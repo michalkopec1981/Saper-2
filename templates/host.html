@@ -189,8 +189,19 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(url, options);
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Błąd serwera');
+                // If response is not OK, try to get error message.
+                // It might be JSON or plain text/HTML.
+                let errorMsg = `Błąd HTTP: ${response.status} ${response.statusText}`;
+                try {
+                    // First, try to parse as JSON, which is the expected format for API errors.
+                    const errorData = await response.json();
+                    errorMsg = errorData.message || JSON.stringify(errorData);
+                } catch (e) {
+                    // If parsing fails, it's not JSON. The response might be an HTML error page.
+                    // We don't show the whole HTML page to the user.
+                    console.error("Could not parse error response as JSON.");
+                }
+                throw new Error(errorMsg);
             }
             return response.json();
         } catch (error) {
@@ -379,9 +390,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Initial Load ---
     fetchApi('/api/game/state').then(state => {
-        updateControlsState(state.game_active, state.is_timer_running);
-        const timeLeft = Math.floor(state.time_left);
-        timerDisplay.textContent = `${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
+        if(state){
+            updateControlsState(state.game_active, state.is_timer_running);
+            const timeLeft = Math.floor(state.time_left);
+            timerDisplay.textContent = `${Math.floor(timeLeft / 60).toString().padStart(2, '0')}:${(timeLeft % 60).toString().padStart(2, '0')}`;
+        }
     });
 
     // --- TETRIS PREVIEW LOGIC ---
@@ -424,4 +437,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-
