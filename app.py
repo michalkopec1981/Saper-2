@@ -1,4 +1,3 @@
-# --- ZMIANA: Dodanie monkey.patch_all() dla gevent ---
 from gevent import monkey
 monkey.patch_all()
 
@@ -11,20 +10,19 @@ import random
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_key'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 
-# --- ZMIANA: Konfiguracja bazy danych dla Railway/lokalnie ---
+# Database Configuration for Railway
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
-    # Zamiana postgres:// na postgresql://, co jest wymagane przez SQLAlchemy
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
-
+    
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- ZMIANA: Konfiguracja SocketIO z gevent i CORS ---
+# SocketIO Configuration
 socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*")
 
 
@@ -73,6 +71,21 @@ game_timer = {
     'is_running': False,
     'end_time': None
 }
+
+# --- NOWA FUNKCJA DO INICJALIZACJI BAZY DANYCH ---
+@app.cli.command("init-db")
+def init_db():
+    """Tworzy tabele w bazie danych i inicjalizuje stan gry."""
+    db.create_all()
+    if not GameState.query.filter_by(key='game_active').first():
+        db.session.add(GameState(key='game_active', value='False'))
+    if not GameState.query.filter_by(key='password').first():
+        db.session.add(GameState(key='password', value='SAPEREVENT'))
+    if not GameState.query.filter_by(key='tetris_active').first():
+        db.session.add(GameState(key='tetris_active', value='False'))
+    db.session.commit()
+    print("Database initialized and tables created.")
+
 
 # --- Routes ---
 @app.route('/')
@@ -356,26 +369,10 @@ def handle_connect():
     emit('game_state_update', get_full_game_state())
     emit_leaderboard_update()
 
-def initialize_database():
-    """Function to initialize the database."""
-    with app.app_context():
-        db.create_all()
-        if not GameState.query.filter_by(key='game_active').first():
-            db.session.add(GameState(key='game_active', value='False'))
-        if not GameState.query.filter_by(key='password').first():
-            db.session.add(GameState(key='password', value='SAPEREVENT'))
-        if not GameState.query.filter_by(key='tetris_active').first():
-            db.session.add(GameState(key='tetris_active', value='False'))
-        db.session.commit()
-        print("Database initialized.")
-
-# Start the timer background task
+# Uruchomienie wątku timera w tle
 socketio.start_background_task(target=update_timer)
 
-# --- ZMIANA: Uruchamianie serwera dla środowiska produkcyjnego/lokalnego ---
 if __name__ == '__main__':
-    # Initialize the database for local development
-    initialize_database()
     port = int(os.environ.get('PORT', 5000))
-    # debug=False jest ważne dla Gunicorna, który zarządza restartami.
     socketio.run(app, host='0.0.0.0', port=port, debug=False)
+
