@@ -1,18 +1,32 @@
+# --- ZMIANA: Dodanie monkey.patch_all() dla gevent ---
+from gevent import monkey
+monkey.patch_all()
+
+import os
 from flask import Flask, render_template, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
-import threading
-import os
 import random
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'bardzo-tajny-klucz-super-bezpieczny'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# --- ZMIANA: Konfiguracja bazy danych dla Railway/lokalnie ---
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Zamiana postgres:// na postgresql://, co jest wymagane przez SQLAlchemy
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+
 db = SQLAlchemy(app)
-socketio = SocketIO(app)
+
+# --- ZMIANA: Konfiguracja SocketIO z gevent i CORS ---
+socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*")
+
 
 # --- Models ---
 class Player(db.Model):
@@ -121,8 +135,6 @@ def scan_qr():
         db.session.add(PlayerScan(player_id=player_id, qrcode_id=qr_code.id, scan_time=datetime.utcnow()))
         db.session.commit()
 
-        # --- ZMIENIONA LOGIKA ---
-        # Sprawdź, czy Tetris jest aktywny
         tetris_state = GameState.query.filter_by(key='tetris_active').first()
         is_tetris_active = tetris_state and tetris_state.value == 'True'
 
@@ -176,12 +188,10 @@ def minigame_reward():
     
     return jsonify({'correct': True, 'letter': letter_to_reveal, 'points': reward_points})
 
-# --- NOWY ENDPOINT DO ZARZĄDZANIA TETRISEM ---
 @app.route('/api/competition/tetris', methods=['GET', 'POST'])
 def manage_tetris():
     tetris_state = GameState.query.filter_by(key='tetris_active').first()
     if not tetris_state:
-        # Fallback in case it's not initialized
         tetris_state = GameState(key='tetris_active', value='False')
         db.session.add(tetris_state)
         db.session.commit()
@@ -346,14 +356,26 @@ def handle_connect():
     emit('game_state_update', get_full_game_state())
     emit_leaderboard_update()
 
-if __name__ == '__main__':
+def initialize_database():
+    """Function to initialize the database."""
     with app.app_context():
         db.create_all()
-        # --- DODANA INICJALIZACJA STANU TETRISA ---
-        if not GameState.query.filter_by(key='game_active').first(): db.session.add(GameState(key='game_active', value='False'))
-        if not GameState.query.filter_by(key='password').first(): db.session.add(GameState(key='password', value='SAPEREVENT'))
-        if not GameState.query.filter_by(key='tetris_active').first(): db.session.add(GameState(key='tetris_active', value='False'))
+        if not GameState.query.filter_by(key='game_active').first():
+            db.session.add(GameState(key='game_active', value='False'))
+        if not GameState.query.filter_by(key='password').first():
+            db.session.add(GameState(key='password', value='SAPEREVENT'))
+        if not GameState.query.filter_by(key='tetris_active').first():
+            db.session.add(GameState(key='tetris_active', value='False'))
         db.session.commit()
-    socketio.start_background_task(target=update_timer)
-    socketio.run(app, debug=True)
+        print("Database initialized.")
 
+# Start the timer background task
+socketio.start_background_task(target=update_timer)
+
+# --- ZMIANA: Uruchamianie serwera dla środowiska produkcyjnego/lokalnego ---
+if __name__ == '__main__':
+    # Initialize the database for local development
+    initialize_database()
+    port = int(os.environ.get('PORT', 5000))
+    # debug=False jest ważne dla Gunicorna, który zarządza restartami.
+    socketio.run(app, host='0.0.0.0', port=port, debug=False)
