@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Superhosta - Saper{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 600px;">
+        <div class="card-header">
+            <h1 class="card-title text-center mb-0">Panel Zarządzania Hostami</h1>
+        </div>
+        <div class="card-body">
+            <p class="text-center text-muted">Zarządzaj danymi logowania dla poszczególnych eventów.</p>
+            
+            <div id="hosts-container">
+                <!-- Host forms will be dynamically inserted here -->
+            </div>
+
+            <div class="d-grid mt-4">
+                <button id="save-all-hosts" class="btn btn-primary btn-lg">Zapisz Wszystkie Zmiany</button>
+            </div>
+             <div id="save-status" class="mt-3 text-center" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hostsContainer = document.getElementById('hosts-container');
+    const saveAllButton = document.getElementById('save-all-hosts');
+    const saveStatusEl = document.getElementById('save-status');
+    const MAX_HOSTS = 3;
+
+    function createHostForm(hostData = { id: 0, login: '', event_name: '' }) {
+        const eventId = hostData.id || (hostsContainer.childElementCount + 1);
+        const form = document.createElement('div');
+        form.className = 'card mb-3';
+        form.dataset.eventId = eventId;
+        
+        form.innerHTML = `
+            <div class="card-body">
+                <h5 class="card-title">Event ${eventId}</h5>
+                <div class="mb-3">
+                    <label for="event-name-${eventId}" class="form-label">Nazwa Eventu</label>
+                    <input type="text" id="event-name-${eventId}" class="form-control" value="${hostData.event_name}" placeholder="np. Finał w Warszawie">
+                </div>
+                <div class="mb-3">
+                    <label for="login-${eventId}" class="form-label">Login Hosta</label>
+                    <input type="text" id="login-${eventId}" class="form-control" value="${hostData.login}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password-${eventId}" class="form-label">Nowe Hasło</label>
+                    <input type="password" id="password-${eventId}" class="form-control" placeholder="Pozostaw puste, aby nie zmieniać">
+                </div>
+            </div>
+        `;
+        return form;
+    }
+
+    async function loadHosts() {
+        try {
+            const response = await fetch('/api/hosts');
+            if (!response.ok) throw new Error('Nie udało się pobrać danych hostów.');
+            
+            const hosts = await response.json();
+            hostsContainer.innerHTML = '';
+            
+            let existingHosts = new Map(hosts.map(h => [h.id, h]));
+
+            for(let i = 1; i <= MAX_HOSTS; i++) {
+                let hostData = existingHosts.has(i) 
+                    ? existingHosts.get(i) 
+                    : { id: i, login: '', event_name: '' };
+                hostsContainer.appendChild(createHostForm(hostData));
+            }
+
+        } catch (error) {
+            console.error('Błąd:', error);
+            saveStatusEl.textContent = error.message;
+            saveStatusEl.className = 'alert alert-danger';
+            saveStatusEl.style.display = 'block';
+        }
+    }
+
+    saveAllButton.addEventListener('click', async () => {
+        const hostDataPayload = [];
+        const hostForms = hostsContainer.querySelectorAll('.card');
+        let allFormsValid = true;
+
+        hostForms.forEach(form => {
+            const id = form.dataset.eventId;
+            const loginInput = form.querySelector(`#login-${id}`);
+            const password = form.querySelector(`#password-${id}`).value;
+            const event_name = form.querySelector(`#event-name-${id}`).value;
+            
+            const login = loginInput.value.trim();
+            if (!login) {
+                loginInput.classList.add('is-invalid');
+                allFormsValid = false;
+            } else {
+                loginInput.classList.remove('is-invalid');
+            }
+
+            hostDataPayload.push({ id, login, password, event_name });
+        });
+
+        if (!allFormsValid) {
+            alert('Login jest wymagany dla każdego hosta.');
+            return;
+        }
+
+        saveStatusEl.textContent = 'Zapisywanie...';
+        saveStatusEl.className = 'alert alert-info';
+        saveStatusEl.style.display = 'block';
+
+        try {
+            const response = await fetch('/api/hosts/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(hostDataPayload)
+            });
+
+            if (!response.ok) {
+                 const errorData = await response.json();
+                 throw new Error(errorData.message || 'Błąd serwera.');
+            }
+            
+            const result = await response.json();
+            saveStatusEl.textContent = result.message;
+            saveStatusEl.className = 'alert alert-success';
+            // Clear passwords fields
+            hostForms.forEach(form => {
+                 form.querySelector(`input[type="password"]`).value = '';
+            });
+
+        } catch (error) {
+            console.error('Błąd zapisu:', error);
+            saveStatusEl.textContent = `Błąd zapisu: ${error.message}`;
+            saveStatusEl.className = 'alert alert-danger';
+        }
+    });
+
+    loadHosts();
+});
+</script>
+{% endblock %}
