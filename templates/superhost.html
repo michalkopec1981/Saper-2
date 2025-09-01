@@ -4,21 +4,17 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card mx-auto" style="max-width: 600px;">
+    <div class="card mx-auto" style="max-width: 800px;">
         <div class="card-header">
-            <h1 class="card-title text-center mb-0">Panel Zarządzania Hostami</h1>
+            <h1 class="card-title text-center mb-0">Panel Zarządzania Grą</h1>
         </div>
         <div class="card-body">
-            <p class="text-center text-muted">Zarządzaj danymi logowania dla poszczególnych eventów.</p>
+            <p class="text-center text-muted">Zarządzaj poszczególnymi eventami, ustawiaj dane logowania i resetuj stan gry.</p>
             
-            <div id="hosts-container">
-                <!-- Host forms will be dynamically inserted here -->
+            <div id="events-container">
+                <!-- Event control panels will be dynamically inserted here -->
             </div>
-
-            <div class="d-grid mt-4">
-                <button id="save-all-hosts" class="btn btn-primary btn-lg">Zapisz Wszystkie Zmiany</button>
-            </div>
-             <div id="save-status" class="mt-3 text-center" style="display: none;"></div>
+            <div id="status-container" class="mt-3 text-center"></div>
         </div>
     </div>
 </div>
@@ -28,35 +24,42 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const hostsContainer = document.getElementById('hosts-container');
-    const saveAllButton = document.getElementById('save-all-hosts');
-    const saveStatusEl = document.getElementById('save-status');
-    const MAX_HOSTS = 3;
+    const eventsContainer = document.getElementById('events-container');
+    const statusContainer = document.getElementById('status-container');
+    const MAX_EVENTS = 5;
 
-    function createHostForm(hostData = { id: 0, login: '', event_name: '' }) {
-        const eventId = hostData.id || (hostsContainer.childElementCount + 1);
-        const form = document.createElement('div');
-        form.className = 'card mb-3';
-        form.dataset.eventId = eventId;
-        
-        form.innerHTML = `
+    function createEventPanel(hostData) {
+        const panel = document.createElement('div');
+        panel.className = 'card mb-3';
+        panel.dataset.eventId = hostData.id;
+
+        panel.innerHTML = `
             <div class="card-body">
-                <h5 class="card-title">Event ${eventId}</h5>
-                <div class="mb-3">
-                    <label for="event-name-${eventId}" class="form-label">Nazwa Eventu</label>
-                    <input type="text" id="event-name-${eventId}" class="form-control" value="${hostData.event_name}" placeholder="np. Finał w Warszawie">
+                <div class="d-flex justify-content-between align-items-center">
+                     <h5 class="card-title mb-0">EVENT ${String(hostData.id).padStart(2, '0')} - <span class="event-name-display">${hostData.event_name || 'Brak nazwy'}</span></h5>
+                     <button class="btn btn-danger btn-sm reset-btn">RESET GRY</button>
                 </div>
-                <div class="mb-3">
-                    <label for="login-${eventId}" class="form-label">Login Hosta</label>
-                    <input type="text" id="login-${eventId}" class="form-control" value="${hostData.login}" required>
+                <hr>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="login-${hostData.id}" class="form-label">LOGIN</label>
+                        <input type="text" id="login-${hostData.id}" class="form-control" value="${hostData.login}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="password-${hostData.id}" class="form-label">HASŁO</label>
+                        <input type="password" id="password-${hostData.id}" class="form-control" placeholder="Nowe lub puste">
+                    </div>
+                    <div class="col-md-4">
+                         <label for="event-name-${hostData.id}" class="form-label">Nazwa Eventu</label>
+                         <input type="text" id="event-name-${hostData.id}" class="form-control" value="${hostData.event_name || ''}">
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label for="password-${eventId}" class="form-label">Nowe Hasło</label>
-                    <input type="password" id="password-${eventId}" class="form-control" placeholder="Pozostaw puste, aby nie zmieniać">
+                 <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-success ok-btn">OK (Zapisz Login/Hasło/Nazwę)</button>
                 </div>
             </div>
         `;
-        return form;
+        return panel;
     }
 
     async function loadHosts() {
@@ -65,80 +68,79 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!response.ok) throw new Error('Nie udało się pobrać danych hostów.');
             
             const hosts = await response.json();
-            hostsContainer.innerHTML = '';
+            eventsContainer.innerHTML = '';
             
-            let existingHosts = new Map(hosts.map(h => [h.id, h]));
+            const hostMap = new Map(hosts.map(h => [h.id, h]));
 
-            for(let i = 1; i <= MAX_HOSTS; i++) {
-                let hostData = existingHosts.has(i) 
-                    ? existingHosts.get(i) 
-                    : { id: i, login: '', event_name: '' };
-                hostsContainer.appendChild(createHostForm(hostData));
+            for (let i = 1; i <= MAX_EVENTS; i++) {
+                const hostData = hostMap.get(i) || { id: i, login: `host${i}`, event_name: `Event #${i}` };
+                eventsContainer.appendChild(createEventPanel(hostData));
             }
 
         } catch (error) {
-            console.error('Błąd:', error);
-            saveStatusEl.textContent = error.message;
-            saveStatusEl.className = 'alert alert-danger';
-            saveStatusEl.style.display = 'block';
+            showStatus(error.message, 'danger');
         }
     }
 
-    saveAllButton.addEventListener('click', async () => {
-        const hostDataPayload = [];
-        const hostForms = hostsContainer.querySelectorAll('.card');
-        let allFormsValid = true;
-
-        hostForms.forEach(form => {
-            const id = form.dataset.eventId;
-            const loginInput = form.querySelector(`#login-${id}`);
-            const password = form.querySelector(`#password-${id}`).value;
-            const event_name = form.querySelector(`#event-name-${id}`).value;
-            
-            const login = loginInput.value.trim();
-            if (!login) {
-                loginInput.classList.add('is-invalid');
-                allFormsValid = false;
-            } else {
-                loginInput.classList.remove('is-invalid');
+    function showStatus(message, type = 'info', duration = 3000) {
+        statusContainer.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
+        setTimeout(() => {
+            if (statusContainer.firstChild) {
+                statusContainer.firstChild.remove();
             }
+        }, duration);
+    }
 
-            hostDataPayload.push({ id, login, password, event_name });
-        });
+    eventsContainer.addEventListener('click', async (e) => {
+        const panel = e.target.closest('.card');
+        if (!panel) return;
 
-        if (!allFormsValid) {
-            alert('Login jest wymagany dla każdego hosta.');
-            return;
+        const eventId = panel.dataset.eventId;
+
+        // Handle RESET button
+        if (e.target.classList.contains('reset-btn')) {
+            if (!confirm(`Czy na pewno chcesz zresetować całą grę dla EVENTU ${eventId}? Usunie to wszystkich graczy, kody i postęp.`)) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/event/${eventId}/reset`, { method: 'POST' });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Błąd serwera');
+                showStatus(result.message, 'success');
+            } catch (error) {
+                showStatus(`Błąd resetowania: ${error.message}`, 'danger');
+            }
         }
 
-        saveStatusEl.textContent = 'Zapisywanie...';
-        saveStatusEl.className = 'alert alert-info';
-        saveStatusEl.style.display = 'block';
+        // Handle OK button
+        if (e.target.classList.contains('ok-btn')) {
+            const login = panel.querySelector(`#login-${eventId}`).value.trim();
+            const password = panel.querySelector(`#password-${eventId}`).value;
+            const event_name = panel.querySelector(`#event-name-${eventId}`).value.trim();
 
-        try {
-            const response = await fetch('/api/hosts/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(hostDataPayload)
-            });
-
-            if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.message || 'Błąd serwera.');
+            if (!login) {
+                alert('Login nie może być pusty.');
+                return;
             }
             
-            const result = await response.json();
-            saveStatusEl.textContent = result.message;
-            saveStatusEl.className = 'alert alert-success';
-            // Clear passwords fields
-            hostForms.forEach(form => {
-                 form.querySelector(`input[type="password"]`).value = '';
-            });
+            const payload = { id: eventId, login, password, event_name };
 
-        } catch (error) {
-            console.error('Błąd zapisu:', error);
-            saveStatusEl.textContent = `Błąd zapisu: ${error.message}`;
-            saveStatusEl.className = 'alert alert-danger';
+            try {
+                const response = await fetch('/api/hosts/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify([payload]) // API oczekuje listy
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Błąd serwera');
+                
+                showStatus(result.message, 'success');
+                panel.querySelector(`#password-${eventId}`).value = ''; // Wyczyść pole hasła po zapisie
+                panel.querySelector('.event-name-display').textContent = event_name; // Zaktualizuj wyświetlaną nazwę
+            } catch (error) {
+                showStatus(`Błąd zapisu: ${error.message}`, 'danger');
+            }
         }
     });
 
@@ -146,3 +148,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
