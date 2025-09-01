@@ -4,9 +4,8 @@ monkey.patch_all()
 import os
 from flask import Flask, render_template, request, jsonify, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime, timedelta
-import random
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
@@ -90,13 +89,13 @@ def host_required(f):
 @app.cli.command("init-db")
 def init_db_command():
     db.create_all()
-    for i in range(1, 4):
+    for i in range(1, 6): # Increased to 5 events
         if not Host.query.get(i):
             host = Host(id=i, login=f'host{i}', event_name=f'Event #{i}')
             host.set_password(f'password{i}')
             db.session.add(host)
     db.session.commit()
-    print("Database initialized and hosts created.")
+    print("Database initialized for 5 hosts.")
 
 # --- Routes ---
 @app.route('/')
@@ -110,7 +109,7 @@ def host(): return render_template('host.html')
 
 @app.route('/superhost')
 def superhost_view(): return render_template('superhost.html')
-    
+
 @app.route('/display/<int:event_id>')
 def display(event_id):
     host = db.session.get(Host, event_id)
@@ -118,11 +117,53 @@ def display(event_id):
     return render_template('display.html', event_id=event_id, event_name=event_name)
 
 @app.route('/qrcodes/<int:event_id>')
-@host_required
-def list_qrcodes(event_id):
-    if session.get('host_id') != event_id: return "Unauthorized", 401
+def list_qrcodes_public(event_id):
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
+
+# --- API Endpoints for Superhost ---
+@app.route('/api/hosts', methods=['GET'])
+def get_hosts():
+    hosts = Host.query.order_by(Host.id).all()
+    return jsonify([{'id': h.id, 'login': h.login, 'event_name': h.event_name} for h in hosts])
+
+@app.route('/api/hosts/update', methods=['POST'])
+def update_hosts():
+    data = request.get_json()
+    for host_data in data:
+        host = db.session.get(Host, host_data['id'])
+        if not host:
+            host = Host(id=host_data['id'])
+            db.session.add(host)
+        
+        host.login = host_data['login']
+        host.event_name = host_data['event_name']
+        if host_data.get('password'):
+            host.set_password(host_data['password'])
+    db.session.commit()
+    return jsonify({'message': 'Dane hosta zaktualizowane pomyślnie!'})
+
+@app.route('/api/event/<int:event_id>/reset', methods=['POST'])
+def reset_event(event_id):
+    # This action can be performed by superhost, so no @host_required
+    try:
+        Player.query.filter_by(event_id=event_id).delete()
+        QRCode.query.filter_by(event_id=event_id).delete()
+        PlayerScan.query.filter_by(event_id=event_id).delete()
+        PlayerAnswer.query.filter_by(event_id=event_id).delete()
+        GameState.query.filter_by(event_id=event_id).delete()
+        db.session.commit()
+        
+        # Emit updates to the corresponding display room
+        room_name = f'event_{event_id}'
+        emit_leaderboard_update(room_name)
+        emit_password_update(room_name)
+        socketio.emit('game_state_update', get_full_game_state(event_id), room=room_name)
+        
+        return jsonify({'message': f'Gra dla eventu {event_id} została zresetowana.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Błąd serwera podczas resetowania: {str(e)}'}), 500
 
 # --- API Endpoints ---
 @app.route('/api/host/login', methods=['POST'])
@@ -158,10 +199,13 @@ def get_game_state_api():
 def start_game():
     event_id = session['host_id']
     data = request.json
-    Player.query.filter_by(event_id=event_id).delete()
+    # Reset only game-related data for the event, not all players
     QRCode.query.filter_by(event_id=event_id).delete()
     PlayerScan.query.filter_by(event_id=event_id).delete()
     PlayerAnswer.query.filter_by(event_id=event_id).delete()
+    Player.query.filter_by(event_id=event_id).delete() # Reset players for this event
+    db.session.commit()
+
     for i in range(1, int(data.get('red_codes_count', 5)) + 1): db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
     for i in range(1, int(data.get('white_codes_count', 5)) + 1): db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
     set_game_state(event_id, 'game_active', 'True')
@@ -358,12 +402,14 @@ def get_full_game_state(event_id):
     return {'game_active': is_active, 'is_timer_running': is_timer_running, 'time_left': time_left, 'password': displayed_password}
 
 def emit_leaderboard_update(room):
+    if not room.startswith('event_'): return
     event_id = int(room.split('_')[1])
     with app.app_context():
         players = Player.query.filter_by(event_id=event_id).order_by(Player.score.desc()).all()
         socketio.emit('leaderboard_update', [{'name': p.name, 'score': p.score} for p in players], room=room)
 
 def emit_password_update(room):
+     if not room.startswith('event_'): return
      event_id = int(room.split('_')[1])
      with app.app_context():
         socketio.emit('password_update', get_full_game_state(event_id)['password'], room=room)
