@@ -77,6 +77,10 @@
                                     <label for="red-codes-count" class="form-label">Liczba "czerwonych" kodów QR:</label>
                                     <input type="number" class="form-control" id="red-codes-count" value="5" min="0" max="100">
                                 </div>
+                                <div class="d-grid gap-2">
+                                    <button id="generate-qrcodes" class="btn btn-secondary">Generuj / Zaktualizuj Kody QR</button>
+                                    <a id="preview-qrcodes" class="btn btn-info" href="#" target="_blank">Podgląd kodów QR</a>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <h6>Czas Gry</h6>
@@ -97,7 +101,6 @@
                         <div class="d-grid gap-2 d-md-flex justify-content-center">
                             <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
                             <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
-                            <a id="preview-qrcodes" class="btn btn-info btn-lg ms-md-auto" href="#" target="_blank">Podgląd kodów QR</a>
                         </div>
                     </div>
                 </div>
@@ -248,11 +251,9 @@ document.addEventListener('DOMContentLoaded', function() {
         panelSection.style.display = 'block';
         document.getElementById('event-name-display').textContent = `(Event: ${eventName})`;
         
-        // Set up links with the correct event ID
         document.getElementById('display-link').href = `/display/${eventId}`;
         document.getElementById('preview-qrcodes').href = `/qrcodes/${eventId}`;
 
-        // Connect to Socket.IO and join the event room
         socket = io({ autoConnect: false });
         socket.on('connect', () => {
             console.log('Socket connected, joining room:', `event_${eventId}`);
@@ -274,20 +275,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const minutesInput = document.getElementById('minutes-input');
     const pauseTimerBtn = document.getElementById('pause-timer');
     const timerDisplay = document.getElementById('game-timer');
+    const generateQrCodesBtn = document.getElementById('generate-qrcodes');
 
-    startGameBtn.addEventListener('click', () => {
+    generateQrCodesBtn.addEventListener('click', () => {
         const whiteCount = document.getElementById('white-codes-count').value;
         const redCount = document.getElementById('red-codes-count').value;
+        fetchApi('/api/generate_qr_codes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ white_codes_count: whiteCount, red_codes_count: redCount })
+        }).then(result => {
+            if (result && result.status === 'success') {
+                alert(result.message);
+            }
+        });
+    });
+
+    startGameBtn.addEventListener('click', () => {
         const minutes = minutesInput.value;
-        
         fetchApi('/api/start_game', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                white_codes_count: whiteCount, 
-                red_codes_count: redCount,
-                minutes: minutes 
-            })
+            body: JSON.stringify({ minutes: minutes })
         });
     });
 
@@ -299,6 +308,12 @@ document.addEventListener('DOMContentLoaded', function() {
         stopGameBtn.disabled = !isGameActive;
         minutesInput.disabled = isGameActive;
         pauseTimerBtn.disabled = !isGameActive;
+        
+        // QR code settings can be edited before the game starts
+        document.getElementById('white-codes-count').disabled = isGameActive;
+        document.getElementById('red-codes-count').disabled = isGameActive;
+        generateQrCodesBtn.disabled = isGameActive;
+
         if (isGameActive) {
             pauseTimerBtn.textContent = isTimerRunning ? 'Pauza' : 'Wznów';
         }
