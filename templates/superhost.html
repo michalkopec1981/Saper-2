@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-md-4">
                         <label for="password-${hostData.id}" class="form-label">HASŁO</label>
-                        <input type="password" id="password-${hostData.id}" class="form-control" placeholder="Nowe lub puste">
+                        <input type="text" id="password-${hostData.id}" class="form-control" placeholder="Nowe lub puste">
                     </div>
                     <div class="col-md-4">
                          <label for="event-name-${hostData.id}" class="form-label">Nazwa Eventu</label>
@@ -129,15 +129,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const response = await fetch('/api/hosts/update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify([payload]) // API oczekuje listy
+                    body: JSON.stringify([payload]) // API expects a list
                 });
 
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.message || 'Błąd serwera');
                 
                 showStatus(result.message, 'success');
-                panel.querySelector(`#password-${eventId}`).value = ''; // Wyczyść pole hasła po zapisie
-                panel.querySelector('.event-name-display').textContent = event_name; // Zaktualizuj wyświetlaną nazwę
+                // Password field is no longer cleared after saving
+                panel.querySelector('.event-name-display').textContent = event_name; // Update displayed name
             } catch (error) {
                 showStatus(`Błąd zapisu: ${error.message}`, 'danger');
             }
@@ -148,4 +148,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-
