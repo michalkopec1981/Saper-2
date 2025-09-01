@@ -1,78 +1,73 @@
 {% extends 'base.html' %}
 
-{% block title %}Zarządzaj Kodami QR - Saper{% endblock %}
+{% block title %}Kody QR do Wydruku{% endblock %}
+
+{% block styles %}
+<style>
+    body { background-color: #fff; }
+    .qr-page {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 20px;
+        padding: 20px;
+        page-break-after: always;
+    }
+    .qr-container {
+        border: 2px solid #333;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background-color: #f8f9fa; /* Default background */
+    }
+    .qr-container.color-white { background-color: #ffffff; border-color: #ccc; }
+    .qr-container.color-yellow { background-color: #fff3cd; border-color: #ffeeba; }
+    .qr-container.color-red { background-color: #f8d7da; border-color: #f5c6cb; }
+    .qr-container.color-white_trap { background-color: #e2e3e5; border-color: #d6d8db; }
+    .qr-container.color-green { background-color: #d4edda; border-color: #c3e6cb; }
+
+    .qr-container img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 10px;
+    }
+    .qr-container h5 {
+        font-family: monospace;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    .print-button-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+    @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .print-button-container { display: none; }
+        .qr-page { border: none; padding: 0; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card mx-auto" style="max-width: 600px;">
-        <div class="card-header">
-            <h1 class="card-title text-center mb-0">Zarządzaj Kodami QR</h1>
-            <h2 class="text-center text-muted h4">{{ event_name }} (Event {{ event_id }})</h2>
-        </div>
-        <div class="card-body">
-            <p class="text-center">Ustaw liczbę kodów QR, które będą dostępne w grze. Pamiętaj, aby zrobić to przed rozpoczęciem eventu.</p>
-            
-            <div class="mb-3">
-                <label for="white-codes-count" class="form-label">Liczba białych kodów QR:</label>
-                <input type="number" class="form-control" id="white-codes-count" value="{{ white_codes_count or 5 }}" min="1" max="100">
-            </div>
-            <div class="mb-3">
-                <label for="red-codes-count" class="form-label">Liczba "czerwonych" kodów QR:</label>
-                <input type="number" class="form-control" id="red-codes-count" value="{{ red_codes_count or 5 }}" min="0" max="100">
-            </div>
-            
-            <div class="d-grid gap-2 mt-4">
-                <button id="generate-qrcodes" class="btn btn-primary">Generuj / Zaktualizuj Kody QR</button>
-                <a href="{{ url_for('list_qrcodes_public', event_id=event_id) }}" target="_blank" class="btn btn-info">Podgląd kodów QR</a>
-            </div>
-            <div id="status-message" class="mt-3 text-center" style="display: none;"></div>
-        </div>
+<div class="print-button-container">
+    <button onclick="window.print()" class="btn btn-primary btn-lg">Drukuj Wszystko</button>
+</div>
+
+<div class="qr-page">
+    {% for qr in qrcodes %}
+    <div class="qr-container color-{{ qr.color }}">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ url_for('player_view', event_id=event_id, qr_code=qr.code_identifier, _external=True) }}" alt="QR Code">
+        <h5>{{ qr.code_identifier }}</h5>
     </div>
+    {% else %}
+    <div class="alert alert-warning" style="grid-column: 1 / -1;">
+        Brak kodów QR do wyświetlenia dla tego eventu. Wygeneruj je w panelu Superhosta.
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const generateBtn = document.getElementById('generate-qrcodes');
-    const statusEl = document.getElementById('status-message');
-    const eventId = {{ event_id }};
-
-    generateBtn.addEventListener('click', async () => {
-        const whiteCount = document.getElementById('white-codes-count').value;
-        const redCount = document.getElementById('red-codes-count').value;
-
-        statusEl.textContent = 'Generowanie...';
-        statusEl.className = 'alert alert-info';
-        statusEl.style.display = 'block';
-
-        try {
-            const response = await fetch('/api/superhost/qrcodes/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    event_id: eventId,
-                    white_codes_count: whiteCount,
-                    red_codes_count: redCount
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'Błąd serwera.');
-            }
-            
-            statusEl.textContent = result.message;
-            statusEl.className = 'alert alert-success';
-
-        } catch (error) {
-            console.error('Błąd generowania kodów:', error);
-            statusEl.textContent = `Błąd: ${error.message}`;
-            statusEl.className = 'alert alert-danger';
-        }
-    });
-});
-</script>
 {% endblock %}
+
