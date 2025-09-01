@@ -4,17 +4,14 @@
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card mx-auto" style="max-width: 800px;">
+    <div class="card">
         <div class="card-header">
-            <h1 class="card-title text-center mb-0">Panel Zarządzania Grą</h1>
+            <h1 class="card-title text-center mb-0">Panel Superhosta</h1>
         </div>
         <div class="card-body">
-            <p class="text-center text-muted">Zarządzaj poszczególnymi eventami, ustawiaj dane logowania i resetuj stan gry.</p>
-            
-            <div id="events-container">
-                <!-- Event control panels will be dynamically inserted here -->
+            <div id="events-container" class="list-group">
+                <!-- Event controls will be dynamically inserted here -->
             </div>
-            <div id="status-container" class="mt-3 text-center"></div>
         </div>
     </div>
 </div>
@@ -25,126 +22,114 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const eventsContainer = document.getElementById('events-container');
-    const statusContainer = document.getElementById('status-container');
-    const MAX_EVENTS = 5;
 
-    function createEventPanel(hostData) {
-        const panel = document.createElement('div');
-        panel.className = 'card mb-3';
-        panel.dataset.eventId = hostData.id;
-
-        panel.innerHTML = `
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                     <h5 class="card-title mb-0">EVENT ${String(hostData.id).padStart(2, '0')} - <span class="event-name-display">${hostData.event_name || 'Brak nazwy'}</span></h5>
-                     <button class="btn btn-danger btn-sm reset-btn">RESET GRY</button>
+    function createEventControl(event) {
+        const div = document.createElement('div');
+        div.className = 'list-group-item';
+        div.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <label for="event-name-${event.id}" class="form-label fw-bold">EVENT ${event.id}</label>
+                    <input type="text" id="event-name-${event.id}" class="form-control form-control-sm event-name" value="${event.event_name}">
                 </div>
-                <hr>
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label for="login-${hostData.id}" class="form-label">LOGIN</label>
-                        <input type="text" id="login-${hostData.id}" class="form-control" value="${hostData.login}" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="password-${hostData.id}" class="form-label">HASŁO</label>
-                        <input type="text" id="password-${hostData.id}" class="form-control" placeholder="Nowe lub puste">
-                    </div>
-                    <div class="col-md-4">
-                         <label for="event-name-${hostData.id}" class="form-label">Nazwa Eventu</label>
-                         <input type="text" id="event-name-${hostData.id}" class="form-control" value="${hostData.event_name || ''}">
-                    </div>
+                <div class="col-md-3">
+                    <label for="login-${event.id}" class="form-label">Login</label>
+                    <input type="text" id="login-${event.id}" class="form-control form-control-sm event-login" value="${event.login}">
                 </div>
-                 <div class="d-grid gap-2 mt-3">
-                    <button class="btn btn-success ok-btn">OK (Zapisz Login/Hasło/Nazwę)</button>
+                <div class="col-md-3">
+                    <label for="password-${event.id}" class="form-label">Hasło</label>
+                    <input type="text" id="password-${event.id}" class="form-control form-control-sm event-password" placeholder="Wpisz nowe, by zmienić">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button class="btn btn-sm btn-success w-100 btn-save-host" data-id="${event.id}">OK</button>
+                    <a href="/superhost/qrcodes/${event.id}" class="btn btn-sm btn-info w-100">KODY QR</a>
+                    <button class="btn btn-sm btn-danger w-100 btn-reset-game" data-id="${event.id}">RESET GRY</button>
                 </div>
             </div>
+            <div class="mt-2 text-center small status-message" id="status-${event.id}" style="display: none;"></div>
         `;
-        return panel;
+        return div;
     }
 
-    async function loadHosts() {
+    async function loadEvents() {
         try {
             const response = await fetch('/api/hosts');
             if (!response.ok) throw new Error('Nie udało się pobrać danych hostów.');
             
-            const hosts = await response.json();
+            const events = await response.json();
             eventsContainer.innerHTML = '';
-            
-            const hostMap = new Map(hosts.map(h => [h.id, h]));
-
-            for (let i = 1; i <= MAX_EVENTS; i++) {
-                const hostData = hostMap.get(i) || { id: i, login: `host${i}`, event_name: `Event #${i}` };
-                eventsContainer.appendChild(createEventPanel(hostData));
-            }
-
+            events.forEach(event => {
+                eventsContainer.appendChild(createEventControl(event));
+            });
+            addEventListeners();
         } catch (error) {
-            showStatus(error.message, 'danger');
+            eventsContainer.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
         }
     }
 
-    function showStatus(message, type = 'info', duration = 3000) {
-        statusContainer.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
-        setTimeout(() => {
-            if (statusContainer.firstChild) {
-                statusContainer.firstChild.remove();
-            }
-        }, duration);
+    function addEventListeners() {
+        document.querySelectorAll('.btn-save-host').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const statusEl = document.getElementById(`status-${id}`);
+                const payload = {
+                    id: id,
+                    event_name: document.getElementById(`event-name-${id}`).value,
+                    login: document.getElementById(`login-${id}`).value,
+                    password: document.getElementById(`password-${id}`).value
+                };
+
+                statusEl.textContent = 'Zapisywanie...';
+                statusEl.className = 'mt-2 text-center small text-info';
+                statusEl.style.display = 'block';
+
+                try {
+                    const response = await fetch('/api/hosts/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify([payload]) // API expects a list
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    statusEl.textContent = result.message;
+                    statusEl.className = 'mt-2 text-center small text-success';
+                    document.getElementById(`password-${id}`).value = ''; // Clear password field after save
+                } catch (error) {
+                    statusEl.textContent = `Błąd: ${error.message}`;
+                    statusEl.className = 'mt-2 text-center small text-danger';
+                }
+            });
+        });
+
+        document.querySelectorAll('.btn-reset-game').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                if (!confirm(`Czy na pewno chcesz całkowicie zresetować GRĘ, KODY QR i PYTANIA dla Eventu ${id}? Tej operacji nie można cofnąć.`)) {
+                    return;
+                }
+                const statusEl = document.getElementById(`status-${id}`);
+                statusEl.textContent = 'Resetowanie...';
+                statusEl.className = 'mt-2 text-center small text-info';
+                statusEl.style.display = 'block';
+
+                 try {
+                    const response = await fetch(`/api/event/${id}/reset`, { method: 'POST' });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    statusEl.textContent = result.message;
+                    statusEl.className = 'mt-2 text-center small text-success';
+                } catch (error) {
+                    statusEl.textContent = `Błąd: ${error.message}`;
+                    statusEl.className = 'mt-2 text-center small text-danger';
+                }
+            });
+        });
     }
 
-    eventsContainer.addEventListener('click', async (e) => {
-        const panel = e.target.closest('.card');
-        if (!panel) return;
-
-        const eventId = panel.dataset.eventId;
-
-        // Handle RESET button
-        if (e.target.classList.contains('reset-btn')) {
-            if (!confirm(`Czy na pewno chcesz zresetować całą grę dla EVENTU ${eventId}? Usunie to wszystkich graczy, kody i postęp.`)) {
-                return;
-            }
-            try {
-                const response = await fetch(`/api/event/${eventId}/reset`, { method: 'POST' });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Błąd serwera');
-                showStatus(result.message, 'success');
-            } catch (error) {
-                showStatus(`Błąd resetowania: ${error.message}`, 'danger');
-            }
-        }
-
-        // Handle OK button
-        if (e.target.classList.contains('ok-btn')) {
-            const login = panel.querySelector(`#login-${eventId}`).value.trim();
-            const password = panel.querySelector(`#password-${eventId}`).value;
-            const event_name = panel.querySelector(`#event-name-${eventId}`).value.trim();
-
-            if (!login) {
-                alert('Login nie może być pusty.');
-                return;
-            }
-            
-            const payload = { id: eventId, login, password, event_name };
-
-            try {
-                const response = await fetch('/api/hosts/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify([payload]) // API expects a list
-                });
-
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Błąd serwera');
-                
-                showStatus(result.message, 'success');
-                // Password field is no longer cleared after saving
-                panel.querySelector('.event-name-display').textContent = event_name; // Update displayed name
-            } catch (error) {
-                showStatus(`Błąd zapisu: ${error.message}`, 'danger');
-            }
-        }
-    });
-
-    loadHosts();
+    loadEvents();
 });
 </script>
 {% endblock %}
+
