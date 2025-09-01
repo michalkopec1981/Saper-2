@@ -69,16 +69,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>Kody QR</h6>
-                                <div class="mb-3">
-                                    <label for="white-codes-count" class="form-label">Liczba białych kodów QR:</label>
-                                    <input type="number" class="form-control" id="white-codes-count" value="5" min="1" max="100">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="red-codes-count" class="form-label">Liczba "czerwonych" kodów QR:</label>
-                                    <input type="number" class="form-control" id="red-codes-count" value="5" min="0" max="100">
-                                </div>
-                                <div class="d-grid gap-2">
-                                    <button id="generate-qrcodes" class="btn btn-secondary">Generuj / Zaktualizuj Kody QR</button>
+                                <p class="text-muted">Kody QR są konfigurowane przez Superhosta. Kliknij poniżej, aby je podejrzeć i wydrukować.</p>
+                                <div class="d-grid">
                                     <a id="preview-qrcodes" class="btn btn-info" href="#" target="_blank">Podgląd kodów QR</a>
                                 </div>
                             </div>
@@ -223,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('API Error:', error);
             alert('Błąd API: ' + error.message);
-            return null; // Return null on error to prevent further issues
+            return null;
         }
     }
 
@@ -265,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupTabListeners();
         
         fetchApi('/api/game/state').then(state => {
-            if(state) updateGameControls(state.game_active, state.is_timer_running);
+            if(state) updateGameControls(state.game_active);
         });
     }
 
@@ -275,21 +267,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const minutesInput = document.getElementById('minutes-input');
     const pauseTimerBtn = document.getElementById('pause-timer');
     const timerDisplay = document.getElementById('game-timer');
-    const generateQrCodesBtn = document.getElementById('generate-qrcodes');
-
-    generateQrCodesBtn.addEventListener('click', () => {
-        const whiteCount = document.getElementById('white-codes-count').value;
-        const redCount = document.getElementById('red-codes-count').value;
-        fetchApi('/api/generate_qr_codes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ white_codes_count: whiteCount, red_codes_count: redCount })
-        }).then(result => {
-            if (result && result.status === 'success') {
-                alert(result.message);
-            }
-        });
-    });
 
     startGameBtn.addEventListener('click', () => {
         const minutes = minutesInput.value;
@@ -309,11 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
         minutesInput.disabled = isGameActive;
         pauseTimerBtn.disabled = !isGameActive;
         
-        // QR code settings can be edited before the game starts
-        document.getElementById('white-codes-count').disabled = isGameActive;
-        document.getElementById('red-codes-count').disabled = isGameActive;
-        generateQrCodesBtn.disabled = isGameActive;
-
         if (isGameActive) {
             pauseTimerBtn.textContent = isTimerRunning ? 'Pauza' : 'Wznów';
         }
