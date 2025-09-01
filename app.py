@@ -120,12 +120,7 @@ def display(event_id):
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
-    if not qrcodes:
-        # If no codes exist, create some default ones for preview
-        for i in range(1, 6): db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
-        for i in range(1, 6): db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
-        db.session.commit()
-        qrcodes = QRCode.query.filter_by(event_id=event_id).all()
+    # Zmieniono logikę - nie tworzymy domyślnych kodów. Jeśli ich nie ma, to host musi je wygenerować.
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
 
 
@@ -205,11 +200,14 @@ def get_game_state_api():
 @host_required
 def generate_qr_codes():
     event_id = session['host_id']
+    # Prevent generating codes if the game is active
+    if get_game_state(event_id, 'game_active', 'False') == 'True':
+        return jsonify({'status': 'error', 'message': 'Nie można generować kodów podczas aktywnej gry.'}), 403
+
     data = request.json
     white_count = int(data.get('white_codes_count', 5))
     red_count = int(data.get('red_codes_count', 5))
     
-    # Clear existing QR codes for this event before generating new ones
     QRCode.query.filter_by(event_id=event_id).delete()
     
     for i in range(1, red_count + 1):
@@ -224,11 +222,13 @@ def generate_qr_codes():
 def start_game():
     event_id = session['host_id']
     data = request.json
+    
+    # Reset game progress, but keep QR codes and Questions
     Player.query.filter_by(event_id=event_id).delete()
     PlayerScan.query.filter_by(event_id=event_id).delete()
     PlayerAnswer.query.filter_by(event_id=event_id).delete()
     
-    # Unclaim all QR codes for the event
+    # Unclaim all QR codes for the event, making them reusable
     QRCode.query.filter_by(event_id=event_id).update({QRCode.claimed_by_player_id: None})
     
     set_game_state(event_id, 'game_active', 'True')
@@ -292,15 +292,16 @@ def register_player():
 @app.route('/api/scan_qr', methods=['POST'])
 def scan_qr():
     data = request.get_json()
-    player_id, qr_code_identifier, event_id = data.get('player_id'), data.get('qr_code'), data.get('event_id')
-
+    player_id, qr_code_identifier, event_id_str = data.get('player_id'), data.get('qr_code'), data.get('event_id')
+    event_id = int(event_id_str)
+    
     if not all([player_id, qr_code_identifier, event_id]):
         return jsonify({'status': 'error', 'message': 'Brak wszystkich wymaganych danych.'}), 400
     
     player = db.session.get(Player, player_id)
     qr_code = QRCode.query.filter_by(code_identifier=qr_code_identifier, event_id=event_id).first()
     
-    if not player or player.event_id != int(event_id): return jsonify({'status': 'error', 'message': 'ID gracza jest nieprawidłowe dla tego eventu.'}), 401
+    if not player or player.event_id != event_id: return jsonify({'status': 'error', 'message': 'ID gracza jest nieprawidłowe dla tego eventu.'}), 401
     if not qr_code: return jsonify({'status': 'error', 'message': 'Ten kod QR jest nieprawidłowy.'}), 404
     if get_game_state(event_id, 'game_active', 'False') != 'True': return jsonify({'status': 'error', 'message': 'Gra nie jest aktywna.'}), 403
 
