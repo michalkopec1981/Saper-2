@@ -1,488 +1,68 @@
 {% extends 'base.html' %}
-
-{% block title %}Panel Hosta - Saper{% endblock %}
-
-{% block styles %}
-{{ super() }}
-<style>
-    #tetris-preview-canvas {
-        border: 2px solid #333;
-        background-color: #f0f0f0;
-        display: block;
-        margin: 1rem auto 0;
-    }
-</style>
-{% endblock %}
-
-
+{% block title %}Panel Hosta - {{ event.name }}{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <!-- Login Section -->
-    <div id="login-section" class="card mx-auto" style="max-width: 400px;">
-        <div class="card-body">
-            <h2 class="card-title text-center">Logowanie Hosta</h2>
-            <form id="login-form">
-                <div class="mb-3">
-                    <label for="login" class="form-label">Login</label>
-                    <input type="text" class="form-control" id="login" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Hasło</label>
-                    <input type="password" class="form-control" id="password" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Zaloguj</button>
-                <div id="login-error" class="text-danger mt-2" style="display: none;"></div>
-            </form>
-        </div>
+    {% if is_impersonated %}
+    <div class="alert alert-warning d-flex justify-content-between align-items-center">
+        Jesteś zalogowany jako Admin w panelu Hosta.
+        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-warning">Powrót do panelu Admina</a>
+    </div>
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div><h1 class="mb-0">Panel Hosta</h1><h3 class="text-muted mb-0">{{ event.name }}</h3></div>
+        <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary">Otwórz Ekran Gry</a>
     </div>
 
-    <!-- Main Panel (hidden by default) -->
-    <div id="panel-section" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-             <div>
-                <h1 class="mb-0">Panel Organizatora</h1>
-                <h3 class="text-muted mb-0" id="event-name-display"></h3>
-             </div>
-             <a id="display-link" href="#" target="_blank" class="btn btn-outline-secondary">Otwórz Ekran Gry</a>
-        </div>
-        
-        <!-- Navigation Tabs -->
-        <ul class="nav nav-tabs mb-4" id="organizerTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="game-tab" data-bs-toggle="tab" data-bs-target="#game" type="button">Ustawienia Gry</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="players-tab" data-bs-toggle="tab" data-bs-target="#players" type="button">Gracze</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="competitions-tab" data-bs-toggle="tab" data-bs-target="#competitions" type="button">Konkurencje</button>
-            </li>
-        </ul>
-        
-        <!-- Tab Content -->
-        <div class="tab-content">
-            <!-- Game Settings Tab -->
-            <div class="tab-pane fade show active" id="game" role="tabpanel">
-                <div class="card">
-                    <div class="card-header"><h5 class="card-title mb-0">Ustawienia Gry i Czasu</h5></div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Kody QR</h6>
-                                <p class="text-muted">Kody QR są konfigurowane przez Superhosta. Kliknij poniżej, aby je podejrzeć i wydrukować.</p>
-                                <div class="d-grid">
-                                    <a id="preview-qrcodes" class="btn btn-info" href="#" target="_blank">Podgląd kodów QR</a>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Czas Gry</h6>
-                                <div class="mb-3">
-                                    <label for="minutes-input" class="form-label">Czas gry w minutach:</label>
-                                    <input type="number" class="form-control" id="minutes-input" value="10" min="1">
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="text-muted">Pozostało:</span>
-                                        <span class="fs-4" id="game-timer">00:00</span>
-                                    </div>
-                                    <button type="button" class="btn btn-warning" id="pause-timer" disabled>Pauza</button>
-                                </div>
-                            </div>
-                        </div>
-                        <hr class="my-4">
-                        <div class="d-grid gap-2 d-md-flex justify-content-center">
-                            <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
-                            <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Players Tab -->
-            <div class="tab-pane fade" id="players" role="tabpanel">
-                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Lista Graczy</h5>
-                        <button class="btn btn-primary btn-sm" id="refresh-players">Odśwież</button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="players-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nazwa</th>
-                                        <th>Punkty</th>
-                                        <th>Ostrzeżenia</th>
-                                        <th>Akcje</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="players-list"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <ul class="nav nav-tabs mb-4" id="hostTabs">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game">Gra</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players">Gracze</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions">Pytania</button></li>
+        {% if event.is_superhost %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#superhost">Kody QR</button></li>{% endif %}
+    </ul>
 
-            <!-- Competitions Tab -->
-            <div class="tab-pane fade" id="competitions" role="tabpanel">
-                <div class="row">
-                    <div class="col-12 mb-4">
-                        <div class="card">
-                            <div class="card-header"><h5 class="card-title mb-0">Minigry</h5></div>
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6>Tetris</h6>
-                                        <p class="text-muted mb-0 small">Aktywuj, aby gra była dostępna dla graczy.</p>
-                                    </div>
-                                    <div>
-                                        <button class="btn btn-secondary me-2" id="test-tetris">Test</button>
-                                        <button class="btn btn-outline-success" id="toggle-tetris">Aktywuj</button>
-                                    </div>
-                                </div>
-                                <div id="tetris-preview-container" style="display: none; text-align: center;">
-                                    <canvas id="tetris-preview-canvas" width="240" height="400"></canvas>
-                                    <p class="mt-2 text-muted small">Sterowanie: Strzałki</p>
-                                </div>
-                            </div>
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="game">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie Grą</h5></div>
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <div class="col-md-6"><label for="minutes-input" class="form-label">Czas gry w minutach:</label><input type="number" class="form-control" id="minutes-input" value="30" min="1"></div>
+                        <div class="col-md-6 d-flex justify-content-between align-items-center">
+                            <div><span class="text-muted">Pozostało:</span><span class="fs-4" id="game-timer">00:00</span></div>
+                            <button type="button" class="btn btn-warning" id="pause-timer" disabled>Pauza</button>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0">Dodaj Pytanie</h5></div>
-                            <div class="card-body">
-                                <form id="add-question-form">
-                                    <div class="mb-3">
-                                        <label for="question-text" class="form-label">Treść pytania</label>
-                                        <textarea class="form-control" id="question-text" rows="3" required></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="letter-to-reveal" class="form-label">Litera do odkrycia</label>
-                                        <input type="text" class="form-control" id="letter-to-reveal" maxlength="1" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Odpowiedzi</label>
-                                        <div id="answers-container"></div>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="add-answer">Dodaj odpowiedź (max 3)</button>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Zapisz pytanie</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0">Lista Pytań</h5>
-                                <button class="btn btn-primary btn-sm" id="refresh-questions">Odśwież</button>
-                            </div>
-                            <div class="card-body">
-                                <div class="list-group" id="questions-list" style="max-height: 400px; overflow-y: auto;"></div>
-                            </div>
-                        </div>
+                    <hr class="my-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                        <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
+                        <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="tab-pane fade" id="players">...</div>
+        <div class="tab-pane fade" id="questions">
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#q-company">Quiz Firma</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#q-proposed">Sugerowane (Świat)</button></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="q-company">...</div>
+                <div class="tab-pane fade" id="q-proposed">...</div>
+            </div>
+        </div>
+        {% if event.is_superhost %}
+        <div class="tab-pane fade" id="superhost">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie Kodami QR</h5></div>
+                <div class="card-body">
+                    <p class="text-muted">Jako Superhost, masz dostęp do zarządzania kodami QR dla tego eventu. Pamiętaj, że zmiany kodów powinny być dokonywane przed rozpoczęciem gry.</p>
+                    <a href="{{ url_for('admin_qrcodes_view', event_id=event.id) }}" class="btn btn-primary">Zarządzaj Kodami QR</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const loginSection = document.getElementById('login-section');
-    const panelSection = document.getElementById('panel-section');
-    const loginForm = document.getElementById('login-form');
-    const loginError = document.getElementById('login-error');
-    
-    let eventId = null;
-    let socket = null;
-
-    // --- Helper ---
-    async function fetchApi(url, options = {}) {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `Błąd HTTP: ${response.status}` }));
-                throw new Error(errorData.message || errorData.error || 'Wystąpił nieznany błąd.');
-            }
-            if (response.status === 204) return null; // No Content
-            return response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            alert('Błąd API: ' + error.message);
-            return null;
-        }
-    }
-
-    // --- Login Logic ---
-    loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const login = document.getElementById('login').value;
-        const password = document.getElementById('password').value;
-        const data = await fetchApi('/api/host/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ login, password })
-        });
-        if (data && data.status === 'success') {
-            eventId = data.event_id;
-            initializePanel(data.event_name);
-        } else {
-            loginError.textContent = (data && data.message) || 'Błąd logowania.';
-            loginError.style.display = 'block';
-        }
-    });
-
-    function initializePanel(eventName) {
-        loginSection.style.display = 'none';
-        panelSection.style.display = 'block';
-        document.getElementById('event-name-display').textContent = `(Event: ${eventName})`;
-        
-        document.getElementById('display-link').href = `/display/${eventId}`;
-        document.getElementById('preview-qrcodes').href = `/qrcodes/${eventId}`;
-
-        socket = io({ autoConnect: false });
-        socket.on('connect', () => {
-            console.log('Socket connected, joining room:', `event_${eventId}`);
-            socket.emit('join', { event_id: eventId });
-        });
-        socket.connect();
-        
-        setupSocketListeners();
-        setupTabListeners();
-        
-        fetchApi('/api/game/state').then(state => {
-            if(state) updateGameControls(state.game_active);
-        });
-    }
-
-    // --- Game Controls ---
-    const startGameBtn = document.getElementById('start-game');
-    const stopGameBtn = document.getElementById('stop-game');
-    const minutesInput = document.getElementById('minutes-input');
-    const pauseTimerBtn = document.getElementById('pause-timer');
-    const timerDisplay = document.getElementById('game-timer');
-
-    startGameBtn.addEventListener('click', () => {
-        const minutes = minutesInput.value;
-        fetchApi('/api/start_game', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minutes: minutes })
-        });
-    });
-
-    stopGameBtn.addEventListener('click', () => fetchApi('/api/stop_game', { method: 'POST' }));
-    pauseTimerBtn.addEventListener('click', () => fetchApi('/api/game/time/pause', { method: 'POST' }));
-
-    function updateGameControls(isGameActive, isTimerRunning) {
-        startGameBtn.disabled = isGameActive;
-        stopGameBtn.disabled = !isGameActive;
-        minutesInput.disabled = isGameActive;
-        pauseTimerBtn.disabled = !isGameActive;
-        
-        if (isGameActive) {
-            pauseTimerBtn.textContent = isTimerRunning ? 'Pauza' : 'Wznów';
-        }
-    }
-
-    function setupSocketListeners() {
-        socket.on('game_state_update', (state) => updateGameControls(state.game_active, state.is_timer_running));
-        socket.on('timer_tick', (data) => updateTimerDisplay(data.time_left));
-        socket.on('timer_paused', () => pauseTimerBtn.textContent = 'Wznów');
-        socket.on('timer_started', () => pauseTimerBtn.textContent = 'Pauza');
-        socket.on('leaderboard_update', loadPlayers);
-    }
-    
-    function updateTimerDisplay(timeLeftSeconds) {
-        const timeLeft = Math.floor(timeLeftSeconds);
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-
-    // --- Players Tab ---
-    const playersList = document.getElementById('players-list');
-    async function loadPlayers() {
-        const players = await fetchApi('/api/players');
-        playersList.innerHTML = '';
-        if (!players || players.length === 0) {
-            playersList.innerHTML = '<tr><td colspan="5" class="text-center">Brak graczy</td></tr>';
-            return;
-        }
-        players.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${p.id}</td>
-                <td>${p.name}</td>
-                <td>${p.score}</td>
-                <td>${p.warnings}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="warnPlayer(${p.id})">Ostrzeż</button>
-                    <button class="btn btn-sm btn-danger" onclick="deletePlayer(${p.id})">Usuń</button>
-                </td>`;
-            playersList.appendChild(tr);
-        });
-    }
-    window.warnPlayer = (id) => fetchApi(`/api/players/${id}/warn`, { method: 'POST' }).then(loadPlayers);
-    window.deletePlayer = (id) => { if(confirm('Czy na pewno?')) fetchApi(`/api/players/${id}`, { method: 'DELETE' }).then(loadPlayers); };
-
-    // --- Competitions Tab ---
-    const answersContainer = document.getElementById('answers-container');
-    const addQuestionForm = document.getElementById('add-question-form');
-    const questionsList = document.getElementById('questions-list');
-    
-    function createAnswerField(index) {
-        const div = document.createElement('div');
-        div.className = 'input-group mb-2';
-        const letter = String.fromCharCode(97 + index);
-        div.innerHTML = `<div class="input-group-text"><input class="form-check-input mt-0" type="radio" name="correct-answer" value="${letter}" required></div><input type="text" class="form-control" placeholder="Odpowiedź ${letter.toUpperCase()}" required><button type="button" class="btn btn-outline-danger btn-remove-answer">×</button>`;
-        answersContainer.appendChild(div);
-        div.querySelector('.btn-remove-answer').addEventListener('click', () => {
-            div.remove();
-            answersContainer.querySelectorAll('.input-group').forEach((field, i) => {
-                const newLetter = String.fromCharCode(97 + i);
-                field.querySelector('input[type=radio]').value = newLetter;
-                field.querySelector('input[type=text]').placeholder = `Odpowiedź ${newLetter.toUpperCase()}`;
-            });
-        });
-    }
-    
-    addQuestionForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const body = {
-            text: document.getElementById('question-text').value,
-            letterToReveal: document.getElementById('letter-to-reveal').value.toUpperCase(),
-            answers: Array.from(answersContainer.querySelectorAll('input[type=text]')).map(i => i.value),
-            correctAnswer: answersContainer.querySelector('input[type=radio]:checked')?.value
-        };
-        if (!body.text || !body.letterToReveal || body.answers.length < 2 || !body.correctAnswer) {
-            return alert('Wypełnij wszystkie pola poprawnie.');
-        }
-        const result = await fetchApi('/api/questions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        if (result) {
-            addQuestionForm.reset();
-            answersContainer.innerHTML = '';
-            createAnswerField(0); createAnswerField(1);
-            loadQuestions();
-        }
-    });
-
-    async function loadQuestions() {
-        const questions = await fetchApi('/api/questions');
-        questionsList.innerHTML = '';
-        if (!questions || questions.length === 0) {
-            questionsList.innerHTML = '<div class="list-group-item">Brak pytań.</div>';
-            return;
-        }
-        questions.forEach(q => {
-            const div = document.createElement('div');
-            div.className = 'list-group-item';
-            let answersHtml = q.answers.map((ans, i) => `<small class="${String.fromCharCode(97 + i) === q.correctAnswer ? 'fw-bold text-success' : ''}">${String.fromCharCode(97 + i).toUpperCase()}. ${ans || ' '}</small>`).join('<br>');
-            div.innerHTML = `
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">${q.text}</h6>
-                    <small>Odkrywa: ${q.letterToReveal}</small>
-                </div>
-                ${answersHtml}
-                <button class="btn btn-sm btn-danger mt-2" onclick="deleteQuestion(${q.id})">Usuń</button>`;
-            questionsList.appendChild(div);
-        });
-    }
-    window.deleteQuestion = (id) => { if(confirm('Na pewno?')) fetchApi(`/api/questions/${id}`, { method: 'DELETE' }).then(loadQuestions); };
-    
-    const toggleTetrisBtn = document.getElementById('toggle-tetris');
-    const testTetrisBtn = document.getElementById('test-tetris');
-    const tetrisPreviewContainer = document.getElementById('tetris-preview-container');
-    
-    function updateTetrisButton(isActive) {
-        toggleTetrisBtn.textContent = isActive ? 'Dezaktywuj' : 'Aktywuj';
-        toggleTetrisBtn.classList.toggle('btn-outline-success', !isActive);
-        toggleTetrisBtn.classList.toggle('btn-outline-danger', isActive);
-    }
-    
-    toggleTetrisBtn.addEventListener('click', async () => {
-        const newState = toggleTetrisBtn.textContent === 'Aktywuj';
-        const response = await fetchApi('/api/competition/tetris', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ active: newState })
-        });
-        if (response) updateTetrisButton(response.tetris_active);
-    });
-    
-    testTetrisBtn.addEventListener('click', () => {
-        const isHidden = tetrisPreviewContainer.style.display === 'none';
-        tetrisPreviewContainer.style.display = isHidden ? 'block' : 'none';
-        if (isHidden) startHostTetris();
-    });
-
-    // --- Tab Loading ---
-    function setupTabListeners() {
-        document.getElementById('refresh-players').addEventListener('click', loadPlayers);
-        document.getElementById('players-tab').addEventListener('shown.bs.tab', loadPlayers);
-        
-        document.getElementById('refresh-questions').addEventListener('click', loadQuestions);
-        document.getElementById('competitions-tab').addEventListener('shown.bs.tab', () => {
-            loadQuestions();
-            fetchApi('/api/competition/tetris').then(data => data && updateTetrisButton(data.tetris_active));
-        });
-        
-        document.getElementById('add-answer').addEventListener('click', () => {
-             if (answersContainer.children.length < 3) createAnswerField(answersContainer.children.length);
-        });
-        createAnswerField(0); createAnswerField(1);
-    }
-
-    // --- TETRIS PREVIEW LOGIC (unchanged) ---
-    const canvas = document.getElementById('tetris-preview-canvas');
-    const context = canvas.getContext('2d');
-    const COLS = 12, ROWS = 20, BLOCK_SIZE = 20;
-    let grid, currentPiece, animationFrameId;
-    const shapes = [[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,1,0],[0,1,1]],[[0,1,1],[1,1,0]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];
-    const colors = ['#000', '#FF0D72', '#0DC2FF', '#0DFF72', '#F538FF', '#FF8E0D', '#FFE138', '#3877FF'];
-
-    function draw() {
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        grid.forEach((row, r) => row.forEach((val, c) => { if (val) { context.fillStyle = colors[val]; context.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE); }}));
-        if (currentPiece) {
-            context.fillStyle = colors[currentPiece.colorId];
-            currentPiece.shape.forEach((row, y) => row.forEach((val, x) => { if (val) context.fillRect((currentPiece.x + x) * BLOCK_SIZE, (currentPiece.y + y) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE); }));
-        }
-    }
-    
-    let lastTime = 0, dropCounter = 0, dropInterval = 1000;
-    function update(time = 0) {
-        dropCounter += time - lastTime;
-        lastTime = time;
-        if (dropCounter > dropInterval) {
-            if(currentPiece) currentPiece.y++;
-            dropCounter = 0;
-        }
-        if (!currentPiece || currentPiece.y > ROWS-2) {
-             currentPiece = { x: 4, y: 0, shape: shapes[Math.floor(Math.random()*shapes.length)], colorId: Math.floor(Math.random()*7)+1 };
-        }
-        draw();
-        animationFrameId = requestAnimationFrame(update);
-    }
-
-    function startHostTetris() {
-        grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-        currentPiece = null;
-        if (animationFrameId) cancelAnimationFrame(animationFrameId);
-        update();
-    }
-});
-</script>
 {% endblock %}
 
