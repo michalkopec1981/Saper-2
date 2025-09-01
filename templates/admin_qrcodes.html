@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Kody QR - {{ event.name }}{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 700px;">
+        <div class="card-header">
+            <h1 class="card-title mb-0">Zarządzanie Kodami QR</h1>
+            <h5 class="text-muted">{{ event.name }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
+            
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="{{ counts.red }}" min="0"></div>
+                <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="{{ counts.white_trap }}" min="0"></div>
+                <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="{{ counts.green }}" min="0"></div>
+                <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="{{ counts.pink }}" min="0"></div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
+                <a href="{{ url_for('list_qrcodes_public', event_id=event.id) }}" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+            </div>
+            <div id="status" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+document.getElementById('save-qrcodes').addEventListener('click', async () => {
+    const statusEl = document.getElementById('status');
+    const payload = {
+        event_id: {{ event.id }},
+        counts: {
+            red: document.getElementById('red-count').value,
+            white_trap: document.getElementById('white_trap-count').value,
+            green: document.getElementById('green-count').value,
+            pink: document.getElementById('pink-count').value,
+        }
+    };
+    try {
+        const response = await fetch('/api/admin/qrcodes/generate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
+        statusEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+    } catch (error) {
+        statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+    }
+});
+</script>
+{% endblock %}
