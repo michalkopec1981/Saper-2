@@ -44,11 +44,12 @@ class Question(db.Model):
     correct_answer = db.Column(db.String(1), nullable=False)
     letter_to_reveal = db.Column(db.String(1), nullable=False)
     event_id = db.Column(db.Integer, nullable=False, default=0)
+    category = db.Column(db.String(50), nullable=False, default='company') # 'company' or 'world'
 
 class QRCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code_identifier = db.Column(db.String(50), nullable=False)
-    is_red = db.Column(db.Boolean, default=False)
+    color = db.Column(db.String(20), nullable=False, default='white') # white, yellow, red, white_trap, green
     claimed_by_player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
     event_id = db.Column(db.Integer, nullable=False, default=0)
 
@@ -117,14 +118,18 @@ def superhost_qrcodes_view(event_id):
     if not host:
         return "Event not found", 404
     
-    white_codes_count = QRCode.query.filter_by(event_id=event_id, is_red=False).count()
-    red_codes_count = QRCode.query.filter_by(event_id=event_id, is_red=True).count()
+    counts = {
+        'white': QRCode.query.filter_by(event_id=event_id, color='white').count(),
+        'yellow': QRCode.query.filter_by(event_id=event_id, color='yellow').count(),
+        'red': QRCode.query.filter_by(event_id=event_id, color='red').count(),
+        'white_trap': QRCode.query.filter_by(event_id=event_id, color='white_trap').count(),
+        'green': QRCode.query.filter_by(event_id=event_id, color='green').count()
+    }
     
     return render_template('superhost_qrcodes.html',
                            event_id=event_id,
                            event_name=host.event_name,
-                           white_codes_count=white_codes_count,
-                           red_codes_count=red_codes_count)
+                           counts=counts)
 
 @app.route('/display/<int:event_id>')
 def display(event_id):
@@ -185,9 +190,8 @@ def reset_event(event_id):
 def superhost_generate_qr_codes():
     data = request.json
     event_id = data.get('event_id')
-    white_count = int(data.get('white_codes_count', 5))
-    red_count = int(data.get('red_codes_count', 5))
-    
+    counts = data.get('counts', {})
+
     if not event_id:
         return jsonify({'status': 'error', 'message': 'Brak ID eventu.'}), 400
 
@@ -196,10 +200,20 @@ def superhost_generate_qr_codes():
 
     QRCode.query.filter_by(event_id=event_id).delete()
     
-    for i in range(1, red_count + 1):
-        db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
-    for i in range(1, white_count + 1):
-        db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
+    # Define colors and their properties
+    colors = {
+        'white': {'prefix': 'bialy', 'count': int(counts.get('white', 0))},
+        'yellow': {'prefix': 'zolty', 'count': int(counts.get('yellow', 0))},
+        'red': {'prefix': 'czerwony', 'count': int(counts.get('red', 0))},
+        'white_trap': {'prefix': 'pulapka', 'count': int(counts.get('white_trap', 0))},
+        'green': {'prefix': 'zielony', 'count': int(counts.get('green', 0))}
+    }
+
+    for color, properties in colors.items():
+        for i in range(1, properties['count'] + 1):
+            identifier = f"{properties['prefix']}{i}"
+            db.session.add(QRCode(code_identifier=identifier, color=color, event_id=event_id))
+            
     db.session.commit()
     return jsonify({'status': 'success', 'message': 'Kody QR zostały wygenerowane pomyślnie.'})
 
@@ -321,14 +335,31 @@ def scan_qr():
     if not player or player.event_id != event_id: return jsonify({'status': 'error', 'message': 'ID gracza jest nieprawidłowe dla tego eventu.'}), 401
     if not qr_code: return jsonify({'status': 'error', 'message': 'Ten kod QR jest nieprawidłowy.'}), 404
     if get_game_state(event_id, 'game_active', 'False') != 'True': return jsonify({'status': 'error', 'message': 'Gra nie jest aktywna.'}), 403
+    
+    if qr_code.claimed_by_player_id: return jsonify({'status': 'error', 'message': 'Ten kod został już wykorzystany.'}), 403
 
-    if qr_code.is_red:
-        if qr_code.claimed_by_player_id: return jsonify({'status': 'error', 'message': 'Ten kod został już wykorzystany.'}), 403
-        qr_code.claimed_by_player_id, player.score = player_id, player.score + 50
+    # Logic based on QR code color
+    if qr_code.color == 'red':
+        qr_code.claimed_by_player_id = player_id
+        player.score += 50
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
-        return jsonify({'status': 'info', 'message': 'Zdobyłeś 50 punktów za czerwony kod!'})
-    else: 
+        return jsonify({'status': 'info', 'message': 'Kod specjalny! Zdobywasz 50 punktów!'})
+
+    elif qr_code.color == 'white_trap':
+        qr_code.claimed_by_player_id = player_id
+        player.score = max(0, player.score - 25)
+        db.session.commit()
+        emit_leaderboard_update(f'event_{event_id}')
+        return jsonify({'status': 'info', 'message': 'Pułapka! Tracisz 25 punktów.'})
+
+    elif qr_code.color == 'green':
+        # Minigame logic can be expanded here
+        qr_code.claimed_by_player_id = player_id
+        db.session.commit()
+        return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
+
+    else: # white and yellow codes (quizzes)
         last_scan = PlayerScan.query.filter_by(player_id=player_id, qrcode_id=qr_code.id).order_by(PlayerScan.scan_time.desc()).first()
         if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
             wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
@@ -337,14 +368,15 @@ def scan_qr():
         db.session.add(PlayerScan(player_id=player_id, qrcode_id=qr_code.id, scan_time=datetime.utcnow(), event_id=event_id))
         db.session.commit()
 
-        is_tetris_active = get_game_state(event_id, 'tetris_active', 'False') == 'True'
-        if is_tetris_active and qr_code_identifier in ["bialy1", "bialy2", "bialy3"]:
-            return jsonify({'status': 'minigame', 'game': 'tetris'})
-        else:
-            answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).all()]
-            question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id).order_by(db.func.random()).first()
-            if not question: return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania!'})
-            return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
+        quiz_category = 'company' if qr_code.color == 'white' else 'world'
+        answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).all()]
+        question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id, Question.category==quiz_category).order_by(db.func.random()).first()
+        
+        if not question: 
+            return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'})
+            
+        return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
+
 
 @app.route('/api/answer', methods=['POST'])
 def process_answer():
@@ -357,6 +389,13 @@ def process_answer():
     question = db.session.get(Question, question_id)
     if not question: return jsonify({'error': 'Invalid question'}), 404
     
+    # Mark the QR code that led to this question as "claimed"
+    last_scan = PlayerScan.query.filter_by(player_id=player_id, event_id=event_id).order_by(PlayerScan.scan_time.desc()).first()
+    if last_scan:
+        qr_code_to_claim = db.session.get(QRCode, last_scan.qrcode_id)
+        if qr_code_to_claim:
+            qr_code_to_claim.claimed_by_player_id = player_id
+
     db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=event_id))
     room_name = f'event_{event_id}'
     if answer == question.correct_answer:
@@ -415,13 +454,14 @@ def handle_questions():
             option_c=data['answers'][2], 
             correct_answer=data['correctAnswer'], 
             letter_to_reveal=data.get('letterToReveal', 'X'),
+            category=data.get('category', 'company'),
             event_id=event_id
         )
         db.session.add(q)
         db.session.commit()
         return jsonify({'status': 'success', 'id': q.id})
     questions = Question.query.filter_by(event_id=event_id).all()
-    return jsonify([{'id': q.id, 'text': q.text, 'answers': [q.option_a, q.option_b, q.option_c], 'correctAnswer': q.correct_answer, 'letterToReveal': q.letter_to_reveal} for q in questions])
+    return jsonify([{'id': q.id, 'text': q.text, 'answers': [q.option_a, q.option_b, q.option_c], 'correctAnswer': q.correct_answer, 'letterToReveal': q.letter_to_reveal, 'category': q.category} for q in questions])
 
 @app.route('/api/questions/<int:question_id>', methods=['DELETE'])
 @host_required
