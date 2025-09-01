@@ -77,7 +77,7 @@ class PlayerScan(db.Model):
     qrcode_id = db.Column(db.Integer, db.ForeignKey('qr_code.id', ondelete='CASCADE'), nullable=False)
     scan_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    color_category = db.Column(db.String(20), nullable=True) # For cooldowns
+    color_category = db.Column(db.String(20), nullable=True)
 
 class FunnyPhoto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -89,9 +89,11 @@ class FunnyPhoto(db.Model):
 
 class GameState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), unique=True, nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     key = db.Column(db.String(50), nullable=False)
     value = db.Column(db.String(255), nullable=False)
+    __table_args__ = (db.UniqueConstraint('event_id', 'key', name='_event_key_uc'),)
+
 
 # --- Dekoratory Autoryzacji ---
 def admin_required(f):
@@ -150,12 +152,7 @@ def get_full_game_state(event_id):
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
     displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
     
-    return {
-        'game_active': is_active, 
-        'is_timer_running': is_timer_running, 
-        'time_left': time_left, 
-        'password': displayed_password
-    }
+    return {'game_active': is_active, 'is_timer_running': is_timer_running, 'time_left': time_left, 'password': displayed_password}
 
 def event_to_dict(event):
     return {'id': event.id, 'name': event.name, 'login': event.login, 'is_superhost': event.is_superhost}
@@ -197,6 +194,7 @@ def admin_qrcodes_view(event_id):
 @admin_required
 def impersonate_host(event_id):
     session['host_event_id'] = event_id
+    session['impersonated_by_admin'] = True
     return redirect(url_for('host_panel'))
 
 # --- HOST ---
@@ -207,6 +205,7 @@ def host_login():
         event = Event.query.filter_by(login=login).first()
         if event and event.check_password(password):
             session['host_event_id'] = event.id
+            session.pop('impersonated_by_admin', None)
             return redirect(url_for('host_panel'))
         return render_template('host_login.html', error="Nieprawidłowe dane")
     return render_template('host_login.html')
@@ -215,7 +214,14 @@ def host_login():
 @host_required
 def host_panel():
     event = db.session.get(Event, session['host_event_id'])
-    return render_template('host.html', event=event)
+    is_impersonated = session.get('impersonated_by_admin', False)
+    return render_template('host.html', event=event, is_impersonated=is_impersonated)
+
+@app.route('/host/logout_impersonate')
+def logout_impersonate():
+    session.pop('host_event_id', None)
+    session.pop('impersonated_by_admin', None)
+    return redirect(url_for('admin_panel'))
 
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
@@ -228,7 +234,9 @@ def display(event_id):
 
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
-    if 'host_event_id' not in session and 'admin_logged_in' not in session: return "Unauthorized", 401
+    is_admin = session.get('admin_logged_in', False)
+    is_host = session.get('host_event_id') == event_id
+    if not (is_admin or is_host): return "Unauthorized", 401
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
 
@@ -292,12 +300,9 @@ def admin_generate_qr_codes():
         return jsonify({'message': 'Nie można zmieniać kodów podczas aktywnej gry.'}), 403
 
     QRCode.query.filter_by(event_id=event_id).delete()
-    
-    # Kody wielorazowe
     db.session.add(QRCode(code_identifier='bialy', color='white', event_id=event_id))
     db.session.add(QRCode(code_identifier='zolty', color='yellow', event_id=event_id))
     
-    # Kody jednorazowe
     counts = data.get('counts', {})
     one_time_codes = {'red': 'czerwony', 'white_trap': 'pulapka', 'green': 'zielony', 'pink': 'rozowy'}
     for color, prefix in one_time_codes.items():
@@ -397,7 +402,7 @@ def host_questions():
         new_q = Question(
             text=data['text'],
             option_a=data['answers'][0], option_b=data['answers'][1], option_c=data['answers'][2],
-            correct_answer=data['correctAnswer'], letter_to_reveal=data.get('letterToReveal', 'X'),
+            correct_answer=data['correctAnswer'], letter_to_reveal=data.get('letterToReveal', 'X').upper(),
             category=data.get('category', 'company'), event_id=event_id
         )
         db.session.add(new_q)
@@ -428,7 +433,7 @@ def register_player():
     db.session.add(new_player)
     db.session.commit()
     emit_leaderboard_update(f'event_{event_id}')
-    return jsonify({'id': new_player.id, 'name': new_player.name})
+    return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
 
 @app.route('/api/player/scan_qr', methods=['POST'])
 def scan_qr():
@@ -440,7 +445,6 @@ def scan_qr():
     if not player or not qr_code: return jsonify({'message': 'Nieprawidłowe dane.'}), 404
     if get_game_state(event_id, 'game_active', 'False') != 'True': return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
-    # Kody wielorazowe (z limitem czasowym)
     if qr_code.color in ['white', 'yellow']:
         last_scan = PlayerScan.query.filter_by(player_id=player_id, color_category=qr_code.color).order_by(PlayerScan.scan_time.desc()).first()
         if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
@@ -449,16 +453,16 @@ def scan_qr():
         
         db.session.add(PlayerScan(player_id=player_id, qrcode_id=qr_code.id, event_id=event_id, color_category=qr_code.color))
         quiz_category = 'company' if qr_code.color == 'white' else 'world'
-        answered_ids = [ans.question_id for ans in player.answers]
+        answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
         question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id, Question.category==quiz_category).order_by(db.func.random()).first()
         if not question: return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'})
         return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
 
-    # Kody jednorazowe
     else:
         if qr_code.claimed_by_player_id: return jsonify({'status': 'error', 'message': 'Ten kod został już wykorzystany.'}), 403
         qr_code.claimed_by_player_id = player_id
         
+        message = ""
         if qr_code.color == 'red':
             player.score += 50
             message = 'Kod specjalny! Zdobywasz 50 punktów!'
@@ -471,36 +475,32 @@ def scan_qr():
         elif qr_code.color == 'pink':
             db.session.commit()
             return jsonify({'status': 'photo_challenge'})
-        else:
-            message = "Niezidentyfikowany kod."
 
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
-        return jsonify({'status': 'info', 'message': message})
+        return jsonify({'status': 'info', 'message': message, 'score': player.score})
 
 @app.route('/api/player/answer', methods=['POST'])
 def process_answer():
     data = request.json
     player_id, question_id, answer = data.get('player_id'), data.get('question_id'), data.get('answer')
-    player = db.session.get(Player, player_id)
-    question = db.session.get(Question, question_id)
+    player, question = db.session.get(Player, player_id), db.session.get(Question, question_id)
     if not player or not question: return jsonify({'error': 'Invalid data'}), 404
     
-    event_id = player.event_id
-    # PlayerAnswer.query.create(player_id=player_id, question_id=question_id, event_id=event_id) # Zapis odpowiedzi, aby nie powtarzać
+    db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
     
     if answer == question.correct_answer:
         player.score += 10
         player.revealed_letters += question.letter_to_reveal
         db.session.commit()
-        emit_password_update(f'event_{event_id}')
-        emit_leaderboard_update(f'event_{event_id}')
-        return jsonify({'correct': True, 'letter': question.letter_to_reveal})
+        emit_password_update(f'event_{player.event_id}')
+        emit_leaderboard_update(f'event_{player.event_id}')
+        return jsonify({'correct': True, 'letter': question.letter_to_reveal, 'score': player.score})
     else:
         player.score = max(0, player.score - 5)
         db.session.commit()
-        emit_leaderboard_update(f'event_{event_id}')
-        return jsonify({'correct': False})
+        emit_leaderboard_update(f'event_{player.event_id}')
+        return jsonify({'correct': False, 'score': player.score})
 
 @app.route('/api/player/upload_photo', methods=['POST'])
 def upload_photo():
@@ -511,7 +511,7 @@ def upload_photo():
 
     if file.filename == '' or not player: return jsonify({'error': 'Brak pliku lub gracza'}), 400
     
-    filename = f"event_{player.event_id}_player_{player.id}_{datetime.utcnow().timestamp()}.jpg"
+    filename = f"event_{player.event_id}_player_{player.id}_{int(datetime.utcnow().timestamp())}.jpg"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     image_url = f"/{filepath}"
@@ -524,7 +524,7 @@ def upload_photo():
     room = f'event_{player.event_id}'
     socketio.emit('new_photo', {'url': image_url, 'player': player.name}, room=room)
     emit_leaderboard_update(room)
-    return jsonify({'message': 'Zdjęcie dodane!', 'score': player.score})
+    return jsonify({'message': 'Zdjęcie dodane! Otrzymujesz 15 punktów.', 'score': player.score})
 
 # ===================================================================
 # --- Gniazda (SocketIO) ---
@@ -540,24 +540,24 @@ def emit_leaderboard_update(room):
         socketio.emit('leaderboard_update', [{'name': p.name, 'score': p.score} for p in players], room=room)
 
 def emit_password_update(room):
-    event_id = int(room.split('_')[1])
-    with app.app_context():
-       socketio.emit('password_update', get_full_game_state(event_id)['password'], room=room)
+     event_id = int(room.split('_')[1])
+     with app.app_context():
+        socketio.emit('password_update', get_full_game_state(event_id)['password'], room=room)
 
 def update_timers():
     while True:
         with app.app_context():
-            active_events = db.session.query(Event.id).join(GameState).filter(GameState.key == 'game_active', GameState.value == 'True').all()
-            for event_tuple in active_events:
-                event_id = event_tuple[0]
-                if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
+             events = Event.query.all()
+             for event in events:
+                event_id = event.id
+                if get_game_state(event_id, 'game_active', 'False') == 'True' and get_game_state(event_id, 'is_timer_running', 'False') == 'True':
                     state = get_full_game_state(event_id)
-                    room = f'event_{event_id}'
-                    socketio.emit('timer_tick', {'time_left': state['time_left']}, room=room)
+                    room_name = f'event_{event_id}'
+                    socketio.emit('timer_tick', {'time_left': state['time_left']}, room=room_name)
                     if state['time_left'] <= 0:
                         set_game_state(event_id, 'game_active', 'False')
                         set_game_state(event_id, 'is_timer_running', 'False')
-                        emit_full_state_update(room)
+                        emit_full_state_update(room_name)
         socketio.sleep(1)
 
 @socketio.on('join')
@@ -568,9 +568,6 @@ def on_join(data):
         join_room(room)
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
         emit_leaderboard_update(room)
-
-@socketio.on('connect')
-def handle_connect(): print(f"Client connected: {request.sid}")
     
 socketio.start_background_task(target=update_timers)
 
