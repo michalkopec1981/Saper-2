@@ -43,6 +43,7 @@ class Question(db.Model):
     option_c = db.Column(db.String(100))
     correct_answer = db.Column(db.String(1), nullable=False)
     letter_to_reveal = db.Column(db.String(1), nullable=False)
+    event_id = db.Column(db.Integer, nullable=False, default=0) # Event specific questions
 
 class QRCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -119,7 +120,14 @@ def display(event_id):
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
+    if not qrcodes:
+        # If no codes exist, create some default ones for preview
+        for i in range(1, 6): db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
+        for i in range(1, 6): db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
+        db.session.commit()
+        qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
+
 
 # --- API Endpoints for Superhost ---
 @app.route('/api/hosts', methods=['GET'])
@@ -145,16 +153,15 @@ def update_hosts():
 
 @app.route('/api/event/<int:event_id>/reset', methods=['POST'])
 def reset_event(event_id):
-    # This action can be performed by superhost, so no @host_required
     try:
         Player.query.filter_by(event_id=event_id).delete()
         QRCode.query.filter_by(event_id=event_id).delete()
         PlayerScan.query.filter_by(event_id=event_id).delete()
         PlayerAnswer.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
+        Question.query.filter_by(event_id=event_id).delete() # Also clear questions for the event
         db.session.commit()
         
-        # Emit updates to the corresponding display room
         room_name = f'event_{event_id}'
         emit_leaderboard_update(room_name)
         emit_password_update(room_name)
@@ -194,20 +201,36 @@ def get_game_state_api():
     event_id = session['host_id']
     return jsonify(get_full_game_state(event_id))
 
+@app.route('/api/generate_qr_codes', methods=['POST'])
+@host_required
+def generate_qr_codes():
+    event_id = session['host_id']
+    data = request.json
+    white_count = int(data.get('white_codes_count', 5))
+    red_count = int(data.get('red_codes_count', 5))
+    
+    # Clear existing QR codes for this event before generating new ones
+    QRCode.query.filter_by(event_id=event_id).delete()
+    
+    for i in range(1, red_count + 1):
+        db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
+    for i in range(1, white_count + 1):
+        db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
+    db.session.commit()
+    return jsonify({'status': 'success', 'message': 'Kody QR zostały wygenerowane.'})
+
 @app.route('/api/start_game', methods=['POST'])
 @host_required
 def start_game():
     event_id = session['host_id']
     data = request.json
-    # Reset only game-related data for the event, not all players
-    QRCode.query.filter_by(event_id=event_id).delete()
+    Player.query.filter_by(event_id=event_id).delete()
     PlayerScan.query.filter_by(event_id=event_id).delete()
     PlayerAnswer.query.filter_by(event_id=event_id).delete()
-    Player.query.filter_by(event_id=event_id).delete() # Reset players for this event
-    db.session.commit()
-
-    for i in range(1, int(data.get('red_codes_count', 5)) + 1): db.session.add(QRCode(code_identifier=f"czerwony{i}", is_red=True, event_id=event_id))
-    for i in range(1, int(data.get('white_codes_count', 5)) + 1): db.session.add(QRCode(code_identifier=f"bialy{i}", is_red=False, event_id=event_id))
+    
+    # Unclaim all QR codes for the event
+    QRCode.query.filter_by(event_id=event_id).update({QRCode.claimed_by_player_id: None})
+    
     set_game_state(event_id, 'game_active', 'True')
     minutes = int(data.get('minutes', 10))
     end_time = datetime.now() + timedelta(minutes=minutes)
@@ -219,6 +242,7 @@ def start_game():
     emit_password_update(room_name)
     socketio.emit('game_state_update', get_full_game_state(event_id), room=room_name)
     return jsonify({'status': 'success', 'message': f'Gra rozpoczęta na {minutes} minut.'})
+
 
 @app.route('/api/stop_game', methods=['POST'])
 @host_required
@@ -276,7 +300,7 @@ def scan_qr():
     player = db.session.get(Player, player_id)
     qr_code = QRCode.query.filter_by(code_identifier=qr_code_identifier, event_id=event_id).first()
     
-    if not player or player.event_id != event_id: return jsonify({'status': 'error', 'message': 'ID gracza jest nieprawidłowe dla tego eventu.'}), 401
+    if not player or player.event_id != int(event_id): return jsonify({'status': 'error', 'message': 'ID gracza jest nieprawidłowe dla tego eventu.'}), 401
     if not qr_code: return jsonify({'status': 'error', 'message': 'Ten kod QR jest nieprawidłowy.'}), 404
     if get_game_state(event_id, 'game_active', 'False') != 'True': return jsonify({'status': 'error', 'message': 'Gra nie jest aktywna.'}), 403
 
@@ -300,7 +324,7 @@ def scan_qr():
             return jsonify({'status': 'minigame', 'game': 'tetris'})
         else:
             answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).all()]
-            question = Question.query.filter(Question.id.notin_(answered_ids)).order_by(db.func.random()).first()
+            question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id).order_by(db.func.random()).first()
             if not question: return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania!'})
             return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
 
@@ -359,21 +383,35 @@ def warn_player(player_id):
 @app.route('/api/questions', methods=['GET', 'POST'])
 @host_required
 def handle_questions():
+    event_id = session['host_id']
     if request.method == 'POST':
         data = request.json
-        q = Question(text=data['text'], option_a=data['answers'][0], option_b=data['answers'][1], option_c=data['answers'][2], correct_answer=data['correctAnswer'], letter_to_reveal=data.get('letterToReveal', 'X'))
+        q = Question(
+            text=data['text'], 
+            option_a=data['answers'][0], 
+            option_b=data['answers'][1], 
+            option_c=data['answers'][2], 
+            correct_answer=data['correctAnswer'], 
+            letter_to_reveal=data.get('letterToReveal', 'X'),
+            event_id=event_id
+        )
         db.session.add(q)
         db.session.commit()
         return jsonify({'status': 'success', 'id': q.id})
-    questions = Question.query.all()
+    questions = Question.query.filter_by(event_id=event_id).all()
     return jsonify([{'id': q.id, 'text': q.text, 'answers': [q.option_a, q.option_b, q.option_c], 'correctAnswer': q.correct_answer, 'letterToReveal': q.letter_to_reveal} for q in questions])
 
 @app.route('/api/questions/<int:question_id>', methods=['DELETE'])
 @host_required
 def delete_question(question_id):
+    event_id = session['host_id']
     question = db.session.get(Question, question_id)
-    if question: db.session.delete(question); db.session.commit()
-    return jsonify({'status': 'success'}), 204
+    if question and question.event_id == event_id:
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'status': 'success'}), 204
+    return jsonify({'status': 'error', 'message': 'Question not found or unauthorized'}), 404
+
 
 @app.route('/api/competition/tetris', methods=['GET', 'POST'])
 @host_required
