@@ -1,73 +1,98 @@
 {% extends 'base.html' %}
-
-{% block title %}Ekran Gry - {{ event_name }} - Saper{% endblock %}
-
+{% block title %}Ekran Gry - {{ event.name }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    body { background-color: #212529; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .container-fluid { max-width: 100vw; overflow-x: hidden; }
+    .main-panel { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .side-panel { height: 100vh; background-color: rgba(0,0,0,0.2); padding: 2rem; display: flex; flex-direction: column; }
+    #anagram { font-size: 5rem; font-weight: bold; letter-spacing: 0.5rem; }
+    #bomb-video-container { width: 100%; max-width: 600px; }
+    #bomb-fuse { width: 100%; border-radius: 15px; }
+    .list-group-item { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
+    .carousel-item img { max-height: 250px; width: 100%; object-fit: contain; }
+    .carousel-caption { background-color: rgba(0, 0, 0, 0.5); }
+</style>
+{% endblock %}
 {% block content %}
-    <h1 class="text-center">Postęp Gry - {{ event_name }}</h1>
-    
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <h2>Ranking</h2>
-            <ul id="leaderboard" class="list-group">
-                <li class="list-group-item">Oczekiwanie na graczy...</li>
-            </ul>
+<div class="container-fluid">
+    <div class="row g-0">
+        <div class="col-md-8 main-panel">
+            <h1 id="anagram" class="font-monospace text-center">_ _ _ _ _ _ _ _ _ _</h1>
+            <p class="lead">Minimalna liczba liter do rozbrojenia bomby: <span id="min-letters">10</span></p>
+            <div id="bomb-video-container">
+                <video id="bomb-fuse" muted autoplay loop playsinline>
+                    <source src="{{ url_for('static', filename='bomb_fuse.mp4') }}" type="video/mp4">
+                    Twoja przeglądarka nie obsługuje wideo.
+                </video>
+            </div>
         </div>
-        <div class="col-md-6">
-            <h2>Hasło</h2>
-            <p id="password-display" class="fs-3 text-monospace">_ _ _ _ _ _ _ _</p>
-            <h2 class="mt-4">Czas do końca</h2>
-            <p id="timer" class="fs-1">00:00</p>
+        <div class="col-md-4 side-panel">
+            <h2 class="text-center">Ranking</h2>
+            <ul id="leaderboard" class="list-group mb-4 flex-grow-1" style="overflow-y: auto;"></ul>
+            <h2 class="text-center mt-auto">Czas: <span id="timer" class="display-4">00:00</span></h2>
+            <div id="funny-photos-carousel" class="carousel slide mt-4" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active"><p class="text-center p-5">Czekamy na śmieszne zdjęcia!</p></div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 {% endblock %}
-
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const EVENT_ID = {{ event_id }};
-        const socket = io();
+document.addEventListener('DOMContentLoaded', function () {
+    const EVENT_ID = {{ event.id }};
+    const socket = io();
+    const leaderboardEl = document.getElementById('leaderboard');
+    const passwordEl = document.getElementById('anagram');
+    const timerEl = document.getElementById('timer');
+    const photoCarousel = document.getElementById('funny-photos-carousel').querySelector('.carousel-inner');
 
-        const leaderboardEl = document.getElementById('leaderboard');
-        const passwordEl = document.getElementById('password-display');
-        const timerEl = document.getElementById('timer');
+    socket.on('connect', () => socket.emit('join', { event_id: EVENT_ID }));
 
-        // Join the specific event room upon connection
-        socket.on('connect', function() {
-            socket.emit('join', { event_id: EVENT_ID });
-        });
-
-        socket.on('leaderboard_update', function(players) {
-            leaderboardEl.innerHTML = '';
-            if (players.length === 0) {
-                leaderboardEl.innerHTML = '<li class="list-group-item">Brak graczy w rankingu.</li>';
-                return;
-            }
-            players.sort((a, b) => b.score - a.score).forEach(player => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `<span>${player.name}</span><span class="badge bg-primary rounded-pill">${player.score} pkt</span>`;
-                leaderboardEl.appendChild(li);
-            });
-        });
-
-        socket.on('password_update', function(passwordState) {
-            passwordEl.textContent = passwordState.split('').join(' ');
-        });
-
-        socket.on('timer_tick', function(data) {
-            const timeLeft = Math.floor(data.time_left);
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        });
-
-        socket.on('game_state_update', function(state) {
-            if (state.password) {
-                 passwordEl.textContent = state.password.split('').join(' ');
-            }
+    socket.on('leaderboard_update', (players) => {
+        leaderboardEl.innerHTML = '';
+        if (!players || players.length === 0) {
+            leaderboardEl.innerHTML = '<li class="list-group-item">Brak graczy w rankingu.</li>';
+            return;
+        }
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `<span>${p.name}</span><span class="badge bg-primary rounded-pill">${p.score} pkt</span>`;
+            leaderboardEl.appendChild(li);
         });
     });
+
+    socket.on('password_update', (passwordState) => passwordEl.textContent = passwordState.split('').join(' '));
+
+    socket.on('timer_tick', (data) => {
+        const timeLeft = Math.floor(data.time_left);
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    });
+    
+    socket.on('new_photo', (data) => {
+        const isFirst = photoCarousel.querySelector('.active p');
+        const newItem = document.createElement('div');
+        newItem.className = 'carousel-item' + (isFirst ? ' active' : '');
+        newItem.innerHTML = `
+            <img src="${data.url}" class="d-block w-100" alt="Funny photo">
+            <div class="carousel-caption d-none d-md-block"><p>Autor: ${data.player}</p></div>`;
+        if(isFirst) photoCarousel.innerHTML = '';
+        photoCarousel.appendChild(newItem);
+    });
+
+    socket.on('game_state_update', (state) => {
+        if (state.password) passwordEl.textContent = state.password.split('').join(' ');
+    });
+});
 </script>
 {% endblock %}
+
