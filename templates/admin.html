@@ -14,6 +14,7 @@
         align-items: center;
         background-color: #f8f9fa;
         overflow: hidden;
+        margin-top: auto;
     }
     .logo-area img {
         max-width: 100%;
@@ -23,6 +24,11 @@
     .logo-placeholder {
         color: #6c757d;
         font-size: 0.9rem;
+    }
+    .notes-textarea {
+        resize: none;
+        overflow-y: hidden;
+        min-height: 38px; /* Standard input height */
     }
 </style>
 {% endblock %}
@@ -92,15 +98,16 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.innerHTML = `
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-9">
+                    <div class="col-lg-10">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name}"></div>
-                            <div class="col-md-4"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login}"></div>
-                            <div class="col-md-4"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
-                            <div class="col-md-4"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
+                            <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-lg-2 d-flex flex-column align-items-center">
                         <label class="form-label">Logo</label>
                         <div class="logo-area">${logoContent}</div>
                     </div>
@@ -123,6 +130,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             </div>`;
+        
+        // Auto-resize textarea
+        const textarea = panel.querySelector('.notes-textarea');
+        textarea.addEventListener('input', () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        });
+
         return panel;
     }
 
@@ -174,7 +189,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 login: panel.querySelector('.event-login').value,
                 password: panel.querySelector('.event-password').value,
                 is_superhost: panel.querySelector('.event-superhost').checked,
-                event_date: panel.querySelector('.event-date').value
+                event_date: panel.querySelector('.event-date').value,
+                notes: panel.querySelector('.event-notes').value
             };
             const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
             if (result) showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
