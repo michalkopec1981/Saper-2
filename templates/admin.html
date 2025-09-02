@@ -26,6 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusContainer = document.getElementById('status-container');
 
     async function fetchApi(url, options = {}) {
+        const isFormData = options.body instanceof FormData;
+        if (!isFormData && options.body) {
+            options.headers = { 'Content-Type': 'application/json', ...options.headers };
+            options.body = JSON.stringify(options.body);
+        }
+
         try {
             const response = await fetch(url, options);
             const data = await response.json().catch(() => null);
@@ -52,9 +58,13 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.dataset.eventId = event.id;
         
         const deleteBtnVisibility = event.id > 2 ? '' : 'style="display: none;"';
+        const logoDisplay = event.logo_url ? '' : 'style="display: none;"';
 
         panel.innerHTML = `
             <div class="card-body">
+                <div class="logo-preview-container mb-2" style="height: 60px;">
+                    <img src="${event.logo_url || ''}" class="event-logo-preview" ${logoDisplay} style="max-height: 50px; border-radius: 5px;">
+                </div>
                 <div class="row g-3">
                     <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name}"></div>
                     <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login}"></div>
@@ -63,7 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-12 d-flex align-items-center justify-content-between pt-2">
                         <div class="form-check form-switch"><input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}><label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label></div>
                         <div class="d-flex justify-content-end gap-2 flex-wrap">
+                            <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
                             <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
+                            <button class="btn btn-sm btn-outline-primary btn-logo">Logo</button>
                             <button class="btn btn-sm btn-danger btn-reset">Reset Gry</button>
                             <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
                             <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
@@ -103,6 +115,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!panel) return;
         const eventId = panel.dataset.eventId;
 
+        if (target.classList.contains('btn-logo')) {
+            panel.querySelector('.logo-upload-input').click();
+        }
+
         if (target.classList.contains('btn-save')) {
             const payload = {
                 name: panel.querySelector('.event-name').value,
@@ -112,15 +128,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 event_date: panel.querySelector('.event-date').value
             };
             target.disabled = true;
-            const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
             if (result) {
-               showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
+                showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
             }
             target.disabled = false;
         }
 
         if (target.classList.contains('btn-reset')) {
-            if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}? To nieodwracalnie usunie wszystkich graczy, postęp, pytania i kody QR.`)) {
+            if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}?`)) {
                 target.disabled = true;
                 const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
                 if (result) showStatus(result.message, 'warning');
@@ -129,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (target.classList.contains('btn-delete')) {
-            if (confirm(`Czy na pewno chcesz USUNĄĆ Event ${eventId}? To nieodwracalna operacja, która usunie wszystkie dane gry.`)) {
+            if (confirm(`Czy na pewno chcesz USUNĄĆ Event ${eventId}?`)) {
                 target.disabled = true;
                 const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
                 if (result) {
@@ -138,6 +154,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     target.disabled = false;
                 }
+            }
+        }
+    });
+
+    eventsContainer.addEventListener('change', async (e) => {
+        if (e.target.classList.contains('logo-upload-input')) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const panel = e.target.closest('.card');
+            const eventId = panel.dataset.eventId;
+            const formData = new FormData();
+            formData.append('logo', file);
+
+            const result = await fetchApi(`/api/admin/event/${eventId}/upload_logo`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (result && result.logo_url) {
+                const imgPreview = panel.querySelector('.event-logo-preview');
+                imgPreview.src = result.logo_url + '?t=' + new Date().getTime(); // Cache busting
+                imgPreview.style.display = 'block';
+                showStatus('Logo zostało zaktualizowane.');
             }
         }
     });
