@@ -42,6 +42,7 @@ class Event(db.Model):
     login = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     is_superhost = db.Column(db.Boolean, default=False)
+    event_date = db.Column(db.Date, nullable=True)
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
 
@@ -119,13 +120,13 @@ def init_db_command():
         admin.set_password('admin')
         db.session.add(admin)
     
-    if Event.query.count() < 5:
-        for i in range(Event.query.count() + 1, 6):
+    if Event.query.count() < 2:
+        for i in range(Event.query.count() + 1, 3):
             event = Event(id=i, login=f'host{i}', name=f'Event #{i}')
             event.set_password(f'password{i}')
             db.session.add(event)
     db.session.commit()
-    print("Database initialized.")
+    print("Database initialized with 2 events.")
 
 # --- Funkcje Pomocnicze ---
 def get_game_state(event_id, key, default=None):
@@ -155,7 +156,13 @@ def get_full_game_state(event_id):
     return {'game_active': is_active, 'is_timer_running': is_timer_running, 'time_left': time_left, 'password': displayed_password}
 
 def event_to_dict(event):
-    return {'id': event.id, 'name': event.name, 'login': event.login, 'is_superhost': event.is_superhost}
+    return {
+        'id': event.id,
+        'name': event.name,
+        'login': event.login,
+        'is_superhost': event.is_superhost,
+        'event_date': event.event_date.isoformat() if event.event_date else ''
+    }
 
 # --- Główne Ścieżki ---
 @app.route('/')
@@ -258,18 +265,37 @@ def manage_events():
     events = Event.query.order_by(Event.id).all()
     return jsonify([event_to_dict(e) for e in events])
 
-@app.route('/api/admin/event/<int:event_id>', methods=['PUT'])
+@app.route('/api/admin/event/<int:event_id>', methods=['PUT', 'DELETE'])
 @admin_required
-def update_event(event_id):
+def update_or_delete_event(event_id):
     event = db.session.get(Event, event_id)
     if not event: return jsonify({'error': 'Event not found'}), 404
-    data = request.json
-    event.name = data.get('name', event.name)
-    event.login = data.get('login', event.login)
-    event.is_superhost = data.get('is_superhost', event.is_superhost)
-    if data.get('password'): event.set_password(data['password'])
-    db.session.commit()
-    return jsonify(event_to_dict(event))
+
+    if request.method == 'PUT':
+        data = request.json
+        event.name = data.get('name', event.name)
+        event.login = data.get('login', event.login)
+        event.is_superhost = data.get('is_superhost', event.is_superhost)
+        if data.get('password'): event.set_password(data['password'])
+        
+        date_str = data.get('event_date')
+        if date_str:
+            try: event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError: pass
+        else:
+            event.event_date = None
+        
+        db.session.commit()
+        return jsonify(event_to_dict(event))
+
+    if request.method == 'DELETE':
+        if event_id <= 2:
+            return jsonify({'error': 'Nie można usunąć dwóch pierwszych eventów.'}), 403
+        
+        db.session.delete(event)
+        db.session.commit()
+        return jsonify({'message': f'Event {event_id} został pomyślnie usunięty.'})
+
 
 @app.route('/api/admin/event/<int:event_id>/reset', methods=['POST'])
 @admin_required
