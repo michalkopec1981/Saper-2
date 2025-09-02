@@ -76,7 +76,6 @@
                                     <label for="minutes-input" class="form-label">Czas gry w minutach:</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="minutes-input" value="30" min="1">
-                                        <button class="btn btn-outline-secondary" type="button" id="set-time-btn">OK</button>
                                     </div>
                                 </div>
                                 <hr>
@@ -97,7 +96,6 @@
                                 <hr>
                                 <div class="d-grid gap-2">
                                     <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
-                                    <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
                                 </div>
                             </div>
                         </div>
@@ -126,6 +124,7 @@
                                 <div class="d-grid gap-2">
                                     <button id="pause-btn" data-control="pause" class="btn btn-warning">Pauza</button>
                                     <button id="force-win-btn" data-control="force_win" class="btn btn-primary">Przedwczesna wygrana</button>
+                                    <button id="stop-game" class="btn btn-danger mt-2">Stop Gry</button>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +209,8 @@ document.addEventListener('DOMContentLoaded', function () {
         preGameSettings.disabled = state.game_active;
         inGameSettings.disabled = !state.game_active;
         startGameBtn.disabled = state.game_active;
-        stopGameBtn.disabled = !state.game_active;
+        
+        // The Stop button is now inside 'in-game-settings' which is handled above.
 
         // Update button states
         pauseBtn.textContent = state.is_timer_running ? 'Pauza' : 'Wznów';
@@ -260,14 +260,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     stopGameBtn.addEventListener('click', async () => {
-        if (confirm('Czy na pewno chcesz zakończyć grę?')) {
-             try {
-                const response = await fetch('/api/host/stop_game', { method: 'POST' });
-                 if (!response.ok) throw new Error('Nie udało się zatrzymać gry.');
-            } catch (error) {
-                console.error('Stop game error:', error);
-                alert(`Błąd: ${error.message}`);
+        const password = prompt('Aby zatrzymać grę, podaj swoje hasło Hosta:');
+        if (password === null) { return; } // User cancelled
+
+        try {
+            const response = await fetch('/api/host/stop_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: password })
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Nie udało się zatrzymać gry.');
             }
+            alert('Gra została zatrzymana.');
+        } catch (error) {
+            console.error('Stop game error:', error);
+            alert(`Błąd: ${error.message}`);
         }
     });
     
@@ -297,8 +307,15 @@ document.addEventListener('DOMContentLoaded', function () {
         updateUI(state);
     });
 
+    socket.on('timer_tick', (data) => {
+        if (infoElements.timeLeft) {
+            infoElements.timeLeft.textContent = formatTime(data.time_left);
+        }
+    });
+
     // Initial load
     fetch('/api/host/state').then(res => res.json()).then(updateUI);
 });
 </script>
 {% endblock %}
+
