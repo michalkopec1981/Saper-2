@@ -13,7 +13,7 @@ from functools import wraps
 
 # Inicjalizacja
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
+app.config['SECRET_key'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
 
@@ -61,6 +61,12 @@ class Player(db.Model):
     revealed_letters = db.Column(db.String(100), default='')
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
 
+class PlayerAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(255), nullable=False)
@@ -146,63 +152,60 @@ def set_game_state(event_id, key, value):
     db.session.commit()
 
 def get_full_game_state(event_id):
-    # This function now gathers all data points for the new host panel
     state_keys = [
         'game_active', 'is_timer_running', 'game_end_time', 'time_left_on_pause',
         'game_start_time', 'total_paused_duration', 'bonus_multiplier', 'time_speed',
-        'language_player', 'language_host'
+        'language_player', 'language_host', 'initial_game_duration'
     ]
-    state = {key: get_game_state(event_id, key) for key in state_keys}
+    state_data = {key: get_game_state(event_id, key) for key in state_keys}
 
-    # Basic booleans and values
-    is_active = state['game_active'] == 'True'
-    is_timer_running = state['is_timer_running'] == 'True'
+    is_active = state_data.get('game_active') == 'True'
+    is_timer_running = state_data.get('is_timer_running') == 'True'
     time_left = 0
-    
-    # Time calculations
-    if is_active and is_timer_running and state['game_end_time']:
-        time_left = max(0, (datetime.fromisoformat(state['game_end_time']) - datetime.now()).total_seconds())
+    time_speed = int(state_data.get('time_speed', 1))
+
+    if is_active and is_timer_running and state_data.get('game_end_time'):
+        end_time = datetime.fromisoformat(state_data['game_end_time'])
+        time_left = max(0, (end_time - datetime.utcnow()).total_seconds())
     elif is_active and not is_timer_running:
-        time_left = float(state['time_left_on_pause'] or 0)
-    
+        time_left = float(state_data.get('time_left_on_pause', 0))
+
     time_elapsed = 0
     time_elapsed_with_pauses = 0
-    if state['game_start_time']:
-        start_time = datetime.fromisoformat(state['game_start_time'])
+    if state_data.get('game_start_time'):
+        start_time = datetime.fromisoformat(state_data['game_start_time'])
+        total_paused = float(state_data.get('total_paused_duration', 0))
         if is_active:
-             total_paused = float(state['total_paused_duration'] or 0)
-             time_elapsed_with_pauses = (datetime.now() - start_time).total_seconds()
-             time_elapsed = time_elapsed_with_pauses - total_paused
-        else:
-            # If game is stopped, calculate based on end time
-            end_time = datetime.fromisoformat(state['game_end_time']) if state['game_end_time'] else datetime.now()
-            total_paused = float(state['total_paused_duration'] or 0)
-            time_elapsed_with_pauses = (end_time - start_time).total_seconds()
+            time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
             time_elapsed = time_elapsed_with_pauses - total_paused
+        else:
+            initial_duration = float(state_data.get('initial_game_duration', 0))
+            time_elapsed = initial_duration - time_left
+            time_elapsed_with_pauses = time_elapsed + total_paused
 
-    # Other stats
+
     player_count = Player.query.filter_by(event_id=event_id).count()
-    correct_answers = PlayerAnswer.query.join(Question).filter(PlayerAnswer.event_id == event_id).count()
+    correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
 
-    # Anagram/Password
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
     displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
     
     return {
-        'game_active': is_active, 
-        'is_timer_running': is_timer_running, 
-        'time_left': time_left, 
+        'game_active': is_active,
+        'is_timer_running': is_timer_running,
+        'time_left': time_left,
         'password': displayed_password,
         'player_count': player_count,
         'correct_answers': correct_answers,
         'time_elapsed': time_elapsed,
         'time_elapsed_with_pauses': time_elapsed_with_pauses,
-        'language_player': state.get('language_player', 'pl'),
-        'language_host': state.get('language_host', 'pl'),
-        'bonus_multiplier': int(state.get('bonus_multiplier', 1)),
-        'time_speed': int(state.get('time_speed', 1))
+        'language_player': state_data.get('language_player', 'pl'),
+        'language_host': state_data.get('language_host', 'pl'),
+        'bonus_multiplier': int(state_data.get('bonus_multiplier', 1)),
+        'time_speed': time_speed
     }
+
 
 def event_to_dict(event):
     return {
@@ -226,7 +229,7 @@ def delete_logo_file(event):
 def index(): return redirect(url_for('host_login'))
 
 # --- ADMIN ---
-# ... (Admin routes are unchanged)
+# ... (Admin routes are unchanged for this update)
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -261,6 +264,7 @@ def impersonate_host(event_id):
     session['host_event_id'] = event_id
     session['impersonated_by_admin'] = True
     return redirect(url_for('host_panel'))
+
 
 # --- HOST ---
 @app.route('/host/login', methods=['GET', 'POST'])
@@ -387,6 +391,7 @@ def reset_event(event_id):
         Question.query.filter_by(event_id=event_id).delete()
         QRCode.query.filter_by(event_id=event_id).delete()
         PlayerScan.query.filter_by(event_id=event_id).delete()
+        PlayerAnswer.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
         db.session.commit()
@@ -428,17 +433,21 @@ def start_game():
     event_id = session['host_event_id']
     Player.query.filter_by(event_id=event_id).delete()
     PlayerScan.query.filter_by(event_id=event_id).delete()
+    PlayerAnswer.query.filter_by(event_id=event_id).delete()
     FunnyPhoto.query.filter_by(event_id=event_id).delete()
     QRCode.query.filter(QRCode.event_id == event_id, QRCode.claimed_by_player_id.isnot(None)).update({QRCode.claimed_by_player_id: None})
     
     set_game_state(event_id, 'game_active', 'True')
     set_game_state(event_id, 'is_timer_running', 'True')
-    set_game_state(event_id, 'game_start_time', datetime.now().isoformat())
+    set_game_state(event_id, 'game_start_time', datetime.utcnow().isoformat())
     set_game_state(event_id, 'total_paused_duration', 0)
+    set_game_state(event_id, 'bonus_multiplier', 1)
+    set_game_state(event_id, 'time_speed', 1)
     
     minutes = int(request.json.get('minutes', 30))
-    set_game_state(event_id, 'initial_game_duration', minutes * 60)
-    end_time = datetime.now() + timedelta(minutes=minutes)
+    duration_seconds = minutes * 60
+    set_game_state(event_id, 'initial_game_duration', duration_seconds)
+    end_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
     set_game_state(event_id, 'game_end_time', end_time.isoformat())
     
     db.session.commit()
@@ -464,23 +473,27 @@ def game_control():
     data = request.json
     control = data.get('control')
     value = data.get('value')
+    
+    is_running = get_game_state(event_id, 'is_timer_running', 'True') == 'True'
 
     if control == 'pause':
-        is_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
         if is_running:
             set_game_state(event_id, 'is_timer_running', 'False')
-            set_game_state(event_id, 'pause_start_time', datetime.now().isoformat())
-            time_left = (datetime.fromisoformat(get_game_state(event_id, 'game_end_time')) - datetime.now()).total_seconds()
-            set_game_state(event_id, 'time_left_on_pause', time_left)
-        else:
+            set_game_state(event_id, 'pause_start_time', datetime.utcnow().isoformat())
+            end_time_str = get_game_state(event_id, 'game_end_time')
+            if end_time_str:
+                time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
+                set_game_state(event_id, 'time_left_on_pause', time_left)
+        else: # Unpausing
             pause_start_str = get_game_state(event_id, 'pause_start_time')
             if pause_start_str:
-                paused_duration = (datetime.now() - datetime.fromisoformat(pause_start_str)).total_seconds()
+                paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
                 total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
                 set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
             
             time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
-            new_end_time = datetime.now() + timedelta(seconds=time_left)
+            time_speed = int(get_game_state(event_id, 'time_speed', 1))
+            new_end_time = datetime.utcnow() + timedelta(seconds=time_left / time_speed)
             set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
             set_game_state(event_id, 'is_timer_running', 'True')
 
@@ -489,16 +502,28 @@ def game_control():
         set_game_state(event_id, 'is_timer_running', 'False')
         socketio.emit('game_forced_win', {'message': 'Zadanie wykonane! Gra zakończona!'}, room=f'event_{event_id}')
 
-    elif control in ['bonus', 'speed', 'language_player', 'language_host']:
-        key = f'{control}_multiplier' if control in ['bonus', 'speed'] else control
-        current_value = get_game_state(event_id, key, 1 if control != 'language' else 'pl')
-        new_value = value if str(current_value) != str(value) else (1 if control != 'language' else 'pl')
-        set_game_state(event_id, key, new_value)
+    elif control == 'bonus':
+        current_val = get_game_state(event_id, 'bonus_multiplier', '1')
+        new_val = value if current_val != str(value) else '1'
+        set_game_state(event_id, 'bonus_multiplier', new_val)
+        
+    elif control == 'speed':
+        current_val = get_game_state(event_id, 'time_speed', '1')
+        new_val = value if current_val != str(value) else '1'
+        set_game_state(event_id, 'time_speed', new_val)
+        
+    elif control == 'language_player':
+        set_game_state(event_id, 'language_player', value)
+
+    elif control == 'language_host':
+        set_game_state(event_id, 'language_host', value)
     
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
+# ... (pozostałe, niezmienione API dla graczy i pytań)
 
+# --- API: HOST Players & Questions (bez zmian) ---
 @app.route('/api/host/players', methods=['GET'])
 @host_required
 def get_players():
@@ -551,7 +576,7 @@ def delete_question(question_id):
         return jsonify({'message': 'Pytanie usunięte'})
     return jsonify({'error': 'Pytanie nie znalezione'}), 404
 
-# --- API: PLAYER ---
+# --- API: PLAYER (bez zmian) ---
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json
@@ -665,18 +690,23 @@ def emit_password_update(room):
 def update_timers():
     while True:
         with app.app_context():
-             events = Event.query.all()
-             for event in events:
-                event_id = event.id
-                if get_game_state(event_id, 'game_active', 'False') == 'True' and get_game_state(event_id, 'is_timer_running', 'False') == 'True':
+            active_events = db.session.query(GameState.event_id).filter_by(key='game_active', value='True').distinct().all()
+            event_ids = [e[0] for e in active_events]
+            
+            for event_id in event_ids:
+                if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
                     state = get_full_game_state(event_id)
                     room_name = f'event_{event_id}'
                     socketio.emit('timer_tick', {'time_left': state['time_left']}, room=room_name)
+                    
                     if state['time_left'] <= 0:
                         set_game_state(event_id, 'game_active', 'False')
                         set_game_state(event_id, 'is_timer_running', 'False')
                         emit_full_state_update(room_name)
+                        socketio.emit('game_over', {}, room=room_name)
+
         socketio.sleep(1)
+
 
 @socketio.on('join')
 def on_join(data):
@@ -684,13 +714,14 @@ def on_join(data):
     if event_id:
         room = f'event_{event_id}'
         join_room(room)
+        # Send initial state only to the client that just joined
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
+        # Send leaderboard to everyone in the room to reflect new player count if applicable
         emit_leaderboard_update(room)
-    
-socketio.start_background_task(target=update_timers)
 
-# --- Uruchomienie Aplikacji ---
+# Uruchomienie Aplikacji
 if __name__ == '__main__':
+    socketio.start_background_task(target=update_timers)
     port = int(os.environ.get('PORT', 5000))
+    # Use debug=False when deploying to production
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
-
