@@ -29,29 +29,6 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- POPRAWKA: Inicjalizacja bazy danych przy starcie aplikacji ---
-with app.app_context():
-    try:
-        db.create_all()
-        # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
-        if not Admin.query.first():
-            admin = Admin(login='admin')
-            admin.set_password('admin')
-            db.session.add(admin)
-            print("Default admin created.")
-        
-        if not Event.query.first():
-            event = Event(id=1, login='host1', name='Event #1')
-            event.set_password('password1')
-            db.session.add(event)
-            print("Default event created.")
-        
-        db.session.commit()
-        print("Database tables checked/created successfully.")
-    except Exception as e:
-        print(f"Database initialization error: {e}")
-# --- KONIEC POPRAWKI ---
-
 # Konfiguracja SocketIO
 socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*", manage_session=True)
 
@@ -131,33 +108,61 @@ class GameState(db.Model):
     value = db.Column(db.String(255), nullable=False)
     __table_args__ = (db.UniqueConstraint('event_id', 'key', name='_event_key_uc'),)
 
+# --- POPRAWKA: Inicjalizacja bazy danych przy starcie aplikacji ---
+with app.app_context():
+    try:
+        db.create_all()
+        # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
+        if not Admin.query.first():
+            admin = Admin(login='admin')
+            admin.set_password('admin')
+            db.session.add(admin)
+            print("Default admin created.")
+        
+        if not Event.query.first():
+            event = Event(id=1, login='host1', name='Event #1')
+            event.set_password('password1')
+            db.session.add(event)
+            print("Default event created.")
+        
+        db.session.commit()
+        print("Database tables checked/created successfully.")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+# --- KONIEC POPRAWKI ---
+
 
 # --- Dekoratory Autoryzacji ---
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'admin_logged_in' not in session: return redirect(url_for('admin_login'))
+        if 'admin_logged_in' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Brak autoryzacji'}), 401
+            return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 def host_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'host_event_id' not in session: return redirect(url_for('host_login'))
+        if 'host_event_id' not in session:
+            if request.path.startswith('/api/'):
+                return jsonify({'error': 'Brak autoryzacji'}), 401
+            return redirect(url_for('host_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 # --- Inicjalizacja Bazy Danych (CLI) ---
 @app.cli.command("init-db")
 def init_db_command():
-    """Wyczyszczenie istniejących danych i utworzenie nowych tabel."""
-    db.drop_all() 
+    """Tworzy tabele w bazie danych i domyślne wpisy, jeśli nie istnieją."""
     db.create_all()
     if not Admin.query.first():
         admin = Admin(login='admin')
         admin.set_password('admin')
         db.session.add(admin)
-    if Event.query.count() < 1:
+    if not Event.query.first():
         event = Event(id=1, login='host1', name='Event #1')
         event.set_password('password1')
         db.session.add(event)
