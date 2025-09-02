@@ -29,6 +29,29 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# --- POPRAWKA: Inicjalizacja bazy danych przy starcie aplikacji ---
+with app.app_context():
+    try:
+        db.create_all()
+        # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
+        if not Admin.query.first():
+            admin = Admin(login='admin')
+            admin.set_password('admin')
+            db.session.add(admin)
+            print("Default admin created.")
+        
+        if not Event.query.first():
+            event = Event(id=1, login='host1', name='Event #1')
+            event.set_password('password1')
+            db.session.add(event)
+            print("Default event created.")
+        
+        db.session.commit()
+        print("Database tables checked/created successfully.")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+# --- KONIEC POPRAWKI ---
+
 # Konfiguracja SocketIO
 socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*", manage_session=True)
 
@@ -124,21 +147,23 @@ def host_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- Inicjalizacja Bazy Danych ---
+# --- Inicjalizacja Bazy Danych (CLI) ---
 @app.cli.command("init-db")
 def init_db_command():
+    """Wyczyszczenie istniejących danych i utworzenie nowych tabel."""
+    db.drop_all() 
     db.create_all()
     if not Admin.query.first():
         admin = Admin(login='admin')
         admin.set_password('admin')
         db.session.add(admin)
-    
     if Event.query.count() < 1:
-        event = Event(id=1, login=f'host1', name=f'Event #1')
-        event.set_password(f'password1')
+        event = Event(id=1, login='host1', name='Event #1')
+        event.set_password('password1')
         db.session.add(event)
     db.session.commit()
-    print("Database initialized with 1 event.")
+    print("Database initialized.")
+
 
 # --- Funkcje Pomocnicze ---
 def get_game_state(event_id, key, default=None):
@@ -162,7 +187,6 @@ def get_full_game_state(event_id):
     is_active = state_data.get('game_active') == 'True'
     is_timer_running = state_data.get('is_timer_running') == 'True'
     
-    # --- POPRAWKA: Bezpieczne odczytywanie wartości, które mogą być `None` dla nowych eventów ---
     bonus_val = state_data.get('bonus_multiplier')
     bonus_multiplier = int(bonus_val) if bonus_val is not None else 1
     
@@ -177,7 +201,6 @@ def get_full_game_state(event_id):
 
     initial_game_duration_val = state_data.get('initial_game_duration')
     initial_game_duration = float(initial_game_duration_val) if initial_game_duration_val is not None else 0
-    # --- KONIEC POPRAWKI ---
 
     time_left = 0
     if is_active and is_timer_running and state_data.get('game_end_time'):
@@ -196,7 +219,6 @@ def get_full_game_state(event_id):
         else:
             time_elapsed = initial_game_duration - time_left_on_pause
             time_elapsed_with_pauses = time_elapsed + total_paused_duration
-
 
     player_count = Player.query.filter_by(event_id=event_id).count()
     try:
@@ -238,11 +260,12 @@ def delete_logo_file(event):
             if os.path.exists(filepath): os.remove(filepath)
             event.logo_url = None
         except Exception as e:
-            print(f"Error deleting logo file: {e}")
+            print(f"Błąd podczas usuwania pliku logo: {e}")
 
 # --- Główne Ścieżki ---
 @app.route('/')
-def index(): return redirect(url_for('host_login'))
+def index(): 
+    return redirect(url_for('host_login'))
 
 # --- ADMIN ---
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -258,13 +281,14 @@ def admin_login():
 
 @app.route('/admin')
 @admin_required
-def admin_panel(): return render_template('admin.html')
+def admin_panel(): 
+    return render_template('admin.html')
 
 @app.route('/admin/qrcodes/<int:event_id>')
 @admin_required
 def admin_qrcodes_view(event_id):
     event = db.session.get(Event, event_id)
-    if not event: return "Event not found", 404
+    if not event: return "Nie znaleziono eventu", 404
     counts = {
         'red': QRCode.query.filter_by(event_id=event_id, color='red').count(),
         'white_trap': QRCode.query.filter_by(event_id=event_id, color='white_trap').count(),
@@ -287,16 +311,12 @@ def host_login():
     if request.method == 'POST':
         login = request.form['login'].strip()
         password = request.form['password'].strip()
-        
         event = Event.query.filter_by(login=login).first()
-        
         if event and event.check_password(password):
             session['host_event_id'] = event.id
             session.pop('impersonated_by_admin', None)
             return redirect(url_for('host_panel'))
-        
         return render_template('host_login.html', error="Nieprawidłowe dane")
-        
     return render_template('host_login.html')
 
 
@@ -315,7 +335,8 @@ def logout_impersonate():
 
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
-def player_view(event_id, qr_code): return render_template('player.html', qr_code=qr_code, event_id=event_id)
+def player_view(event_id, qr_code): 
+    return render_template('player.html', qr_code=qr_code, event_id=event_id)
 
 @app.route('/display/<int:event_id>')
 def display(event_id):
@@ -326,7 +347,7 @@ def display(event_id):
 def list_qrcodes_public(event_id):
     is_admin = session.get('admin_logged_in', False)
     is_host = session.get('host_event_id') == event_id
-    if not (is_admin or is_host): return "Unauthorized", 401
+    if not (is_admin or is_host): return "Brak autoryzacji", 401
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
 
@@ -342,24 +363,15 @@ def manage_events():
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
         login = f'host{new_id}'
         password = f'password{new_id}'
-        
-        new_event = Event(
-            id=new_id, 
-            name=f'Nowy Event #{new_id}', 
-            login=login
-        )
+        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login)
         new_event.set_password(password)
-        
         db.session.add(new_event)
-        
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Błąd podczas tworzenia eventu'}), 500
-            
         return jsonify(event_to_dict(new_event))
-        
     events = Event.query.order_by(Event.id).all()
     return jsonify([event_to_dict(e) for e in events])
 
@@ -367,33 +379,27 @@ def manage_events():
 @admin_required
 def update_or_delete_event(event_id):
     event = db.session.get(Event, event_id)
-    if not event: return jsonify({'error': 'Event not found'}), 404
+    if not event: return jsonify({'error': 'Nie znaleziono eventu'}), 404
 
     if request.method == 'PUT':
         data = request.json
         event.name = data.get('name', event.name).strip()
-        
         new_login = data.get('login', event.login).strip()
         if new_login:
             event.login = new_login
-
         event.is_superhost = data.get('is_superhost', event.is_superhost)
         event.notes = data.get('notes', event.notes).strip()
-
         new_password = data.get('password')
         if new_password and new_password.strip():
             event.set_password(new_password.strip())
-            
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
-        
         try:
             db.session.commit()
             return jsonify(event_to_dict(event))
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': f'Błąd zapisu: {e}'}), 500
-
 
     if request.method == 'DELETE':
         if event_id <= 1: return jsonify({'error': 'Nie można usunąć pierwszego eventu.'}), 403
@@ -406,7 +412,7 @@ def update_or_delete_event(event_id):
 @admin_required
 def upload_logo(event_id):
     event = db.session.get(Event, event_id)
-    if not event: return jsonify({'error': 'Event not found'}), 404
+    if not event: return jsonify({'error': 'Nie znaleziono eventu'}), 404
     if 'logo' not in request.files: return jsonify({'error': 'Brak pliku logo'}), 400
     file = request.files['logo']
     if file.filename == '': return jsonify({'error': 'Nie wybrano pliku'}), 400
@@ -424,7 +430,7 @@ def upload_logo(event_id):
 @admin_required
 def delete_logo(event_id):
     event = db.session.get(Event, event_id)
-    if not event: return jsonify({'error': 'Event not found'}), 404
+    if not event: return jsonify({'error': 'Nie znaleziono eventu'}), 404
     delete_logo_file(event)
     db.session.commit()
     return jsonify({'message': 'Logo usunięte pomyślnie.'})
@@ -435,7 +441,7 @@ def delete_logo(event_id):
 def reset_event(event_id):
     try:
         event = db.session.get(Event, event_id)
-        if not event: return jsonify({'message': 'Event not found'}), 404
+        if not event: return jsonify({'message': 'Nie znaleziono eventu'}), 404
         delete_logo_file(event)
         Player.query.filter_by(event_id=event_id).delete()
         Question.query.filter_by(event_id=event_id).delete()
@@ -475,7 +481,8 @@ def admin_generate_qr_codes():
 # --- API: HOST ---
 @app.route('/api/host/state', methods=['GET'])
 @host_required
-def get_host_game_state(): return jsonify(get_full_game_state(session['host_event_id']))
+def get_host_game_state(): 
+    return jsonify(get_full_game_state(session['host_event_id']))
 
 @app.route('/api/host/start_game', methods=['POST'])
 @host_required
@@ -596,7 +603,7 @@ def warn_player(player_id):
     if player and player.event_id == session['host_event_id']:
         player.warnings += 1; db.session.commit()
         return jsonify({'warnings': player.warnings})
-    return jsonify({'error': 'Gracz nie znaleziony'}), 404
+    return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
 @app.route('/api/host/player/<int:player_id>', methods=['DELETE'])
 @host_required
@@ -607,7 +614,7 @@ def delete_player(player_id):
         db.session.commit()
         emit_leaderboard_update(f'event_{session["host_event_id"]}')
         return jsonify({'message': 'Gracz usunięty'})
-    return jsonify({'error': 'Gracz nie znaleziony'}), 404
+    return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
@@ -633,7 +640,7 @@ def delete_question(question_id):
     if q and q.event_id == session['host_event_id']:
         db.session.delete(q); db.session.commit()
         return jsonify({'message': 'Pytanie usunięte'})
-    return jsonify({'error': 'Pytanie nie znalezione'}), 404
+    return jsonify({'error': 'Nie znaleziono pytania'}), 404
 
 # --- API: PLAYER ---
 @app.route('/api/player/register', methods=['POST'])
@@ -769,7 +776,7 @@ def update_timers():
                             emit_full_state_update(room_name)
                             socketio.emit('game_over', {}, room=room_name)
         except Exception as e:
-            print(f"Error in update_timers: {e}")
+            print(f"Błąd w update_timers: {e}")
         socketio.sleep(1)
 
 
@@ -788,6 +795,6 @@ def on_join(data):
 if __name__ == '__main__':
     socketio.start_background_task(target=update_timers)
     port = int(os.environ.get('PORT', 5000))
-    # Use debug=False when deploying to production
+    # Użyj debug=False przy wdrażaniu na produkcję
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
 
