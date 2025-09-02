@@ -1,5 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}Panel Admina{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    .logo-area {
+        width: 100%;
+        max-width: 300px;
+        height: 120px;
+        border: 2px dashed #ccc;
+        border-radius: .375rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+    .logo-area img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .logo-placeholder {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -58,29 +84,42 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.dataset.eventId = event.id;
         
         const deleteBtnVisibility = event.id > 2 ? '' : 'style="display: none;"';
-        const logoDisplay = event.logo_url ? '' : 'style="display: none;"';
+        const logoContent = event.logo_url 
+            ? `<img src="${event.logo_url}" class="event-logo-preview">`
+            : `<span class="logo-placeholder">Brak logo</span>`;
+        const deleteLogoBtnVisibility = event.logo_url ? '' : 'style="display: none;"';
 
         panel.innerHTML = `
             <div class="card-body">
-                <div class="logo-preview-container mb-2" style="height: 60px;">
-                    <img src="${event.logo_url || ''}" class="event-logo-preview" ${logoDisplay} style="max-height: 50px; border-radius: 5px;">
-                </div>
                 <div class="row g-3">
-                    <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name}"></div>
-                    <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login}"></div>
-                    <div class="col-md-3"><label class="form-label">Nowe Hasło (widoczne)</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
-                    <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
-                    <div class="col-12 d-flex align-items-center justify-content-between pt-2">
-                        <div class="form-check form-switch"><input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}><label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label></div>
-                        <div class="d-flex justify-content-end gap-2 flex-wrap">
-                            <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                            <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
-                            <button class="btn btn-sm btn-outline-primary btn-logo">Logo</button>
-                            <button class="btn btn-sm btn-danger btn-reset">Reset Gry</button>
-                            <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
-                            <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
-                            <button class="btn btn-sm btn-success btn-save">Zapisz Zmiany</button>
+                    <div class="col-md-9">
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name}"></div>
+                            <div class="col-md-4"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login}"></div>
+                            <div class="col-md-4"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-4"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
                         </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Logo</label>
+                        <div class="logo-area">${logoContent}</div>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
+                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                        <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                        <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
+                        <button class="btn btn-sm btn-outline-primary btn-logo">Logo</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                        <button class="btn btn-sm btn-danger btn-reset">Reset Gry</button>
+                        <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
+                        <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
+                        <button class="btn btn-sm btn-success btn-save">Zapisz Zmiany</button>
                     </div>
                 </div>
             </div>`;
@@ -101,9 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addEventBtn.disabled = true;
         const newEvent = await fetchApi('/api/admin/events', { method: 'POST' });
         if (newEvent) {
-            const newPanel = createEventPanel(newEvent);
-            eventsContainer.appendChild(newPanel);
-            newPanel.scrollIntoView({ behavior: 'smooth' });
+            eventsContainer.appendChild(createEventPanel(newEvent));
             showStatus(`Dodano pomyślnie ${newEvent.name}.`);
         }
         addEventBtn.disabled = false;
@@ -119,6 +156,18 @@ document.addEventListener('DOMContentLoaded', function() {
             panel.querySelector('.logo-upload-input').click();
         }
 
+        if (target.classList.contains('btn-delete-logo')) {
+            if (confirm(`Czy na pewno chcesz usunąć logo dla Eventu ${eventId}?`)) {
+                const result = await fetchApi(`/api/admin/event/${eventId}/delete_logo`, { method: 'POST' });
+                if (result) {
+                    const logoArea = panel.querySelector('.logo-area');
+                    logoArea.innerHTML = `<span class="logo-placeholder">Brak logo</span>`;
+                    target.style.display = 'none';
+                    showStatus(result.message);
+                }
+            }
+        }
+
         if (target.classList.contains('btn-save')) {
             const payload = {
                 name: panel.querySelector('.event-name').value,
@@ -127,32 +176,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 is_superhost: panel.querySelector('.event-superhost').checked,
                 event_date: panel.querySelector('.event-date').value
             };
-            target.disabled = true;
             const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
-            if (result) {
-                showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
-            }
-            target.disabled = false;
+            if (result) showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
         }
 
         if (target.classList.contains('btn-reset')) {
-            if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}?`)) {
-                target.disabled = true;
+            if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}? To usunie logo, graczy, kody, etc.`)) {
                 const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
-                if (result) showStatus(result.message, 'warning');
-                target.disabled = false;
+                if (result) {
+                    const logoArea = panel.querySelector('.logo-area');
+                    logoArea.innerHTML = `<span class="logo-placeholder">Brak logo</span>`;
+                    panel.querySelector('.btn-delete-logo').style.display = 'none';
+                    showStatus(result.message, 'warning');
+                }
             }
         }
         
         if (target.classList.contains('btn-delete')) {
             if (confirm(`Czy na pewno chcesz USUNĄĆ Event ${eventId}?`)) {
-                target.disabled = true;
                 const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
                 if (result) {
                     panel.remove();
                     showStatus(result.message, 'success');
-                } else {
-                    target.disabled = false;
                 }
             }
         }
@@ -168,15 +213,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('logo', file);
 
-            const result = await fetchApi(`/api/admin/event/${eventId}/upload_logo`, {
-                method: 'POST',
-                body: formData
-            });
+            const result = await fetchApi(`/api/admin/event/${eventId}/upload_logo`, { method: 'POST', body: formData });
             
             if (result && result.logo_url) {
-                const imgPreview = panel.querySelector('.event-logo-preview');
-                imgPreview.src = result.logo_url + '?t=' + new Date().getTime(); // Cache busting
-                imgPreview.style.display = 'block';
+                const logoArea = panel.querySelector('.logo-area');
+                logoArea.innerHTML = `<img src="${result.logo_url}?t=${new Date().getTime()}" class="event-logo-preview">`;
+                panel.querySelector('.btn-delete-logo').style.display = 'inline-block';
                 showStatus('Logo zostało zaktualizowane.');
             }
         }
