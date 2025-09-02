@@ -50,6 +50,7 @@ class Event(db.Model):
     is_superhost = db.Column(db.Boolean, default=False)
     event_date = db.Column(db.Date, nullable=True)
     logo_url = db.Column(db.String(255), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
 
@@ -169,12 +170,14 @@ def event_to_dict(event):
         'login': event.login,
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
-        'logo_url': event.logo_url
+        'logo_url': event.logo_url,
+        'notes': event.notes
     }
 
 def delete_logo_file(event):
     if event and event.logo_url:
         try:
+            # Construct absolute path from root of the project
             filepath = os.path.join(app.root_path, event.logo_url.lstrip('/'))
             if os.path.exists(filepath):
                 os.remove(filepath)
@@ -295,6 +298,7 @@ def update_or_delete_event(event_id):
         event.name = data.get('name', event.name)
         event.login = data.get('login', event.login)
         event.is_superhost = data.get('is_superhost', event.is_superhost)
+        event.notes = data.get('notes', event.notes)
         if data.get('password'): event.set_password(data['password'])
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
