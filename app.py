@@ -161,28 +161,41 @@ def get_full_game_state(event_id):
 
     is_active = state_data.get('game_active') == 'True'
     is_timer_running = state_data.get('is_timer_running') == 'True'
-    time_left = 0
-    time_speed = int(state_data.get('time_speed', 1))
+    
+    # --- POPRAWKA: Bezpieczne odczytywanie wartości, które mogą być `None` dla nowych eventów ---
+    bonus_val = state_data.get('bonus_multiplier')
+    bonus_multiplier = int(bonus_val) if bonus_val is not None else 1
+    
+    speed_val = state_data.get('time_speed')
+    time_speed = int(speed_val) if speed_val is not None else 1
+    
+    time_left_on_pause_val = state_data.get('time_left_on_pause')
+    time_left_on_pause = float(time_left_on_pause_val) if time_left_on_pause_val is not None else 0
 
+    total_paused_duration_val = state_data.get('total_paused_duration')
+    total_paused_duration = float(total_paused_duration_val) if total_paused_duration_val is not None else 0
+
+    initial_game_duration_val = state_data.get('initial_game_duration')
+    initial_game_duration = float(initial_game_duration_val) if initial_game_duration_val is not None else 0
+    # --- KONIEC POPRAWKI ---
+
+    time_left = 0
     if is_active and is_timer_running and state_data.get('game_end_time'):
         end_time = datetime.fromisoformat(state_data['game_end_time'])
         time_left = max(0, (end_time - datetime.utcnow()).total_seconds())
     elif is_active and not is_timer_running:
-        time_left = float(state_data.get('time_left_on_pause', 0))
+        time_left = time_left_on_pause
 
     time_elapsed = 0
     time_elapsed_with_pauses = 0
     if state_data.get('game_start_time'):
         start_time = datetime.fromisoformat(state_data['game_start_time'])
-        total_paused = float(state_data.get('total_paused_duration', 0))
         if is_active:
             time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
-            time_elapsed = time_elapsed_with_pauses - total_paused
+            time_elapsed = time_elapsed_with_pauses - total_paused_duration
         else:
-            initial_duration = float(state_data.get('initial_game_duration', 0))
-            time_left_at_end = float(state_data.get('time_left_on_pause', time_left))
-            time_elapsed = initial_duration - time_left_at_end
-            time_elapsed_with_pauses = time_elapsed + total_paused
+            time_elapsed = initial_game_duration - time_left_on_pause
+            time_elapsed_with_pauses = time_elapsed + total_paused_duration
 
 
     player_count = Player.query.filter_by(event_id=event_id).count()
@@ -204,9 +217,9 @@ def get_full_game_state(event_id):
         'correct_answers': correct_answers,
         'time_elapsed': time_elapsed,
         'time_elapsed_with_pauses': time_elapsed_with_pauses,
-        'language_player': state_data.get('language_player', 'pl'),
-        'language_host': state_data.get('language_host', 'pl'),
-        'bonus_multiplier': int(state_data.get('bonus_multiplier', 1)),
+        'language_player': state_data.get('language_player') or 'pl',
+        'language_host': state_data.get('language_host') or 'pl',
+        'bonus_multiplier': bonus_multiplier,
         'time_speed': time_speed
     }
 
@@ -275,27 +288,12 @@ def host_login():
         login = request.form['login'].strip()
         password = request.form['password'].strip()
         
-        print(f"DEBUG: Próba logowania - login: '{login}', password: '{password}'")
-        
         event = Event.query.filter_by(login=login).first()
         
-        if event:
-            print(f"DEBUG: Znaleziono event - ID: {event.id}, login: '{event.login}'")
-            print(f"DEBUG: Sprawdzanie hasła...")
-            
-            if event.check_password(password):
-                print(f"DEBUG: Hasło prawidłowe - logowanie udane")
-                session['host_event_id'] = event.id
-                session.pop('impersonated_by_admin', None)
-                return redirect(url_for('host_panel'))
-            else:
-                print(f"DEBUG: Hasło nieprawidłowe")
-        else:
-            print(f"DEBUG: Nie znaleziono eventu o loginie: '{login}'")
-            all_events = Event.query.all()
-            print(f"DEBUG: Wszystkie eventy w bazie:")
-            for e in all_events:
-                print(f"  - ID: {e.id}, login: '{e.login}'")
+        if event and event.check_password(password):
+            session['host_event_id'] = event.id
+            session.pop('impersonated_by_admin', None)
+            return redirect(url_for('host_panel'))
         
         return render_template('host_login.html', error="Nieprawidłowe dane")
         
@@ -356,10 +354,8 @@ def manage_events():
         
         try:
             db.session.commit()
-            print(f"DEBUG: Stworzono nowy event - ID: {new_id}, login: '{login}', password: '{password}'")
         except Exception as e:
             db.session.rollback()
-            print(f"ERROR: Błąd podczas tworzenia eventu: {e}")
             return jsonify({'error': 'Błąd podczas tworzenia eventu'}), 500
             
         return jsonify(event_to_dict(new_event))
