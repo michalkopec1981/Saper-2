@@ -114,8 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
             target.disabled = true;
             const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             if (result) {
-                panel.querySelector('.event-password').value = '';
-                showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
+               showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
             }
             target.disabled = false;
         }
