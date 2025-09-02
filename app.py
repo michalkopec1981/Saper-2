@@ -17,7 +17,6 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-supe
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
 
-# *** POPRAWKA: Tworzenie folderu przy starcie aplikacji ***
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -147,49 +146,87 @@ def set_game_state(event_id, key, value):
     db.session.commit()
 
 def get_full_game_state(event_id):
-    is_active = get_game_state(event_id, 'game_active', 'False') == 'True'
-    is_timer_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
-    end_time_str = get_game_state(event_id, 'game_end_time')
+    # This function now gathers all data points for the new host panel
+    state_keys = [
+        'game_active', 'is_timer_running', 'game_end_time', 'time_left_on_pause',
+        'game_start_time', 'total_paused_duration', 'bonus_multiplier', 'time_speed',
+        'language_player', 'language_host'
+    ]
+    state = {key: get_game_state(event_id, key) for key in state_keys}
+
+    # Basic booleans and values
+    is_active = state['game_active'] == 'True'
+    is_timer_running = state['is_timer_running'] == 'True'
     time_left = 0
-    if is_active and is_timer_running and end_time_str:
-        time_left = max(0, (datetime.fromisoformat(end_time_str) - datetime.now()).total_seconds())
-    elif is_active and not is_timer_running:
-        time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
     
+    # Time calculations
+    if is_active and is_timer_running and state['game_end_time']:
+        time_left = max(0, (datetime.fromisoformat(state['game_end_time']) - datetime.now()).total_seconds())
+    elif is_active and not is_timer_running:
+        time_left = float(state['time_left_on_pause'] or 0)
+    
+    time_elapsed = 0
+    time_elapsed_with_pauses = 0
+    if state['game_start_time']:
+        start_time = datetime.fromisoformat(state['game_start_time'])
+        if is_active:
+             total_paused = float(state['total_paused_duration'] or 0)
+             time_elapsed_with_pauses = (datetime.now() - start_time).total_seconds()
+             time_elapsed = time_elapsed_with_pauses - total_paused
+        else:
+            # If game is stopped, calculate based on end time
+            end_time = datetime.fromisoformat(state['game_end_time']) if state['game_end_time'] else datetime.now()
+            total_paused = float(state['total_paused_duration'] or 0)
+            time_elapsed_with_pauses = (end_time - start_time).total_seconds()
+            time_elapsed = time_elapsed_with_pauses - total_paused
+
+    # Other stats
+    player_count = Player.query.filter_by(event_id=event_id).count()
+    correct_answers = PlayerAnswer.query.join(Question).filter(PlayerAnswer.event_id == event_id).count()
+
+    # Anagram/Password
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
     displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
     
-    return {'game_active': is_active, 'is_timer_running': is_timer_running, 'time_left': time_left, 'password': displayed_password}
+    return {
+        'game_active': is_active, 
+        'is_timer_running': is_timer_running, 
+        'time_left': time_left, 
+        'password': displayed_password,
+        'player_count': player_count,
+        'correct_answers': correct_answers,
+        'time_elapsed': time_elapsed,
+        'time_elapsed_with_pauses': time_elapsed_with_pauses,
+        'language_player': state.get('language_player', 'pl'),
+        'language_host': state.get('language_host', 'pl'),
+        'bonus_multiplier': int(state.get('bonus_multiplier', 1)),
+        'time_speed': int(state.get('time_speed', 1))
+    }
 
 def event_to_dict(event):
     return {
-        'id': event.id,
-        'name': event.name,
-        'login': event.login,
+        'id': event.id, 'name': event.name, 'login': event.login,
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
-        'logo_url': event.logo_url,
-        'notes': event.notes
+        'logo_url': event.logo_url, 'notes': event.notes
     }
 
 def delete_logo_file(event):
     if event and event.logo_url:
         try:
-            # Construct absolute path from root of the project
             filepath = os.path.join(app.root_path, event.logo_url.lstrip('/'))
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            if os.path.exists(filepath): os.remove(filepath)
             event.logo_url = None
         except Exception as e:
             print(f"Error deleting logo file: {e}")
-
 
 # --- Główne Ścieżki ---
 @app.route('/')
 def index(): return redirect(url_for('host_login'))
 
 # --- ADMIN ---
+# ... (Admin routes are unchanged)
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -317,19 +354,16 @@ def upload_logo(event_id):
     event = db.session.get(Event, event_id)
     if not event: return jsonify({'error': 'Event not found'}), 404
     if 'logo' not in request.files: return jsonify({'error': 'Brak pliku logo'}), 400
-    
     file = request.files['logo']
     if file.filename == '': return jsonify({'error': 'Nie wybrano pliku'}), 400
-    
     if file:
-        delete_logo_file(event) # Usuń stare logo, jeśli istnieje
+        delete_logo_file(event)
         filename = secure_filename(f"event_{event_id}_{file.filename}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         event.logo_url = f"/{filepath}"
         db.session.commit()
         return jsonify({'message': 'Logo wgrane pomyślnie', 'logo_url': event.logo_url})
-    
     return jsonify({'error': 'Nie udało się wgrać pliku'}), 500
 
 @app.route('/api/admin/event/<int:event_id>/delete_logo', methods=['POST'])
@@ -349,16 +383,13 @@ def reset_event(event_id):
         event = db.session.get(Event, event_id)
         if not event: return jsonify({'message': 'Event not found'}), 404
         delete_logo_file(event)
-
         Player.query.filter_by(event_id=event_id).delete()
         Question.query.filter_by(event_id=event_id).delete()
         QRCode.query.filter_by(event_id=event_id).delete()
         PlayerScan.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
-        
         db.session.commit()
-        
         room = f'event_{event_id}'
         emit_leaderboard_update(room)
         emit_password_update(room)
@@ -375,17 +406,14 @@ def admin_generate_qr_codes():
     event_id = data.get('event_id')
     if get_game_state(event_id, 'game_active', 'False') == 'True':
         return jsonify({'message': 'Nie można zmieniać kodów podczas aktywnej gry.'}), 403
-
     QRCode.query.filter_by(event_id=event_id).delete()
     db.session.add(QRCode(code_identifier='bialy', color='white', event_id=event_id))
     db.session.add(QRCode(code_identifier='zolty', color='yellow', event_id=event_id))
-    
     counts = data.get('counts', {})
     one_time_codes = {'red': 'czerwony', 'white_trap': 'pulapka', 'green': 'zielony', 'pink': 'rozowy'}
     for color, prefix in one_time_codes.items():
         for i in range(1, int(counts.get(color, 0)) + 1):
             db.session.add(QRCode(code_identifier=f"{prefix}{i}", color=color, event_id=event_id))
-            
     db.session.commit()
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
 
@@ -404,10 +432,15 @@ def start_game():
     QRCode.query.filter(QRCode.event_id == event_id, QRCode.claimed_by_player_id.isnot(None)).update({QRCode.claimed_by_player_id: None})
     
     set_game_state(event_id, 'game_active', 'True')
+    set_game_state(event_id, 'is_timer_running', 'True')
+    set_game_state(event_id, 'game_start_time', datetime.now().isoformat())
+    set_game_state(event_id, 'total_paused_duration', 0)
+    
     minutes = int(request.json.get('minutes', 30))
+    set_game_state(event_id, 'initial_game_duration', minutes * 60)
     end_time = datetime.now() + timedelta(minutes=minutes)
     set_game_state(event_id, 'game_end_time', end_time.isoformat())
-    set_game_state(event_id, 'is_timer_running', 'True')
+    
     db.session.commit()
     
     room = f'event_{event_id}'
@@ -424,24 +457,47 @@ def stop_game():
     emit_full_state_update(f'event_{event_id}')
     return jsonify({'message': 'Gra została zakończona.'})
 
-@app.route('/api/host/pause_time', methods=['POST'])
+@app.route('/api/host/game_control', methods=['POST'])
 @host_required
-def pause_time():
+def game_control():
     event_id = session['host_event_id']
-    is_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
-    if is_running:
-        end_time_str = get_game_state(event_id, 'game_end_time')
-        if end_time_str:
-            time_left = (datetime.fromisoformat(end_time_str) - datetime.now()).total_seconds()
+    data = request.json
+    control = data.get('control')
+    value = data.get('value')
+
+    if control == 'pause':
+        is_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
+        if is_running:
+            set_game_state(event_id, 'is_timer_running', 'False')
+            set_game_state(event_id, 'pause_start_time', datetime.now().isoformat())
+            time_left = (datetime.fromisoformat(get_game_state(event_id, 'game_end_time')) - datetime.now()).total_seconds()
             set_game_state(event_id, 'time_left_on_pause', time_left)
+        else:
+            pause_start_str = get_game_state(event_id, 'pause_start_time')
+            if pause_start_str:
+                paused_duration = (datetime.now() - datetime.fromisoformat(pause_start_str)).total_seconds()
+                total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
+                set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
+            
+            time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
+            new_end_time = datetime.now() + timedelta(seconds=time_left)
+            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+            set_game_state(event_id, 'is_timer_running', 'True')
+
+    elif control == 'force_win':
+        set_game_state(event_id, 'game_active', 'False')
         set_game_state(event_id, 'is_timer_running', 'False')
-    else:
-        time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
-        new_end_time = datetime.now() + timedelta(seconds=time_left)
-        set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
-        set_game_state(event_id, 'is_timer_running', 'True')
+        socketio.emit('game_forced_win', {'message': 'Zadanie wykonane! Gra zakończona!'}, room=f'event_{event_id}')
+
+    elif control in ['bonus', 'speed', 'language_player', 'language_host']:
+        key = f'{control}_multiplier' if control in ['bonus', 'speed'] else control
+        current_value = get_game_state(event_id, key, 1 if control != 'language' else 'pl')
+        new_value = value if str(current_value) != str(value) else (1 if control != 'language' else 'pl')
+        set_game_state(event_id, key, new_value)
+    
     emit_full_state_update(f'event_{event_id}')
-    return jsonify({'status': 'success'})
+    return jsonify(get_full_game_state(event_id))
+
 
 @app.route('/api/host/players', methods=['GET'])
 @host_required
@@ -454,8 +510,7 @@ def get_players():
 def warn_player(player_id):
     player = db.session.get(Player, player_id)
     if player and player.event_id == session['host_event_id']:
-        player.warnings += 1
-        db.session.commit()
+        player.warnings += 1; db.session.commit()
         return jsonify({'warnings': player.warnings})
     return jsonify({'error': 'Gracz nie znaleziony'}), 404
 
@@ -482,10 +537,8 @@ def host_questions():
             correct_answer=data['correctAnswer'], letter_to_reveal=data.get('letterToReveal', 'X').upper(),
             category=data.get('category', 'company'), event_id=event_id
         )
-        db.session.add(new_q)
-        db.session.commit()
+        db.session.add(new_q); db.session.commit()
         return jsonify({'id': new_q.id})
-    
     questions = Question.query.filter_by(event_id=event_id).all()
     return jsonify([{'id': q.id, 'text': q.text, 'answers': [q.option_a, q.option_b, q.option_c], 'correctAnswer': q.correct_answer, 'letterToReveal': q.letter_to_reveal, 'category': q.category} for q in questions])
 
@@ -494,8 +547,7 @@ def host_questions():
 def delete_question(question_id):
     q = db.session.get(Question, question_id)
     if q and q.event_id == session['host_event_id']:
-        db.session.delete(q)
-        db.session.commit()
+        db.session.delete(q); db.session.commit()
         return jsonify({'message': 'Pytanie usunięte'})
     return jsonify({'error': 'Pytanie nie znalezione'}), 404
 
@@ -507,8 +559,7 @@ def register_player():
     if Player.query.filter_by(name=name, event_id=event_id).first():
         return jsonify({'error': 'Ta nazwa jest już zajęta.'}), 409
     new_player = Player(name=name, event_id=event_id)
-    db.session.add(new_player)
-    db.session.commit()
+    db.session.add(new_player); db.session.commit()
     emit_leaderboard_update(f'event_{event_id}')
     return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
 
@@ -534,25 +585,14 @@ def scan_qr():
         question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id, Question.category==quiz_category).order_by(db.func.random()).first()
         if not question: return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'})
         return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
-
     else:
         if qr_code.claimed_by_player_id: return jsonify({'status': 'error', 'message': 'Ten kod został już wykorzystany.'}), 403
         qr_code.claimed_by_player_id = player_id
-        
-        message = ""
-        if qr_code.color == 'red':
-            player.score += 50
-            message = 'Kod specjalny! Zdobywasz 50 punktów!'
-        elif qr_code.color == 'white_trap':
-            player.score = max(0, player.score - 25)
-            message = 'Pułapka! Tracisz 25 punktów.'
-        elif qr_code.color == 'green':
-            db.session.commit()
-            return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
-        elif qr_code.color == 'pink':
-            db.session.commit()
-            return jsonify({'status': 'photo_challenge'})
-
+        if qr_code.color == 'red': player.score += 50; message = 'Kod specjalny! Zdobywasz 50 punktów!'
+        elif qr_code.color == 'white_trap': player.score = max(0, player.score - 25); message = 'Pułapka! Tracisz 25 punktów.'
+        elif qr_code.color == 'green': db.session.commit(); return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
+        elif qr_code.color == 'pink': db.session.commit(); return jsonify({'status': 'photo_challenge'})
+        else: message = "Niezidentyfikowany kod."
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
         return jsonify({'status': 'info', 'message': message, 'score': player.score})
@@ -565,9 +605,11 @@ def process_answer():
     if not player or not question: return jsonify({'error': 'Invalid data'}), 404
     
     db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
+    bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
     
     if answer == question.correct_answer:
-        player.score += 10
+        points = 10 * bonus
+        player.score += points
         player.revealed_letters += question.letter_to_reveal
         db.session.commit()
         emit_password_update(f'event_{player.event_id}')
@@ -585,19 +627,18 @@ def upload_photo():
     file = request.files['photo']
     player_id = request.form.get('player_id')
     player = db.session.get(Player, player_id)
-
     if file.filename == '' or not player: return jsonify({'error': 'Brak pliku lub gracza'}), 400
     
     filename = f"event_{player.event_id}_player_{player.id}_{int(datetime.utcnow().timestamp())}.jpg"
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename.replace('logos','..'))
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'].replace('logos','funny'), filename)
+    if not os.path.exists(os.path.dirname(filepath)): os.makedirs(os.path.dirname(filepath))
     file.save(filepath)
     image_url = f"/{filepath}"
-
+    
     photo = FunnyPhoto(player_id=player.id, player_name=player.name, image_url=image_url, event_id=player.event_id)
     player.score += 15
-    db.session.add(photo)
-    db.session.commit()
-
+    db.session.add(photo); db.session.commit()
+    
     room = f'event_{player.event_id}'
     socketio.emit('new_photo', {'url': image_url, 'player': player.name}, room=room)
     emit_leaderboard_update(room)
