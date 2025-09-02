@@ -465,10 +465,20 @@ def start_game():
 @host_required
 def stop_game():
     event_id = session['host_event_id']
+    data = request.json
+    password = data.get('password')
+    
+    event = db.session.get(Event, event_id)
+    if not event or not password:
+        return jsonify({'error': 'Brak danych uwierzytelniających'}), 400
+        
+    if not event.check_password(password):
+        return jsonify({'error': 'Nieprawidłowe hasło!'}), 401
+
     set_game_state(event_id, 'game_active', 'False')
     set_game_state(event_id, 'is_timer_running', 'False')
     emit_full_state_update(f'event_{event_id}')
-    return jsonify({'message': 'Gra została zakończona.'})
+    return jsonify({'message': 'Gra została zatrzymana.'})
 
 @app.route('/api/host/game_control', methods=['POST'])
 @host_required
