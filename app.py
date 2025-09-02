@@ -128,13 +128,12 @@ def init_db_command():
         admin.set_password('admin')
         db.session.add(admin)
     
-    if Event.query.count() < 2:
-        for i in range(Event.query.count() + 1, 3):
-            event = Event(id=i, login=f'host{i}', name=f'Event #{i}')
-            event.set_password(f'password{i}')
-            db.session.add(event)
+    if Event.query.count() < 1:
+        event = Event(id=1, login=f'host1', name=f'Event #1')
+        event.set_password(f'password1')
+        db.session.add(event)
     db.session.commit()
-    print("Database initialized with 2 events.")
+    print("Database initialized with 1 event.")
 
 # --- Funkcje Pomocnicze ---
 def get_game_state(event_id, key, default=None):
@@ -177,7 +176,6 @@ def event_to_dict(event):
 def delete_logo_file(event):
     if event and event.logo_url:
         try:
-            # Construct absolute path from root of the project
             filepath = os.path.join(app.root_path, event.logo_url.lstrip('/'))
             if os.path.exists(filepath):
                 os.remove(filepath)
@@ -306,7 +304,7 @@ def update_or_delete_event(event_id):
         return jsonify(event_to_dict(event))
 
     if request.method == 'DELETE':
-        if event_id <= 2: return jsonify({'error': 'Nie można usunąć dwóch pierwszych eventów.'}), 403
+        if event_id <= 1: return jsonify({'error': 'Nie można usunąć pierwszego eventu.'}), 403
         delete_logo_file(event)
         db.session.delete(event)
         db.session.commit()
