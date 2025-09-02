@@ -17,6 +17,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-supe
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
 
+# *** POPRAWKA: Tworzenie folderu przy starcie aplikacji ***
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 # Konfiguracja Bazy Danych
 database_url = os.environ.get('DATABASE_URL')
 if database_url:
@@ -49,7 +53,6 @@ class Event(db.Model):
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
 
-# ... (pozostałe modele bez zmian)
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
@@ -316,7 +319,6 @@ def upload_logo(event_id):
 @app.route('/api/admin/event/<int:event_id>/reset', methods=['POST'])
 @admin_required
 def reset_event(event_id):
-    # ... (reszta kodu bez zmian)
     try:
         Player.query.filter_by(event_id=event_id).delete()
         Question.query.filter_by(event_id=event_id).delete()
@@ -337,7 +339,6 @@ def reset_event(event_id):
 @app.route('/api/admin/qrcodes/generate', methods=['POST'])
 @admin_required
 def admin_generate_qr_codes():
-    # ... (reszta kodu bez zmian)
     data = request.json
     event_id = data.get('event_id')
     if get_game_state(event_id, 'game_active', 'False') == 'True':
@@ -357,7 +358,6 @@ def admin_generate_qr_codes():
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
 
 # --- API: HOST ---
-# ... (wszystkie funkcje API Hosta bez zmian)
 @app.route('/api/host/state', methods=['GET'])
 @host_required
 def get_host_game_state(): return jsonify(get_full_game_state(session['host_event_id']))
@@ -468,7 +468,6 @@ def delete_question(question_id):
     return jsonify({'error': 'Pytanie nie znalezione'}), 404
 
 # --- API: PLAYER ---
-# ... (wszystkie funkcje API Gracza bez zmian)
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json
@@ -558,7 +557,7 @@ def upload_photo():
     if file.filename == '' or not player: return jsonify({'error': 'Brak pliku lub gracza'}), 400
     
     filename = f"event_{player.event_id}_player_{player.id}_{int(datetime.utcnow().timestamp())}.jpg"
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename.replace('logos','..'))
     file.save(filepath)
     image_url = f"/{filepath}"
 
@@ -620,7 +619,5 @@ socketio.start_background_task(target=update_timers)
 # --- Uruchomienie Aplikacji ---
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
 
