@@ -8,12 +8,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from functools import wraps
 
 # Inicjalizacja
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
 
 # Konfiguracja Bazy Danych
 database_url = os.environ.get('DATABASE_URL')
@@ -43,9 +45,11 @@ class Event(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     is_superhost = db.Column(db.Boolean, default=False)
     event_date = db.Column(db.Date, nullable=True)
+    logo_url = db.Column(db.String(255), nullable=True)
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
 
+# ... (pozostałe modele bez zmian)
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
@@ -161,7 +165,8 @@ def event_to_dict(event):
         'name': event.name,
         'login': event.login,
         'is_superhost': event.is_superhost,
-        'event_date': event.event_date.isoformat() if event.event_date else ''
+        'event_date': event.event_date.isoformat() if event.event_date else '',
+        'logo_url': event.logo_url
     }
 
 # --- Główne Ścieżki ---
@@ -277,29 +282,41 @@ def update_or_delete_event(event_id):
         event.login = data.get('login', event.login)
         event.is_superhost = data.get('is_superhost', event.is_superhost)
         if data.get('password'): event.set_password(data['password'])
-        
         date_str = data.get('event_date')
-        if date_str:
-            try: event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            except ValueError: pass
-        else:
-            event.event_date = None
-        
+        event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         db.session.commit()
         return jsonify(event_to_dict(event))
 
     if request.method == 'DELETE':
-        if event_id <= 2:
-            return jsonify({'error': 'Nie można usunąć dwóch pierwszych eventów.'}), 403
-        
+        if event_id <= 2: return jsonify({'error': 'Nie można usunąć dwóch pierwszych eventów.'}), 403
         db.session.delete(event)
         db.session.commit()
         return jsonify({'message': f'Event {event_id} został pomyślnie usunięty.'})
 
+@app.route('/api/admin/event/<int:event_id>/upload_logo', methods=['POST'])
+@admin_required
+def upload_logo(event_id):
+    event = db.session.get(Event, event_id)
+    if not event: return jsonify({'error': 'Event not found'}), 404
+    if 'logo' not in request.files: return jsonify({'error': 'Brak pliku logo'}), 400
+    
+    file = request.files['logo']
+    if file.filename == '': return jsonify({'error': 'Nie wybrano pliku'}), 400
+    
+    if file:
+        filename = secure_filename(f"event_{event_id}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        event.logo_url = f"/{filepath}"
+        db.session.commit()
+        return jsonify({'message': 'Logo wgrane pomyślnie', 'logo_url': event.logo_url})
+    
+    return jsonify({'error': 'Nie udało się wgrać pliku'}), 500
 
 @app.route('/api/admin/event/<int:event_id>/reset', methods=['POST'])
 @admin_required
 def reset_event(event_id):
+    # ... (reszta kodu bez zmian)
     try:
         Player.query.filter_by(event_id=event_id).delete()
         Question.query.filter_by(event_id=event_id).delete()
@@ -320,6 +337,7 @@ def reset_event(event_id):
 @app.route('/api/admin/qrcodes/generate', methods=['POST'])
 @admin_required
 def admin_generate_qr_codes():
+    # ... (reszta kodu bez zmian)
     data = request.json
     event_id = data.get('event_id')
     if get_game_state(event_id, 'game_active', 'False') == 'True':
@@ -339,6 +357,7 @@ def admin_generate_qr_codes():
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
 
 # --- API: HOST ---
+# ... (wszystkie funkcje API Hosta bez zmian)
 @app.route('/api/host/state', methods=['GET'])
 @host_required
 def get_host_game_state(): return jsonify(get_full_game_state(session['host_event_id']))
@@ -449,6 +468,7 @@ def delete_question(question_id):
     return jsonify({'error': 'Pytanie nie znalezione'}), 404
 
 # --- API: PLAYER ---
+# ... (wszystkie funkcje API Gracza bez zmian)
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json
