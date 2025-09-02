@@ -13,7 +13,6 @@ from functools import wraps
 
 # Inicjalizacja
 app = Flask(__name__)
-# POPRAWKA: 'SECRET_KEY' zamiast 'SECRET_key'
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
@@ -181,16 +180,16 @@ def get_full_game_state(event_id):
             time_elapsed = time_elapsed_with_pauses - total_paused
         else:
             initial_duration = float(state_data.get('initial_game_duration', 0))
-            time_elapsed = initial_duration - time_left
+            time_left_at_end = float(state_data.get('time_left_on_pause', time_left))
+            time_elapsed = initial_duration - time_left_at_end
             time_elapsed_with_pauses = time_elapsed + total_paused
 
 
     player_count = Player.query.filter_by(event_id=event_id).count()
-    # POPRAWKA: Zabezpieczenie przed brakiem tabeli w bazie danych
     try:
         correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
     except Exception:
-        correct_answers = 0 # Domyślna wartość, jeśli tabela nie istnieje
+        correct_answers = 0
 
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
@@ -210,7 +209,6 @@ def get_full_game_state(event_id):
         'bonus_multiplier': int(state_data.get('bonus_multiplier', 1)),
         'time_speed': time_speed
     }
-
 
 def event_to_dict(event):
     return {
@@ -274,14 +272,35 @@ def impersonate_host(event_id):
 @app.route('/host/login', methods=['GET', 'POST'])
 def host_login():
     if request.method == 'POST':
-        login, password = request.form['login'], request.form['password']
+        login = request.form['login'].strip()
+        password = request.form['password'].strip()
+        
+        print(f"DEBUG: Próba logowania - login: '{login}', password: '{password}'")
+        
         event = Event.query.filter_by(login=login).first()
-        if event and event.check_password(password):
-            session['host_event_id'] = event.id
-            session.pop('impersonated_by_admin', None)
-            return redirect(url_for('host_panel'))
+        
+        if event:
+            print(f"DEBUG: Znaleziono event - ID: {event.id}, login: '{event.login}'")
+            print(f"DEBUG: Sprawdzanie hasła...")
+            
+            if event.check_password(password):
+                print(f"DEBUG: Hasło prawidłowe - logowanie udane")
+                session['host_event_id'] = event.id
+                session.pop('impersonated_by_admin', None)
+                return redirect(url_for('host_panel'))
+            else:
+                print(f"DEBUG: Hasło nieprawidłowe")
+        else:
+            print(f"DEBUG: Nie znaleziono eventu o loginie: '{login}'")
+            all_events = Event.query.all()
+            print(f"DEBUG: Wszystkie eventy w bazie:")
+            for e in all_events:
+                print(f"  - ID: {e.id}, login: '{e.login}'")
+        
         return render_template('host_login.html', error="Nieprawidłowe dane")
+        
     return render_template('host_login.html')
+
 
 @app.route('/host')
 @host_required
@@ -323,11 +342,28 @@ def list_qrcodes_public(event_id):
 def manage_events():
     if request.method == 'POST':
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
-        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=f'host{new_id}')
-        new_event.set_password(f'password{new_id}')
+        login = f'host{new_id}'
+        password = f'password{new_id}'
+        
+        new_event = Event(
+            id=new_id, 
+            name=f'Nowy Event #{new_id}', 
+            login=login
+        )
+        new_event.set_password(password)
+        
         db.session.add(new_event)
-        db.session.commit()
+        
+        try:
+            db.session.commit()
+            print(f"DEBUG: Stworzono nowy event - ID: {new_id}, login: '{login}', password: '{password}'")
+        except Exception as e:
+            db.session.rollback()
+            print(f"ERROR: Błąd podczas tworzenia eventu: {e}")
+            return jsonify({'error': 'Błąd podczas tworzenia eventu'}), 500
+            
         return jsonify(event_to_dict(new_event))
+        
     events = Event.query.order_by(Event.id).all()
     return jsonify([event_to_dict(e) for e in events])
 
@@ -339,15 +375,29 @@ def update_or_delete_event(event_id):
 
     if request.method == 'PUT':
         data = request.json
-        event.name = data.get('name', event.name)
-        event.login = data.get('login', event.login)
+        event.name = data.get('name', event.name).strip()
+        
+        new_login = data.get('login', event.login).strip()
+        if new_login:
+            event.login = new_login
+
         event.is_superhost = data.get('is_superhost', event.is_superhost)
-        event.notes = data.get('notes', event.notes)
-        if data.get('password'): event.set_password(data['password'])
+        event.notes = data.get('notes', event.notes).strip()
+
+        new_password = data.get('password')
+        if new_password and new_password.strip():
+            event.set_password(new_password.strip())
+            
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
-        db.session.commit()
-        return jsonify(event_to_dict(event))
+        
+        try:
+            db.session.commit()
+            return jsonify(event_to_dict(event))
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': f'Błąd zapisu: {e}'}), 500
+
 
     if request.method == 'DELETE':
         if event_id <= 1: return jsonify({'error': 'Nie można usunąć pierwszego eventu.'}), 403
@@ -702,27 +752,28 @@ def emit_password_update(room):
 
 def update_timers():
     while True:
-        with app.app_context():
-            active_events = db.session.query(GameState.event_id).filter_by(key='game_active', value='True').distinct().all()
-            event_ids = [e[0] for e in active_events]
-            
-            for event_id in event_ids:
-                if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
-                    state = get_full_game_state(event_id)
-                    room_name = f'event_{event_id}'
-                    # POPRAWKA: Wysyłanie pełnych danych o czasie
-                    socketio.emit('timer_tick', {
-                        'time_left': state['time_left'],
-                        'time_elapsed': state['time_elapsed'],
-                        'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
-                    }, room=room_name)
-                    
-                    if state['time_left'] <= 0:
-                        set_game_state(event_id, 'game_active', 'False')
-                        set_game_state(event_id, 'is_timer_running', 'False')
-                        emit_full_state_update(room_name)
-                        socketio.emit('game_over', {}, room=room_name)
-
+        try:
+            with app.app_context():
+                active_events = db.session.query(GameState.event_id).filter_by(key='game_active', value='True').distinct().all()
+                event_ids = [e[0] for e in active_events]
+                
+                for event_id in event_ids:
+                    if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
+                        state = get_full_game_state(event_id)
+                        room_name = f'event_{event_id}'
+                        socketio.emit('timer_tick', {
+                            'time_left': state['time_left'],
+                            'time_elapsed': state['time_elapsed'],
+                            'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
+                        }, room=room_name)
+                        
+                        if state['time_left'] <= 0:
+                            set_game_state(event_id, 'game_active', 'False')
+                            set_game_state(event_id, 'is_timer_running', 'False')
+                            emit_full_state_update(room_name)
+                            socketio.emit('game_over', {}, room=room_name)
+        except Exception as e:
+            print(f"Error in update_timers: {e}")
         socketio.sleep(1)
 
 
