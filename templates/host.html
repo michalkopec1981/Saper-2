@@ -307,9 +307,16 @@ document.addEventListener('DOMContentLoaded', function () {
         updateUI(state);
     });
 
+    // POPRAWKA: Aktualizacja wszystkich pól czasu
     socket.on('timer_tick', (data) => {
         if (infoElements.timeLeft) {
             infoElements.timeLeft.textContent = formatTime(data.time_left);
+        }
+        if (infoElements.timeElapsed) {
+            infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
+        }
+        if (infoElements.timeElapsedPauses) {
+            infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
         }
     });
 
