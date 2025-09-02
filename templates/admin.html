@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
         
-        const deleteBtnVisibility = event.id > 2 ? '' : 'style="display: none;"';
+        const deleteBtnVisibility = event.id > 1 ? '' : 'style="display: none;"';
         const logoContent = event.logo_url 
             ? `<img src="${event.logo_url}" class="event-logo-preview">`
             : `<span class="logo-placeholder">Brak logo</span>`;
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.innerHTML = `
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-lg-10">
+                    <div class="col-lg-9">
                         <div class="row g-3">
                             <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
                             <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
                         </div>
                     </div>
-                    <div class="col-lg-2 d-flex flex-column align-items-center">
+                    <div class="col-lg-3 d-flex flex-column align-items-center">
                         <label class="form-label">Logo</label>
                         <div class="logo-area">${logoContent}</div>
                     </div>
