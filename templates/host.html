@@ -1,5 +1,18 @@
 {% extends 'base.html' %}
 {% block title %}Panel Hosta - {{ event.name }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    /* Style for active bonus/speed buttons */
+    .btn-group .btn.active-modifier {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     {% if is_impersonated %}
@@ -22,47 +35,270 @@
 
     <div class="tab-content">
         <div class="tab-pane fade show active" id="game">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie Grą</h5></div>
+            
+            <!-- Game Information Panel -->
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0">Informacje o grze</h5></div>
                 <div class="card-body">
-                    <div class="row align-items-end">
-                        <div class="col-md-6"><label for="minutes-input" class="form-label">Czas gry w minutach:</label><input type="number" class="form-control" id="minutes-input" value="30" min="1"></div>
-                        <div class="col-md-6 d-flex justify-content-between align-items-center">
-                            <div><span class="text-muted">Pozostało:</span><span class="fs-4" id="game-timer">00:00</span></div>
-                            <button type="button" class="btn btn-warning" id="pause-timer" disabled>Pauza</button>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Liczba graczy: <span id="info-player-count" class="badge bg-primary rounded-pill">0</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Zdobyte nagrody: <span id="info-correct-answers" class="badge bg-primary rounded-pill">0</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Język: <span id="info-language" class="badge bg-secondary">Polski</span></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                             <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Czas do końca: <strong id="info-time-left">00:00</strong></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Czas gry (netto): <span id="info-time-elapsed">00:00</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Czas gry (brutto): <span id="info-time-elapsed-pauses">00:00</span></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                             <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Aktualna premia: <span id="info-bonus" class="badge bg-success">Brak</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Aktualne tempo: <span id="info-speed" class="badge bg-info">x1</span></li>
+                            </ul>
                         </div>
                     </div>
-                    <hr class="my-4">
-                    <div class="d-grid gap-2 d-md-flex justify-content-center">
-                        <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
-                        <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
-                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <!-- Pre-Game Settings Panel -->
+                    <fieldset id="pre-game-settings">
+                        <div class="card mb-4">
+                            <div class="card-header"><h5 class="card-title mb-0">Ustawienia przed grą</h5></div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="minutes-input" class="form-label">Czas gry w minutach:</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minutes-input" value="30" min="1">
+                                        <button class="btn btn-outline-secondary" type="button" id="set-time-btn">OK</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="mb-3">
+                                    <h6>Język graczy</h6>
+                                    <div class="btn-group w-100" role="group" id="lang-player-controls">
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="pl">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en">Język angielski</button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6>Język prowadzącego</h6>
+                                    <div class="btn-group w-100" role="group" id="lang-host-controls">
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="pl">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en">Język angielski</button>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="d-grid gap-2">
+                                    <button id="start-game" class="btn btn-success btn-lg">Start Gry</button>
+                                    <button id="stop-game" class="btn btn-danger btn-lg" disabled>Stop Gry</button>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="col-lg-6">
+                    <!-- In-Game Settings Panel -->
+                    <fieldset id="in-game-settings" disabled>
+                        <div class="card mb-4">
+                            <div class="card-header"><h5 class="card-title mb-0">Ustawienia w czasie gry</h5></div>
+                            <div class="card-body" id="game-controls">
+                                <label class="form-label">Premia punktowa:</label>
+                                <div class="btn-group w-100 mb-3" role="group">
+                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
+                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
+                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
+                                </div>
+                                <label class="form-label">Tempo czasu:</label>
+                                <div class="btn-group w-100 mb-3" role="group">
+                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
+                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="3">x3</button>
+                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
+                                </div>
+                                <hr>
+                                <div class="d-grid gap-2">
+                                    <button id="pause-btn" data-control="pause" class="btn btn-warning">Pauza</button>
+                                    <button id="force-win-btn" data-control="force_win" class="btn btn-primary">Przedwczesna wygrana</button>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
                 </div>
             </div>
         </div>
         <div class="tab-pane fade" id="players">...</div>
-        <div class="tab-pane fade" id="questions">
-            <ul class="nav nav-pills mb-3">
-                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#q-company">Quiz Firma</button></li>
-                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#q-proposed">Sugerowane (Świat)</button></li>
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="q-company">...</div>
-                <div class="tab-pane fade" id="q-proposed">...</div>
-            </div>
-        </div>
+        <div class="tab-pane fade" id="questions">...</div>
         {% if event.is_superhost %}
-        <div class="tab-pane fade" id="superhost">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie Kodami QR</h5></div>
-                <div class="card-body">
-                    <p class="text-muted">Jako Superhost, masz dostęp do zarządzania kodami QR dla tego eventu. Pamiętaj, że zmiany kodów powinny być dokonywane przed rozpoczęciem gry.</p>
-                    <a href="{{ url_for('admin_qrcodes_view', event_id=event.id) }}" class="btn btn-primary">Zarządzaj Kodami QR</a>
-                </div>
-            </div>
-        </div>
+        <div class="tab-pane fade" id="superhost">...</div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
 
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const EVENT_ID = {{ event.id }};
+    const socket = io();
+
+    // --- Element references ---
+    const infoElements = {
+        playerCount: document.getElementById('info-player-count'),
+        correctAnswers: document.getElementById('info-correct-answers'),
+        language: document.getElementById('info-language'),
+        timeLeft: document.getElementById('info-time-left'),
+        timeElapsed: document.getElementById('info-time-elapsed'),
+        timeElapsedPauses: document.getElementById('info-time-elapsed-pauses'),
+        bonus: document.getElementById('info-bonus'),
+        speed: document.getElementById('info-speed')
+    };
+    const preGameSettings = document.getElementById('pre-game-settings');
+    const inGameSettings = document.getElementById('in-game-settings');
+    const minutesInput = document.getElementById('minutes-input');
+    const startGameBtn = document.getElementById('start-game');
+    const stopGameBtn = document.getElementById('stop-game');
+    const gameControls = document.getElementById('game-controls');
+    const langPlayerControls = document.getElementById('lang-player-controls');
+    const langHostControls = document.getElementById('lang-host-controls');
+    const pauseBtn = document.getElementById('pause-btn');
+
+    // --- Helper functions ---
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    async function sendGameControl(control, value = null) {
+        try {
+            const response = await fetch('/api/host/game_control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ control, value })
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Server error');
+            }
+        } catch (error) {
+            console.error('Control error:', error);
+            alert(`Błąd: ${error.message}`);
+        }
+    }
+    
+    function updateUI(state) {
+        // Update info panel
+        infoElements.playerCount.textContent = state.player_count;
+        infoElements.correctAnswers.textContent = state.correct_answers;
+        infoElements.language.textContent = state.language_player === 'pl' ? 'Polski' : 'Angielski';
+        infoElements.timeLeft.textContent = formatTime(state.time_left);
+        infoElements.timeElapsed.textContent = formatTime(state.time_elapsed);
+        infoElements.timeElapsedPauses.textContent = formatTime(state.time_elapsed_with_pauses);
+        infoElements.bonus.textContent = state.bonus_multiplier > 1 ? `x${state.bonus_multiplier}` : 'Brak';
+        infoElements.speed.textContent = `x${state.time_speed}`;
+
+        // Enable/disable sections
+        preGameSettings.disabled = state.game_active;
+        inGameSettings.disabled = !state.game_active;
+        startGameBtn.disabled = state.game_active;
+        stopGameBtn.disabled = !state.game_active;
+
+        // Update button states
+        pauseBtn.textContent = state.is_timer_running ? 'Pauza' : 'Wznów';
+        
+        // Update active classes for modifiers
+        document.querySelectorAll('#game-controls .btn-group .btn').forEach(btn => {
+            const control = btn.dataset.control;
+            const value = btn.dataset.value;
+            if (control === 'bonus' && parseInt(value) === state.bonus_multiplier) {
+                btn.classList.add('active-modifier');
+            } else if (control === 'speed' && parseInt(value) === state.time_speed) {
+                btn.classList.add('active-modifier');
+            } else {
+                btn.classList.remove('active-modifier');
+            }
+        });
+        
+        // Update language buttons
+        document.querySelectorAll('#lang-player-controls .btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.value === state.language_player);
+        });
+        document.querySelectorAll('#lang-host-controls .btn').forEach(btn => {
+             btn.classList.toggle('active', btn.dataset.value === state.language_host);
+        });
+    }
+
+    // --- Event listeners ---
+    startGameBtn.addEventListener('click', async () => {
+        const minutes = parseInt(minutesInput.value);
+        if (minutes < 1) {
+            alert('Czas gry musi wynosić co najmniej 1 minutę.');
+            return;
+        }
+        if (confirm(`Czy na pewno chcesz rozpocząć nową grę? Spowoduje to usunięcie wszystkich obecnych graczy i postępów.`)) {
+             try {
+                const response = await fetch('/api/host/start_game', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minutes })
+                });
+                 if (!response.ok) throw new Error('Nie udało się rozpocząć gry.');
+            } catch (error) {
+                console.error('Start game error:', error);
+                alert(`Błąd: ${error.message}`);
+            }
+        }
+    });
+
+    stopGameBtn.addEventListener('click', async () => {
+        if (confirm('Czy na pewno chcesz zakończyć grę?')) {
+             try {
+                const response = await fetch('/api/host/stop_game', { method: 'POST' });
+                 if (!response.ok) throw new Error('Nie udało się zatrzymać gry.');
+            } catch (error) {
+                console.error('Stop game error:', error);
+                alert(`Błąd: ${error.message}`);
+            }
+        }
+    });
+    
+    gameControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-control]');
+        if (btn) {
+            sendGameControl(btn.dataset.control, btn.dataset.value);
+        }
+    });
+
+    langPlayerControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-control]');
+        if(btn) sendGameControl(btn.dataset.control, btn.dataset.value);
+    });
+
+    langHostControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-control]');
+        if(btn) sendGameControl(btn.dataset.control, btn.dataset.value);
+    });
+    
+    // --- Socket.IO listeners ---
+    socket.on('connect', () => {
+        socket.emit('join', { event_id: EVENT_ID });
+    });
+
+    socket.on('game_state_update', (state) => {
+        updateUI(state);
+    });
+
+    // Initial load
+    fetch('/api/host/state').then(res => res.json()).then(updateUI);
+});
+</script>
+{% endblock %}
