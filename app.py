@@ -480,6 +480,7 @@ def stop_game():
     emit_full_state_update(f'event_{event_id}')
     return jsonify({'message': 'Gra została zatrzymana.'})
 
+
 @app.route('/api/host/game_control', methods=['POST'])
 @host_required
 def game_control():
@@ -709,7 +710,12 @@ def update_timers():
                 if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
                     state = get_full_game_state(event_id)
                     room_name = f'event_{event_id}'
-                    socketio.emit('timer_tick', {'time_left': state['time_left']}, room=room_name)
+                    # POPRAWKA: Wysyłanie pełnych danych o czasie
+                    socketio.emit('timer_tick', {
+                        'time_left': state['time_left'],
+                        'time_elapsed': state['time_elapsed'],
+                        'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
+                    }, room=room_name)
                     
                     if state['time_left'] <= 0:
                         set_game_state(event_id, 'game_active', 'False')
