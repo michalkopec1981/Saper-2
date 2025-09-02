@@ -176,6 +176,7 @@ def event_to_dict(event):
 def delete_logo_file(event):
     if event and event.logo_url:
         try:
+            # Construct absolute path from root of the project
             filepath = os.path.join(app.root_path, event.logo_url.lstrip('/'))
             if os.path.exists(filepath):
                 os.remove(filepath)
