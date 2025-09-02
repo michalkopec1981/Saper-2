@@ -172,6 +172,17 @@ def event_to_dict(event):
         'logo_url': event.logo_url
     }
 
+def delete_logo_file(event):
+    if event and event.logo_url:
+        try:
+            filepath = os.path.join(app.root_path, event.logo_url.lstrip('/'))
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            event.logo_url = None
+        except Exception as e:
+            print(f"Error deleting logo file: {e}")
+
+
 # --- Główne Ścieżki ---
 @app.route('/')
 def index(): return redirect(url_for('host_login'))
@@ -292,6 +303,7 @@ def update_or_delete_event(event_id):
 
     if request.method == 'DELETE':
         if event_id <= 2: return jsonify({'error': 'Nie można usunąć dwóch pierwszych eventów.'}), 403
+        delete_logo_file(event)
         db.session.delete(event)
         db.session.commit()
         return jsonify({'message': f'Event {event_id} został pomyślnie usunięty.'})
@@ -307,6 +319,7 @@ def upload_logo(event_id):
     if file.filename == '': return jsonify({'error': 'Nie wybrano pliku'}), 400
     
     if file:
+        delete_logo_file(event) # Usuń stare logo, jeśli istnieje
         filename = secure_filename(f"event_{event_id}_{file.filename}")
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
@@ -316,17 +329,33 @@ def upload_logo(event_id):
     
     return jsonify({'error': 'Nie udało się wgrać pliku'}), 500
 
+@app.route('/api/admin/event/<int:event_id>/delete_logo', methods=['POST'])
+@admin_required
+def delete_logo(event_id):
+    event = db.session.get(Event, event_id)
+    if not event: return jsonify({'error': 'Event not found'}), 404
+    delete_logo_file(event)
+    db.session.commit()
+    return jsonify({'message': 'Logo usunięte pomyślnie.'})
+
+
 @app.route('/api/admin/event/<int:event_id>/reset', methods=['POST'])
 @admin_required
 def reset_event(event_id):
     try:
+        event = db.session.get(Event, event_id)
+        if not event: return jsonify({'message': 'Event not found'}), 404
+        delete_logo_file(event)
+
         Player.query.filter_by(event_id=event_id).delete()
         Question.query.filter_by(event_id=event_id).delete()
         QRCode.query.filter_by(event_id=event_id).delete()
         PlayerScan.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
+        
         db.session.commit()
+        
         room = f'event_{event_id}'
         emit_leaderboard_update(room)
         emit_password_update(room)
