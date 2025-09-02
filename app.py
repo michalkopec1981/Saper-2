@@ -13,7 +13,8 @@ from functools import wraps
 
 # Inicjalizacja
 app = Flask(__name__)
-app.config['SECRET_key'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
+# POPRAWKA: 'SECRET_KEY' zamiast 'SECRET_key'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
 
@@ -185,7 +186,11 @@ def get_full_game_state(event_id):
 
 
     player_count = Player.query.filter_by(event_id=event_id).count()
-    correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
+    # POPRAWKA: Zabezpieczenie przed brakiem tabeli w bazie danych
+    try:
+        correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
+    except Exception:
+        correct_answers = 0 # Domyślna wartość, jeśli tabela nie istnieje
 
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
@@ -229,7 +234,6 @@ def delete_logo_file(event):
 def index(): return redirect(url_for('host_login'))
 
 # --- ADMIN ---
-# ... (Admin routes are unchanged for this update)
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -521,9 +525,7 @@ def game_control():
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
-# ... (pozostałe, niezmienione API dla graczy i pytań)
-
-# --- API: HOST Players & Questions (bez zmian) ---
+# --- API: HOST Players & Questions ---
 @app.route('/api/host/players', methods=['GET'])
 @host_required
 def get_players():
@@ -576,7 +578,7 @@ def delete_question(question_id):
         return jsonify({'message': 'Pytanie usunięte'})
     return jsonify({'error': 'Pytanie nie znalezione'}), 404
 
-# --- API: PLAYER (bez zmian) ---
+# --- API: PLAYER ---
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json
@@ -725,3 +727,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     # Use debug=False when deploying to production
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
+
