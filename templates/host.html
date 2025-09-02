@@ -10,6 +10,17 @@
         color: white;
         border-color: #0d6efd;
     }
+    
+    /* Style for time display - make it more prominent */
+    #info-time-left {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #dc3545;
+    }
+    
+    #info-time-elapsed, #info-time-elapsed-pauses {
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -170,11 +181,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const langHostControls = document.getElementById('lang-host-controls');
     const pauseBtn = document.getElementById('pause-btn');
 
+    // Variables to track current state for smoother updates
+    let currentTimeLeft = 0;
+    let currentTimeElapsed = 0;
+    let currentTimeElapsedPauses = 0;
+    let isGameActive = false;
+    let isTimerRunning = false;
+    let lastUpdateTime = Date.now();
+
     // --- Helper functions ---
     function formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // Local timer for smooth countdown updates
+    function startLocalTimer() {
+        setInterval(() => {
+            if (isGameActive && isTimerRunning) {
+                const now = Date.now();
+                const deltaSeconds = (now - lastUpdateTime) / 1000;
+                
+                if (deltaSeconds >= 0.9) { // Update approximately every second
+                    if (currentTimeLeft > 0) {
+                        currentTimeLeft = Math.max(0, currentTimeLeft - deltaSeconds);
+                        infoElements.timeLeft.textContent = formatTime(currentTimeLeft);
+                        
+                        // Update elapsed times too
+                        currentTimeElapsed += deltaSeconds;
+                        currentTimeElapsedPauses += deltaSeconds;
+                        infoElements.timeElapsed.textContent = formatTime(currentTimeElapsed);
+                        infoElements.timeElapsedPauses.textContent = formatTime(currentTimeElapsedPauses);
+                    }
+                    lastUpdateTime = now;
+                }
+            }
+        }, 100); // Check every 100ms for smooth updates
     }
 
     async function sendGameControl(control, value = null) {
@@ -195,6 +238,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function updateUI(state) {
+        // Update local state variables
+        isGameActive = state.game_active;
+        isTimerRunning = state.is_timer_running;
+        currentTimeLeft = state.time_left;
+        currentTimeElapsed = state.time_elapsed;
+        currentTimeElapsedPauses = state.time_elapsed_with_pauses;
+        lastUpdateTime = Date.now();
+
         // Update info panel
         infoElements.playerCount.textContent = state.player_count;
         infoElements.correctAnswers.textContent = state.correct_answers;
@@ -210,8 +261,6 @@ document.addEventListener('DOMContentLoaded', function () {
         inGameSettings.disabled = !state.game_active;
         startGameBtn.disabled = state.game_active;
         
-        // The Stop button is now inside 'in-game-settings' which is handled above.
-
         // Update button states
         pauseBtn.textContent = state.is_timer_running ? 'Pauza' : 'Wznów';
         
@@ -307,8 +356,15 @@ document.addEventListener('DOMContentLoaded', function () {
         updateUI(state);
     });
 
-    // POPRAWKA: Aktualizacja wszystkich pól czasu
+    // Enhanced timer_tick handler - now properly updates all time fields
     socket.on('timer_tick', (data) => {
+        // Update local state with server data to keep in sync
+        currentTimeLeft = data.time_left;
+        currentTimeElapsed = data.time_elapsed;
+        currentTimeElapsedPauses = data.time_elapsed_with_pauses;
+        lastUpdateTime = Date.now();
+
+        // Update the display immediately
         if (infoElements.timeLeft) {
             infoElements.timeLeft.textContent = formatTime(data.time_left);
         }
@@ -320,9 +376,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    socket.on('game_over', () => {
+        isGameActive = false;
+        isTimerRunning = false;
+        alert('Czas się skończył! Gra zakończona.');
+    });
+
+    socket.on('game_forced_win', (data) => {
+        isGameActive = false;
+        isTimerRunning = false;
+        alert(data.message);
+    });
+
+    // Initialize local timer
+    startLocalTimer();
+
     // Initial load
     fetch('/api/host/state').then(res => res.json()).then(updateUI);
 });
 </script>
 {% endblock %}
-
