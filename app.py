@@ -294,7 +294,7 @@ def get_full_game_state(event_id):
 def event_to_dict(event):
     return {
         'id': event.id, 'name': event.name, 'login': event.login,
-        'password': event.password_plain, # Dodana linia
+        'password': event.password_plain or '', # Dodana linia
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
         'logo_url': event.logo_url, 'notes': event.notes
@@ -436,10 +436,13 @@ def update_or_delete_event(event_id):
             event.login = new_login
         event.is_superhost = data.get('is_superhost', event.is_superhost)
         event.notes = data.get('notes', event.notes).strip()
-        new_password = data.get('password')
+           new_password = data.get('password')
         if new_password and new_password.strip():
             event.set_password(new_password.strip())
-            event.password_plain = new_password.strip() # Dodana linia
+            event.password_plain = new_password.strip()
+        elif new_password == '':
+    # Jeśli przesłano pusty string, wyczyść hasło
+        event.password_plain = ''
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         try:
@@ -846,6 +849,7 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
