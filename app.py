@@ -402,10 +402,19 @@ def list_qrcodes_public(event_id):
 # --- API Endpoints ---
 # ===================================================================
 
-# --- API: ADMIN ---
+@app.route('/api/admin/event/<int:event_id>/game_state', methods=['GET'])
+@admin_required
+def get_admin_game_state(event_id):
+    """Pobiera stan gry dla panelu admina"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Nie znaleziono eventu'}), 404
+    
+    return jsonify(get_full_game_state(event_id))
+
 @app.route('/api/admin/events', methods=['GET', 'POST'])
 @admin_required
-def manage_events():
+def manage_events(): 
     if request.method == 'POST':
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
         login = f'host{new_id}'
@@ -849,6 +858,7 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
