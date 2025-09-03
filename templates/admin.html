@@ -41,7 +41,7 @@
         </div>
         <button id="add-event-btn" class="btn btn-primary">Dodaj Nowy Event</button>
     </div>
-    
+
     <div id="status-container" class="mb-3"></div>
 
     <div id="events-container">
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const panel = document.createElement('div');
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
-        
+
         const deleteBtnVisibility = event.id > 1 ? '' : 'style="display: none;"';
         const logoContent = event.logo_url 
             ? `<img src="${event.logo_url}" class="event-logo-preview">`
@@ -100,15 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row g-3">
                     <div class="col-lg-9">
                         <div class="row g-3">
-                            <div class="col-md-4"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
-                            <div class="col-md-4"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
-                            <div class="col-md-4"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
-                            <div class="col-md-6"><label class="form-label">Aktualne Hasło</label><input type="text" class="form-control" value="${event.password || ''}" readonly></div>
-                            <div class="col-md-6"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
                             <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
                         </div>
                     </div>
-                <div class="col-lg-3 d-flex flex-column align-items-center">
+                    <div class="col-lg-3 d-flex flex-column align-items-center">
                         <label class="form-label">Logo</label>
                         <div class="logo-area">${logoContent}</div>
                     </div>
@@ -121,17 +120,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                        <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
+                        <button class="btn btn-sm btn-outline-primary btn-logo">Logo</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
                         <button class="btn btn-sm btn-secondary btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
                         <button class="btn btn-sm btn-secondary btn-logo">Logo</button>
                         <button class="btn btn-sm btn-secondary btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
                         <button class="btn btn-sm btn-danger btn-reset">Reset Gry</button>
+                        <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
                         <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary">Kody QR</a>
                         <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
                         <button class="btn btn-sm btn-success btn-save">Zapisz Zmiany</button>
                     </div>
                 </div>
             </div>`;
-        
+
         // Auto-resize textarea
         const textarea = panel.querySelector('.notes-textarea');
         textarea.addEventListener('input', () => {
@@ -208,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        
+
         if (target.classList.contains('btn-delete')) {
             if (confirm(`Czy na pewno chcesz USUNĄĆ Event ${eventId}?`)) {
                 const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
@@ -231,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('logo', file);
 
             const result = await fetchApi(`/api/admin/event/${eventId}/upload_logo`, { method: 'POST', body: formData });
-            
+
             if (result && result.logo_url) {
                 const logoArea = panel.querySelector('.logo-area');
                 logoArea.innerHTML = `<img src="${result.logo_url}?t=${new Date().getTime()}" class="event-logo-preview">`;
@@ -245,4 +248,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-
+~
