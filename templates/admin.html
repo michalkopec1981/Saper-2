@@ -85,6 +85,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function createEventPanel(event) {
+            async function updateGameStatus(panel, eventId) {
+                try {
+                    const response = await fetch(`/api/admin/event/${eventId}/game_state`);
+                    if (response.ok) {
+                        const gameState = await response.json();
+                        
+                        const statusText = panel.querySelector('.game-status-text');
+                        const statusBadge = panel.querySelector('.game-status-badge');
+                        const timeLeft = panel.querySelector('.time-left');
+                        const timeElapsed = panel.querySelector('.time-elapsed');
+                        
+                        let status = 'Przygotowanie';
+                        let badgeClass = 'bg-secondary';
+                        
+                        if (gameState.game_active) {
+                            if (gameState.is_timer_running) {
+                                status = 'Start';
+                                badgeClass = 'bg-success';
+                            } else {
+                                status = 'Pauza';
+                                badgeClass = 'bg-warning';
+                            }
+                        } else if (gameState.time_elapsed > 0) {
+                            status = 'Koniec';
+                            badgeClass = 'bg-danger';
+                        }
+                        
+                        statusText.textContent = status;
+                        statusBadge.className = `badge game-status-badge ${badgeClass}`;
+                        statusBadge.textContent = gameState.game_active ? 'AKTYWNA' : 'NIEAKTYWNA';
+                        
+                        // Format czasu
+                        const formatTime = (seconds) => {
+                            const mins = Math.floor(seconds / 60);
+                            const secs = Math.floor(seconds % 60);
+                            return `${mins}:${secs.toString().padStart(2, '0')}`;
+                        };
+                        
+                        timeLeft.textContent = gameState.game_active ? formatTime(gameState.time_left) : '-';
+                        timeElapsed.textContent = gameState.time_elapsed > 0 ? formatTime(gameState.time_elapsed_with_pauses) : '-';
+                    }
+                } catch (error) {
+                    console.error('Błąd pobierania statusu gry:', error);
+                }
+            }
         const panel = document.createElement('div');
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
@@ -173,11 +218,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const events = await fetchApi('/api/admin/events');
         if (events) {
             eventsContainer.innerHTML = '';
-            events.forEach(event => eventsContainer.appendChild(createEventPanel(event)));
+            events.forEach(event => {
+                const panel = createEventPanel(event);
+                eventsContainer.appendChild(panel);
+                updateGameStatus(panel, event.id); // DODANA LINIA
+            });
         } else {
             eventsContainer.innerHTML = '<div class="alert alert-warning">Nie udało się załadować eventów.</div>';
         }
     }
+
+    // TUTAJ DODAJ automatyczne odświeżanie
+    setInterval(() => {
+        const panels = eventsContainer.querySelectorAll('.card[data-event-id]');
+        panels.forEach(panel => {
+            const eventId = panel.dataset.eventId;
+            updateGameStatus(panel, eventId);
+        });
+    }, 5000);
 
     addEventBtn.addEventListener('click', async () => {
         addEventBtn.disabled = true;
