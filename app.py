@@ -46,6 +46,7 @@ class Event(db.Model):
     name = db.Column(db.String(100), default="Nowy Event")
     login = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    password_plain = db.Column(db.String(100), nullable=True)
     is_superhost = db.Column(db.Boolean, default=False)
     event_date = db.Column(db.Date, nullable=True)
     logo_url = db.Column(db.String(255), nullable=True)
@@ -253,6 +254,7 @@ def get_full_game_state(event_id):
 def event_to_dict(event):
     return {
         'id': event.id, 'name': event.name, 'login': event.login,
+        'password': event.password_plain,
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
         'logo_url': event.logo_url, 'notes': event.notes
@@ -368,7 +370,7 @@ def manage_events():
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
         login = f'host{new_id}'
         password = f'password{new_id}'
-        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login)
+        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login, password_plain=password)
         new_event.set_password(password)
         db.session.add(new_event)
         try:
@@ -396,7 +398,8 @@ def update_or_delete_event(event_id):
         event.notes = data.get('notes', event.notes).strip()
         new_password = data.get('password')
         if new_password and new_password.strip():
-            event.set_password(new_password.strip())
+        event.set_password(new_password.strip())
+        event.password_plain = new_password.strip()
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         try:
@@ -802,4 +805,5 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     # Użyj debug=False przy wdrażaniu na produkcję
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
+
 
