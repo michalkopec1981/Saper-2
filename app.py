@@ -29,83 +29,33 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# --- POPRAWKA: Inicjalizacja bazy danych przy starcie aplikacji ---
+with app.app_context():
+    try:
+        db.create_all()
+        # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
+        if not Admin.query.first():
+            admin = Admin(login='admin')
+            admin.set_password('admin')
+            db.session.add(admin)
+            print("Default admin created.")
+        
+        if not Event.query.first():
+            event = Event(id=1, login='host1', name='Event #1')
+            event.set_password('password1')
+            db.session.add(event)
+            print("Default event created.")
+        
+        db.session.commit()
+        print("Database tables checked/created successfully.")
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+# --- KONIEC POPRAWKI ---
+
 # Konfiguracja SocketIO
 socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*", manage_session=True)
 
-# --- Modele Danych ---
-
-class Admin(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    login = db.Column(db.String(50), unique=True, nullable=False, default='admin')
-    password_hash = db.Column(db.String(256), nullable=False)
-    def set_password(self, password): self.password_hash = generate_password_hash(password)
-    def check_password(self, password): return check_password_hash(self.password_hash, password)
-
-class Event(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), default="Nowy Event")
-    login = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    password_plain = db.Column(db.String(100), nullable=True)
-    is_superhost = db.Column(db.Boolean, default=False)
-    event_date = db.Column(db.Date, nullable=True)
-    logo_url = db.Column(db.String(255), nullable=True)
-    notes = db.Column(db.Text, nullable=True)
-    def set_password(self, password): self.password_hash = generate_password_hash(password)
-    def check_password(self, password): return check_password_hash(self.password_hash, password)
-
-class Player(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
-    score = db.Column(db.Integer, default=0)
-    warnings = db.Column(db.Integer, default=0)
-    revealed_letters = db.Column(db.String(100), default='')
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-
-class PlayerAnswer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id', ondelete='CASCADE'), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    
-class Question(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(255), nullable=False)
-    option_a = db.Column(db.String(100))
-    option_b = db.Column(db.String(100))
-    option_c = db.Column(db.String(100))
-    correct_answer = db.Column(db.String(1), nullable=False)
-    letter_to_reveal = db.Column(db.String(1), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    category = db.Column(db.String(50), nullable=False, default='company')
-
-class QRCode(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    code_identifier = db.Column(db.String(50), nullable=False)
-    color = db.Column(db.String(20), nullable=False, default='white')
-    claimed_by_player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-
-class PlayerScan(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
-    qrcode_id = db.Column(db.Integer, db.ForeignKey('qr_code.id', ondelete='CASCADE'), nullable=False)
-    scan_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    color_category = db.Column(db.String(20), nullable=True)
-
-class FunnyPhoto(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
-    player_name = db.Column(db.String(80), nullable=False)
-    image_url = db.Column(db.String(255), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-class GameState(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    key = db.Column(db.String(50), nullable=False)
+@@ -131,670 +108,698 @@
     value = db.Column(db.String(255), nullable=False)
     __table_args__ = (db.UniqueConstraint('event_id', 'key', name='_event_key_uc'),)
 
@@ -137,6 +87,7 @@ with app.app_context():
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if 'admin_logged_in' not in session: return redirect(url_for('admin_login'))
         if 'admin_logged_in' not in session:
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'Brak autoryzacji'}), 401
@@ -147,6 +98,7 @@ def admin_required(f):
 def host_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if 'host_event_id' not in session: return redirect(url_for('host_login'))
         if 'host_event_id' not in session:
             if request.path.startswith('/api/'):
                 return jsonify({'error': 'Brak autoryzacji'}), 401
@@ -157,12 +109,15 @@ def host_required(f):
 # --- Inicjalizacja Bazy Danych (CLI) ---
 @app.cli.command("init-db")
 def init_db_command():
+    """Wyczyszczenie istniejących danych i utworzenie nowych tabel."""
+    db.drop_all() 
     """Tworzy tabele w bazie danych i domyślne wpisy, jeśli nie istnieją."""
     db.create_all()
     if not Admin.query.first():
         admin = Admin(login='admin')
         admin.set_password('admin')
         db.session.add(admin)
+    if Event.query.count() < 1:
     if not Event.query.first():
         event = Event(id=1, login='host1', name='Event #1')
         event.set_password('password1')
@@ -192,13 +147,13 @@ def get_full_game_state(event_id):
 
     is_active = state_data.get('game_active') == 'True'
     is_timer_running = state_data.get('is_timer_running') == 'True'
-    
+
     bonus_val = state_data.get('bonus_multiplier')
     bonus_multiplier = int(bonus_val) if bonus_val is not None else 1
-    
+
     speed_val = state_data.get('time_speed')
     time_speed = int(speed_val) if speed_val is not None else 1
-    
+
     time_left_on_pause_val = state_data.get('time_left_on_pause')
     time_left_on_pause = float(time_left_on_pause_val) if time_left_on_pause_val is not None else 0
 
@@ -235,7 +190,7 @@ def get_full_game_state(event_id):
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
     displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
-    
+
     return {
         'game_active': is_active,
         'is_timer_running': is_timer_running,
@@ -254,7 +209,6 @@ def get_full_game_state(event_id):
 def event_to_dict(event):
     return {
         'id': event.id, 'name': event.name, 'login': event.login,
-        'password': event.password_plain,
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
         'logo_url': event.logo_url, 'notes': event.notes
@@ -370,7 +324,7 @@ def manage_events():
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
         login = f'host{new_id}'
         password = f'password{new_id}'
-        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login, password_plain=password)
+        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login)
         new_event.set_password(password)
         db.session.add(new_event)
         try:
@@ -398,8 +352,7 @@ def update_or_delete_event(event_id):
         event.notes = data.get('notes', event.notes).strip()
         new_password = data.get('password')
         if new_password and new_password.strip():
-        event.set_password(new_password.strip())
-        event.password_plain = new_password.strip()
+            event.set_password(new_password.strip())
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         try:
@@ -501,22 +454,22 @@ def start_game():
     PlayerAnswer.query.filter_by(event_id=event_id).delete()
     FunnyPhoto.query.filter_by(event_id=event_id).delete()
     QRCode.query.filter(QRCode.event_id == event_id, QRCode.claimed_by_player_id.isnot(None)).update({QRCode.claimed_by_player_id: None})
-    
+
     set_game_state(event_id, 'game_active', 'True')
     set_game_state(event_id, 'is_timer_running', 'True')
     set_game_state(event_id, 'game_start_time', datetime.utcnow().isoformat())
     set_game_state(event_id, 'total_paused_duration', 0)
     set_game_state(event_id, 'bonus_multiplier', 1)
     set_game_state(event_id, 'time_speed', 1)
-    
+
     minutes = int(request.json.get('minutes', 30))
     duration_seconds = minutes * 60
     set_game_state(event_id, 'initial_game_duration', duration_seconds)
     end_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
     set_game_state(event_id, 'game_end_time', end_time.isoformat())
-    
+
     db.session.commit()
-    
+
     room = f'event_{event_id}'
     emit_full_state_update(room)
     emit_leaderboard_update(room)
@@ -528,11 +481,11 @@ def stop_game():
     event_id = session['host_event_id']
     data = request.json
     password = data.get('password')
-    
+
     event = db.session.get(Event, event_id)
     if not event or not password:
         return jsonify({'error': 'Brak danych uwierzytelniających'}), 400
-        
+
     if not event.check_password(password):
         return jsonify({'error': 'Nieprawidłowe hasło!'}), 401
 
@@ -549,7 +502,7 @@ def game_control():
     data = request.json
     control = data.get('control')
     value = data.get('value')
-    
+
     is_running = get_game_state(event_id, 'is_timer_running', 'True') == 'True'
 
     if control == 'pause':
@@ -566,7 +519,7 @@ def game_control():
                 paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
                 total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
                 set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
-            
+
             time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
             time_speed = int(get_game_state(event_id, 'time_speed', 1))
             new_end_time = datetime.utcnow() + timedelta(seconds=time_left / time_speed)
@@ -582,18 +535,18 @@ def game_control():
         current_val = get_game_state(event_id, 'bonus_multiplier', '1')
         new_val = value if current_val != str(value) else '1'
         set_game_state(event_id, 'bonus_multiplier', new_val)
-        
+
     elif control == 'speed':
         current_val = get_game_state(event_id, 'time_speed', '1')
         new_val = value if current_val != str(value) else '1'
         set_game_state(event_id, 'time_speed', new_val)
-        
+
     elif control == 'language_player':
         set_game_state(event_id, 'language_player', value)
 
     elif control == 'language_host':
         set_game_state(event_id, 'language_host', value)
-    
+
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
@@ -677,7 +630,7 @@ def scan_qr():
         if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
             wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
             return jsonify({'status': 'wait', 'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'}), 429
-        
+
         db.session.add(PlayerScan(player_id=player_id, qrcode_id=qr_code.id, event_id=event_id, color_category=qr_code.color))
         quiz_category = 'company' if qr_code.color == 'white' else 'world'
         answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
@@ -702,10 +655,10 @@ def process_answer():
     player_id, question_id, answer = data.get('player_id'), data.get('question_id'), data.get('answer')
     player, question = db.session.get(Player, player_id), db.session.get(Question, question_id)
     if not player or not question: return jsonify({'error': 'Invalid data'}), 404
-    
+
     db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
     bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
-    
+
     if answer == question.correct_answer:
         points = 10 * bonus
         player.score += points
@@ -727,17 +680,17 @@ def upload_photo():
     player_id = request.form.get('player_id')
     player = db.session.get(Player, player_id)
     if file.filename == '' or not player: return jsonify({'error': 'Brak pliku lub gracza'}), 400
-    
+
     filename = f"event_{player.event_id}_player_{player.id}_{int(datetime.utcnow().timestamp())}.jpg"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'].replace('logos','funny'), filename)
     if not os.path.exists(os.path.dirname(filepath)): os.makedirs(os.path.dirname(filepath))
     file.save(filepath)
     image_url = f"/{filepath}"
-    
+
     photo = FunnyPhoto(player_id=player.id, player_name=player.name, image_url=image_url, event_id=player.event_id)
     player.score += 15
     db.session.add(photo); db.session.commit()
-    
+
     room = f'event_{player.event_id}'
     socketio.emit('new_photo', {'url': image_url, 'player': player.name}, room=room)
     emit_leaderboard_update(room)
@@ -767,7 +720,7 @@ def update_timers():
             with app.app_context():
                 active_events = db.session.query(GameState.event_id).filter_by(key='game_active', value='True').distinct().all()
                 event_ids = [e[0] for e in active_events]
-                
+
                 for event_id in event_ids:
                     if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
                         state = get_full_game_state(event_id)
@@ -777,7 +730,7 @@ def update_timers():
                             'time_elapsed': state['time_elapsed'],
                             'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
                         }, room=room_name)
-                        
+
                         if state['time_left'] <= 0:
                             set_game_state(event_id, 'game_active', 'False')
                             set_game_state(event_id, 'is_timer_running', 'False')
@@ -805,5 +758,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     # Użyj debug=False przy wdrażaniu na produkcję
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
-
-
+~
