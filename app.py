@@ -116,7 +116,44 @@ class GameState(db.Model):
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
+        # Najpierw spróbuj utworzyć tabele
         db.create_all()
+        
+        # Następnie sprawdź czy kolumna password_plain istnieje i dodaj ją jeśli nie
+        from sqlalchemy import text
+        
+        # Sprawdź typ bazy danych
+        database_url = os.environ.get('DATABASE_URL')
+        if database_url and 'postgresql' in database_url:
+            # PostgreSQL
+            try:
+                result = db.session.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name='event' AND column_name='password_plain'
+                """))
+                
+                if result.fetchone() is None:
+                    print("Dodawanie kolumny password_plain do tabeli event...")
+                    db.session.execute(text("ALTER TABLE event ADD COLUMN password_plain VARCHAR(100)"))
+                    db.session.commit()
+                    print("Kolumna password_plain została dodana.")
+            except Exception as e:
+                print(f"Błąd podczas dodawania kolumny password_plain: {e}")
+        else:
+            # SQLite
+            try:
+                result = db.session.execute(text("PRAGMA table_info(event)"))
+                columns = [row[1] for row in result]
+                
+                if 'password_plain' not in columns:
+                    print("Dodawanie kolumny password_plain do tabeli event...")
+                    db.session.execute(text("ALTER TABLE event ADD COLUMN password_plain VARCHAR(100)"))
+                    db.session.commit()
+                    print("Kolumna password_plain została dodana.")
+            except Exception as e:
+                print(f"Błąd podczas dodawania kolumny password_plain: {e}")
+        
         # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -125,7 +162,7 @@ with app.app_context():
             print("Default admin created.")
         
         if not Event.query.first():
-            event = Event(id=1, login='host1', name='Event #1')
+            event = Event(id=1, login='host1', name='Event #1', password_plain='password1')
             event.set_password('password1')
             db.session.add(event)
             print("Default event created.")
@@ -134,7 +171,7 @@ with app.app_context():
         print("Database tables checked/created successfully.")
     except Exception as e:
         print(f"Database initialization error: {e}")
-
+        db.session.rollback()
 
 # --- Dekoratory Autoryzacji ---
 def admin_required(f):
@@ -809,5 +846,6 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
