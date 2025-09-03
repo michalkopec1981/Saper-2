@@ -105,6 +105,30 @@ document.addEventListener('DOMContentLoaded', function() {
                            <div class="col-md-3"><label class="form-label">Hasło Hosta</label><input type="text" class="form-control event-password" value="${event.password || ''}" placeholder="Wpisz, aby zmienić"></div>
                             <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
                             <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status Gry</label>
+                                <div class="game-status-info p-2 border rounded bg-light">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold game-status-text">Ładowanie...</span>
+                                        <span class="badge game-status-badge bg-secondary">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Informacje Czasowe</label>
+                                <div class="time-info p-2 border rounded bg-light">
+                                    <div class="small">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Czas do końca:</span>
+                                            <span class="time-left">-</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Czas gry brutto:</span>
+                                            <span class="time-elapsed">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex flex-column align-items-center">
