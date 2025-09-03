@@ -116,44 +116,7 @@ class GameState(db.Model):
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
-        # Najpierw spróbuj utworzyć tabele
         db.create_all()
-        
-        # Następnie sprawdź czy kolumna password_plain istnieje i dodaj ją jeśli nie
-        from sqlalchemy import text
-        
-        # Sprawdź typ bazy danych
-        database_url = os.environ.get('DATABASE_URL')
-        if database_url and 'postgresql' in database_url:
-            # PostgreSQL
-            try:
-                result = db.session.execute(text("""
-                    SELECT column_name 
-                    FROM information_schema.columns 
-                    WHERE table_name='event' AND column_name='password_plain'
-                """))
-                
-                if result.fetchone() is None:
-                    print("Dodawanie kolumny password_plain do tabeli event...")
-                    db.session.execute(text("ALTER TABLE event ADD COLUMN password_plain VARCHAR(100)"))
-                    db.session.commit()
-                    print("Kolumna password_plain została dodana.")
-            except Exception as e:
-                print(f"Błąd podczas dodawania kolumny password_plain: {e}")
-        else:
-            # SQLite
-            try:
-                result = db.session.execute(text("PRAGMA table_info(event)"))
-                columns = [row[1] for row in result]
-                
-                if 'password_plain' not in columns:
-                    print("Dodawanie kolumny password_plain do tabeli event...")
-                    db.session.execute(text("ALTER TABLE event ADD COLUMN password_plain VARCHAR(100)"))
-                    db.session.commit()
-                    print("Kolumna password_plain została dodana.")
-            except Exception as e:
-                print(f"Błąd podczas dodawania kolumny password_plain: {e}")
-        
         # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -162,7 +125,7 @@ with app.app_context():
             print("Default admin created.")
         
         if not Event.query.first():
-            event = Event(id=1, login='host1', name='Event #1', password_plain='password1')
+            event = Event(id=1, login='host1', name='Event #1')
             event.set_password('password1')
             db.session.add(event)
             print("Default event created.")
@@ -171,7 +134,7 @@ with app.app_context():
         print("Database tables checked/created successfully.")
     except Exception as e:
         print(f"Database initialization error: {e}")
-        db.session.rollback()
+
 
 # --- Dekoratory Autoryzacji ---
 def admin_required(f):
@@ -263,8 +226,16 @@ def get_full_game_state(event_id):
             time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
             time_elapsed = time_elapsed_with_pauses - total_paused_duration
         else:
-            time_elapsed = initial_game_duration - time_left_on_pause
-            time_elapsed_with_pauses = time_elapsed + total_paused_duration
+            # If game is finished, calculate based on saved durations
+            end_time_str = state_data.get('game_end_time')
+            if end_time_str:
+                end_time = datetime.fromisoformat(end_time_str)
+                time_elapsed_with_pauses = (end_time - start_time).total_seconds()
+                time_elapsed = time_elapsed_with_pauses - total_paused_duration
+            else: # Fallback for ended games without clear end time
+                time_elapsed = initial_game_duration - time_left_on_pause
+                time_elapsed_with_pauses = time_elapsed + total_paused_duration
+
 
     player_count = Player.query.filter_by(event_id=event_id).count()
     try:
@@ -294,11 +265,34 @@ def get_full_game_state(event_id):
 def event_to_dict(event):
     return {
         'id': event.id, 'name': event.name, 'login': event.login,
-        'password': event.password_plain or '', # Dodana linia
+        'password': event.password_plain, # Dodana linia
         'is_superhost': event.is_superhost,
         'event_date': event.event_date.isoformat() if event.event_date else '',
         'logo_url': event.logo_url, 'notes': event.notes
     }
+
+def get_event_with_status(event):
+    event_data = event_to_dict(event)
+    game_state_full = get_full_game_state(event.id)
+
+    status_text = "Przygotowanie"
+    # Sprawdzenie, czy gra kiedykolwiek się rozpoczęła, aby odróżnić "Koniec" od "Przygotowanie"
+    game_has_started = get_game_state(event.id, 'game_start_time') is not None
+    
+    if game_state_full.get('game_active'):
+        if game_state_full.get('is_timer_running'):
+            status_text = "Start"
+        else:
+            status_text = "Pauza"
+    elif game_has_started:
+            status_text = "Koniec"
+
+    event_data['game_status'] = {
+        'status_text': status_text,
+        'time_left': game_state_full.get('time_left', 0),
+        'gross_time': game_state_full.get('time_elapsed_with_pauses', 0)
+    }
+    return event_data
 
 def delete_logo_file(event):
     if event and event.logo_url:
@@ -402,24 +396,15 @@ def list_qrcodes_public(event_id):
 # --- API Endpoints ---
 # ===================================================================
 
-@app.route('/api/admin/event/<int:event_id>/game_state', methods=['GET'])
-@admin_required
-def get_admin_game_state(event_id):
-    """Pobiera stan gry dla panelu admina"""
-    event = db.session.get(Event, event_id)
-    if not event:
-        return jsonify({'error': 'Nie znaleziono eventu'}), 404
-    
-    return jsonify(get_full_game_state(event_id))
-
+# --- API: ADMIN ---
 @app.route('/api/admin/events', methods=['GET', 'POST'])
 @admin_required
-def manage_events(): 
+def manage_events():
     if request.method == 'POST':
         new_id = (db.session.query(db.func.max(Event.id)).scalar() or 0) + 1
         login = f'host{new_id}'
         password = f'password{new_id}'
-        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login, password_plain=password) # Zmieniona linia
+        new_event = Event(id=new_id, name=f'Nowy Event #{new_id}', login=login, password_plain=password)
         new_event.set_password(password)
         db.session.add(new_event)
         try:
@@ -427,9 +412,9 @@ def manage_events():
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Błąd podczas tworzenia eventu'}), 500
-        return jsonify(event_to_dict(new_event))
+        return jsonify(get_event_with_status(new_event))
     events = Event.query.order_by(Event.id).all()
-    return jsonify([event_to_dict(e) for e in events])
+    return jsonify([get_event_with_status(e) for e in events])
 
 @app.route('/api/admin/event/<int:event_id>', methods=['PUT', 'DELETE'])
 @admin_required
@@ -448,15 +433,12 @@ def update_or_delete_event(event_id):
         new_password = data.get('password')
         if new_password and new_password.strip():
             event.set_password(new_password.strip())
-            event.password_plain = new_password.strip()
-        elif new_password == '':
-            # Jeśli przesłano pusty string, wyczyść hasło
-            event.password_plain = ''
+            event.password_plain = new_password.strip() # Dodana linia
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         try:
             db.session.commit()
-            return jsonify(event_to_dict(event))
+            return jsonify(get_event_with_status(event))
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': f'Błąd zapisu: {e}'}), 500
@@ -858,9 +840,3 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
-
-
-
-
