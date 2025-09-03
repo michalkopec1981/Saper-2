@@ -436,13 +436,13 @@ def update_or_delete_event(event_id):
             event.login = new_login
         event.is_superhost = data.get('is_superhost', event.is_superhost)
         event.notes = data.get('notes', event.notes).strip()
-           new_password = data.get('password')
+        new_password = data.get('password')
         if new_password and new_password.strip():
             event.set_password(new_password.strip())
             event.password_plain = new_password.strip()
         elif new_password == '':
-    # Jeśli przesłano pusty string, wyczyść hasło
-        event.password_plain = ''
+            # Jeśli przesłano pusty string, wyczyść hasło
+            event.password_plain = ''
         date_str = data.get('event_date')
         event.event_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
         try:
@@ -849,6 +849,7 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
