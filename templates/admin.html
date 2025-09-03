@@ -84,52 +84,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }, duration);
     }
 
+    function formatTime(totalSeconds) {
+        if (typeof totalSeconds !== 'number' || totalSeconds < 0) {
+            return '00:00';
+        }
+        totalSeconds = Math.floor(totalSeconds);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        const paddedMinutes = String(minutes).padStart(2, '0');
+        const paddedSeconds = String(seconds).padStart(2, '0');
+
+        if (hours > 0) {
+            const paddedHours = String(hours).padStart(2, '0');
+            return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+        }
+        return `${paddedMinutes}:${paddedSeconds}`;
+    }
+
     function createEventPanel(event) {
-            async function updateGameStatus(panel, eventId) {
-                try {
-                    const response = await fetch(`/api/admin/event/${eventId}/game_state`);
-                    if (response.ok) {
-                        const gameState = await response.json();
-                        
-                        const statusText = panel.querySelector('.game-status-text');
-                        const statusBadge = panel.querySelector('.game-status-badge');
-                        const timeLeft = panel.querySelector('.time-left');
-                        const timeElapsed = panel.querySelector('.time-elapsed');
-                        
-                        let status = 'Przygotowanie';
-                        let badgeClass = 'bg-secondary';
-                        
-                        if (gameState.game_active) {
-                            if (gameState.is_timer_running) {
-                                status = 'Start';
-                                badgeClass = 'bg-success';
-                            } else {
-                                status = 'Pauza';
-                                badgeClass = 'bg-warning';
-                            }
-                        } else if (gameState.time_elapsed > 0) {
-                            status = 'Koniec';
-                            badgeClass = 'bg-danger';
-                        }
-                        
-                        statusText.textContent = status;
-                        statusBadge.className = `badge game-status-badge ${badgeClass}`;
-                        statusBadge.textContent = gameState.game_active ? 'AKTYWNA' : 'NIEAKTYWNA';
-                        
-                        // Format czasu
-                        const formatTime = (seconds) => {
-                            const mins = Math.floor(seconds / 60);
-                            const secs = Math.floor(seconds % 60);
-                            return `${mins}:${secs.toString().padStart(2, '0')}`;
-                        };
-                        
-                        timeLeft.textContent = gameState.game_active ? formatTime(gameState.time_left) : '-';
-                        timeElapsed.textContent = gameState.time_elapsed > 0 ? formatTime(gameState.time_elapsed_with_pauses) : '-';
-                    }
-                } catch (error) {
-                    console.error('Błąd pobierania statusu gry:', error);
-                }
-            }
         const panel = document.createElement('div');
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
@@ -140,6 +114,14 @@ document.addEventListener('DOMContentLoaded', function() {
             : `<span class="logo-placeholder">Brak logo</span>`;
         const deleteLogoBtnVisibility = event.logo_url ? '' : 'style="display: none;"';
 
+        // Logika statusu gry
+        const status = event.game_status || { status_text: 'Brak Danych', time_left: 0, gross_time: 0 };
+        let badgeClass = 'bg-secondary';
+        if (status.status_text === 'Start') badgeClass = 'bg-success';
+        else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark';
+        else if (status.status_text === 'Koniec') badgeClass = 'bg-danger';
+        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-info text-dark';
+
         panel.innerHTML = `
             <div class="card-body">
                 <div class="row g-3">
@@ -147,33 +129,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="row g-3">
                             <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
                             <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
-                           <div class="col-md-3"><label class="form-label">Hasło Hosta</label><input type="text" class="form-control event-password" value="${event.password || ''}" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-3"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
                             <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
                             <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
-                            <div class="col-md-6">
-                                <label class="form-label">Status Gry</label>
-                                <div class="game-status-info p-2 border rounded bg-light">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-bold game-status-text">Ładowanie...</span>
-                                        <span class="badge game-status-badge bg-secondary">-</span>
+                            
+                            <!-- Sekcja Statusu Gry -->
+                            <div class="col-12 mt-3">
+                                <div class="row align-items-center p-2 rounded" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                    <div class="col-md-4 mb-2 mb-md-0">
+                                        <span class="fw-bold d-block d-sm-inline">Status gry:</span>
+                                        <span class="badge ${badgeClass} game-status-badge ms-1">${status.status_text}</span>
+                                    </div>
+                                    <div class="col-md-4 mb-2 mb-md-0">
+                                        <span class="fw-bold d-block d-sm-inline">Czas do końca:</span>
+                                        <span class="game-time-left ms-1">${formatTime(status.time_left)}</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <span class="fw-bold d-block d-sm-inline">Czas gry brutto:</span>
+                                        <span class="game-gross-time ms-1">${formatTime(status.gross_time)}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Informacje Czasowe</label>
-                                <div class="time-info p-2 border rounded bg-light">
-                                    <div class="small">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Czas do końca:</span>
-                                            <span class="time-left">-</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between">
-                                            <span>Czas gry brutto:</span>
-                                            <span class="time-elapsed">-</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex flex-column align-items-center">
@@ -189,15 +166,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                        <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
-                        <button class="btn btn-sm btn-outline-primary btn-logo">Logo</button>
+                        <button class="btn btn-sm btn-outline-secondary btn-logo">Logo</button>
                         <button class="btn btn-sm btn-outline-danger btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
-                        <button class="btn btn-sm btn-secondary btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
-                        <button class="btn btn-sm btn-secondary btn-logo">Logo</button>
-                        <button class="btn btn-sm btn-secondary btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
-                        <button class="btn btn-sm btn-danger btn-reset">Reset Gry</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
+                        <button class="btn btn-sm btn-warning btn-reset">Reset Gry</button>
                         <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
-                        <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary">Kody QR</a>
                         <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
                         <button class="btn btn-sm btn-success btn-save">Zapisz Zmiany</button>
                     </div>
@@ -210,6 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
             textarea.style.height = 'auto';
             textarea.style.height = (textarea.scrollHeight) + 'px';
         });
+        // Initial resize
+        setTimeout(() => textarea.dispatchEvent(new Event('input')), 0);
 
         return panel;
     }
@@ -218,24 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const events = await fetchApi('/api/admin/events');
         if (events) {
             eventsContainer.innerHTML = '';
-            events.forEach(event => {
-                const panel = createEventPanel(event);
-                eventsContainer.appendChild(panel);
-                updateGameStatus(panel, event.id); // DODANA LINIA
-            });
+            events.forEach(event => eventsContainer.appendChild(createEventPanel(event)));
         } else {
             eventsContainer.innerHTML = '<div class="alert alert-warning">Nie udało się załadować eventów.</div>';
         }
     }
-
-    // TUTAJ DODAJ automatyczne odświeżanie
-    setInterval(() => {
-        const panels = eventsContainer.querySelectorAll('.card[data-event-id]');
-        panels.forEach(panel => {
-            const eventId = panel.dataset.eventId;
-            updateGameStatus(panel, eventId);
-        });
-    }, 5000);
 
     addEventBtn.addEventListener('click', async () => {
         addEventBtn.disabled = true;
@@ -279,17 +241,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 notes: panel.querySelector('.event-notes').value
             };
             const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
-            if (result) showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
+            if (result) {
+                 showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
+                 // Odśwież panel, aby zaktualizować status (jeśli mógł się zmienić)
+                 const updatedPanel = createEventPanel(result);
+                 panel.replaceWith(updatedPanel);
+            }
         }
 
         if (target.classList.contains('btn-reset')) {
             if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}? To usunie logo, graczy, kody, etc.`)) {
                 const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
                 if (result) {
-                    const logoArea = panel.querySelector('.logo-area');
-                    logoArea.innerHTML = `<span class="logo-placeholder">Brak logo</span>`;
-                    panel.querySelector('.btn-delete-logo').style.display = 'none';
                     showStatus(result.message, 'warning');
+                    // Odśwież listę eventów, aby pokazać zresetowany status
+                    loadEvents();
                 }
             }
         }
@@ -330,4 +296,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-~
