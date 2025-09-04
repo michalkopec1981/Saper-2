@@ -137,13 +137,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex flex-column align-items-center">
-                        <label class="form-label">Logo</label>
-                        <div class="logo-area">${logoContent}</div>
-                        <div class="d-flex gap-2 mt-2">
+                        <div class="d-flex gap-2 mb-2">
                             <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                            <button class="btn btn-sm btn-secondary btn-logo" style="min-width: 80px;">Logo</button>
-                            <button class="btn btn-sm btn-secondary btn-delete-logo" style="min-width: 80px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                            <button class="btn btn-sm btn-outline-secondary btn-logo" style="min-width: 80px;">Logo</button>
+                            <button class="btn btn-sm btn-outline-secondary btn-delete-logo" style="min-width: 80px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
                         </div>
+                        <div class="logo-area">${logoContent}</div>
                     </div>
                 </div>
                 <hr class="my-3">
