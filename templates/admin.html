@@ -99,11 +99,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Logika statusu gry
         const status = event.game_status || { status_text: 'Brak Danych' };
-        let badgeClass = 'bg-secondary';
-        if (status.status_text === 'Start') badgeClass = 'bg-success';
-        else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark';
-        else if (status.status_text === 'Koniec') badgeClass = 'bg-danger';
-        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-info text-dark';
+        let badgeClass = 'bg-secondary'; // Domyślny szary
+        if (status.status_text === 'Start') badgeClass = 'bg-success'; // Zielony
+        else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark'; // Żółty
+        else if (status.status_text === 'Koniec') badgeClass = 'bg-danger'; // Czerwony
+        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-secondary'; // Szary
 
         panel.innerHTML = `
             <div class="card-body">
@@ -132,8 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
                     <div class="d-flex align-items-center">
-                        <span class="badge bg-dark text-white p-2 me-2" style="font-size: 0.875rem;">STAN GRY:</span>
-                        <span class="badge ${badgeClass} p-2 fw-normal" style="font-size: 0.875rem;">${status.status_text}</span>
+                        <span class="badge ${badgeClass} p-2" style="font-size: 0.875rem;">STAN GRY: ${status.status_text}</span>
                     </div>
                     <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
