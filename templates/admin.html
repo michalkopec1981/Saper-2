@@ -121,13 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <hr class="my-3">
                 <div class="d-flex align-items-center flex-wrap">
-                    <div class="form-check form-switch me-4">
-                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
-                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
-                    </div>
                     <div>
                         <span class="fw-bold">Stan gry:</span>
                         <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
+                    </div>
+                    <div class="form-check form-switch me-4">
+                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
+                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
                      <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
