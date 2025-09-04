@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
-
 {% block title %}Panel Admina{% endblock %}
-
 {% block styles %}
 {{ super() }}
 <style>
@@ -29,11 +27,10 @@
     .notes-textarea {
         resize: none;
         overflow-y: hidden;
-        min-height: 38px;
+        min-height: 38px; /* Standard input height */
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -47,15 +44,10 @@
     <div id="status-container" class="mb-3"></div>
 
     <div id="events-container">
-        <div class="text-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Ładowanie...</span>
-            </div>
-        </div>
+        <div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Ładowanie...</span></div></div>
     </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 {{ super() }}
 <script>
@@ -96,12 +88,13 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
 
-        const deleteBtnVisibility = event.id == 1 ? 'style="display: none;"' : '';
+        const deleteBtnVisibility = event.id > 1 ? '' : 'style="display: none;"';
         const logoContent = event.logo_url 
             ? `<img src="${event.logo_url}" class="event-logo-preview">`
             : `<span class="logo-placeholder">Brak logo</span>`;
         const deleteLogoBtnVisibility = event.logo_url ? '' : 'style="display: none;"';
 
+        // Logika statusu gry
         const status = event.game_status || { status_text: 'Brak Danych' };
         let badgeClass = 'bg-secondary';
         if (status.status_text === 'Start') badgeClass = 'bg-success';
@@ -114,64 +107,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row g-3 align-items-start">
                     <div class="col-lg-9">
                         <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Nazwa Eventu</label>
-                                <input type="text" class="form-control event-name" value="${event.name || ''}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Login Hosta</label>
-                                <input type="text" class="form-control event-login" value="${event.login || ''}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Hasło Hosta</label>
-                                <input type="text" class="form-control event-password" value="${event.password || ''}">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Data</label>
-                                <input type="date" class="form-control event-date" value="${event.event_date || ''}">
-                            </div>
-                            <div class="col-md-12">
-                                <label class="form-label">Uwagi</label>
-                                <textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea>
-                            </div>
+                            <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Hasło Hosta</label><input type="text" class="form-control event-password" value="${event.password || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
+                            <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex flex-column align-items-center">
-                        <div class="d-flex gap-2 mb-2">
-                            <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                            <button class="btn btn-sm btn-outline-secondary btn-logo" style="min-width: 80px;">Logo</button>
-                            <button class="btn btn-sm btn-outline-secondary btn-delete-logo" style="min-width: 80px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
-                        </div>
+                        <label class="form-label">Logo</label>
                         <div class="logo-area">${logoContent}</div>
                     </div>
                 </div>
                 <hr class="my-3">
-                <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
+                <div class="d-flex align-items-center flex-wrap">
+                    <div class="form-check form-switch me-4">
+                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
+                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
+                    </div>
                     <div>
                         <span class="fw-bold">Stan gry:</span>
                         <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
-                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
+                    <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
+                        <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                        <button class="btn btn-sm btn-outline-secondary btn-logo">Logo</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete" ${deleteBtnVisibility}>Usuń Event</button>
+                        <button class="btn btn-sm btn-warning btn-reset">Reset Gry</button>
+                        <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-info">Kody QR</a>
+                        <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary">Panel Hosta</a>
+                        <button class="btn btn-sm btn-success btn-save">Zapisz Zmiany</button>
                     </div>
-                </div>
-                <div class="d-flex justify-content-end gap-2 flex-wrap mb-2">
-                    <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary" style="min-width: 110px;">Kody QR</a>
-                    <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary" style="min-width: 110px;">Panel Hosta</a>
-                    <button class="btn btn-sm btn-success btn-save" style="min-width: 110px;">Zapisz Zmiany</button>
-                </div>
-                <div class="d-flex justify-content-end gap-2 flex-wrap">
-                    <button class="btn btn-sm btn-danger btn-delete" style="min-width: 110px;" ${deleteBtnVisibility}>Usuń Event</button>
-                    <button class="btn btn-sm btn-danger btn-reset" style="min-width: 110px;">Reset Gry</button>
                 </div>
             </div>`;
 
+        // Auto-resize textarea
         const textarea = panel.querySelector('.notes-textarea');
         textarea.addEventListener('input', () => {
             textarea.style.height = 'auto';
             textarea.style.height = (textarea.scrollHeight) + 'px';
         });
+        // Initial resize
         setTimeout(() => textarea.dispatchEvent(new Event('input')), 0);
 
         return panel;
@@ -282,3 +259,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
