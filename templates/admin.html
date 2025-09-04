@@ -88,7 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
         panel.className = 'card mb-3';
         panel.dataset.eventId = event.id;
 
-        const deleteBtnVisibility = event.id > 1 ? '' : 'style="display: none;"';
+        // Hide delete button only for event ID = 1
+        const deleteBtnVisibility = event.id == 1 ? 'style="display: none;"' : '';
         const logoContent = event.logo_url 
             ? `<img src="${event.logo_url}" class="event-logo-preview">`
             : `<span class="logo-placeholder">Brak logo</span>`;
@@ -120,25 +121,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <hr class="my-3">
-                <div class="d-flex align-items-center flex-wrap">
+                <div class="d-flex align-items-center justify-content-between flex-wrap mb-2">
                     <div>
                         <span class="fw-bold">Stan gry:</span>
                         <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
                     </div>
-                    <div class="form-check form-switch me-4">
+                    <div class="form-check form-switch">
                         <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
                         <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
-                     <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
-                        <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                        <button class="btn btn-sm btn-secondary btn-logo" style="min-width: 110px;">Logo</button>
-                        <button class="btn btn-sm btn-secondary btn-delete-logo" style="min-width: 110px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
-                        <button class="btn btn-sm btn-danger btn-delete" style="min-width: 110px;" ${deleteBtnVisibility}>Usuń Event</button>
-                        <button class="btn btn-sm btn-danger btn-reset" style="min-width: 110px;">Reset Gry</button>
-                        <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary" style="min-width: 110px;">Kody QR</a>
-                        <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary" style="min-width: 110px;">Panel Hosta</a>
-                        <button class="btn btn-sm btn-success btn-save" style="min-width: 110px;">Zapisz Zmiany</button>
-                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 flex-wrap mb-2">
+                    <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                    <button class="btn btn-sm btn-secondary btn-logo" style="min-width: 110px;">Logo</button>
+                    <button class="btn btn-sm btn-secondary btn-delete-logo" style="min-width: 110px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                    <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary" style="min-width: 110px;">Kody QR</a>
+                    <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary" style="min-width: 110px;">Panel Hosta</a>
+                    <button class="btn btn-sm btn-success btn-save" style="min-width: 110px;">Zapisz Zmiany</button>
+                </div>
+                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-danger btn-delete" style="min-width: 110px;" ${deleteBtnVisibility}>Usuń Event</button>
+                    <button class="btn btn-sm btn-danger btn-reset" style="min-width: 110px;">Reset Gry</button>
                 </div>
             </div>`;
 
@@ -258,5 +261,4 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEvents();
 });
 </script>
-{% endblock %}
-
+{% endblock %>
