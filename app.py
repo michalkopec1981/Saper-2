@@ -276,7 +276,6 @@ def get_event_with_status(event):
     game_state_full = get_full_game_state(event.id)
 
     status_text = "Przygotowanie"
-    # Sprawdzenie, czy gra kiedykolwiek się rozpoczęła, aby odróżnić "Koniec" od "Przygotowanie"
     game_has_started = get_game_state(event.id, 'game_start_time') is not None
     
     if game_state_full.get('game_active'):
@@ -288,9 +287,7 @@ def get_event_with_status(event):
             status_text = "Koniec"
 
     event_data['game_status'] = {
-        'status_text': status_text,
-        'time_left': game_state_full.get('time_left', 0),
-        'gross_time': game_state_full.get('time_elapsed_with_pauses', 0)
+        'status_text': status_text
     }
     return event_data
 
