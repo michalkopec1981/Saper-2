@@ -126,15 +126,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <hr class="my-3">
-                <div class="d-flex align-items-center flex-wrap">
-                    <div class="form-check form-switch me-4">
-                        <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
-                        <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
-                    </div>
+                <div class="d-flex align-items-center flex-wrap justify-content-between">
                     <div class="d-flex align-items-center">
                         <span class="badge ${badgeClass} p-2" style="font-size: 0.875rem;">STAN GRY: ${status.status_text}</span>
                     </div>
-                    <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
+                            <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
+                        </div>
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
                         <button class="btn btn-sm btn-danger btn-delete btn-fixed-width" ${deleteBtnVisibility}>Usuń Event</button>
                         <button class="btn btn-sm btn-danger btn-reset btn-fixed-width">Reset Gry</button>
