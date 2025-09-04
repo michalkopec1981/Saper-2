@@ -32,6 +32,38 @@
     .btn-fixed-width {
         min-width: 130px;
     }
+    .status-badge {
+        border: 2px solid;
+        padding: .375rem .75rem;
+        font-size: .875rem;
+        font-weight: 700;
+        line-height: 1.5;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        border-radius: .375rem;
+        background-color: #fff;
+    }
+    .status-start {
+        border-color: #198754;
+        color: #198754;
+    }
+    .status-pauza {
+        border-color: #ffc107;
+        color: #ffc107;
+    }
+    .status-koniec {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    .status-przygotowanie {
+        border-color: #212529;
+        color: #212529;
+    }
+    .status-default {
+         border-color: #6c757d;
+         color: #6c757d;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -99,11 +131,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Logika statusu gry
         const status = event.game_status || { status_text: 'Brak Danych' };
-        let badgeClass = 'bg-secondary'; // Domyślny szary
-        if (status.status_text === 'Start') badgeClass = 'bg-success'; // Zielony
-        else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark'; // Żółty
-        else if (status.status_text === 'Koniec') badgeClass = 'bg-danger'; // Czerwony
-        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-dark'; // Czarny
+        let statusClass = 'status-default';
+        if (status.status_text === 'Start') statusClass = 'status-start';
+        else if (status.status_text === 'Pauza') statusClass = 'status-pauza';
+        else if (status.status_text === 'Koniec') statusClass = 'status-koniec';
+        else if (status.status_text === 'Przygotowanie') statusClass = 'status-przygotowanie';
 
         panel.innerHTML = `
             <div class="card-body">
@@ -128,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <hr class="my-3">
                 <div class="d-flex align-items-center flex-wrap justify-content-between">
                     <div class="d-flex align-items-center">
-                        <span class="badge ${badgeClass} p-2" style="font-size: 0.875rem;">STAN GRY: ${status.status_text}</span>
+                        <span class="status-badge ${statusClass}">STAN GRY: ${status.status_text}</span>
                     </div>
                     <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                         <div class="form-check form-switch">
