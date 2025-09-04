@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (status.status_text === 'Start') badgeClass = 'bg-success'; // Zielony
         else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark'; // Żółty
         else if (status.status_text === 'Koniec') badgeClass = 'bg-danger'; // Czerwony
-        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-secondary'; // Szary
+        else if (status.status_text === 'Przygotowanie') badgeClass = 'bg-dark'; // Czarny
 
         panel.innerHTML = `
             <div class="card-body">
