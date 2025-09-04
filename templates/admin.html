@@ -139,6 +139,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-lg-3 d-flex flex-column align-items-center">
                         <label class="form-label">Logo</label>
                         <div class="logo-area">${logoContent}</div>
+                        <div class="d-flex gap-2 mt-2">
+                            <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                            <button class="btn btn-sm btn-secondary btn-logo" style="min-width: 80px;">Logo</button>
+                            <button class="btn btn-sm btn-secondary btn-delete-logo" style="min-width: 80px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                        </div>
                     </div>
                 </div>
                 <hr class="my-3">
@@ -153,9 +158,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="d-flex justify-content-end gap-2 flex-wrap mb-2">
-                    <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
-                    <button class="btn btn-sm btn-secondary btn-logo" style="min-width: 110px;">Logo</button>
-                    <button class="btn btn-sm btn-secondary btn-delete-logo" style="min-width: 110px;" ${deleteLogoBtnVisibility}>Usuń Logo</button>
                     <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary" style="min-width: 110px;">Kody QR</a>
                     <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary" style="min-width: 110px;">Panel Hosta</a>
                     <button class="btn btn-sm btn-success btn-save" style="min-width: 110px;">Zapisz Zmiany</button>
