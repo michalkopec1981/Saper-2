@@ -32,6 +32,10 @@
     .btn-fixed-width {
         min-width: 130px;
     }
+    .game-status-badge {
+        font-size: 1rem;
+        vertical-align: text-bottom;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -132,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
                     <div>
-                        <span class="fw-bold">Stan gry:</span>
+                        <span class="form-label mb-0 fw-bold">Stan gry: </span>
                         <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
                     </div>
                     <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
