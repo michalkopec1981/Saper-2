@@ -14,7 +14,6 @@
         align-items: center;
         background-color: #f8f9fa;
         overflow: hidden;
-        margin-top: auto;
     }
     .logo-area img {
         max-width: 100%;
@@ -84,25 +83,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, duration);
     }
 
-    function formatTime(totalSeconds) {
-        if (typeof totalSeconds !== 'number' || totalSeconds < 0) {
-            return '00:00';
-        }
-        totalSeconds = Math.floor(totalSeconds);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        const paddedMinutes = String(minutes).padStart(2, '0');
-        const paddedSeconds = String(seconds).padStart(2, '0');
-
-        if (hours > 0) {
-            const paddedHours = String(hours).padStart(2, '0');
-            return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
-        }
-        return `${paddedMinutes}:${paddedSeconds}`;
-    }
-
     function createEventPanel(event) {
         const panel = document.createElement('div');
         panel.className = 'card mb-3';
@@ -115,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const deleteLogoBtnVisibility = event.logo_url ? '' : 'style="display: none;"';
 
         // Logika statusu gry
-        const status = event.game_status || { status_text: 'Brak Danych', time_left: 0, gross_time: 0 };
+        const status = event.game_status || { status_text: 'Brak Danych' };
         let badgeClass = 'bg-secondary';
         if (status.status_text === 'Start') badgeClass = 'bg-success';
         else if (status.status_text === 'Pauza') badgeClass = 'bg-warning text-dark';
@@ -124,33 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         panel.innerHTML = `
             <div class="card-body">
-                <div class="row g-3">
+                <div class="row g-3 align-items-start">
                     <div class="col-lg-9">
                         <div class="row g-3">
                             <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
                             <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
-                            <div class="col-md-3"><label class="form-label">Nowe Hasło</label><input type="text" class="form-control event-password" placeholder="Wpisz, aby zmienić"></div>
+                            <div class="col-md-3"><label class="form-label">Hasło Hosta</label><input type="text" class="form-control event-password" value="${event.password || ''}"></div>
                             <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
                             <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
-                            
-                            <!-- Sekcja Statusu Gry -->
-                            <div class="col-12 mt-3">
-                                <div class="row align-items-center p-2 rounded" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
-                                    <div class="col-md-4 mb-2 mb-md-0">
-                                        <span class="fw-bold d-block d-sm-inline">Status gry:</span>
-                                        <span class="badge ${badgeClass} game-status-badge ms-1">${status.status_text}</span>
-                                    </div>
-                                    <div class="col-md-4 mb-2 mb-md-0">
-                                        <span class="fw-bold d-block d-sm-inline">Czas do końca:</span>
-                                        <span class="game-time-left ms-1">${formatTime(status.time_left)}</span>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <span class="fw-bold d-block d-sm-inline">Czas gry brutto:</span>
-                                        <span class="game-gross-time ms-1">${formatTime(status.gross_time)}</span>
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex flex-column align-items-center">
@@ -159,12 +120,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <hr class="my-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="form-check form-switch">
+                <div class="d-flex align-items-center flex-wrap">
+                    <div class="form-check form-switch me-4">
                         <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
                         <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
-                    <div class="d-flex justify-content-end gap-2 flex-wrap">
+                    <div>
+                        <span class="fw-bold">Stan gry:</span>
+                        <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
+                    </div>
+                    <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
                         <button class="btn btn-sm btn-outline-secondary btn-logo">Logo</button>
                         <button class="btn btn-sm btn-outline-danger btn-delete-logo" ${deleteLogoBtnVisibility}>Usuń Logo</button>
@@ -243,7 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
             if (result) {
                  showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
-                 // Odśwież panel, aby zaktualizować status (jeśli mógł się zmienić)
                  const updatedPanel = createEventPanel(result);
                  panel.replaceWith(updatedPanel);
             }
@@ -254,7 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
                 if (result) {
                     showStatus(result.message, 'warning');
-                    // Odśwież listę eventów, aby pokazać zresetowany status
                     loadEvents();
                 }
             }
@@ -296,3 +259,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
