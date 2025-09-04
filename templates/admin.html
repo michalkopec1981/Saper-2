@@ -32,10 +32,6 @@
     .btn-fixed-width {
         min-width: 130px;
     }
-    .game-status-badge {
-        font-size: 1rem;
-        vertical-align: text-bottom;
-    }
 </style>
 {% endblock %}
 {% block content %}
@@ -135,9 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
                         <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
                     </div>
-                    <div>
-                        <span class="form-label mb-0 fw-bold">Stan gry: </span>
-                        <span class="badge ${badgeClass} game-status-badge">${status.status_text}</span>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-dark text-white p-2 me-2" style="font-size: 0.875rem;">STAN GRY:</span>
+                        <span class="badge ${badgeClass} p-2 fw-normal" style="font-size: 0.875rem;">${status.status_text}</span>
                     </div>
                     <div class="ms-auto d-flex justify-content-end gap-2 flex-wrap">
                         <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
