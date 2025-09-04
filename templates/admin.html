@@ -188,7 +188,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (target.classList.contains('btn-delete-logo')) {
-            if (confirm(`Czy na pewno chcesz usunąć logo dla Eventu ${eventId}?`)) {
+            const confirmed = confirm(`Czy na pewno chcesz usunąć logo dla Eventu ${eventId}?`);
+            if (confirmed) {
                 const result = await fetchApi(`/api/admin/event/${eventId}/delete_logo`, { method: 'POST' });
                 if (result) {
                     const logoArea = panel.querySelector('.logo-area');
@@ -217,21 +218,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (target.classList.contains('btn-reset')) {
-            if (confirm(`Czy na pewno chcesz zresetować całą grę dla Eventu ${eventId}? To usunie logo, graczy, kody, etc.`)) {
-                const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
-                if (result) {
-                    showStatus(result.message, 'warning');
-                    loadEvents();
+            const hostPassword = panel.querySelector('.event-password').value;
+            const enteredPassword = prompt(`Aby zresetować grę dla Eventu ${eventId}, wpisz hasło Hosta:`);
+            if (enteredPassword !== null) {
+                if (enteredPassword === hostPassword) {
+                    const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
+                    if (result) {
+                        showStatus(result.message, 'warning');
+                        loadEvents();
+                    }
+                } else if (enteredPassword) {
+                    showStatus('Nieprawidłowe hasło. Resetowanie gry anulowane.', 'danger');
                 }
             }
         }
 
         if (target.classList.contains('btn-delete')) {
-            if (confirm(`Czy na pewno chcesz USUNĄĆ Event ${eventId}?`)) {
-                const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
-                if (result) {
-                    panel.remove();
-                    showStatus(result.message, 'success');
+            const hostPassword = panel.querySelector('.event-password').value;
+            const enteredPassword = prompt(`Aby USUNĄĆ Event ${eventId}, wpisz hasło Hosta:`);
+             if (enteredPassword !== null) {
+                if (enteredPassword === hostPassword) {
+                    const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
+                    if (result) {
+                        panel.remove();
+                        showStatus(result.message, 'success');
+                    }
+                } else if (enteredPassword) {
+                    showStatus('Nieprawidłowe hasło. Usuwanie eventu anulowane.', 'danger');
                 }
             }
         }
