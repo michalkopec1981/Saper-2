@@ -681,6 +681,51 @@ def delete_question(question_id):
         return jsonify({'message': 'Pytanie usunięte'})
     return jsonify({'error': 'Nie znaleziono pytania'}), 404
 
+# Dodaj nowy endpoint w app.py
+
+@app.route('/api/host/qrcodes/counts', methods=['GET'])
+@host_required
+def get_host_qr_counts():
+    event_id = session['host_event_id']
+    event = db.session.get(Event, event_id)
+    
+    if not event or not event.is_superhost:
+        return jsonify({'error': 'Brak uprawnień Superhost'}), 403
+    
+    counts = {
+        'red': QRCode.query.filter_by(event_id=event_id, color='red').count(),
+        'white_trap': QRCode.query.filter_by(event_id=event_id, color='white_trap').count(),
+        'green': QRCode.query.filter_by(event_id=event_id, color='green').count(),
+        'pink': QRCode.query.filter_by(event_id=event_id, color='pink').count()
+    }
+    return jsonify(counts)
+
+@app.route('/api/host/qrcodes/generate', methods=['POST'])
+@host_required
+def host_generate_qr_codes():
+    event_id = session['host_event_id']
+    event = db.session.get(Event, event_id)
+    
+    if not event or not event.is_superhost:
+        return jsonify({'error': 'Brak uprawnień Superhost'}), 403
+    
+    if get_game_state(event_id, 'game_active', 'False') == 'True':
+        return jsonify({'message': 'Nie można zmieniać kodów podczas aktywnej gry.'}), 403
+    
+    data = request.json
+    QRCode.query.filter_by(event_id=event_id).delete()
+    db.session.add(QRCode(code_identifier='bialy', color='white', event_id=event_id))
+    db.session.add(QRCode(code_identifier='zolty', color='yellow', event_id=event_id))
+    
+    counts = data.get('counts', {})
+    one_time_codes = {'red': 'czerwony', 'white_trap': 'pulapka', 'green': 'zielony', 'pink': 'rozowy'}
+    for color, prefix in one_time_codes.items():
+        for i in range(1, int(counts.get(color, 0)) + 1):
+            db.session.add(QRCode(code_identifier=f"{prefix}{i}", color=color, event_id=event_id))
+    
+    db.session.commit()
+    return jsonify({'message': 'Kody QR zostały wygenerowane.'})
+
 # --- API: PLAYER ---
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
@@ -837,4 +882,5 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
