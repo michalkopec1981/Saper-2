@@ -120,7 +120,6 @@ class GameState(db.Model):
 with app.app_context():
     try:
         db.create_all()
-        # Sprawdzenie i dodanie domyślnego admina/eventu, jeśli baza jest pusta
         if not Admin.query.first():
             admin = Admin(login='admin')
             admin.set_password('admin')
@@ -229,16 +228,14 @@ def get_full_game_state(event_id):
             time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
             time_elapsed = time_elapsed_with_pauses - total_paused_duration
         else:
-            # If game is finished, calculate based on saved durations
             end_time_str = state_data.get('game_end_time')
             if end_time_str:
                 end_time = datetime.fromisoformat(end_time_str)
                 time_elapsed_with_pauses = (end_time - start_time).total_seconds()
                 time_elapsed = time_elapsed_with_pauses - total_paused_duration
-            else: # Fallback for ended games without clear end time
+            else:
                 time_elapsed = initial_game_duration - time_left_on_pause
                 time_elapsed_with_pauses = time_elapsed + total_paused_duration
-
 
     player_count = Player.query.filter_by(event_id=event_id).count()
     try:
@@ -344,7 +341,6 @@ def impersonate_host(event_id):
     session['host_event_id'] = event_id
     session['impersonated_by_admin'] = True
     return redirect(url_for('host_panel'))
-
 
 # --- HOST ---
 @app.route('/host/login', methods=['GET', 'POST'])
@@ -477,7 +473,6 @@ def delete_logo(event_id):
     db.session.commit()
     return jsonify({'message': 'Logo usunięte pomyślnie.'})
 
-
 @app.route('/api/admin/event/<int:event_id>/reset', methods=['POST'])
 @admin_required
 def reset_event(event_id):
@@ -575,7 +570,6 @@ def stop_game():
     emit_full_state_update(f'event_{event_id}')
     return jsonify({'message': 'Gra została zatrzymana.'})
 
-
 @app.route('/api/host/game_control', methods=['POST'])
 @host_required
 def game_control():
@@ -594,7 +588,7 @@ def game_control():
             if end_time_str:
                 time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
                 set_game_state(event_id, 'time_left_on_pause', time_left)
-        else: # Unpausing
+        else:
             pause_start_str = get_game_state(event_id, 'pause_start_time')
             if pause_start_str:
                 paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
@@ -643,7 +637,8 @@ def get_players():
 def warn_player(player_id):
     player = db.session.get(Player, player_id)
     if player and player.event_id == session['host_event_id']:
-        player.warnings += 1; db.session.commit()
+        player.warnings += 1
+        db.session.commit()
         return jsonify({'warnings': player.warnings})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
@@ -658,7 +653,6 @@ def delete_player(player_id):
         return jsonify({'message': 'Gracz usunięty'})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
-# 2. Zaktualizuj endpoint dla pytań hosta (znajdź '/api/host/questions' i zmień):
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
 def host_questions():
@@ -673,7 +667,7 @@ def host_questions():
             correct_answer=data['correctAnswer'], 
             letter_to_reveal=data.get('letterToReveal', 'X').upper(),
             category=data.get('category', 'company'), 
-            difficulty=data.get('difficulty', 'easy'),  # NOWE
+            difficulty=data.get('difficulty', 'easy'),
             event_id=event_id
         )
         db.session.add(new_q)
@@ -688,33 +682,35 @@ def host_questions():
         'correctAnswer': q.correct_answer, 
         'letterToReveal': q.letter_to_reveal, 
         'category': q.category,
-        'difficulty': q.difficulty,  # NOWE
-        'times_shown': q.times_shown,  # NOWE
-        'times_correct': q.times_correct  # NOWE
+        'difficulty': q.difficulty,
+        'times_shown': q.times_shown,
+        'times_correct': q.times_correct
     } for q in questions])
 
-# 3. Dodaj endpoint do edycji pytania:
-@app.route('/api/host/question/<int:question_id>', methods=['PUT'])
+@app.route('/api/host/question/<int:question_id>', methods=['PUT', 'DELETE'])
 @host_required
-def update_question(question_id):
+def manage_question(question_id):
     q = db.session.get(Question, question_id)
     if not q or q.event_id != session['host_event_id']:
         return jsonify({'error': 'Nie znaleziono pytania'}), 404
     
-    data = request.json
-    q.text = data.get('text', q.text)
-    q.option_a = data['answers'][0]
-    q.option_b = data['answers'][1]
-    q.option_c = data['answers'][2]
-    q.correct_answer = data.get('correctAnswer', q.correct_answer)
-    q.letter_to_reveal = data.get('letterToReveal', q.letter_to_reveal).upper()
-    q.category = data.get('category', q.category)
-    q.difficulty = data.get('difficulty', q.difficulty)
+    if request.method == 'PUT':
+        data = request.json
+        q.text = data.get('text', q.text)
+        q.option_a = data['answers'][0]
+        q.option_b = data['answers'][1]
+        q.option_c = data['answers'][2]
+        q.correct_answer = data.get('correctAnswer', q.correct_answer)
+        q.letter_to_reveal = data.get('letterToReveal', q.letter_to_reveal).upper()
+        q.category = data.get('category', q.category)
+        q.difficulty = data.get('difficulty', q.difficulty)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie zaktualizowane'})
     
-    db.session.commit()
-    return jsonify({'message': 'Pytanie zaktualizowane'})
-
-# Dodaj nowy endpoint w app.py
+    if request.method == 'DELETE':
+        db.session.delete(q)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie usunięte'})
 
 @app.route('/api/host/qrcodes/counts', methods=['GET'])
 @host_required
@@ -767,7 +763,8 @@ def register_player():
     if Player.query.filter_by(name=name, event_id=event_id).first():
         return jsonify({'error': 'Ta nazwa jest już zajęta.'}), 409
     new_player = Player(name=name, event_id=event_id)
-    db.session.add(new_player); db.session.commit()
+    db.session.add(new_player)
+    db.session.commit()
     emit_leaderboard_update(f'event_{event_id}')
     return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
 
@@ -815,11 +812,11 @@ def process_answer():
     db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
     bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
     
-    # NOWE - zwiększ licznik wyświetleń
+    # Zwiększ licznik wyświetleń
     question.times_shown += 1
     
     if answer == question.correct_answer:
-        # NOWE - zwiększ licznik poprawnych odpowiedzi
+        # Zwiększ licznik poprawnych odpowiedzi
         question.times_correct += 1
         
         points = 10 * bonus
@@ -851,7 +848,8 @@ def upload_photo():
     
     photo = FunnyPhoto(player_id=player.id, player_name=player.name, image_url=image_url, event_id=player.event_id)
     player.score += 15
-    db.session.add(photo); db.session.commit()
+    db.session.add(photo)
+    db.session.commit()
     
     room = f'event_{player.event_id}'
     socketio.emit('new_photo', {'url': image_url, 'player': player.name}, room=room)
@@ -909,20 +907,13 @@ def on_join(data):
     if event_id:
         room = f'event_{event_id}'
         join_room(room)
-        # Send initial state only to the client that just joined
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
-        # Send leaderboard to everyone in the room to reflect new player count if applicable
         emit_leaderboard_update(room)
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':
     socketio.start_background_task(target=update_timers)
     port = int(os.environ.get('PORT', 5000))
-    # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
-
-
-
+    
