@@ -658,20 +658,6 @@ def delete_player(player_id):
         return jsonify({'message': 'Gracz usunięty'})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
-class Question(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(255), nullable=False)
-    option_a = db.Column(db.String(100))
-    option_b = db.Column(db.String(100))
-    option_c = db.Column(db.String(100))
-    correct_answer = db.Column(db.String(1), nullable=False)
-    letter_to_reveal = db.Column(db.String(1), nullable=False)
-    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
-    category = db.Column(db.String(50), nullable=False, default='company')
-    difficulty = db.Column(db.String(20), nullable=False, default='easy')  # NOWE
-    times_shown = db.Column(db.Integer, default=0)  # NOWE - ile razy pytanie się pojawiło
-    times_correct = db.Column(db.Integer, default=0)  # NOWE - ile razy dobrze odpowiedziano
-
 # 2. Zaktualizuj endpoint dla pytań hosta (znajdź '/api/host/questions' i zmień):
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
@@ -935,6 +921,7 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
