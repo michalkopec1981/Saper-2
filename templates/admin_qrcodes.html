@@ -20,6 +20,7 @@
             <div class="d-grid gap-2 mt-4">
                 <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
                 <a href="{{ url_for('list_qrcodes_public', event_id=event.id) }}" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+                <a href="{{ url_for('admin_panel') }}" class="btn btn-outline-secondary">Wróć do Panelu Admina</a>
             </div>
             <div id="status" class="mt-3"></div>
         </div>
