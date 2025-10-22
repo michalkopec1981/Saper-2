@@ -658,6 +658,21 @@ def delete_player(player_id):
         return jsonify({'message': 'Gracz usunięty'})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(255), nullable=False)
+    option_a = db.Column(db.String(100))
+    option_b = db.Column(db.String(100))
+    option_c = db.Column(db.String(100))
+    correct_answer = db.Column(db.String(1), nullable=False)
+    letter_to_reveal = db.Column(db.String(1), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    category = db.Column(db.String(50), nullable=False, default='company')
+    difficulty = db.Column(db.String(20), nullable=False, default='easy')  # NOWE
+    times_shown = db.Column(db.Integer, default=0)  # NOWE - ile razy pytanie się pojawiło
+    times_correct = db.Column(db.Integer, default=0)  # NOWE - ile razy dobrze odpowiedziano
+
+# 2. Zaktualizuj endpoint dla pytań hosta (znajdź '/api/host/questions' i zmień):
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
 def host_questions():
@@ -666,23 +681,52 @@ def host_questions():
         data = request.json
         new_q = Question(
             text=data['text'],
-            option_a=data['answers'][0], option_b=data['answers'][1], option_c=data['answers'][2],
-            correct_answer=data['correctAnswer'], letter_to_reveal=data.get('letterToReveal', 'X').upper(),
-            category=data.get('category', 'company'), event_id=event_id
+            option_a=data['answers'][0], 
+            option_b=data['answers'][1], 
+            option_c=data['answers'][2],
+            correct_answer=data['correctAnswer'], 
+            letter_to_reveal=data.get('letterToReveal', 'X').upper(),
+            category=data.get('category', 'company'), 
+            difficulty=data.get('difficulty', 'easy'),  # NOWE
+            event_id=event_id
         )
-        db.session.add(new_q); db.session.commit()
+        db.session.add(new_q)
+        db.session.commit()
         return jsonify({'id': new_q.id})
+    
     questions = Question.query.filter_by(event_id=event_id).all()
-    return jsonify([{'id': q.id, 'text': q.text, 'answers': [q.option_a, q.option_b, q.option_c], 'correctAnswer': q.correct_answer, 'letterToReveal': q.letter_to_reveal, 'category': q.category} for q in questions])
+    return jsonify([{
+        'id': q.id, 
+        'text': q.text, 
+        'answers': [q.option_a, q.option_b, q.option_c], 
+        'correctAnswer': q.correct_answer, 
+        'letterToReveal': q.letter_to_reveal, 
+        'category': q.category,
+        'difficulty': q.difficulty,  # NOWE
+        'times_shown': q.times_shown,  # NOWE
+        'times_correct': q.times_correct  # NOWE
+    } for q in questions])
 
-@app.route('/api/host/question/<int:question_id>', methods=['DELETE'])
+# 3. Dodaj endpoint do edycji pytania:
+@app.route('/api/host/question/<int:question_id>', methods=['PUT'])
 @host_required
-def delete_question(question_id):
+def update_question(question_id):
     q = db.session.get(Question, question_id)
-    if q and q.event_id == session['host_event_id']:
-        db.session.delete(q); db.session.commit()
-        return jsonify({'message': 'Pytanie usunięte'})
-    return jsonify({'error': 'Nie znaleziono pytania'}), 404
+    if not q or q.event_id != session['host_event_id']:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+    
+    data = request.json
+    q.text = data.get('text', q.text)
+    q.option_a = data['answers'][0]
+    q.option_b = data['answers'][1]
+    q.option_c = data['answers'][2]
+    q.correct_answer = data.get('correctAnswer', q.correct_answer)
+    q.letter_to_reveal = data.get('letterToReveal', q.letter_to_reveal).upper()
+    q.category = data.get('category', q.category)
+    q.difficulty = data.get('difficulty', q.difficulty)
+    
+    db.session.commit()
+    return jsonify({'message': 'Pytanie zaktualizowane'})
 
 # Dodaj nowy endpoint w app.py
 
@@ -785,7 +829,13 @@ def process_answer():
     db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
     bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
     
+    # NOWE - zwiększ licznik wyświetleń
+    question.times_shown += 1
+    
     if answer == question.correct_answer:
+        # NOWE - zwiększ licznik poprawnych odpowiedzi
+        question.times_correct += 1
+        
         points = 10 * bonus
         player.score += points
         player.revealed_letters += question.letter_to_reveal
@@ -885,6 +935,7 @@ if __name__ == '__main__':
     # Użyj debug=False przy wdrażaniu na produkcję
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
