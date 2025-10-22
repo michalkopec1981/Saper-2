@@ -41,7 +41,9 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game">Gra</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions">Pytania</button></li>
-        {% if event.is_superhost %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#superhost">Kody QR</button></li>{% endif %}
+        {% if event.is_superhost %}
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes">Kody QR</button></li>
+        {% endif %}
     </ul>
 
     <div class="tab-content">
@@ -146,7 +148,41 @@
         <div class="tab-pane fade" id="players">...</div>
         <div class="tab-pane fade" id="questions">...</div>
         {% if event.is_superhost %}
-        <div class="tab-pane fade" id="superhost">...</div>
+        <div class="tab-pane fade" id="qrcodes">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Zarządzanie Kodami QR</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Kody Czerwone (punkty specjalne)</label>
+                            <input type="number" id="host-red-count" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kody Białe Pułapka (punkty ujemne)</label>
+                            <input type="number" id="host-white-trap-count" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kody Zielone (minigry)</label>
+                            <input type="number" id="host-green-count" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kody Różowe (wyzwanie foto)</label>
+                            <input type="number" id="host-pink-count" class="form-control" value="0" min="0">
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="host-save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
+                        <a href="{{ url_for('list_qrcodes_public', event_id=event.id) }}" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+                    </div>
+                    <div id="host-qr-status" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -158,6 +194,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const EVENT_ID = {{ event.id }};
+    const IS_SUPERHOST = {{ 'true' if event.is_superhost else 'false' }};
     const socket = io();
 
     // --- Element references ---
@@ -203,12 +240,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 const now = Date.now();
                 const deltaSeconds = (now - lastUpdateTime) / 1000;
                 
-                if (deltaSeconds >= 0.9) { // Update approximately every second
+                if (deltaSeconds >= 0.9) {
                     if (currentTimeLeft > 0) {
                         currentTimeLeft = Math.max(0, currentTimeLeft - deltaSeconds);
                         infoElements.timeLeft.textContent = formatTime(currentTimeLeft);
                         
-                        // Update elapsed times too
                         currentTimeElapsed += deltaSeconds;
                         currentTimeElapsedPauses += deltaSeconds;
                         infoElements.timeElapsed.textContent = formatTime(currentTimeElapsed);
@@ -217,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     lastUpdateTime = now;
                 }
             }
-        }, 100); // Check every 100ms for smooth updates
+        }, 100);
     }
 
     async function sendGameControl(control, value = null) {
@@ -238,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function updateUI(state) {
-        // Update local state variables
         isGameActive = state.game_active;
         isTimerRunning = state.is_timer_running;
         currentTimeLeft = state.time_left;
@@ -246,7 +281,6 @@ document.addEventListener('DOMContentLoaded', function () {
         currentTimeElapsedPauses = state.time_elapsed_with_pauses;
         lastUpdateTime = Date.now();
 
-        // Update info panel
         infoElements.playerCount.textContent = state.player_count;
         infoElements.correctAnswers.textContent = state.correct_answers;
         infoElements.language.textContent = state.language_player === 'pl' ? 'Polski' : 'Angielski';
@@ -256,15 +290,12 @@ document.addEventListener('DOMContentLoaded', function () {
         infoElements.bonus.textContent = state.bonus_multiplier > 1 ? `x${state.bonus_multiplier}` : 'Brak';
         infoElements.speed.textContent = `x${state.time_speed}`;
 
-        // Enable/disable sections
         preGameSettings.disabled = state.game_active;
         inGameSettings.disabled = !state.game_active;
         startGameBtn.disabled = state.game_active;
         
-        // Update button states
         pauseBtn.textContent = state.is_timer_running ? 'Pauza' : 'Wznów';
         
-        // Update active classes for modifiers
         document.querySelectorAll('#game-controls .btn-group .btn').forEach(btn => {
             const control = btn.dataset.control;
             const value = btn.dataset.value;
@@ -277,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
         
-        // Update language buttons
         document.querySelectorAll('#lang-player-controls .btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.value === state.language_player);
         });
@@ -310,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     stopGameBtn.addEventListener('click', async () => {
         const password = prompt('Aby zatrzymać grę, podaj swoje hasło Hosta:');
-        if (password === null) { return; } // User cancelled
+        if (password === null) { return; }
 
         try {
             const response = await fetch('/api/host/stop_game', {
@@ -347,6 +377,52 @@ document.addEventListener('DOMContentLoaded', function () {
         if(btn) sendGameControl(btn.dataset.control, btn.dataset.value);
     });
     
+    // --- QR Codes Management (Superhost only) ---
+    if (IS_SUPERHOST) {
+        // Load QR counts when tab is opened
+        document.querySelector('button[data-bs-target="#qrcodes"]').addEventListener('click', loadQRCounts);
+        
+        async function loadQRCounts() {
+            try {
+                const response = await fetch('/api/host/qrcodes/counts');
+                if (!response.ok) throw new Error('Nie udało się pobrać liczby kodów.');
+                const counts = await response.json();
+                
+                document.getElementById('host-red-count').value = counts.red;
+                document.getElementById('host-white-trap-count').value = counts.white_trap;
+                document.getElementById('host-green-count').value = counts.green;
+                document.getElementById('host-pink-count').value = counts.pink;
+            } catch (error) {
+                console.error('Load QR counts error:', error);
+            }
+        }
+        
+        document.getElementById('host-save-qrcodes').addEventListener('click', async () => {
+            const statusEl = document.getElementById('host-qr-status');
+            const payload = {
+                counts: {
+                    red: document.getElementById('host-red-count').value,
+                    white_trap: document.getElementById('host-white-trap-count').value,
+                    green: document.getElementById('host-green-count').value,
+                    pink: document.getElementById('host-pink-count').value,
+                }
+            };
+            
+            try {
+                const response = await fetch('/api/host/qrcodes/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || result.error);
+                statusEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            } catch (error) {
+                statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        });
+    }
+    
     // --- Socket.IO listeners ---
     socket.on('connect', () => {
         socket.emit('join', { event_id: EVENT_ID });
@@ -356,15 +432,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateUI(state);
     });
 
-    // Enhanced timer_tick handler - now properly updates all time fields
     socket.on('timer_tick', (data) => {
-        // Update local state with server data to keep in sync
         currentTimeLeft = data.time_left;
         currentTimeElapsed = data.time_elapsed;
         currentTimeElapsedPauses = data.time_elapsed_with_pauses;
         lastUpdateTime = Date.now();
 
-        // Update the display immediately
         if (infoElements.timeLeft) {
             infoElements.timeLeft.textContent = formatTime(data.time_left);
         }
