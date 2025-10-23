@@ -50,6 +50,7 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         {% if is_superhost %}
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
         {% endif %}
@@ -168,6 +169,32 @@
                 </div>
                 <div class="card-body">
                     <div id="questions-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="minigames">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
+                <div class="card-body">
+                    <div class="alert alert-info">Minigry aktywowane przez zielone kody QR.</div>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🎮 Tetris</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle" style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="tetris-toggle">
+                                        <span id="tetris-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
         </div>
@@ -697,6 +724,40 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             alert('Błąd: ' + error.message);
         }
+       function loadMinigamesStatus() {
+    fetch('/api/host/minigames/status').then(res => res.json()).then(data => {
+        const tetrisToggle = document.getElementById('tetris-toggle');
+        const tetrisStatus = document.getElementById('tetris-status');
+        if (tetrisToggle && tetrisStatus) {
+            tetrisToggle.checked = data.tetris_enabled;
+            tetrisStatus.textContent = data.tetris_enabled ? 'Aktywny' : 'Nieaktywny';
+            tetrisStatus.className = data.tetris_enabled ? 'badge bg-success' : 'badge bg-secondary';
+        }
+    });
+}
+document.getElementById('tetris-toggle')?.addEventListener('change', async (e) => {
+    const enabled = e.target.checked;
+    const statusEl = document.getElementById('tetris-status');
+    const infoEl = document.getElementById('minigames-info');
+    try {
+        const response = await fetch('/api/host/minigames/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ game_type: 'tetris', enabled })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+        statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        infoEl.textContent = result.message;
+        infoEl.style.display = 'block';
+        setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+    } catch (error) {
+        alert('Błąd: ' + error.message);
+        e.target.checked = !enabled;
+    }
+});
+document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
     });
     
     async function editQuestion(id) {
@@ -740,8 +801,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     document.querySelector('button[data-bs-target="#questions"]').addEventListener('click', loadQuestions);
 
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames">Minigry</button></li>
-    
+        
     // =====================================================================
     // STEROWANIE GRĄ
     // =====================================================================
@@ -943,5 +1003,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
