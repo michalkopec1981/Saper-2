@@ -362,7 +362,9 @@ def host_login():
 def host_panel():
     event = db.session.get(Event, session['host_event_id'])
     is_impersonated = session.get('impersonated_by_admin', False)
-    return render_template('host.html', event=event, is_impersonated=is_impersonated)
+    is_superhost = event.is_superhost if event else False
+    return render_template('host.html', event=event, is_impersonated=is_impersonated, is_superhost=is_superhost)
+
 
 @app.route('/host/logout_impersonate')
 def logout_impersonate():
@@ -514,6 +516,24 @@ def admin_generate_qr_codes():
             db.session.add(QRCode(code_identifier=f"{prefix}{i}", color=color, event_id=event_id))
     db.session.commit()
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
+
+@app.route('/api/host/qrcodes', methods=['GET'])
+@host_required
+def get_host_qrcodes():
+    """Zwraca wszystkie kody QR dla eventu, jeśli host ma uprawnienia Superhost"""
+    event_id = session['host_event_id']
+    event = db.session.get(Event, event_id)
+    
+    if not event or not event.is_superhost:
+        return jsonify({'error': 'Brak uprawnień Superhost'}), 403
+    
+    qrcodes = QRCode.query.filter_by(event_id=event_id).all()
+    return jsonify([{
+        'id': qr.id,
+        'code_identifier': qr.code_identifier,
+        'color': qr.color,
+        'claimed_by_player_id': qr.claimed_by_player_id
+    } for qr in qrcodes])
 
 # --- API: HOST ---
 @app.route('/api/host/state', methods=['GET'])
@@ -917,3 +937,4 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
