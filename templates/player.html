@@ -46,9 +46,8 @@
 {% endblock %}
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='tetris.js') }}"></script>
-<script>
 <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='tetris.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const eventId = {{ event_id }};
@@ -317,6 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </script>
 {% endblock %}
+
 
 
 
