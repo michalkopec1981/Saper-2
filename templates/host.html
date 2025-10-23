@@ -245,6 +245,15 @@
                         <button type="button" class="btn btn-outline-danger" data-difficulty="hard" data-translate="hard">Trudny</button>
                     </div>
                 </div>
+                <!-- Dodaj to PO sekcji z poziomem trudności (difficulty) -->
+                <div class="mb-3">
+                    <label class="form-label" data-translate="question_category">Kategoria pytania:</label>
+                    <div class="btn-group w-100" role="group" id="category-buttons">
+                        <button type="button" class="btn btn-outline-primary active" data-category="company" data-translate="category_company">Firmowe</button>
+                        <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">Światowe</button>
+                    </div>
+                </div>
+                
                 <div class="mb-3">
                     <label class="form-label" data-translate="letter_reveal">Litera do odsłonięcia:</label>
                     <input type="text" class="form-control" id="modal-letter" maxlength="1" value="X">
@@ -568,6 +577,15 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.classList.add('active');
         }
     });
+
+    // Category buttons
+    document.getElementById('category-buttons').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (btn) {
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    });
     
     // =====================================================================
     // PYTANIA
@@ -631,13 +649,14 @@ document.addEventListener('DOMContentLoaded', function () {
         questionModal.show();
     });
     
-    document.getElementById('save-question-btn').addEventListener('click', async () => {
+   document.getElementById('save-question-btn').addEventListener('click', async () => {
         const text = document.getElementById('modal-question-text').value.trim();
         const answerA = document.getElementById('modal-answer-a').value.trim();
         const answerB = document.getElementById('modal-answer-b').value.trim();
         const answerC = document.getElementById('modal-answer-c').value.trim();
         const correctAnswer = document.querySelector('input[name="correct-answer"]:checked')?.value;
         const difficulty = document.querySelector('#difficulty-buttons .btn.active')?.dataset.difficulty || 'easy';
+        const category = document.querySelector('#category-buttons .btn.active')?.dataset.category || 'company'; // DODAJ TĘ LINIĘ
         const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
         
         if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
@@ -651,8 +670,9 @@ document.addEventListener('DOMContentLoaded', function () {
             correctAnswer,
             difficulty,
             letterToReveal: letter,
-            category: 'company'
+            category: category // ZMIEŃ Z 'company' na zmienną category
         };
+        // ... reszta kodu
         
         try {
             let response;
@@ -921,3 +941,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
