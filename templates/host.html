@@ -50,7 +50,7 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        {% if event.is_superhost %}
+        {% if is_superhost %}
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
         {% endif %}
     </ul>
@@ -163,8 +163,30 @@
             </div>
         </div>
         
-        {% if event.is_superhost %}
-        <div class="tab-pane fade" id="qrcodes">...</div>
+        {% if is_superhost %}
+        <div class="tab-pane fade" id="qrcodes">
+            <div class="card mx-auto">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
+                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+                    </div>
+                    <div id="qrcodes-status" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -241,6 +263,7 @@ const translations = {
         tab_players: 'Gracze',
         tab_questions: 'Pytania',
         tab_qrcodes: 'Kody QR',
+        qr_management: 'Zarządzanie Kodami QR',
         game_info: 'Informacje o grze',
         player_count: 'Liczba graczy:',
         correct_answers: 'Zdobyte nagrody:',
@@ -291,6 +314,7 @@ const translations = {
         tab_players: 'Players',
         tab_questions: 'Questions',
         tab_qrcodes: 'QR Codes',
+        qr_management: 'QR Codes Management',
         game_info: 'Game information',
         player_count: 'Number of players:',
         correct_answers: 'Rewards collected:',
@@ -338,6 +362,8 @@ const translations = {
 
 let currentLanguage = 'pl';
 let currentEditingQuestionId = null;
+const EVENT_ID = {{ event.id }};
+const IS_SUPERHOST = {{ 'true' if is_superhost else 'false' }};
 
 function translatePage(lang) {
     currentLanguage = lang;
@@ -360,12 +386,62 @@ function translatePage(lang) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    const EVENT_ID = {{ event.id }};
     const socket = io();
     const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
     
-    // Language switching
-    document.getElementById('lang-host-controls').addEventListener('click', (e) => {
+    // =====================================================================
+    // SEKCJA KODÓW QR - TYLKO DLA SUPERHOST
+    // =====================================================================
+    if (IS_SUPERHOST) {
+        // Załaduj liczby kodów po otwarciu zakładki
+        document.querySelector('button[data-bs-target="#qrcodes"]')?.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/host/qrcodes/counts');
+                if (response.ok) {
+                    const counts = await response.json();
+                    document.getElementById('red-count').value = counts.red || 0;
+                    document.getElementById('white_trap-count').value = counts.white_trap || 0;
+                    document.getElementById('green-count').value = counts.green || 0;
+                    document.getElementById('pink-count').value = counts.pink || 0;
+                }
+            } catch (error) {
+                console.error('Błąd ładowania kodów QR:', error);
+            }
+        });
+
+        // Generowanie kodów QR
+        document.getElementById('save-qrcodes').addEventListener('click', async () => {
+            const statusEl = document.getElementById('qrcodes-status');
+            const payload = {
+                counts: {
+                    red: document.getElementById('red-count').value,
+                    white_trap: document.getElementById('white_trap-count').value,
+                    green: document.getElementById('green-count').value,
+                    pink: document.getElementById('pink-count').value,
+                }
+            };
+            try {
+                const response = await fetch('/api/host/qrcodes/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+                statusEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+            } catch (error) {
+                statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        });
+
+        // Link do podglądu kodów QR
+        document.getElementById('preview-qrcodes-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
+    }
+    
+    // =====================================================================
+    // JĘZYK I TRANSLACJA
+    // =====================================================================
+    document.getElementById('lang-host-controls')?.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-value]');
         if (btn) {
             const lang = btn.dataset.value;
@@ -383,7 +459,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    // Load questions
+    // =====================================================================
+    // PYTANIA
+    // =====================================================================
     function loadQuestions() {
         fetch('/api/host/questions')
             .then(res => res.json())
@@ -428,7 +506,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
     
-    // Add question button
     document.getElementById('add-question-btn').addEventListener('click', () => {
         currentEditingQuestionId = null;
         document.getElementById('modal-question-text').value = '';
@@ -444,7 +521,6 @@ document.addEventListener('DOMContentLoaded', function () {
         questionModal.show();
     });
     
-    // Save question
     document.getElementById('save-question-btn').addEventListener('click', async () => {
         const text = document.getElementById('modal-question-text').value.trim();
         const answerA = document.getElementById('modal-answer-a').value.trim();
@@ -493,7 +569,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    // Edit question
     async function editQuestion(id) {
         try {
             const response = await fetch('/api/host/questions');
@@ -521,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    // Delete question
     async function deleteQuestion(id) {
         if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
         
@@ -534,10 +608,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    // Load questions when tab is opened
     document.querySelector('button[data-bs-target="#questions"]').addEventListener('click', loadQuestions);
     
-    // Game controls (simplified version - add your full game logic here)
+    // =====================================================================
+    // STEROWANIE GRĄ
+    // =====================================================================
     const infoElements = {
         playerCount: document.getElementById('info-player-count'),
         correctAnswers: document.getElementById('info-correct-answers'),
@@ -575,11 +650,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    // Socket listeners
     socket.on('connect', () => socket.emit('join', { event_id: EVENT_ID }));
     socket.on('game_state_update', updateUI);
     
-    // Load initial state
     fetch('/api/host/state').then(res => res.json()).then(state => {
         updateUI(state);
         if (state.language_host === 'en') {
@@ -587,7 +660,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    // Game controls
     document.getElementById('start-game')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('minutes-input').value);
         if (confirm(`Czy na pewno chcesz rozpocząć nową grę?`)) {
