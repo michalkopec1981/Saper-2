@@ -48,8 +48,275 @@
 {{ super() }}
 <script src="{{ url_for('static', filename='tetris.js') }}"></script>
 <script>
-// Pełny kod JavaScript dla gracza
+<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventId = {{ event_id }};
+    const qrCode = "{{ qr_code }}";
+    let playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+    let playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
+    let currentQuestionId = null;
+
+    const socket = io();
+    
+    // Elements
+    const nameInputSection = document.getElementById('name-input-section');
+    const gameView = document.getElementById('game-view');
+    const quizSection = document.getElementById('quiz-section');
+    const messageSection = document.getElementById('message-section');
+    const photoCaptureView = document.getElementById('photo-capture-view');
+    const playerNameInput = document.getElementById('player-name');
+    const registerBtn = document.getElementById('register-btn');
+    const playerNameDisplay = document.getElementById('player-name-display');
+    const playerScoreDisplay = document.getElementById('player-score');
+    const questionEl = document.getElementById('question');
+    const answersEl = document.getElementById('answers');
+
+    // Photo capture elements
+    const cameraFeed = document.getElementById('camera-feed');
+    const captureBtn = document.getElementById('capture-btn');
+    const photoCanvas = document.getElementById('photo-canvas');
+
+    // Helper functions
+    function showMessage(text, type = 'info') {
+        messageSection.textContent = text;
+        messageSection.className = `alert alert-${type}`;
+        messageSection.style.display = 'block';
+        quizSection.style.display = 'none';
+    }
+
+    function displayQuestion(question) {
+        currentQuestionId = question.id;
+        questionEl.textContent = question.text;
+        answersEl.innerHTML = '';
+        const options = [
+            { key: 'a', text: question.option_a },
+            { key: 'b', text: question.option_b },
+            { key: 'c', text: question.option_c }
+        ];
+        options.forEach(opt => {
+            if (opt.text) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-secondary btn-lg';
+                btn.textContent = `${opt.key.toUpperCase()}) ${opt.text}`;
+                btn.dataset.answer = opt.key.toUpperCase();
+                answersEl.appendChild(btn);
+            }
+        });
+        messageSection.style.display = 'none';
+        quizSection.style.display = 'block';
+    }
+
+    // Register player
+    registerBtn.addEventListener('click', async () => {
+        const name = playerNameInput.value.trim();
+        if (!name) {
+            alert('Proszę podać imię lub nazwę drużyny.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/player/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, event_id: eventId })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                alert(data.error || 'Błąd rejestracji');
+                return;
+            }
+
+            const data = await response.json();
+            playerId = data.id;
+            playerName = data.name;
+            localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+            localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+
+            playerNameDisplay.textContent = playerName;
+            playerScoreDisplay.textContent = data.score;
+
+            nameInputSection.style.display = 'none';
+            gameView.style.display = 'block';
+
+            // Scan QR code after registration
+            scanQrCode();
+        } catch (error) {
+            alert('Błąd połączenia z serwerem');
+        }
+    });
+
+    // Scan QR code
+    async function scanQrCode() {
+        try {
+            const response = await fetch('/api/player/scan_qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    player_id: playerId, 
+                    qr_code: qrCode,
+                    event_id: eventId 
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 429) {
+                showMessage(data.message, 'warning');
+                return;
+            }
+
+            if (!response.ok) {
+                showMessage(data.message || 'Błąd skanowania', 'danger');
+                return;
+            }
+
+            if (data.status === 'question') {
+                displayQuestion(data.question);
+            } else if (data.status === 'photo_challenge') {
+                startPhotoChallenge();
+            } else if (data.status === 'minigame' && data.game === 'tetris') {
+                startTetrisGame();
+            } else if (data.status === 'info' || data.status === 'error') {
+                showMessage(data.message, data.status === 'error' ? 'danger' : 'info');
+                if (data.score !== undefined) {
+                    playerScoreDisplay.textContent = data.score;
+                }
+            }
+        } catch (error) {
+            showMessage('Błąd połączenia z serwerem', 'danger');
+        }
+    }
+
+    // Answer question
+    answersEl.addEventListener('click', async (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            const answer = event.target.dataset.answer;
+            try {
+                const response = await fetch('/api/player/answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        player_id: playerId, 
+                        question_id: currentQuestionId, 
+                        answer 
+                    })
+                });
+
+                const data = await response.json();
+                playerScoreDisplay.textContent = data.score;
+
+                if (data.correct) {
+                    showMessage(`✅ Dobrze! Zdobywasz punkty i literę: ${data.letter}`, 'success');
+                } else {
+                    showMessage('❌ Zła odpowiedź. Tracisz 5 punktów.', 'danger');
+                }
+            } catch (error) {
+                showMessage('Błąd połączenia z serwerem', 'danger');
+            }
+        }
+    });
+
+    // Photo challenge
+    function startPhotoChallenge() {
+        gameView.style.display = 'none';
+        photoCaptureView.style.display = 'block';
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(stream => {
+                cameraFeed.srcObject = stream;
+            })
+            .catch(err => {
+                alert('Nie można uzyskać dostępu do kamery: ' + err.message);
+            });
+    }
+
+    captureBtn.addEventListener('click', async () => {
+        const context = photoCanvas.getContext('2d');
+        photoCanvas.width = cameraFeed.videoWidth;
+        photoCanvas.height = cameraFeed.videoHeight;
+        context.drawImage(cameraFeed, 0, 0);
+
+        photoCanvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('photo', blob, 'photo.jpg');
+            formData.append('player_id', playerId);
+
+            try {
+                const response = await fetch('/api/player/upload_photo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                // Stop camera
+                const stream = cameraFeed.srcObject;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                photoCaptureView.style.display = 'none';
+                gameView.style.display = 'block';
+                
+                playerScoreDisplay.textContent = data.score;
+                showMessage(data.message, 'success');
+            } catch (error) {
+                alert('Błąd wysyłania zdjęcia');
+            }
+        }, 'image/jpeg');
+    });
+
+    // Tetris game
+    function startTetrisGame() {
+        gameView.style.display = 'none';
+        document.getElementById('tetris-game-view').style.display = 'block';
+        
+        let tetrisGame;
+        
+        document.getElementById('tetris-start-btn').onclick = () => {
+            tetrisGame = new TetrisGame('tetris-canvas', playerId, eventId);
+            tetrisGame.start();
+            document.getElementById('tetris-start-btn').style.display = 'none';
+        };
+        
+        document.getElementById('tetris-back-btn').onclick = () => {
+            if (tetrisGame) {
+                tetrisGame.gameRunning = false;
+            }
+            document.getElementById('tetris-game-view').style.display = 'none';
+            gameView.style.display = 'block';
+            document.getElementById('tetris-start-btn').style.display = 'inline-block';
+        };
+    }
+
+    // Socket.IO
+    socket.on('connect', () => {
+        socket.emit('join', { event_id: eventId });
+    });
+
+    socket.on('game_over', () => {
+        showMessage('⏰ Czas minął! Gra zakończona.', 'danger');
+    });
+
+    socket.on('game_forced_win', (data) => {
+        showMessage(data.message, 'success');
+    });
+
+    // Initialize
+    if (playerId && playerName) {
+        playerNameDisplay.textContent = playerName;
+        nameInputSection.style.display = 'none';
+        gameView.style.display = 'block';
+        scanQrCode();
+    } else {
+        nameInputSection.style.display = 'block';
+    }
+});
+</script>
 </script>
 {% endblock %}
+
 
 
