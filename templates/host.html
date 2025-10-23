@@ -99,14 +99,14 @@
                                 <div class="mb-3">
                                     <h6 data-translate="player_language">Język graczy</h6>
                                     <div class="btn-group w-100" role="group" id="lang-player-controls">
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
                                         <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
                                     </div>
                                 </div>
                                 <div class="mb-3">
                                     <h6 data-translate="host_language">Język prowadzącego</h6>
                                     <div class="btn-group w-100" role="group" id="lang-host-controls">
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
                                         <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
                                     </div>
                                 </div>
@@ -149,7 +149,16 @@
             </div>
         </div>
         
-        <div class="tab-pane fade" id="players">...</div>
+        <div class="tab-pane fade" id="players">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="players_management">Zarządzanie graczami</h5>
+                </div>
+                <div class="card-body">
+                    <div id="players-list"></div>
+                </div>
+            </div>
+        </div>
         
         <div class="tab-pane fade" id="questions">
             <div class="card">
@@ -288,6 +297,7 @@ const translations = {
         force_win: 'Przedwczesna wygrana',
         stop_game: 'Stop Gry',
         questions_management: 'Zarządzanie pytaniami',
+        players_management: 'Zarządzanie graczami',
         add_question: 'Dodaj pytanie',
         question_modal_title: 'Dodaj pytanie',
         question_text: 'Treść pytania:',
@@ -305,7 +315,9 @@ const translations = {
         correct: 'Poprawne',
         times: 'razy',
         admin_impersonate: 'Jesteś zalogowany jako Admin w panelu Hosta.',
-        back_to_admin: 'Powrót do panelu Admina'
+        back_to_admin: 'Powrót do panelu Admina',
+        warn: 'Ostrzeż',
+        warnings: 'Ostrzeżenia'
     },
     en: {
         host_title: 'GAME ORGANIZATION',
@@ -339,6 +351,7 @@ const translations = {
         force_win: 'Force Win',
         stop_game: 'Stop Game',
         questions_management: 'Questions management',
+        players_management: 'Players management',
         add_question: 'Add question',
         question_modal_title: 'Add question',
         question_text: 'Question text:',
@@ -356,7 +369,9 @@ const translations = {
         correct: 'Correct',
         times: 'times',
         admin_impersonate: 'You are logged in as Admin in Host panel.',
-        back_to_admin: 'Back to Admin panel'
+        back_to_admin: 'Back to Admin panel',
+        warn: 'Warn',
+        warnings: 'Warnings'
     }
 };
 
@@ -383,6 +398,12 @@ function translatePage(lang) {
     if (pauseBtn && pauseBtn.textContent.includes('Wznów') || pauseBtn.textContent.includes('Resume')) {
         pauseBtn.textContent = translations[lang]['resume'];
     }
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -439,6 +460,79 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // =====================================================================
+    // GRACZE
+    // =====================================================================
+    function loadPlayers() {
+        fetch('/api/host/players')
+            .then(res => res.json())
+            .then(players => {
+                const list = document.getElementById('players-list');
+                if (players.length === 0) {
+                    list.innerHTML = `<p class="text-muted">Brak graczy</p>`;
+                    return;
+                }
+                
+                list.innerHTML = `
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>${translations[currentLanguage].player_count.replace(':', '')}</th>
+                                <th>Punkty</th>
+                                <th>${translations[currentLanguage].warnings}</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${players.map(p => `
+                                <tr>
+                                    <td>${p.name}</td>
+                                    <td>${p.score}</td>
+                                    <td>${p.warnings}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
+                                        <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                // Attach event listeners
+                document.querySelectorAll('.warn-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deletePlayer(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+    
+    async function warnPlayer(id) {
+        try {
+            const response = await fetch(`/api/host/player/${id}/warn`, { method: 'POST' });
+            if (!response.ok) throw new Error('Błąd ostrzeżenia gracza');
+            loadPlayers();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+    
+    async function deletePlayer(id) {
+        if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
+        
+        try {
+            const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania gracza');
+            loadPlayers();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+    
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
+    
+    // =====================================================================
     // JĘZYK I TRANSLACJA
     // =====================================================================
     document.getElementById('lang-host-controls')?.addEventListener('click', (e) => {
@@ -447,6 +541,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const lang = btn.dataset.value;
             translatePage(lang);
             sendGameControl('language_host', lang);
+            
+            // Update active state
+            document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
+        }
+    });
+    
+    document.getElementById('lang-player-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (btn) {
+            const lang = btn.dataset.value;
+            sendGameControl('language_player', lang);
+            
+            // Update active state
+            document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
         }
     });
     
@@ -634,51 +744,179 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ control, value })
             });
             if (!response.ok) throw new Error('Server error');
+            const result = await response.json();
+            console.log('Game control response:', result);
         } catch (error) {
             console.error('Control error:', error);
         }
     }
     
     function updateUI(state) {
-        if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count;
-        if (infoElements.correctAnswers) infoElements.correctAnswers.textContent = state.correct_answers;
+        console.log('Updating UI with state:', state);
         
+        // Update player count and correct answers
+        if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
+        if (infoElements.correctAnswers) infoElements.correctAnswers.textContent = state.correct_answers || 0;
+        
+        // Update language display
+        if (infoElements.language) {
+            const langText = state.language_host === 'en' ? 'English' : 'Polski';
+            infoElements.language.textContent = langText;
+        }
+        
+        // Update bonus display
+        if (infoElements.bonus) {
+            const bonusVal = state.bonus_multiplier || 1;
+            infoElements.bonus.textContent = bonusVal > 1 ? `x${bonusVal}` : 'Brak';
+            
+            // Update button states
+            document.querySelectorAll('[data-control="bonus"]').forEach(btn => {
+                btn.classList.toggle('active-modifier', btn.dataset.value === String(bonusVal));
+            });
+        }
+        
+        // Update speed display
+        if (infoElements.speed) {
+            const speedVal = state.time_speed || 1;
+            infoElements.speed.textContent = `x${speedVal}`;
+            
+            // Update button states
+            document.querySelectorAll('[data-control="speed"]').forEach(btn => {
+                btn.classList.toggle('active-modifier', btn.dataset.value === String(speedVal));
+            });
+        }
+        
+        // Update pause button text
         const pauseBtn = document.getElementById('pause-btn');
         if (pauseBtn) {
             isTimerRunning = state.is_timer_running;
-            pauseBtn.textContent = state.is_timer_running ? translations[currentLanguage].pause : translations[currentLanguage].resume;
+            pauseBtn.textContent = state.is_timer_running 
+                ? translations[currentLanguage].pause 
+                : translations[currentLanguage].resume;
+        }
+        
+        // Enable/disable fieldsets based on game state
+        const preGameFieldset = document.getElementById('pre-game-settings');
+        const inGameFieldset = document.getElementById('in-game-settings');
+        
+        if (state.game_active) {
+            preGameFieldset.disabled = true;
+            inGameFieldset.disabled = false;
+        } else {
+            preGameFieldset.disabled = false;
+            inGameFieldset.disabled = true;
         }
     }
     
-    socket.on('connect', () => socket.emit('join', { event_id: EVENT_ID }));
-    socket.on('game_state_update', updateUI);
-    
-    fetch('/api/host/state').then(res => res.json()).then(state => {
-        updateUI(state);
-        if (state.language_host === 'en') {
-            translatePage('en');
-        }
+    // Socket.IO event handlers
+    socket.on('connect', () => {
+        console.log('Socket connected');
+        socket.emit('join', { event_id: EVENT_ID });
     });
     
+    socket.on('game_state_update', (state) => {
+        console.log('Game state update received:', state);
+        updateUI(state);
+    });
+    
+    socket.on('timer_tick', (data) => {
+        if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
+        if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
+        if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
+    });
+    
+    socket.on('game_over', () => {
+        alert('Czas minął! Gra zakończona.');
+    });
+    
+    socket.on('game_forced_win', (data) => {
+        alert(data.message);
+    });
+    
+    // Initial state load
+    fetch('/api/host/state')
+        .then(res => res.json())
+        .then(state => {
+            console.log('Initial state loaded:', state);
+            updateUI(state);
+            if (state.language_host === 'en') {
+                translatePage('en');
+                document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
+                document.querySelector('#lang-host-controls button[data-value="en"]').classList.add('active-modifier');
+            }
+            if (state.language_player === 'en') {
+                document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
+                document.querySelector('#lang-player-controls button[data-value="en"]').classList.add('active-modifier');
+            }
+        })
+        .catch(error => console.error('Error loading initial state:', error));
+    
+    // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('minutes-input').value);
-        if (confirm(`Czy na pewno chcesz rozpocząć nową grę?`)) {
-            await fetch('/api/host/start_game', {
+        if (isNaN(minutes) || minutes < 1) {
+            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
+            return;
+        }
+        
+        if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/host/start_game', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minutes })
             });
+            
+            if (!response.ok) {
+                throw new Error('Błąd uruchamiania gry');
+            }
+            
+            const result = await response.json();
+            console.log('Game started:', result);
+            alert(result.message || 'Gra rozpoczęta!');
+        } catch (error) {
+            console.error('Error starting game:', error);
+            alert('Błąd podczas uruchamiania gry: ' + error.message);
         }
     });
     
-    document.getElementById('game-controls')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-control]');
-        if (btn) sendGameControl(btn.dataset.control, btn.dataset.value);
+    // Stop game button
+    document.getElementById('stop-game')?.addEventListener('click', async () => {
+        const password = prompt('Wprowadź hasło Hosta, aby zakończyć grę:');
+        if (!password) return;
+        
+        try {
+            const response = await fetch('/api/host/stop_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zatrzymywania gry');
+            }
+            
+            alert(result.message || 'Gra zatrzymana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
     });
     
-    document.getElementById('lang-player-controls')?.addEventListener('click', (e) => {
+    // In-game controls
+    document.getElementById('game-controls')?.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-control]');
-        if(btn) sendGameControl(btn.dataset.control, btn.dataset.value);
+        if (!btn) return;
+        
+        const control = btn.dataset.control;
+        const value = btn.dataset.value;
+        
+        console.log('Sending game control:', control, value);
+        sendGameControl(control, value);
     });
 });
 </script>
