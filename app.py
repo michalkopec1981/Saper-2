@@ -856,26 +856,79 @@ def scan_qr():
     player = db.session.get(Player, player_id)
     qr_code = QRCode.query.filter_by(code_identifier=qr_id, event_id=event_id).first()
 
-    if not player or not qr_code: return jsonify({'message': 'Nieprawidłowe dane.'}), 404
-    if get_game_state(event_id, 'game_active', 'False') != 'True': return jsonify({'message': 'Gra nie jest aktywna.'}), 403
+    if not player or not qr_code:
+        return jsonify({'message': 'Nieprawidłowe dane.'}), 404
+    
+    if get_game_state(event_id, 'game_active', 'False') != 'True':
+        return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
+    # BIAŁE I ŻÓŁTE KODY (wielorazowe)
     if qr_code.color in ['white', 'yellow']:
-        last_scan = PlayerScan.query.filter_by(player_id=player_id, color_category=qr_code.color).order_by(PlayerScan.scan_time.desc()).first()
+        last_scan = PlayerScan.query.filter_by(
+            player_id=player_id, 
+            color_category=qr_code.color
+        ).order_by(PlayerScan.scan_time.desc()).first()
+        
         if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
             wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
-            return jsonify({'status': 'wait', 'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'}), 429
+            return jsonify({
+                'status': 'wait', 
+                'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'
+            }), 429
         
-        db.session.add(PlayerScan(player_id=player_id, qrcode_id=qr_code.id, event_id=event_id, color_category=qr_code.color))
+        db.session.add(PlayerScan(
+            player_id=player_id, 
+            qrcode_id=qr_code.id, 
+            event_id=event_id, 
+            color_category=qr_code.color
+        ))
+        
         quiz_category = 'company' if qr_code.color == 'white' else 'world'
         answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
-        question = Question.query.filter(Question.id.notin_(answered_ids), Question.event_id==event_id, Question.category==quiz_category).order_by(db.func.random()).first()
-        if not question: return jsonify({'status': 'info', 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'})
-        return jsonify({'status': 'question', 'question': {'id': question.id, 'text': question.text, 'option_a': question.option_a, 'option_b': question.option_b, 'option_c': question.option_c}})
+        question = Question.query.filter(
+            Question.id.notin_(answered_ids), 
+            Question.event_id == event_id, 
+            Question.category == quiz_category
+        ).order_by(db.func.random()).first()
+        
+        if not question:
+            return jsonify({
+                'status': 'info', 
+                'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'
+            })
+        
+        return jsonify({
+            'status': 'question', 
+            'question': {
+                'id': question.id, 
+                'text': question.text, 
+                'option_a': question.option_a, 
+                'option_b': question.option_b, 
+                'option_c': question.option_c
+            }
+        })
+    
+    # JEDNORAZOWE KODY (czerwone, pułapki, zielone, różowe)
     else:
-        if qr_code.claimed_by_player_id: return jsonify({'status': 'error', 'message': 'Ten kod został już wykorzystany.'}), 403
+        if qr_code.claimed_by_player_id:
+            return jsonify({
+                'status': 'error', 
+                'message': 'Ten kod został już wykorzystany.'
+            }), 403
+        
         qr_code.claimed_by_player_id = player_id
-        if qr_code.color == 'red': player.score += 50; message = 'Kod specjalny! Zdobywasz 50 punktów!'
-        elif qr_code.color == 'white_trap': player.score = max(0, player.score - 25); message = 'Pułapka! Tracisz 25 punktów.'
+        
+        # CZERWONY KOD
+        if qr_code.color == 'red':
+            player.score += 50
+            message = 'Kod specjalny! Zdobywasz 50 punktów!'
+        
+        # PUŁAPKA
+        elif qr_code.color == 'white_trap':
+            player.score = max(0, player.score - 25)
+            message = 'Pułapka! Tracisz 25 punktów.'
+        
+        # ZIELONY KOD - MINIGRA TETRIS
         elif qr_code.color == 'green':
             # Sprawdź czy Tetris jest aktywny
             if get_game_state(event_id, 'minigame_tetris_enabled', 'False') != 'True':
@@ -892,9 +945,17 @@ def scan_qr():
             
             db.session.commit()
             return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
-        elif qr_code.color == 'pink': db.session.commit(); return jsonify({'status': 'photo_challenge'})
-        else: message = "Niezidentyfikowany kod."
+        
+        # RÓŻOWY KOD - FOTO
+        elif qr_code.color == 'pink':
             db.session.commit()
+            return jsonify({'status': 'photo_challenge'})
+        
+        # NIEZNANY KOD
+        else:
+            message = "Niezidentyfikowany kod."
+        
+        db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
         return jsonify({'status': 'info', 'message': message, 'score': player.score})
 
@@ -1051,6 +1112,7 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
 
