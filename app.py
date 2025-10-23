@@ -645,35 +645,46 @@ def game_control():
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
-@app.route('/fix-db-columns')
-def fix_db_columns():
+@app.route('/fix-db-columns-v2')
+def fix_db_columns_v2():
     try:
-        # Lista zapytań do wykonania
-        queries = [
-            "ALTER TABLE question ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'company'",
-            "ALTER TABLE question ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20) DEFAULT 'easy'", 
-            "ALTER TABLE question ADD COLUMN IF NOT EXISTS times_shown INTEGER DEFAULT 0",
-            "ALTER TABLE question ADD COLUMN IF NOT EXISTS times_correct INTEGER DEFAULT 0"
-        ]
+        # Najpierw sprawdź, które kolumny już istnieją
+        result = db.session.execute("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'question'
+        """)
+        existing_columns = [row[0] for row in result]
         
-        results = []
-        for query in queries:
-            try:
-                db.session.execute(query)
-                results.append(f"✓ Wykonano: {query.split('COLUMN')[1].split(' ')[1]}")
-            except Exception as e:
-                # Jeśli kolumna już istnieje, PostgreSQL zwróci błąd - to OK
-                if "already exists" in str(e):
-                    results.append(f"✓ Kolumna już istnieje: {query.split('COLUMN')[1].split(' ')[1]}")
-                else:
-                    results.append(f"✗ Błąd: {str(e)}")
+        added = []
+        
+        # Dodaj brakujące kolumny
+        if 'category' not in existing_columns:
+            db.session.execute("ALTER TABLE question ADD COLUMN category VARCHAR(50) DEFAULT 'company'")
+            added.append('category')
+            
+        if 'difficulty' not in existing_columns:
+            db.session.execute("ALTER TABLE question ADD COLUMN difficulty VARCHAR(20) DEFAULT 'easy'")
+            added.append('difficulty')
+            
+        if 'times_shown' not in existing_columns:
+            db.session.execute("ALTER TABLE question ADD COLUMN times_shown INTEGER DEFAULT 0")
+            added.append('times_shown')
+            
+        if 'times_correct' not in existing_columns:
+            db.session.execute("ALTER TABLE question ADD COLUMN times_correct INTEGER DEFAULT 0")
+            added.append('times_correct')
         
         db.session.commit()
-        return "<br>".join(results) + "<br><br><strong>Gotowe! Możesz teraz dodawać pytania.</strong>"
         
+        if added:
+            return f"Dodano kolumny: {', '.join(added)}<br><br>Możesz teraz dodawać pytania!"
+        else:
+            return "Wszystkie kolumny już istnieją. Możesz dodawać pytania!"
+            
     except Exception as e:
         db.session.rollback()
-        return f"Błąd główny: {str(e)}"
+        return f"Błąd: {str(e)}"
 
 # --- API: HOST Players & Questions ---
 @app.route('/api/host/players', methods=['GET'])
@@ -967,5 +978,6 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
