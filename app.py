@@ -937,6 +937,44 @@ def upload_photo():
     emit_leaderboard_update(room)
     return jsonify({'message': 'Zdjęcie dodane! Otrzymujesz 15 punktów.', 'score': player.score})
 
+@app.route('/api/player/minigame/complete', methods=['POST'])
+def complete_minigame():
+    data = request.json
+    player_id = data.get('player_id')
+    game_type = data.get('game_type')
+    score = data.get('score', 0)
+    player = db.session.get(Player, player_id)
+    if not player:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+    if game_type == 'tetris':
+        if get_game_state(player.event_id, 'minigame_tetris_enabled', 'False') != 'True':
+            return jsonify({'error': 'Ta minigra nie jest aktywna'}), 403
+    completed_key = f'minigame_{game_type}_completed_{player_id}'
+    if get_game_state(player.event_id, completed_key):
+        return jsonify({'error': 'Już ukończyłeś tę minigrę!'}), 403
+    bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
+    points = 10 * bonus
+    player.score += points
+    password = "SAPEREVENT"
+    available_letters = [l for l in password if l not in player.revealed_letters.upper()]
+    if available_letters:
+        revealed_letter = random.choice(available_letters)
+        player.revealed_letters += revealed_letter
+    else:
+        revealed_letter = None
+    set_game_state(player.event_id, completed_key, 'True')
+    db.session.commit()
+    emit_password_update(f'event_{player.event_id}')
+    emit_leaderboard_update(f'event_{player.event_id}')
+    return jsonify({
+        'success': True,
+        'points_earned': points,
+        'total_score': player.score,
+        'letter_revealed': revealed_letter,
+        'message': f'Gratulacje! Zdobywasz {points} punktów!' + (f' Odsłonięta litera: {revealed_letter}' if revealed_letter else '')
+    })
+
+
 # ===================================================================
 # --- Gniazda (SocketIO) ---
 # ===================================================================
@@ -998,6 +1036,7 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
 
