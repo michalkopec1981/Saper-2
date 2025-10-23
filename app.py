@@ -714,6 +714,26 @@ def delete_player(player_id):
         return jsonify({'message': 'Gracz usunięty'})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
+# --- API: HOST Minigames ---
+@app.route('/api/host/minigames/status', methods=['GET'])
+@host_required
+def get_minigames_status():
+    event_id = session['host_event_id']
+    tetris_enabled = get_game_state(event_id, 'minigame_tetris_enabled', 'False') == 'True'
+    return jsonify({'tetris_enabled': tetris_enabled})
+
+@app.route('/api/host/minigames/toggle', methods=['POST'])
+@host_required
+def toggle_minigame():
+    event_id = session['host_event_id']
+    data = request.json
+    game_type = data.get('game_type')
+    enabled = data.get('enabled', False)
+    if game_type == 'tetris':
+        set_game_state(event_id, 'minigame_tetris_enabled', 'True' if enabled else 'False')
+        return jsonify({'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}', 'tetris_enabled': enabled})
+    return jsonify({'error': 'Nieznany typ minigry'}), 400
+
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
 def host_questions():
@@ -978,6 +998,7 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
 
