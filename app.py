@@ -892,11 +892,11 @@ def scan_qr():
             
             db.session.commit()
             return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
-                elif qr_code.color == 'pink': db.session.commit(); return jsonify({'status': 'photo_challenge'})
-                else: message = "Niezidentyfikowany kod."
-                db.session.commit()
-                emit_leaderboard_update(f'event_{event_id}')
-                return jsonify({'status': 'info', 'message': message, 'score': player.score})
+        elif qr_code.color == 'pink': db.session.commit(); return jsonify({'status': 'photo_challenge'})
+        else: message = "Niezidentyfikowany kod."
+            db.session.commit()
+        emit_leaderboard_update(f'event_{event_id}')
+        return jsonify({'status': 'info', 'message': message, 'score': player.score})
 
 @app.route('/api/player/answer', methods=['POST'])
 def process_answer():
@@ -1051,6 +1051,7 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
 
