@@ -876,7 +876,22 @@ def scan_qr():
         qr_code.claimed_by_player_id = player_id
         if qr_code.color == 'red': player.score += 50; message = 'Kod specjalny! Zdobywasz 50 punktów!'
         elif qr_code.color == 'white_trap': player.score = max(0, player.score - 25); message = 'Pułapka! Tracisz 25 punktów.'
-        elif qr_code.color == 'green': db.session.commit(); return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
+        elif qr_code.color == 'green':
+    # Sprawdź czy Tetris jest aktywny
+    if get_game_state(event_id, 'minigame_tetris_enabled', 'False') != 'True':
+        message = 'Ta minigra nie jest jeszcze aktywna. Poproś organizatora o włączenie.'
+        db.session.commit()
+        return jsonify({'status': 'info', 'message': message})
+    
+    # Sprawdź czy gracz już ukończył Tetris
+    completed_key = f'minigame_tetris_completed_{player_id}'
+    if get_game_state(event_id, completed_key):
+        message = 'Już ukończyłeś tę minigrę!'
+        db.session.commit()
+        return jsonify({'status': 'info', 'message': message})
+    
+    db.session.commit()
+    return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
         elif qr_code.color == 'pink': db.session.commit(); return jsonify({'status': 'photo_challenge'})
         else: message = "Niezidentyfikowany kod."
         db.session.commit()
@@ -1036,6 +1051,7 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
 
 
