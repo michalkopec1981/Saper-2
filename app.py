@@ -645,6 +645,36 @@ def game_control():
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
+@app.route('/fix-db-columns')
+def fix_db_columns():
+    try:
+        # Lista zapytań do wykonania
+        queries = [
+            "ALTER TABLE question ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'company'",
+            "ALTER TABLE question ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20) DEFAULT 'easy'", 
+            "ALTER TABLE question ADD COLUMN IF NOT EXISTS times_shown INTEGER DEFAULT 0",
+            "ALTER TABLE question ADD COLUMN IF NOT EXISTS times_correct INTEGER DEFAULT 0"
+        ]
+        
+        results = []
+        for query in queries:
+            try:
+                db.session.execute(query)
+                results.append(f"✓ Wykonano: {query.split('COLUMN')[1].split(' ')[1]}")
+            except Exception as e:
+                # Jeśli kolumna już istnieje, PostgreSQL zwróci błąd - to OK
+                if "already exists" in str(e):
+                    results.append(f"✓ Kolumna już istnieje: {query.split('COLUMN')[1].split(' ')[1]}")
+                else:
+                    results.append(f"✗ Błąd: {str(e)}")
+        
+        db.session.commit()
+        return "<br>".join(results) + "<br><br><strong>Gotowe! Możesz teraz dodawać pytania.</strong>"
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"Błąd główny: {str(e)}"
+
 # --- API: HOST Players & Questions ---
 @app.route('/api/host/players', methods=['GET'])
 @host_required
@@ -937,4 +967,5 @@ if __name__ == '__main__':
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
     
+
 
