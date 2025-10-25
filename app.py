@@ -719,8 +719,8 @@ def delete_player(player_id):
 @host_required
 def get_minigames_status():
     event_id = session['host_event_id']
-    tetris_enabled = get_game_state(event_id, 'minigame_tetris_enabled', 'False') == 'True'
-    return jsonify({'tetris_enabled': tetris_enabled})
+    tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
+    return jsonify({'tetris_enabled': not tetris_disabled})
 
 @app.route('/api/host/minigames/toggle', methods=['POST'])
 @host_required
@@ -730,7 +730,8 @@ def toggle_minigame():
     game_type = data.get('game_type')
     enabled = data.get('enabled', False)
     if game_type == 'tetris':
-        set_game_state(event_id, 'minigame_tetris_enabled', 'True' if enabled else 'False')
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_tetris_disabled', 'False' if enabled else 'True')
         return jsonify({'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}', 'tetris_enabled': enabled})
     return jsonify({'error': 'Nieznany typ minigry'}), 400
 
@@ -946,9 +947,10 @@ def scan_qr():
         
         # ZIELONY KOD - MINIGRA TETRIS
         elif qr_code.color == 'green':
-            # Sprawdź czy Tetris jest aktywny
-            if get_game_state(event_id, 'minigame_tetris_enabled', 'False') != 'True':
-                message = 'Ta minigra nie jest jeszcze aktywna. Poproś organizatora o włączenie.'
+            # Sprawdź czy Tetris NIE został wyłączony (domyślnie jest aktywny)
+            tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
+            if tetris_disabled == 'True':
+                message = 'Ta minigra została wyłączona przez organizatora.'
                 db.session.commit()
                 return jsonify({'status': 'info', 'message': message})
             
@@ -1047,8 +1049,10 @@ def complete_minigame():
     if not player:
         return jsonify({'error': 'Nie znaleziono gracza'}), 404
     if game_type == 'tetris':
-        if get_game_state(player.event_id, 'minigame_tetris_enabled', 'False') != 'True':
-            return jsonify({'error': 'Ta minigra nie jest aktywna'}), 403
+        # Sprawdź czy Tetris NIE został wyłączony (domyślnie jest aktywny)
+        tetris_disabled = get_game_state(player.event_id, 'minigame_tetris_disabled', 'False')
+        if tetris_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
     
     # Pobierz aktualny wynik gracza w Tetris
     tetris_score_key = f'minigame_tetris_score_{player_id}'
