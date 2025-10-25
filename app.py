@@ -34,7 +34,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Konfiguracja SocketIO
-socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins="*", manage_session=True)
+socketio = SocketIO(app, 
+                    async_mode='gevent', 
+                    cors_allowed_origins="*", 
+                    manage_session=True,
+                    engineio_logger=True,
+                    logger=True,
+                    ping_timeout=60,
+                    ping_interval=25)
 
 # --- Modele Danych ---
 
@@ -545,6 +552,9 @@ def get_host_game_state():
 @host_required
 def start_game():
     event_id = session['host_event_id']
+    print(f"=== START GAME DEBUG ===")
+    print(f"Event ID: {event_id}")
+    
     Player.query.filter_by(event_id=event_id).delete()
     PlayerScan.query.filter_by(event_id=event_id).delete()
     PlayerAnswer.query.filter_by(event_id=event_id).delete()
@@ -564,11 +574,16 @@ def start_game():
     end_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
     set_game_state(event_id, 'game_end_time', end_time.isoformat())
     
+    print(f"Game state set: active=True, timer_running=True, duration={minutes}min")
+    
     db.session.commit()
     
     room = f'event_{event_id}'
+    print(f"Emitting to room: {room}")
     emit_full_state_update(room)
     emit_leaderboard_update(room)
+    print(f"Game started successfully!")
+    
     return jsonify({'message': f'Gra rozpoczęta na {minutes} minut.'})
 
 @app.route('/api/host/stop_game', methods=['POST'])
@@ -879,6 +894,9 @@ def scan_qr():
         print(f"ERROR: Game not active!")
         return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
+    print(f"QR Code color check: {qr_code.color}")
+    print(f"Is reusable (white/yellow)? {qr_code.color in ['white', 'yellow']}")
+
     # BIAŁE I ŻÓŁTE KODY (wielorazowe)
     if qr_code.color in ['white', 'yellow']:
         last_scan = PlayerScan.query.filter_by(
@@ -947,23 +965,30 @@ def scan_qr():
         
         # ZIELONY KOD - MINIGRA TETRIS
         elif qr_code.color == 'green':
+            print(f"=== TETRIS CHECK ===")
             # Sprawdź czy Tetris NIE został wyłączony (domyślnie jest aktywny)
             tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
+            print(f"Tetris disabled state: {tetris_disabled}")
             if tetris_disabled == 'True':
                 message = 'Ta minigra została wyłączona przez organizatora.'
+                print(f"Tetris is DISABLED - returning error")
                 db.session.commit()
                 return jsonify({'status': 'info', 'message': message})
             
+            print(f"Tetris is ENABLED - checking player progress")
             # Sprawdź czy gracz już zdobył wymaganą liczbę punktów (20)
             tetris_score_key = f'minigame_tetris_score_{player_id}'
             current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
+            print(f"Player {player_id} Tetris score: {current_tetris_score}/20")
             
             if current_tetris_score >= 20:
                 message = 'Już ukończyłeś tę minigrę! Zdobyłeś wymagane 20 punktów.'
+                print(f"Player already completed Tetris")
                 db.session.commit()
                 return jsonify({'status': 'info', 'message': message})
             
             # Gracz może grać - jeszcze nie osiągnął 20 punktów
+            print(f"Starting Tetris game for player {player_id}")
             db.session.commit()
             return jsonify({
                 'status': 'minigame', 
