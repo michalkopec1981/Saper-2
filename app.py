@@ -936,15 +936,23 @@ def scan_qr():
                 db.session.commit()
                 return jsonify({'status': 'info', 'message': message})
             
-            # Sprawdź czy gracz już ukończył Tetris
-            completed_key = f'minigame_tetris_completed_{player_id}'
-            if get_game_state(event_id, completed_key):
-                message = 'Już ukończyłeś tę minigrę!'
+            # Sprawdź czy gracz już zdobył wymaganą liczbę punktów (20)
+            tetris_score_key = f'minigame_tetris_score_{player_id}'
+            current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
+            
+            if current_tetris_score >= 20:
+                message = 'Już ukończyłeś tę minigrę! Zdobyłeś wymagane 20 punktów.'
                 db.session.commit()
                 return jsonify({'status': 'info', 'message': message})
             
+            # Gracz może grać - jeszcze nie osiągnął 20 punktów
             db.session.commit()
-            return jsonify({'status': 'minigame', 'game': 'tetris', 'message': 'Minigra odblokowana!'})
+            return jsonify({
+                'status': 'minigame', 
+                'game': 'tetris', 
+                'current_score': current_tetris_score,
+                'message': f'Minigra odblokowana! Twój postęp: {current_tetris_score}/20 pkt'
+            })
         
         # RÓŻOWY KOD - FOTO
         elif qr_code.color == 'pink':
@@ -1025,30 +1033,55 @@ def complete_minigame():
     if game_type == 'tetris':
         if get_game_state(player.event_id, 'minigame_tetris_enabled', 'False') != 'True':
             return jsonify({'error': 'Ta minigra nie jest aktywna'}), 403
-    completed_key = f'minigame_{game_type}_completed_{player_id}'
-    if get_game_state(player.event_id, completed_key):
-        return jsonify({'error': 'Już ukończyłeś tę minigrę!'}), 403
-    bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
-    points = 10 * bonus
-    player.score += points
-    password = "SAPEREVENT"
-    available_letters = [l for l in password if l not in player.revealed_letters.upper()]
-    if available_letters:
-        revealed_letter = random.choice(available_letters)
-        player.revealed_letters += revealed_letter
+    
+    # Pobierz aktualny wynik gracza w Tetris
+    tetris_score_key = f'minigame_tetris_score_{player_id}'
+    current_tetris_score = int(get_game_state(player.event_id, tetris_score_key, '0'))
+    
+    # Dodaj zdobyte punkty do sumy
+    new_tetris_score = current_tetris_score + score
+    set_game_state(player.event_id, tetris_score_key, str(new_tetris_score))
+    
+    # Sprawdź czy gracz osiągnął 20 punktów
+    if new_tetris_score >= 20:
+        # Gracz ukończył wyzwanie - przyznaj nagrody
+        bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
+        points = 10 * bonus
+        player.score += points
+        
+        password = "SAPEREVENT"
+        available_letters = [l for l in password if l not in player.revealed_letters.upper()]
+        if available_letters:
+            revealed_letter = random.choice(available_letters)
+            player.revealed_letters += revealed_letter
+        else:
+            revealed_letter = None
+        
+        db.session.commit()
+        emit_password_update(f'event_{player.event_id}')
+        emit_leaderboard_update(f'event_{player.event_id}')
+        
+        return jsonify({
+            'success': True,
+            'completed': True,
+            'points_earned': points,
+            'total_score': player.score,
+            'tetris_score': new_tetris_score,
+            'letter_revealed': revealed_letter,
+            'message': f'WYZWANIE UKOŃCZONE! Zdobyłeś {new_tetris_score} pkt w Tetris i otrzymujesz {points} punktów!' + (f' Odsłonięta litera: {revealed_letter}' if revealed_letter else '')
+        })
     else:
-        revealed_letter = None
-    set_game_state(player.event_id, completed_key, 'True')
-    db.session.commit()
-    emit_password_update(f'event_{player.event_id}')
-    emit_leaderboard_update(f'event_{player.event_id}')
-    return jsonify({
-        'success': True,
-        'points_earned': points,
-        'total_score': player.score,
-        'letter_revealed': revealed_letter,
-        'message': f'Gratulacje! Zdobywasz {points} punktów!' + (f' Odsłonięta litera: {revealed_letter}' if revealed_letter else '')
-    })
+        # Gracz jeszcze nie osiągnął 20 punktów - może kontynuować
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'completed': False,
+            'points_earned': 0,
+            'total_score': player.score,
+            'tetris_score': new_tetris_score,
+            'message': f'Postęp: {new_tetris_score}/20 pkt. Zeskanuj kod ponownie, aby kontynuować!'
+        })
+
 
 
 # ===================================================================
@@ -1111,13 +1144,3 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-    
-
-
-
-
-
-
-
-
-
