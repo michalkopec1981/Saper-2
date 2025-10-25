@@ -1,3 +1,6 @@
+
+Copy
+
 from gevent import monkey
 monkey.patch_all()
 
@@ -853,13 +856,29 @@ def register_player():
 def scan_qr():
     data = request.json
     player_id, qr_id, event_id = data.get('player_id'), data.get('qr_code'), data.get('event_id')
+    
+    # DEBUG LOGGING
+    print(f"=== SCAN QR DEBUG ===")
+    print(f"Received data: {data}")
+    print(f"Player ID: {player_id}, QR Code: {qr_id}, Event ID: {event_id}")
+    
     player = db.session.get(Player, player_id)
     qr_code = QRCode.query.filter_by(code_identifier=qr_id, event_id=event_id).first()
 
+    print(f"Player found: {player is not None}")
+    print(f"QR Code found: {qr_code is not None}")
+    if qr_code:
+        print(f"QR Code color: {qr_code.color}")
+    
     if not player or not qr_code:
+        print(f"ERROR: Player or QR code not found!")
         return jsonify({'message': 'Nieprawidłowe dane.'}), 404
     
-    if get_game_state(event_id, 'game_active', 'False') != 'True':
+    game_active = get_game_state(event_id, 'game_active', 'False')
+    print(f"Game active: {game_active}")
+    
+    if game_active != 'True':
+        print(f"ERROR: Game not active!")
         return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
     # BIAŁE I ŻÓŁTE KODY (wielorazowe)
