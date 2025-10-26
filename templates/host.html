@@ -951,7 +951,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => console.error('Error loading initial state:', error));
     
-    // Start game button
+    // ??? POPRAWIONY Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('minutes-input').value);
         if (isNaN(minutes) || minutes < 1) {
@@ -963,8 +963,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         
-        console.log('Starting game with', minutes, 'minutes'); // DEBUG
-        
         try {
             const response = await fetch('/api/host/start_game', {
                 method: 'POST',
@@ -972,14 +970,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ minutes })
             });
             
-            console.log('Response status:', response.status); // DEBUG
+            const result = await response.json();
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'B????d uruchamiania gry');
+                throw new Error(result.error || 'Nieznany b????d uruchamiania gry');
             }
             
-            const result = await response.json();
             console.log('Game started:', result);
             alert(result.message || 'Gra rozpocz??ta!');
         } catch (error) {
