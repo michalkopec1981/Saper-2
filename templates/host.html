@@ -2,6 +2,7 @@
 {% block title %}Panel Hosta - {{ event.name }}{% endblock %}
 
 {% block styles %}
+<meta charset="UTF-8">
 {{ super() }}
 <style>
     .btn-group .btn.active-modifier {
@@ -34,8 +35,8 @@
 <div class="container mt-4">
     {% if is_impersonated %}
     <div class="alert alert-warning d-flex justify-content-between align-items-center">
-        <span data-translate="admin_impersonate">Jeste?? zalogowany jako Admin w panelu Hosta.</span>
-        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-warning" data-translate="back_to_admin">Powr??t do panelu Admina</a>
+        <span data-translate="admin_impersonate">Jesteś zalogowany jako Admin w panelu Hosta.</span>
+        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-warning" data-translate="back_to_admin">Powrót do panelu Admina</a>
     </div>
     {% endif %}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -43,7 +44,7 @@
             <h1 class="mb-0" data-translate="host_title">ORGANIZACJA GRY</h1>
             <h3 class="text-muted mb-0">{{ event.name }}</h3>
         </div>
-        <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otw??rz Ekran Gry</a>
+        <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otwórz Ekran Gry</a>
     </div>
 
     <ul class="nav nav-tabs mb-4" id="hostTabs">
@@ -66,12 +67,12 @@
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="player_count">Liczba graczy:</span> <span id="info-player-count" class="badge bg-primary rounded-pill">0</span></li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="correct_answers">Zdobyte nagrody:</span> <span id="info-correct-answers" class="badge bg-primary rounded-pill">0</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="language_label">J??zyk:</span> <span id="info-language" class="badge bg-secondary">Polski</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="language_label">Język:</span> <span id="info-language" class="badge bg-secondary">Polski</span></li>
                             </ul>
                         </div>
                         <div class="col-md-4">
                              <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_left">Czas do ko??ca:</span> <strong id="info-time-left">00:00</strong></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_left">Czas do końca:</span> <strong id="info-time-left">00:00</strong></li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_net">Czas gry (netto):</span> <span id="info-time-elapsed">00:00</span></li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_gross">Czas gry (brutto):</span> <span id="info-time-elapsed-pauses">00:00</span></li>
                             </ul>
@@ -90,7 +91,7 @@
                 <div class="col-lg-6">
                     <fieldset id="pre-game-settings">
                         <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Ustawienia przed gr??</h5></div>
+                            <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Ustawienia przed grą</h5></div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label for="minutes-input" class="form-label" data-translate="game_duration">Czas gry w minutach:</label>
@@ -98,17 +99,17 @@
                                 </div>
                                 <hr>
                                 <div class="mb-3">
-                                    <h6 data-translate="player_language">J??zyk graczy</h6>
+                                    <h6 data-translate="player_language">Język graczy</h6>
                                     <div class="btn-group w-100" role="group" id="lang-player-controls">
-                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">J??zyk polski</button>
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">J??zyk angielski</button>
+                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <h6 data-translate="host_language">J??zyk prowadz??cego</h6>
+                                    <h6 data-translate="host_language">Język prowadzącego</h6>
                                     <div class="btn-group w-100" role="group" id="lang-host-controls">
-                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">J??zyk polski</button>
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">J??zyk angielski</button>
+                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
+                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
                                     </div>
                                 </div>
                                 <hr>
@@ -153,7 +154,7 @@
         <div class="tab-pane fade" id="players">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="players_management">Zarz??dzanie graczami</h5>
+                    <h5 class="card-title mb-0" data-translate="players_management">Zarządzanie graczami</h5>
                 </div>
                 <div class="card-body">
                     <div id="players-list"></div>
@@ -164,7 +165,7 @@
         <div class="tab-pane fade" id="questions">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0" data-translate="questions_management">Zarz??dzanie pytaniami</h5>
+                    <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
                     <button class="btn btn-primary" id="add-question-btn" data-translate="add_question">Dodaj pytanie</button>
                 </div>
                 <div class="card-body">
@@ -175,7 +176,7 @@
 
         <div class="tab-pane fade" id="minigames">
             <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">Zarz??dzanie minigrami</h5></div>
+                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
                 <div class="card-body">
                     <div class="alert alert-info">Minigry aktywowane przez zielone kody QR.</div>
                     <div class="card mb-3">
@@ -183,7 +184,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="mb-1">???? Tetris</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punkt??w</p>
+                                    <p class="text-muted mb-0">Cel: 20 punktów</p>
                                 </div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle" style="width: 3em; height: 1.5em;">
@@ -203,21 +204,21 @@
         <div class="tab-pane fade" id="qrcodes">
             <div class="card mx-auto">
                 <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="qr_management">Zarz??dzanie Kodami QR</h5>
+                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info small"><b>Uwaga:</b> Kody bia??e i ??????te s?? wielorazowe (z 5-minutowym limitem na gracza). Pozosta??e kody s?? unikalne i jednorazowe.</div>
+                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
                     
                     <div class="row g-3">
                         <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Bia??e Pu??apka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
                         <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody R????owe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
                         <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
-                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgl??d i Druk Kod??w</a>
+                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
                     </div>
                     <div id="qrcodes-status" class="mt-3"></div>
                 </div>
@@ -237,7 +238,7 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label" data-translate="question_text">Tre???? pytania:</label>
+                    <label class="form-label" data-translate="question_text">Treść pytania:</label>
                     <textarea class="form-control" id="modal-question-text" rows="3"></textarea>
                 </div>
                 <div class="mb-3">
@@ -265,10 +266,10 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label" data-translate="difficulty_level">Poziom trudno??ci:</label>
+                    <label class="form-label" data-translate="difficulty_level">Poziom trudności:</label>
                     <div class="btn-group w-100" role="group" id="difficulty-buttons">
-                        <button type="button" class="btn btn-outline-success active" data-difficulty="easy" data-translate="easy">??atwy</button>
-                        <button type="button" class="btn btn-outline-warning" data-difficulty="medium" data-translate="medium">??redni</button>
+                        <button type="button" class="btn btn-outline-success active" data-difficulty="easy" data-translate="easy">Łatwy</button>
+                        <button type="button" class="btn btn-outline-warning" data-difficulty="medium" data-translate="medium">Średni</button>
                         <button type="button" class="btn btn-outline-danger" data-difficulty="hard" data-translate="hard">Trudny</button>
                     </div>
                 </div>
@@ -276,12 +277,12 @@
                     <label class="form-label" data-translate="question_category">Kategoria pytania:</label>
                     <div class="btn-group w-100" role="group" id="category-buttons">
                         <button type="button" class="btn btn-outline-primary active" data-category="company" data-translate="category_company">Firmowe</button>
-                        <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">??wiatowe</button>
+                        <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">Światowe</button>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label" data-translate="letter_reveal">Litera do ods??oni??cia:</label>
+                    <label class="form-label" data-translate="letter_reveal">Litera do odsłonięcia:</label>
                     <input type="text" class="form-control" id="modal-letter" maxlength="1" value="X">
                 </div>
             </div>
@@ -438,7 +439,7 @@ function translatePage(lang) {
     
     // Update pause button text based on state
     const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn && (pauseBtn.textContent.includes('Wzn??w') || pauseBtn.textContent.includes('Resume'))) {
+    if (pauseBtn && (pauseBtn.textContent.includes('Wznów') || pauseBtn.textContent.includes('Resume'))) {
         pauseBtn.textContent = translations[lang]['resume'];
     }
 }
@@ -456,10 +457,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
     
     // =====================================================================
-    // SEKCJA KOD??W QR - TYLKO DLA SUPERHOST
+    // SEKCJA KODÓW QR - TYLKO DLA SUPERHOST
     // =====================================================================
     if (IS_SUPERHOST) {
-        // Za??aduj liczby kod??w po otwarciu zak??adki
+        // Załaduj liczby kodów po otwarciu zakładki
         document.querySelector('button[data-bs-target="#qrcodes"]')?.addEventListener('click', async () => {
             try {
                 const response = await fetch('/api/host/qrcodes/counts');
@@ -471,11 +472,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById('pink-count').value = counts.pink || 0;
                 }
             } catch (error) {
-                console.error('B????d ??adowania kod??w QR:', error);
+                console.error('Błąd ładowania kodów QR:', error);
             }
         });
 
-        // Generowanie kod??w QR
+        // Generowanie kodów QR
         document.getElementById('save-qrcodes').addEventListener('click', async () => {
             const statusEl = document.getElementById('qrcodes-status');
             const payload = {
@@ -500,7 +501,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Link do podgl??du kod??w QR
+        // Link do podglądu kodów QR
         document.getElementById('preview-qrcodes-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
     }
     
@@ -556,29 +557,29 @@ document.addEventListener('DOMContentLoaded', function () {
     async function warnPlayer(id) {
         try {
             const response = await fetch(`/api/host/player/${id}/warn`, { method: 'POST' });
-            if (!response.ok) throw new Error('B????d ostrze??enia gracza');
+            if (!response.ok) throw new Error('Błąd ostrzeżenia gracza');
             loadPlayers();
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
         }
     }
     
     async function deletePlayer(id) {
-        if (!confirm('Czy na pewno chcesz usun???? tego gracza?')) return;
+        if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
         
         try {
             const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('B????d usuwania gracza');
+            if (!response.ok) throw new Error('Błąd usuwania gracza');
             loadPlayers();
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
         }
     }
     
     document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
     
     // =====================================================================
-    // J??ZYK I TRANSLACJA
+    // JĘZYK I TRANSLACJA
     // =====================================================================
     document.getElementById('lang-host-controls')?.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-value]');
@@ -698,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
         
         if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
-            alert('Wype??nij wszystkie pola!');
+            alert('Wypełnij wszystkie pola!');
             return;
         }
         
@@ -727,12 +728,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
             
-            if (!response.ok) throw new Error('B????d zapisu pytania');
+            if (!response.ok) throw new Error('Błąd zapisu pytania');
             
             questionModal.hide();
             loadQuestions();
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
         }
     });
     
@@ -762,19 +763,19 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelector('.modal-title').textContent = translations[currentLanguage].edit + ' ' + translations[currentLanguage].question_text.toLowerCase();
             questionModal.show();
         } catch (error) {
-            alert('B????d ??adowania pytania: ' + error.message);
+            alert('Błąd ładowania pytania: ' + error.message);
         }
     }
     
     async function deleteQuestion(id) {
-        if (!confirm('Czy na pewno chcesz usun???? to pytanie?')) return;
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
         
         try {
             const response = await fetch(`/api/host/question/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('B????d usuwania pytania');
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
             loadQuestions();
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
         }
     }
     
@@ -815,7 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
             infoEl.style.display = 'block';
             setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
             e.target.checked = !enabled;
         }
     });
@@ -823,7 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
         
     // =====================================================================
-    // STEROWANIE GR????
+    // STEROWANIE GRĄ
     // =====================================================================
     const infoElements = {
         playerCount: document.getElementById('info-player-count'),
@@ -934,7 +935,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     socket.on('game_over', () => {
-        alert('Czas min????! Gra zako??czona.');
+        alert('Czas minął! Gra zakończona.');
     });
     
     socket.on('game_forced_win', (data) => {
@@ -966,11 +967,11 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('???? Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
-            alert('Prosz?? wprowadzi?? poprawny czas gry (minimum 1 minuta).');
+            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
             return;
         }
         
-        if (!confirm(`Czy na pewno chcesz rozpocz???? now?? gr?? na ${minutes} minut?`)) {
+        if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
             return;
         }
         
@@ -986,20 +987,20 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('???? Start game response:', result);
             
             if (!response.ok) {
-                throw new Error(result.error || 'Nieznany b????d uruchamiania gry');
+                throw new Error(result.error || 'Nieznany błąd uruchamiania gry');
             }
             
             console.log('??? Game started successfully');
-            alert(result.message || 'Gra rozpocz??ta!');
+            alert(result.message || 'Gra rozpoczęta!');
         } catch (error) {
             console.error('??? Error starting game:', error);
-            alert('B????d podczas uruchamiania gry: ' + error.message);
+            alert('Błąd podczas uruchamiania gry: ' + error.message);
         }
     });
     
     // Stop game button
     document.getElementById('stop-game')?.addEventListener('click', async () => {
-        const password = prompt('Wprowad?? has??o Hosta, aby zako??czy?? gr??:');
+        const password = prompt('Wprowadź hasło Hosta, aby zakończyć grę:');
         if (!password) return;
         
         try {
@@ -1012,12 +1013,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
             
             if (!response.ok) {
-                throw new Error(result.error || 'B????d zatrzymywania gry');
+                throw new Error(result.error || 'Błąd zatrzymywania gry');
             }
             
             alert(result.message || 'Gra zatrzymana');
         } catch (error) {
-            alert('B????d: ' + error.message);
+            alert('Błąd: ' + error.message);
         }
     });
     
@@ -1037,5 +1038,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
-
-
