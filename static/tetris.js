@@ -1,22 +1,24 @@
 // ============================================
-// TETRIS GAME - Pełna implementacja
+// TETRIS GAME - Mobilna wersja responsywna
 // ============================================
 
 class TetrisGame {
-    constructor(canvasId, playerId, eventId) {
+    constructor(canvasId, playerId, eventId, currentScore = 0) {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.playerId = playerId;
         this.eventId = eventId;
         
-        // Wymiary
-        this.blockSize = 30;
+        // Wymiary - dostosowane do ekranu mobilnego
         this.cols = 10;
         this.rows = 20;
+        this.calculateCanvasSize();
+        
+        // Ustaw początkowy wynik z serwera
+        this.score = currentScore;
         
         // Stan gry
         this.board = this.createEmptyBoard();
-        this.score = 0;
         this.gameOver = false;
         this.gameRunning = false;
         this.dropInterval = 1000; // ms
@@ -51,6 +53,24 @@ class TetrisGame {
         };
         
         this.setupControls();
+        this.setupTouchControls();
+    }
+    
+    calculateCanvasSize() {
+        // Oblicz rozmiar canvas bazując na dostępnej przestrzeni
+        // 65% wysokości viewportu minus nagłówek (około 120px)
+        const availableHeight = window.innerHeight * 0.65 - 120;
+        const availableWidth = Math.min(window.innerWidth - 40, 400);
+        
+        // Oblicz blockSize tak, aby plansza zmieściła się w dostępnej przestrzeni
+        const blockSizeByHeight = Math.floor(availableHeight / this.rows);
+        const blockSizeByWidth = Math.floor(availableWidth / this.cols);
+        
+        this.blockSize = Math.min(blockSizeByHeight, blockSizeByWidth, 30);
+        
+        // Ustaw wymiary canvas
+        this.canvas.width = this.cols * this.blockSize;
+        this.canvas.height = this.rows * this.blockSize;
     }
     
     createEmptyBoard() {
@@ -58,6 +78,7 @@ class TetrisGame {
     }
     
     setupControls() {
+        // Sterowanie klawiaturą (dla komputerów)
         document.addEventListener('keydown', (e) => {
             if (!this.gameRunning || this.gameOver) return;
             
@@ -82,9 +103,61 @@ class TetrisGame {
         });
     }
     
+    setupTouchControls() {
+        // Przyciski dotykowe dla urządzeń mobilnych
+        const leftBtn = document.getElementById('tetris-left-btn');
+        const rightBtn = document.getElementById('tetris-right-btn');
+        const rotateBtn = document.getElementById('tetris-rotate-btn');
+        const downBtn = document.getElementById('tetris-down-btn');
+        
+        if (leftBtn) {
+            leftBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(-1, 0);
+            });
+            leftBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(-1, 0);
+            });
+        }
+        
+        if (rightBtn) {
+            rightBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(1, 0);
+            });
+            rightBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(1, 0);
+            });
+        }
+        
+        if (rotateBtn) {
+            rotateBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.rotatePiece();
+            });
+            rotateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.rotatePiece();
+            });
+        }
+        
+        if (downBtn) {
+            downBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(0, 1);
+            });
+            downBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.gameRunning && !this.gameOver) this.movePiece(0, 1);
+            });
+        }
+    }
+    
     start() {
         this.board = this.createEmptyBoard();
-        this.score = 0;
+        // Nie resetujemy score - kontynuujemy od obecnego wyniku
         this.gameOver = false;
         this.gameRunning = true;
         this.spawnPiece();
