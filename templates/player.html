@@ -13,6 +13,7 @@
                 <h2>Witaj, <span id="player-name-display"></span>!</h2>
                 <p class="lead mb-0">Punkty: <strong id="player-score">0</strong></p>
             </div>
+            <button id="reset-player-btn" class="btn btn-sm btn-outline-danger" style="position: fixed; top: 10px; right: 10px; z-index: 100;">🔄 Reset</button>
             <hr>
         </div>
         <div id="quiz-section" style="display: none;" class="text-center">
@@ -195,6 +196,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             console.log('Scan QR response:', data);
 
+            // ✅ Obsługa wygasłych danych gracza (po resecie gry)
+            if (data.clear_storage) {
+                console.log('Clearing expired player data from localStorage');
+                localStorage.removeItem(`saperPlayerId_${eventId}`);
+                localStorage.removeItem(`saperPlayerName_${eventId}`);
+                showMessage(data.message + ' Strona zostanie odświeżona...', 'warning');
+                setTimeout(() => location.reload(), 3000);
+                return;
+            }
+
             if (response.status === 429) {
                 showMessage(data.message, 'warning');
                 return;
@@ -360,6 +371,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     socket.on('game_forced_win', (data) => {
         showMessage(data.message, 'success');
+    });
+
+    // Reset player data button
+    document.getElementById('reset-player-btn')?.addEventListener('click', () => {
+        if (confirm('Czy na pewno chcesz wyczyścić swoje dane i zarejestrować się ponownie?')) {
+            localStorage.removeItem(`saperPlayerId_${eventId}`);
+            localStorage.removeItem(`saperPlayerName_${eventId}`);
+            location.reload();
+        }
     });
 
     // Initialize
