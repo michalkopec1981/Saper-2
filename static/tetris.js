@@ -17,7 +17,7 @@ class TetrisGame {
         this.board = this.createEmptyBoard();
         this.gameOver = false;
         this.gameRunning = false;
-        this.dropInterval = 1000; // ms
+        this.dropInterval = 700; // ms - szybsze opadanie (było 1000)
         this.lastDrop = 0;
         
         // Aktualny klocek
@@ -54,15 +54,15 @@ class TetrisGame {
     
     calculateCanvasSize() {
         // Oblicz rozmiar canvas bazując na dostępnej przestrzeni
-        // 65% wysokości viewportu minus nagłówek (około 120px)
-        const availableHeight = window.innerHeight * 0.65 - 120;
+        // 72% wysokości viewportu minus nagłówek (około 70px) minus padding (10px)
+        const availableHeight = window.innerHeight * 0.72 - 15;
         const availableWidth = Math.min(window.innerWidth - 40, 400);
         
         // Oblicz blockSize tak, aby plansza zmieściła się w dostępnej przestrzeni
         const blockSizeByHeight = Math.floor(availableHeight / this.rows);
         const blockSizeByWidth = Math.floor(availableWidth / this.cols);
         
-        this.blockSize = Math.min(blockSizeByHeight, blockSizeByWidth, 30);
+        this.blockSize = Math.min(blockSizeByHeight, blockSizeByWidth, 32);
         
         // Ustaw wymiary canvas
         this.canvas.width = this.cols * this.blockSize;
