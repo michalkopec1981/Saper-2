@@ -38,8 +38,8 @@ socketio = SocketIO(app,
                     async_mode='gevent', 
                     cors_allowed_origins="*", 
                     manage_session=True,
-                    engineio_logger=False,  # Zmień na True jeśli chcesz więcej logów
-                    logger=True,           # Zmień na True jeśli chcesz więcej logów
+                    engineio_logger=False,
+                    logger=True,
                     ping_timeout=60,
                     ping_interval=25)
 
@@ -116,6 +116,15 @@ class FunnyPhoto(db.Model):
     image_url = db.Column(db.String(255), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    votes = db.Column(db.Integer, default=0)
+
+class PhotoVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    photo_id = db.Column(db.Integer, db.ForeignKey('funny_photo.id', ondelete='CASCADE'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (db.UniqueConstraint('photo_id', 'player_id', name='_photo_player_vote_uc'),)
 
 class GameState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -496,6 +505,7 @@ def reset_event(event_id):
         PlayerScan.query.filter_by(event_id=event_id).delete()
         PlayerAnswer.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
+        PhotoVote.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
         db.session.commit()
         room = f'event_{event_id}'
@@ -573,6 +583,7 @@ def start_game():
         PlayerScan.query.filter_by(event_id=event_id).delete()
         PlayerAnswer.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
+        PhotoVote.query.filter_by(event_id=event_id).delete()
         
         set_game_state(event_id, 'game_active', 'True')
         set_game_state(event_id, 'is_timer_running', 'True')
@@ -603,6 +614,7 @@ def start_game():
         socketio.emit('game_state_update', fresh_state, room=room)
         socketio.emit('leaderboard_update', [], room=room)
         socketio.emit('password_update', fresh_state['password'], room=room)
+        socketio.emit('photos_update', [], room=room)  # Resetuj galerię
         
         print(f"✅ Game started successfully! Updates emitted.")
         
@@ -1062,6 +1074,7 @@ def scan_qr():
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
         return jsonify({'status': 'info', 'message': message, 'score': player.score})
+
 @app.route('/api/player/answer', methods=['POST'])
 def process_answer():
     data = request.json
@@ -1106,15 +1119,80 @@ def upload_photo():
     file.save(filepath)
     image_url = f"/{filepath}"
     
-    photo = FunnyPhoto(player_id=player.id, player_name=player.name, image_url=image_url, event_id=player.event_id)
+    photo = FunnyPhoto(player_id=player.id, player_name=player.name, image_url=image_url, event_id=player.event_id, votes=0)
     player.score += 15
     db.session.add(photo)
     db.session.commit()
     
     room = f'event_{player.event_id}'
-    socketio.emit('new_photo', {'url': image_url, 'player': player.name}, room=room)
+    socketio.emit('new_photo', {'url': image_url, 'player': player.name, 'photo_id': photo.id, 'votes': 0}, room=room)
     emit_leaderboard_update(room)
     return jsonify({'message': 'Zdjęcie dodane! Otrzymujesz 15 punktów.', 'score': player.score})
+
+# 🎉 NOWE ENDPOINTY DLA GŁOSOWANIA NA ZDJĘCIA
+
+@app.route('/api/photos/<int:event_id>', methods=['GET'])
+def get_photos(event_id):
+    """Pobierz wszystkie zdjęcia dla danego eventu z liczbą głosów"""
+    photos = FunnyPhoto.query.filter_by(event_id=event_id).order_by(FunnyPhoto.votes.desc(), FunnyPhoto.timestamp.desc()).all()
+    return jsonify([{
+        'id': p.id,
+        'player_name': p.player_name,
+        'image_url': p.image_url,
+        'votes': p.votes,
+        'timestamp': p.timestamp.isoformat()
+    } for p in photos])
+
+@app.route('/api/photo/<int:photo_id>/vote', methods=['POST'])
+def vote_photo(photo_id):
+    """Zagłosuj na zdjęcie (lub cofnij głos)"""
+    data = request.json
+    player_id = data.get('player_id')
+    
+    if not player_id:
+        return jsonify({'error': 'Brak ID gracza'}), 400
+    
+    player = db.session.get(Player, player_id)
+    photo = db.session.get(FunnyPhoto, photo_id)
+    
+    if not player or not photo:
+        return jsonify({'error': 'Nie znaleziono gracza lub zdjęcia'}), 404
+    
+    # Sprawdź czy gracz już głosował na to zdjęcie
+    existing_vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
+    
+    if existing_vote:
+        # Cofnij głos
+        db.session.delete(existing_vote)
+        photo.votes = max(0, photo.votes - 1)
+        action = 'removed'
+    else:
+        # Dodaj głos
+        new_vote = PhotoVote(photo_id=photo_id, player_id=player_id, event_id=photo.event_id)
+        db.session.add(new_vote)
+        photo.votes += 1
+        action = 'added'
+    
+    db.session.commit()
+    
+    # Wyemituj aktualizację do wszystkich
+    room = f'event_{photo.event_id}'
+    socketio.emit('photo_vote_update', {
+        'photo_id': photo_id, 
+        'votes': photo.votes
+    }, room=room)
+    
+    return jsonify({
+        'action': action,
+        'votes': photo.votes,
+        'message': 'Głos oddany!' if action == 'added' else 'Głos cofnięty'
+    })
+
+@app.route('/api/photo/<int:photo_id>/check_vote/<int:player_id>', methods=['GET'])
+def check_vote(photo_id, player_id):
+    """Sprawdź czy gracz zagłosował na dane zdjęcie"""
+    vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
+    return jsonify({'voted': vote is not None})
 
 @app.route('/api/player/minigame/complete', methods=['POST'])
 def complete_minigame():
@@ -1247,7 +1325,7 @@ def update_timers():
                         if state['time_left'] <= 0:
                             print(f"⏰ TIME'S UP for event {event_id}!")
                             set_game_state(event_id, 'game_active', 'False')
-                            set_game_state(event_id, 'is_timer_running', 'False')
+            set_game_state(event_id, 'is_timer_running', 'False')
                             emit_full_state_update(room_name)
                             socketio.emit('game_over', {}, room=room_name)
         except Exception as e:
@@ -1317,4 +1395,3 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
