@@ -555,36 +555,50 @@ def start_game():
     print(f"=== START GAME DEBUG ===")
     print(f"Event ID: {event_id}")
     
-    Player.query.filter_by(event_id=event_id).delete()
-    PlayerScan.query.filter_by(event_id=event_id).delete()
-    PlayerAnswer.query.filter_by(event_id=event_id).delete()
-    FunnyPhoto.query.filter_by(event_id=event_id).delete()
-    QRCode.query.filter(QRCode.event_id == event_id, QRCode.claimed_by_player_id.isnot(None)).update({QRCode.claimed_by_player_id: None})
-    
-    set_game_state(event_id, 'game_active', 'True')
-    set_game_state(event_id, 'is_timer_running', 'True')
-    set_game_state(event_id, 'game_start_time', datetime.utcnow().isoformat())
-    set_game_state(event_id, 'total_paused_duration', 0)
-    set_game_state(event_id, 'bonus_multiplier', 1)
-    set_game_state(event_id, 'time_speed', 1)
-    
-    minutes = int(request.json.get('minutes', 30))
-    duration_seconds = minutes * 60
-    set_game_state(event_id, 'initial_game_duration', duration_seconds)
-    end_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
-    set_game_state(event_id, 'game_end_time', end_time.isoformat())
-    
-    print(f"Game state set: active=True, timer_running=True, duration={minutes}min")
-    
-    db.session.commit()
-    
-    room = f'event_{event_id}'
-    print(f"Emitting to room: {room}")
-    emit_full_state_update(room)
-    emit_leaderboard_update(room)
-    print(f"Game started successfully!")
-    
-    return jsonify({'message': f'Gra rozpoczęta na {minutes} minut.'})
+    try:
+        Player.query.filter_by(event_id=event_id).delete()
+        PlayerScan.query.filter_by(event_id=event_id).delete()
+        PlayerAnswer.query.filter_by(event_id=event_id).delete()
+        FunnyPhoto.query.filter_by(event_id=event_id).delete()
+        
+        # Reset claimed QR codes - fixed syntax
+        qr_codes_to_reset = QRCode.query.filter(
+            QRCode.event_id == event_id, 
+            QRCode.claimed_by_player_id.isnot(None)
+        ).all()
+        for qr in qr_codes_to_reset:
+            qr.claimed_by_player_id = None
+        
+        set_game_state(event_id, 'game_active', 'True')
+        set_game_state(event_id, 'is_timer_running', 'True')
+        set_game_state(event_id, 'game_start_time', datetime.utcnow().isoformat())
+        set_game_state(event_id, 'total_paused_duration', 0)
+        set_game_state(event_id, 'bonus_multiplier', 1)
+        set_game_state(event_id, 'time_speed', 1)
+        
+        minutes = int(request.json.get('minutes', 30))
+        duration_seconds = minutes * 60
+        set_game_state(event_id, 'initial_game_duration', duration_seconds)
+        end_time = datetime.utcnow() + timedelta(seconds=duration_seconds)
+        set_game_state(event_id, 'game_end_time', end_time.isoformat())
+        
+        print(f"Game state set: active=True, timer_running=True, duration={minutes}min")
+        
+        db.session.commit()
+        
+        room = f'event_{event_id}'
+        print(f"Emitting to room: {room}")
+        emit_full_state_update(room)
+        emit_leaderboard_update(room)
+        print(f"Game started successfully!")
+        
+        return jsonify({'message': f'Gra rozpoczęta na {minutes} minut.'})
+    except Exception as e:
+        print(f"ERROR in start_game: {e}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/host/stop_game', methods=['POST'])
 @host_required
