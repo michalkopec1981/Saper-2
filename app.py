@@ -1183,6 +1183,9 @@ def emit_password_update(room):
      with app.app_context():
         socketio.emit('password_update', get_full_game_state(event_id)['password'], room=room)
 
+_background_task_started = False
+_background_task_lock = False
+
 def update_timers():
     """Background task that sends timer updates every second"""
     print("🚀 Timer background task started")
@@ -1231,6 +1234,57 @@ def update_timers():
         # Sleep 1 second between updates
         socketio.sleep(1)
 
+def init_background_tasks():
+    """Initialize background tasks - called once per worker"""
+    global _background_task_started, _background_task_lock
+    
+    if _background_task_started or _background_task_lock:
+        return
+    
+    _background_task_lock = True
+    print("=" * 60)
+    print("🚀 INITIALIZING BACKGROUND TASKS")
+    print("=" * 60)
+    
+    try:
+        print("📡 Starting timer background task...")
+        socketio.start_background_task(target=update_timers)
+        _background_task_started = True
+        print("✅ Background task started successfully")
+    except Exception as e:
+        print(f"❌ Error starting background task: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        _background_task_lock = False
+
+
+# Initialize background tasks when worker starts (for gunicorn/production)
+@socketio.on('connect')
+def handle_connect():
+    """Called on first connection - ensures background task is running"""
+    init_background_tasks()
+
+
+# Uruchomienie Aplikacji
+if __name__ == '__main__':
+    print("=" * 60)
+    print("🚀 SAPER QR APPLICATION STARTING")
+    print("=" * 60)
+    
+    print("📡 Starting timer background task...")
+    socketio.start_background_task(target=update_timers)
+    
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    print(f"🌐 Server configuration:")
+    print(f"   - Host: 0.0.0.0")
+    print(f"   - Port: {port}")
+    print(f"   - Debug: {debug_mode}")
+    print("=" * 60)
+    
+    socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
 
 
 @socketio.on('join')
@@ -1261,4 +1315,5 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
