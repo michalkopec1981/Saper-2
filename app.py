@@ -556,18 +556,22 @@ def start_game():
     print(f"Event ID: {event_id}")
     
     try:
-        Player.query.filter_by(event_id=event_id).delete()
-        PlayerScan.query.filter_by(event_id=event_id).delete()
-        PlayerAnswer.query.filter_by(event_id=event_id).delete()
-        FunnyPhoto.query.filter_by(event_id=event_id).delete()
-        
-        # ✅ POPRAWIONA składnia - używamy pętli zamiast .update()
+        # ✅ KROK 1: Najpierw resetujemy kody QR (usuwamy referencje do graczy)
         qr_codes_to_reset = QRCode.query.filter(
             QRCode.event_id == event_id, 
             QRCode.claimed_by_player_id.isnot(None)
         ).all()
         for qr in qr_codes_to_reset:
             qr.claimed_by_player_id = None
+        
+        # Commit żeby zapisać zmiany w kodach QR przed usunięciem graczy
+        db.session.commit()
+        
+        # ✅ KROK 2: Teraz możemy bezpiecznie usunąć graczy i powiązane dane
+        Player.query.filter_by(event_id=event_id).delete()
+        PlayerScan.query.filter_by(event_id=event_id).delete()
+        PlayerAnswer.query.filter_by(event_id=event_id).delete()
+        FunnyPhoto.query.filter_by(event_id=event_id).delete()
         
         set_game_state(event_id, 'game_active', 'True')
         set_game_state(event_id, 'is_timer_running', 'True')
