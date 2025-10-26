@@ -38,10 +38,11 @@ socketio = SocketIO(app,
                     async_mode='gevent', 
                     cors_allowed_origins="*", 
                     manage_session=True,
-                    engineio_logger=True,
-                    logger=True,
+                    engineio_logger=False,  # Zmień na True jeśli chcesz więcej logów
+                    logger=True,           # Zmień na True jeśli chcesz więcej logów
                     ping_timeout=60,
                     ping_interval=25)
+
 
 # --- Modele Danych ---
 
@@ -590,15 +591,24 @@ def start_game():
         
         db.session.commit()
         
+        # ✅ POPRAWKA: Pobierz świeży stan i emituj SYNCHRONICZNIE
         room = f'event_{event_id}'
         print(f"Emitting to room: {room}")
-        emit_full_state_update(room)
-        emit_leaderboard_update(room)
-        print(f"Game started successfully!")
+        
+        # Pobierz aktualny stan po zapisie do bazy
+        fresh_state = get_full_game_state(event_id)
+        print(f"Fresh state to emit: time_left={fresh_state.get('time_left')}, game_active={fresh_state.get('game_active')}")
+        
+        # Wyemituj aktualizację stanu
+        socketio.emit('game_state_update', fresh_state, room=room)
+        socketio.emit('leaderboard_update', [], room=room)
+        socketio.emit('password_update', fresh_state['password'], room=room)
+        
+        print(f"✅ Game started successfully! Updates emitted.")
         
         return jsonify({'message': f'Gra rozpoczęta na {minutes} minut.'})
     except Exception as e:
-        print(f"ERROR in start_game: {e}")
+        print(f"❌ ERROR in start_game: {e}")
         import traceback
         traceback.print_exc()
         db.session.rollback()
@@ -1151,8 +1161,16 @@ def complete_minigame():
 # --- Gniazda (SocketIO) ---
 # ===================================================================
 def emit_full_state_update(room):
+    """Emit full game state to all clients in the room"""
     event_id = int(room.split('_')[1])
-    socketio.emit('game_state_update', get_full_game_state(event_id), room=room)
+    state = get_full_game_state(event_id)
+    
+    print(f"📤 Emitting full state to {room}:")
+    print(f"   - game_active: {state['game_active']}")
+    print(f"   - is_timer_running: {state['is_timer_running']}")
+    print(f"   - time_left: {state['time_left']}")
+    
+    socketio.emit('game_state_update', state, room=room)
 
 def emit_leaderboard_update(room):
     event_id = int(room.split('_')[1])
@@ -1166,30 +1184,53 @@ def emit_password_update(room):
         socketio.emit('password_update', get_full_game_state(event_id)['password'], room=room)
 
 def update_timers():
+    """Background task that sends timer updates every second"""
+    print("🚀 Timer background task started")
+    
     while True:
         try:
             with app.app_context():
-                active_events = db.session.query(GameState.event_id).filter_by(key='game_active', value='True').distinct().all()
+                # Znajdź wszystkie aktywne eventy
+                active_events = db.session.query(GameState.event_id).filter_by(
+                    key='game_active', 
+                    value='True'
+                ).distinct().all()
                 event_ids = [e[0] for e in active_events]
                 
+                if event_ids:
+                    print(f"⏱️  Timer tick - Active events: {event_ids}")
+                
                 for event_id in event_ids:
-                    if get_game_state(event_id, 'is_timer_running', 'False') == 'True':
+                    is_running = get_game_state(event_id, 'is_timer_running', 'False')
+                    
+                    if is_running == 'True':
                         state = get_full_game_state(event_id)
                         room_name = f'event_{event_id}'
+                        
+                        # Emit timer tick
                         socketio.emit('timer_tick', {
                             'time_left': state['time_left'],
                             'time_elapsed': state['time_elapsed'],
                             'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
                         }, room=room_name)
                         
+                        print(f"⏱️  Tick -> {room_name}: {state['time_left']:.1f}s left")
+                        
+                        # Sprawdź czy czas minął
                         if state['time_left'] <= 0:
+                            print(f"⏰ TIME'S UP for event {event_id}!")
                             set_game_state(event_id, 'game_active', 'False')
                             set_game_state(event_id, 'is_timer_running', 'False')
                             emit_full_state_update(room_name)
                             socketio.emit('game_over', {}, room=room_name)
         except Exception as e:
-            print(f"Błąd w update_timers: {e}")
+            print(f"❌ Błąd w update_timers: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Sleep 1 second between updates
         socketio.sleep(1)
+
 
 
 @socketio.on('join')
@@ -1203,7 +1244,21 @@ def on_join(data):
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':
+    print("=" * 60)
+    print("🚀 SAPER QR APPLICATION STARTING")
+    print("=" * 60)
+    
+    print("📡 Starting timer background task...")
     socketio.start_background_task(target=update_timers)
+    
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    print(f"🌐 Server configuration:")
+    print(f"   - Host: 0.0.0.0")
+    print(f"   - Port: {port}")
+    print(f"   - Debug: {debug_mode}")
+    print("=" * 60)
+    
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
