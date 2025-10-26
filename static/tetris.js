@@ -56,14 +56,15 @@ class TetrisGame {
         // Oblicz rozmiar canvas bazując na dostępnej przestrzeni
         // 90% wysokości viewportu minus nagłówek (około 80px) minus padding (20px)
         const availableHeight = window.innerHeight * 0.90 - 100;
-        // Szerokość: cała szerokość minus przyciski po bokach (2 x 110px) minus marginesy
-        const availableWidth = Math.min(window.innerWidth - 260, 500);
+        // Szerokość: cała szerokość minus przyciski po bokach (2 x 60px) minus marginesy
+        const availableWidth = Math.min(window.innerHeight * 0.90 - 100, window.innerWidth - 140);
         
         // Oblicz blockSize tak, aby plansza zmieściła się w dostępnej przestrzeni
         const blockSizeByHeight = Math.floor(availableHeight / this.rows);
         const blockSizeByWidth = Math.floor(availableWidth / this.cols);
         
-        this.blockSize = Math.min(blockSizeByHeight, blockSizeByWidth, 35);
+        // Zwiększony maksymalny rozmiar bloku dla większej planszy
+        this.blockSize = Math.min(blockSizeByHeight, blockSizeByWidth, 50);
         
         // Ustaw wymiary canvas
         this.canvas.width = this.cols * this.blockSize;
