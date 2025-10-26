@@ -54,10 +54,10 @@ class TetrisGame {
     
     calculateCanvasSize() {
         // Oblicz rozmiar canvas bazując na dostępnej przestrzeni
-        // 90% wysokości viewportu minus nagłówek (około 80px) minus padding (20px)
-        const availableHeight = window.innerHeight * 0.90 - 100;
-        // Szerokość: cała szerokość minus przyciski po bokach (2 x 60px) minus marginesy
-        const availableWidth = Math.min(window.innerHeight * 0.90 - 100, window.innerWidth - 140);
+        // 84% wysokości viewportu minus nagłówek (około 60px) minus przycisk wyjścia (około 60px) minus padding (4px)
+        const availableHeight = window.innerHeight * 0.84 - 4;
+        // Szerokość: cała szerokość minus przyciski po bokach (2 x 69px = 138px) minus minimalne marginesy (4px)
+        const availableWidth = Math.min(window.innerHeight * 0.84 - 4, window.innerWidth - 142);
         
         // Oblicz blockSize tak, aby plansza zmieściła się w dostępnej przestrzeni
         const blockSizeByHeight = Math.floor(availableHeight / this.rows);
@@ -108,6 +108,28 @@ class TetrisGame {
         const rotateBtn = document.getElementById('tetris-rotate-btn');
         const downBtn = document.getElementById('tetris-down-btn');
         
+        // Funkcje pomocnicze dla szybkiego ruchu w dół
+        let downInterval = null;
+        
+        const startDownMovement = () => {
+            if (this.gameRunning && !this.gameOver) {
+                this.movePiece(0, 1);
+                // Szybkie powtarzanie co 50ms
+                downInterval = setInterval(() => {
+                    if (this.gameRunning && !this.gameOver) {
+                        this.movePiece(0, 1);
+                    }
+                }, 50);
+            }
+        };
+        
+        const stopDownMovement = () => {
+            if (downInterval) {
+                clearInterval(downInterval);
+                downInterval = null;
+            }
+        };
+        
         if (leftBtn) {
             leftBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -142,13 +164,31 @@ class TetrisGame {
         }
         
         if (downBtn) {
+            // Przytrzymanie dla szybkiego opadania
             downBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                if (this.gameRunning && !this.gameOver) this.movePiece(0, 1);
+                startDownMovement();
             });
-            downBtn.addEventListener('click', (e) => {
+            downBtn.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                if (this.gameRunning && !this.gameOver) this.movePiece(0, 1);
+                stopDownMovement();
+            });
+            downBtn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                stopDownMovement();
+            });
+            
+            // Obsługa myszki (dla desktopów)
+            downBtn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startDownMovement();
+            });
+            downBtn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                stopDownMovement();
+            });
+            downBtn.addEventListener('mouseleave', (e) => {
+                stopDownMovement();
             });
         }
     }
