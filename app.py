@@ -561,7 +561,7 @@ def start_game():
         PlayerAnswer.query.filter_by(event_id=event_id).delete()
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
         
-        # Reset claimed QR codes - fixed syntax
+        # ✅ POPRAWIONA składnia - używamy pętli zamiast .update()
         qr_codes_to_reset = QRCode.query.filter(
             QRCode.event_id == event_id, 
             QRCode.claimed_by_player_id.isnot(None)
