@@ -32,41 +32,49 @@
     </div>
     <div id="tetris-game-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #607D8B; z-index: 1000;">
         <div class="d-flex flex-column" style="height: 100vh;">
-            <!-- Nagłówek (10%) -->
-            <div class="text-center py-2 bg-dark text-white" style="flex: 0 0 10%; min-height: 80px; display: flex; flex-direction: column; justify-content: center;">
-                <h5 class="mb-1">🎮 TETRIS</h5>
+            <!-- Nagłówek (8%) - zmniejszony -->
+            <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                <h5 class="mb-0" style="font-size: 1.1rem;">🎮 TETRIS</h5>
                 <div class="d-flex justify-content-between align-items-center px-3">
-                    <span id="tetris-player-name" class="small"></span>
-                    <strong>Punkty: <span id="tetris-score">0</span> / 20</strong>
+                    <span id="tetris-player-name" style="font-size: 0.85rem;"></span>
+                    <strong style="font-size: 0.9rem;">Punkty: <span id="tetris-score">0</span> / 20</strong>
                 </div>
             </div>
             
-            <!-- Obszar gry z przyciskami po bokach (90%) -->
-            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative;">
-                <!-- Sekcja Start/Back (na środku, przed rozpoczęciem gry) -->
-                <div id="tetris-start-section" class="text-center" style="position: absolute; z-index: 10;">
-                    <button id="tetris-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px;">Start Gry</button>
-                    <button id="tetris-back-btn" class="btn btn-secondary">Wróć do Gry</button>
+            <!-- Obszar gry z przyciskami po bokach (84%) -->
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+                <!-- Sekcja Start/Back (na środku, przed rozpoczęciem gry) - BIAŁE TŁO -->
+                <div id="tetris-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 class="mb-3" style="color: #333;">🎮 Tetris Challenge</h4>
+                    <p class="mb-4" style="color: #666;">Ułóż linie, aby zdobyć 20 punktów!</p>
+                    <button id="tetris-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START GRY</button>
+                    <br>
+                    <button id="tetris-back-btn" class="btn btn-outline-secondary">← Wróć do gry</button>
                 </div>
                 
-                <!-- Przyciski po lewej stronie -->
-                <div id="tetris-left-controls" style="display: none; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 5;">
-                    <div class="d-flex flex-column gap-3">
-                        <button id="tetris-left-btn" class="btn btn-light" style="width: 50px; height: 50px; font-size: 24px; touch-action: manipulation; border: 3px solid #333; background: white;">←</button>
-                        <button id="tetris-rotate-btn" class="btn btn-light" style="width: 50px; height: 50px; font-size: 20px; touch-action: manipulation; border: 3px solid #333; background: white;">🔄</button>
+                <!-- Przyciski po lewej stronie (65px, było 50px) -->
+                <div id="tetris-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                    <div class="d-flex flex-column gap-2">
+                        <button id="tetris-left-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
+                        <button id="tetris-rotate-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 28px; touch-action: manipulation; border: 3px solid #333; background: white;">🔄</button>
                     </div>
                 </div>
                 
                 <!-- Plansza gry (środek) -->
-                <canvas id="tetris-canvas" style="border: 3px solid #333; background-color: #000; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 20px); z-index: 1;"></canvas>
+                <canvas id="tetris-canvas" style="border: 3px solid #333; background-color: #000; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 4px); z-index: 1;"></canvas>
                 
-                <!-- Przyciski po prawej stronie -->
-                <div id="tetris-right-controls" style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 5;">
-                    <div class="d-flex flex-column gap-3">
-                        <button id="tetris-right-btn" class="btn btn-light" style="width: 50px; height: 50px; font-size: 24px; touch-action: manipulation; border: 3px solid #333; background: white;">→</button>
-                        <button id="tetris-down-btn" class="btn btn-light" style="width: 50px; height: 50px; font-size: 24px; touch-action: manipulation; border: 3px solid #333; background: white;">↓</button>
+                <!-- Przyciski po prawej stronie (65px, było 50px) -->
+                <div id="tetris-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                    <div class="d-flex flex-column gap-2">
+                        <button id="tetris-right-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
+                        <button id="tetris-down-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▼</button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Przycisk wyjścia (8%) -->
+            <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+                <button id="tetris-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">WYJDŹ Z GRY</button>
             </div>
         </div>
     </div>
@@ -336,13 +344,14 @@ document.addEventListener('DOMContentLoaded', function() {
             tetrisGame = new TetrisGame('tetris-canvas', playerId, eventId, currentScore);
             tetrisGame.start();
             
-            // Ukryj sekcję startu, pokaż kontrolki po bokach
+            // Ukryj sekcję startu, pokaż kontrolki po bokach i przycisk wyjścia
             document.getElementById('tetris-start-section').style.display = 'none';
             document.getElementById('tetris-left-controls').style.display = 'block';
             document.getElementById('tetris-right-controls').style.display = 'block';
+            document.getElementById('tetris-exit-btn').style.display = 'block';
         };
         
-        // Przycisk Wróć
+        // Przycisk Wróć (na ekranie startowym)
         document.getElementById('tetris-back-btn').onclick = () => {
             if (tetrisGame) {
                 tetrisGame.gameRunning = false;
@@ -359,7 +368,32 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('tetris-start-section').style.display = 'block';
             document.getElementById('tetris-left-controls').style.display = 'none';
             document.getElementById('tetris-right-controls').style.display = 'none';
+            document.getElementById('tetris-exit-btn').style.display = 'none';
             document.getElementById('tetris-start-btn').style.display = 'inline-block';
+        };
+        
+        // Przycisk Wyjdź z gry (podczas gry)
+        document.getElementById('tetris-exit-btn').onclick = () => {
+            if (confirm('Czy na pewno chcesz wyjść z gry? Postęp zostanie zapisany.')) {
+                if (tetrisGame) {
+                    tetrisGame.gameRunning = false;
+                }
+                
+                // Ukryj Tetris
+                tetrisView.style.display = 'none';
+                
+                // Pokaż główny widok
+                document.getElementById('main-view').style.display = 'block';
+                gameView.style.display = 'block';
+                
+                // Resetuj widok Tetris
+                document.getElementById('tetris-start-section').style.display = 'block';
+                document.getElementById('tetris-left-controls').style.display = 'none';
+                document.getElementById('tetris-right-controls').style.display = 'none';
+                document.getElementById('tetris-exit-btn').style.display = 'none';
+                document.getElementById('tetris-start-btn').style.display = 'inline-block';
+                document.getElementById('tetris-start-btn').textContent = 'KONTYNUUJ GRĘ';
+            }
         };
     }
 
