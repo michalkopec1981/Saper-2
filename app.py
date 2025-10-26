@@ -1325,7 +1325,7 @@ def update_timers():
                         if state['time_left'] <= 0:
                             print(f"⏰ TIME'S UP for event {event_id}!")
                             set_game_state(event_id, 'game_active', 'False')
-            set_game_state(event_id, 'is_timer_running', 'False')
+                            set_game_state(event_id, 'is_timer_running', 'False')
                             emit_full_state_update(room_name)
                             socketio.emit('game_over', {}, room=room_name)
         except Exception as e:
@@ -1395,3 +1395,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
