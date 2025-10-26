@@ -450,6 +450,8 @@ function formatTime(seconds) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('???? HOST PANEL INITIALIZING - Event ID:', EVENT_ID);
+    
     const socket = io();
     const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
     
@@ -821,7 +823,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
         
     // =====================================================================
-    // STEROWANIE GR??
+    // STEROWANIE GR????
     // =====================================================================
     const infoElements = {
         playerCount: document.getElementById('info-player-count'),
@@ -837,6 +839,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let isTimerRunning = false;
     
     async function sendGameControl(control, value = null) {
+        console.log('???? Sending game control:', control, value);
         try {
             const response = await fetch('/api/host/game_control', {
                 method: 'POST',
@@ -845,14 +848,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             if (!response.ok) throw new Error('Server error');
             const result = await response.json();
-            console.log('Game control response:', result);
+            console.log('??? Game control response:', result);
         } catch (error) {
-            console.error('Control error:', error);
+            console.error('??? Control error:', error);
         }
     }
     
     function updateUI(state) {
-        console.log('Updating UI with state:', state);
+        console.log('???? Updating UI with state:', state);
         
         // Update player count and correct answers
         if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
@@ -910,16 +913,21 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Socket.IO event handlers
     socket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('??? Socket connected, joining room for event:', EVENT_ID);
         socket.emit('join', { event_id: EVENT_ID });
     });
     
+    socket.on('disconnect', () => {
+        console.log('??? Socket disconnected');
+    });
+    
     socket.on('game_state_update', (state) => {
-        console.log('Game state update received:', state);
+        console.log('???? Game state update received:', state);
         updateUI(state);
     });
     
     socket.on('timer_tick', (data) => {
+        console.log('?????? Timer tick:', data);
         if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
         if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
         if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
@@ -934,10 +942,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     // Initial state load
+    console.log('???? Loading initial state...');
     fetch('/api/host/state')
         .then(res => res.json())
         .then(state => {
-            console.log('Initial state loaded:', state);
+            console.log('??? Initial state loaded:', state);
             updateUI(state);
             if (state.language_host === 'en') {
                 translatePage('en');
@@ -949,11 +958,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
             }
         })
-        .catch(error => console.error('Error loading initial state:', error));
+        .catch(error => console.error('??? Error loading initial state:', error));
     
     // ??? POPRAWIONY Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('minutes-input').value);
+        console.log('???? Starting game with', minutes, 'minutes');
+        
         if (isNaN(minutes) || minutes < 1) {
             alert('Prosz?? wprowadzi?? poprawny czas gry (minimum 1 minuta).');
             return;
@@ -964,6 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         try {
+            console.log('???? Sending start game request...');
             const response = await fetch('/api/host/start_game', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -971,15 +983,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             
             const result = await response.json();
+            console.log('???? Start game response:', result);
             
             if (!response.ok) {
                 throw new Error(result.error || 'Nieznany b????d uruchamiania gry');
             }
             
-            console.log('Game started:', result);
+            console.log('??? Game started successfully');
             alert(result.message || 'Gra rozpocz??ta!');
         } catch (error) {
-            console.error('Error starting game:', error);
+            console.error('??? Error starting game:', error);
             alert('B????d podczas uruchamiania gry: ' + error.message);
         }
     });
@@ -1016,9 +1029,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const control = btn.dataset.control;
         const value = btn.dataset.value;
         
-        console.log('Sending game control:', control, value);
+        console.log('???? Sending game control:', control, value);
         sendGameControl(control, value);
     });
+    
+    console.log('??? HOST PANEL INITIALIZED');
 });
 </script>
 {% endblock %}
