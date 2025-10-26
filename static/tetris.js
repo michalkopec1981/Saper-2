@@ -1,7 +1,3 @@
-// ============================================
-// TETRIS GAME - Mobilna wersja responsywna
-// ============================================
-
 class TetrisGame {
     constructor(canvasId, playerId, eventId, currentScore = 0) {
         this.canvas = document.getElementById(canvasId);
