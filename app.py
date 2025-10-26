@@ -1265,28 +1265,6 @@ def handle_connect():
     """Called on first connection - ensures background task is running"""
     init_background_tasks()
 
-
-# Uruchomienie Aplikacji
-if __name__ == '__main__':
-    print("=" * 60)
-    print("🚀 SAPER QR APPLICATION STARTING")
-    print("=" * 60)
-    
-    print("📡 Starting timer background task...")
-    socketio.start_background_task(target=update_timers)
-    
-    port = int(os.environ.get('PORT', 5000))
-    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    print(f"🌐 Server configuration:")
-    print(f"   - Host: 0.0.0.0")
-    print(f"   - Port: {port}")
-    print(f"   - Debug: {debug_mode}")
-    print("=" * 60)
-    
-    socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
 @socketio.on('join')
 def on_join(data):
     event_id = data.get('event_id')
@@ -1315,5 +1293,3 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
