@@ -903,18 +903,43 @@ def scan_qr():
     print(f"Received data: {data}")
     print(f"Player ID: {player_id}, QR Code: {qr_id}, Event ID: {event_id}")
     
-    player = db.session.get(Player, player_id)
-    qr_code = QRCode.query.filter_by(code_identifier=qr_id, event_id=event_id).first()
-
+    # ✅ WALIDACJA: Sprawdź czy gracz istnieje
+    player = db.session.get(Player, player_id) if player_id else None
+    
     print(f"Player found: {player is not None}")
+    if player:
+        print(f"Player name: {player.name}, Event ID: {player.event_id}")
+    
+    # ✅ Jeśli gracz nie istnieje, zwróć błąd z flagą czyszczenia
+    if not player:
+        print(f"ERROR: Player ID {player_id} not found in database!")
+        return jsonify({
+            'status': 'error',
+            'message': 'Twoje dane wygasły po resecie gry. Odśwież stronę (F5) i zarejestruj się ponownie.',
+            'clear_storage': True
+        }), 404
+    
+    # ✅ Sprawdź czy event_id gracza zgadza się z event_id w żądaniu
+    if player.event_id != event_id:
+        print(f"ERROR: Player event mismatch. Player event: {player.event_id}, Request event: {event_id}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Nieprawidłowy event. Odśwież stronę.',
+            'clear_storage': True
+        }), 400
+    
+    # Znajdź kod QR
+    qr_code = QRCode.query.filter_by(code_identifier=qr_id, event_id=event_id).first()
+    
     print(f"QR Code found: {qr_code is not None}")
     if qr_code:
         print(f"QR Code color: {qr_code.color}")
     
-    if not player or not qr_code:
-        print(f"ERROR: Player or QR code not found!")
-        return jsonify({'message': 'Nieprawidłowe dane.'}), 404
+    if not qr_code:
+        print(f"ERROR: QR code not found!")
+        return jsonify({'message': 'Nieprawidłowy kod QR.'}), 404
     
+    # Sprawdź czy gra jest aktywna
     game_active = get_game_state(event_id, 'game_active', 'False')
     print(f"Game active: {game_active}")
     
@@ -923,9 +948,8 @@ def scan_qr():
         return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
     print(f"QR Code color check: {qr_code.color}")
-    print(f"Is reusable (white/yellow)? {qr_code.color in ['white', 'yellow']}")
 
-    # BIAŁE I ŻÓŁTE KODY (wielorazowe)
+    # BIAŁE I ŻÓŁTE KODY (wielorazowe - quizy)
     if qr_code.color in ['white', 'yellow']:
         last_scan = PlayerScan.query.filter_by(
             player_id=player_id, 
@@ -960,6 +984,7 @@ def scan_qr():
                 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'
             })
         
+        db.session.commit()
         return jsonify({
             'status': 'question', 
             'question': {
@@ -971,7 +996,41 @@ def scan_qr():
             }
         })
     
-    # JEDNORAZOWE KODY (czerwone, pułapki, zielone, różowe)
+    # 🎮 ZIELONY KOD - TRYB TESTOWY TETRIS (wielokrotne użycie, bez ograniczeń)
+    elif qr_code.color == 'green':
+        print(f"=== GREEN CODE - TETRIS TEST MODE ===")
+        
+        # Sprawdź czy Tetris NIE został wyłączony
+        tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
+        print(f"Tetris disabled state: {tetris_disabled}")
+        
+        if tetris_disabled == 'True':
+            message = 'Ta minigra została wyłączona przez organizatora.'
+            print(f"Tetris is DISABLED - returning error")
+            return jsonify({'status': 'info', 'message': message})
+        
+        print(f"Tetris is ENABLED - checking player progress")
+        
+        # Sprawdź postęp gracza w Tetris
+        tetris_score_key = f'minigame_tetris_score_{player_id}'
+        current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
+        print(f"Player {player_id} Tetris score: {current_tetris_score}/20")
+        
+        if current_tetris_score >= 20:
+            message = f'Już ukończyłeś tę minigrę! Zdobyłeś {current_tetris_score} punktów Tetris.'
+            print(f"Player already completed Tetris")
+            return jsonify({'status': 'info', 'message': message})
+        
+        # 🎮 TRYB DEWELOPERSKI: Zielony kod zawsze uruchamia Tetris (bez sprawdzania claimed_by_player_id)
+        print(f"🎮 DEV MODE: Starting Tetris game for player {player_id}")
+        return jsonify({
+            'status': 'minigame', 
+            'game': 'tetris', 
+            'current_score': current_tetris_score,
+            'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
+        })
+    
+    # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
     else:
         if qr_code.claimed_by_player_id:
             return jsonify({
@@ -991,40 +1050,6 @@ def scan_qr():
             player.score = max(0, player.score - 25)
             message = 'Pułapka! Tracisz 25 punktów.'
         
-        # ZIELONY KOD - MINIGRA TETRIS
-        elif qr_code.color == 'green':
-            print(f"=== TETRIS CHECK ===")
-            # Sprawdź czy Tetris NIE został wyłączony (domyślnie jest aktywny)
-            tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
-            print(f"Tetris disabled state: {tetris_disabled}")
-            if tetris_disabled == 'True':
-                message = 'Ta minigra została wyłączona przez organizatora.'
-                print(f"Tetris is DISABLED - returning error")
-                db.session.commit()
-                return jsonify({'status': 'info', 'message': message})
-            
-            print(f"Tetris is ENABLED - checking player progress")
-            # Sprawdź czy gracz już zdobył wymaganą liczbę punktów (20)
-            tetris_score_key = f'minigame_tetris_score_{player_id}'
-            current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
-            print(f"Player {player_id} Tetris score: {current_tetris_score}/20")
-            
-            if current_tetris_score >= 20:
-                message = 'Już ukończyłeś tę minigrę! Zdobyłeś wymagane 20 punktów.'
-                print(f"Player already completed Tetris")
-                db.session.commit()
-                return jsonify({'status': 'info', 'message': message})
-            
-            # Gracz może grać - jeszcze nie osiągnął 20 punktów
-            print(f"Starting Tetris game for player {player_id}")
-            db.session.commit()
-            return jsonify({
-                'status': 'minigame', 
-                'game': 'tetris', 
-                'current_score': current_tetris_score,
-                'message': f'Minigra odblokowana! Twój postęp: {current_tetris_score}/20 pkt'
-            })
-        
         # RÓŻOWY KOD - FOTO
         elif qr_code.color == 'pink':
             db.session.commit()
@@ -1037,7 +1062,6 @@ def scan_qr():
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
         return jsonify({'status': 'info', 'message': message, 'score': player.score})
-
 @app.route('/api/player/answer', methods=['POST'])
 def process_answer():
     data = request.json
@@ -1293,3 +1317,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
