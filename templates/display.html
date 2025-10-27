@@ -12,7 +12,8 @@
     #bomb-fuse { width: 100%; border-radius: 15px; }
     .list-group-item { background-color: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white; }
     .carousel-item img { max-height: 250px; width: 100%; object-fit: contain; }
-    .carousel-caption { background-color: rgba(0, 0, 0, 0.5); }
+    .carousel-caption { background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; }
+    .carousel-caption h5 { font-size: 1.2rem; margin: 0; }
 </style>
 {% endblock %}
 {% block content %}
@@ -32,10 +33,24 @@
             <h2 class="text-center">Ranking</h2>
             <ul id="leaderboard" class="list-group mb-4 flex-grow-1" style="overflow-y: auto;"></ul>
             <h2 class="text-center mt-auto">Czas: <span id="timer" class="display-4">00:00</span></h2>
-            <div id="funny-photos-carousel" class="carousel slide mt-4" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active"><p class="text-center p-5">Czekamy na śmieszne zdjęcia!</p></div>
+            
+            <!-- 📸 KARUZELA ZDJĘĆ -->
+            <div id="funny-photos-carousel" class="carousel slide mt-4" data-bs-ride="carousel" data-bs-interval="5000">
+                <div class="carousel-inner" id="photos-carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="text-center p-5">
+                            <p>📸 Czekamy na śmieszne zdjęcia!</p>
+                        </div>
+                    </div>
                 </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#funny-photos-carousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Poprzednie</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#funny-photos-carousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Następne</span>
+                </button>
             </div>
         </div>
     </div>
@@ -51,9 +66,51 @@ document.addEventListener('DOMContentLoaded', function () {
     const leaderboardEl = document.getElementById('leaderboard');
     const passwordEl = document.getElementById('anagram');
     const timerEl = document.getElementById('timer');
-    const photoCarousel = document.getElementById('funny-photos-carousel').querySelector('.carousel-inner');
+    const photoCarouselInner = document.getElementById('photos-carousel-inner');
 
-    socket.on('connect', () => socket.emit('join', { event_id: EVENT_ID }));
+    // 📸 Funkcja ładowania zdjęć z serwera
+    async function loadPhotos() {
+        try {
+            const response = await fetch(`/api/photos/${EVENT_ID}`);
+            if (!response.ok) return;
+            
+            const photos = await response.json();
+            
+            if (photos.length === 0) {
+                photoCarouselInner.innerHTML = `
+                    <div class="carousel-item active">
+                        <div class="text-center p-5">
+                            <p>📸 Czekamy na śmieszne zdjęcia!</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Wyczyść karuzele i dodaj zdjęcia
+            photoCarouselInner.innerHTML = '';
+            photos.forEach((photo, index) => {
+                const isActive = index === 0 ? 'active' : '';
+                const newItem = document.createElement('div');
+                newItem.className = `carousel-item ${isActive}`;
+                newItem.innerHTML = `
+                    <img src="${photo.image_url}" class="d-block w-100" alt="Zdjęcie gracza ${photo.player_name}">
+                    <div class="carousel-caption">
+                        <h5>👤 ${photo.player_name}</h5>
+                    </div>
+                `;
+                photoCarouselInner.appendChild(newItem);
+            });
+        } catch (error) {
+            console.error('Błąd ładowania zdjęć:', error);
+        }
+    }
+
+    socket.on('connect', () => {
+        console.log('✅ Socket connected');
+        socket.emit('join', { event_id: EVENT_ID });
+        loadPhotos(); // Załaduj istniejące zdjęcia
+    });
 
     socket.on('leaderboard_update', (players) => {
         leaderboardEl.innerHTML = '';
@@ -69,7 +126,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    socket.on('password_update', (passwordState) => passwordEl.textContent = passwordState.split('').join(' '));
+    socket.on('password_update', (passwordState) => {
+        passwordEl.textContent = passwordState.split('').join(' ');
+    });
 
     socket.on('timer_tick', (data) => {
         const timeLeft = Math.floor(data.time_left);
@@ -78,21 +137,58 @@ document.addEventListener('DOMContentLoaded', function () {
         timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     });
     
+    // 📸 Obsługa nowych zdjęć w czasie rzeczywistym
     socket.on('new_photo', (data) => {
-        const isFirst = photoCarousel.querySelector('.active p');
+        console.log('📸 Nowe zdjęcie otrzymane:', data);
+        
+        // Usuń placeholder jeśli istnieje
+        const placeholder = photoCarouselInner.querySelector('.text-center');
+        if (placeholder) {
+            photoCarouselInner.innerHTML = '';
+        }
+        
+        // Usuń klasę 'active' ze wszystkich elementów
+        photoCarouselInner.querySelectorAll('.carousel-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Dodaj nowe zdjęcie na początek (będzie aktywne)
         const newItem = document.createElement('div');
-        newItem.className = 'carousel-item' + (isFirst ? ' active' : '');
+        newItem.className = 'carousel-item active';
         newItem.innerHTML = `
-            <img src="${data.url}" class="d-block w-100" alt="Funny photo">
-            <div class="carousel-caption d-none d-md-block"><p>Autor: ${data.player}</p></div>`;
-        if(isFirst) photoCarousel.innerHTML = '';
-        photoCarousel.appendChild(newItem);
+            <img src="${data.url}" class="d-block w-100" alt="Zdjęcie gracza ${data.player}">
+            <div class="carousel-caption">
+                <h5>👤 ${data.player}</h5>
+            </div>
+        `;
+        
+        // Wstaw na początek
+        photoCarouselInner.insertBefore(newItem, photoCarouselInner.firstChild);
+        
+        // Jeśli jest więcej niż 10 zdjęć, usuń najstarsze
+        const allItems = photoCarouselInner.querySelectorAll('.carousel-item');
+        if (allItems.length > 10) {
+            allItems[allItems.length - 1].remove();
+        }
+    });
+
+    // 📸 Obsługa resetowania zdjęć (przy starcie gry)
+    socket.on('photos_update', (photos) => {
+        console.log('📸 Reset galerii zdjęć');
+        photoCarouselInner.innerHTML = `
+            <div class="carousel-item active">
+                <div class="text-center p-5">
+                    <p>📸 Czekamy na śmieszne zdjęcia!</p>
+                </div>
+            </div>
+        `;
     });
 
     socket.on('game_state_update', (state) => {
-        if (state.password) passwordEl.textContent = state.password.split('').join(' ');
+        if (state.password) {
+            passwordEl.textContent = state.password.split('').join(' ');
+        }
     });
 });
 </script>
 {% endblock %}
-
