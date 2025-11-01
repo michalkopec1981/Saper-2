@@ -1312,6 +1312,8 @@ def update_timers():
     """Background task that sends timer updates every second"""
     print("🚀 Timer background task started")
     
+    last_tick_times = {}  # Śledzi ostatni czas tick'a dla każdego eventu
+    
     while True:
         try:
             with app.app_context():
@@ -1322,32 +1324,72 @@ def update_timers():
                 ).distinct().all()
                 event_ids = [e[0] for e in active_events]
                 
-                if event_ids:
-                    print(f"⏱️  Timer tick - Active events: {event_ids}")
+                current_time = datetime.utcnow()
                 
                 for event_id in event_ids:
                     is_running = get_game_state(event_id, 'is_timer_running', 'False')
                     
                     if is_running == 'True':
+                        # Pobierz time_speed dla tego eventu
+                        time_speed = int(get_game_state(event_id, 'time_speed', 1))
+                        
+                        # Oblicz ile czasu upłynęło od ostatniego tick'a
+                        if event_id in last_tick_times:
+                            elapsed_real_time = (current_time - last_tick_times[event_id]).total_seconds()
+                        else:
+                            elapsed_real_time = 1.0  # Pierwszy tick
+                        
+                        last_tick_times[event_id] = current_time
+                        
+                        # Oblicz ile czasu "game time" upłynęło (uwzględniając prędkość)
+                        elapsed_game_time = elapsed_real_time * time_speed
+                        
+                        # Pobierz aktualny game_end_time
+                        end_time_str = get_game_state(event_id, 'game_end_time')
+                        if end_time_str:
+                            end_time = datetime.fromisoformat(end_time_str)
+                            
+                            # Nowy end_time = stary end_time - (elapsed_game_time - elapsed_real_time)
+                            # To powoduje, że czas "przyspiesza"
+                            time_adjustment = elapsed_game_time - elapsed_real_time
+                            new_end_time = end_time - timedelta(seconds=time_adjustment)
+                            
+                            # Zapisz nowy end_time
+                            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+                            
+                            # Oblicz pozostały czas
+                            time_left = max(0, (new_end_time - current_time).total_seconds())
+                        else:
+                            time_left = 0
+                        
                         state = get_full_game_state(event_id)
                         room_name = f'event_{event_id}'
                         
                         # Emit timer tick
                         socketio.emit('timer_tick', {
-                            'time_left': state['time_left'],
+                            'time_left': time_left,
                             'time_elapsed': state['time_elapsed'],
                             'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
                         }, room=room_name)
                         
-                        print(f"⏱️  Tick -> {room_name}: {state['time_left']:.1f}s left")
+                        if event_ids:  # Log tylko jeśli są aktywne eventy
+                            print(f"⏱️  Tick -> {room_name}: {time_left:.1f}s left (speed: x{time_speed})")
                         
                         # Sprawdź czy czas minął
-                        if state['time_left'] <= 0:
+                        if time_left <= 0:
                             print(f"⏰ TIME'S UP for event {event_id}!")
                             set_game_state(event_id, 'game_active', 'False')
                             set_game_state(event_id, 'is_timer_running', 'False')
                             emit_full_state_update(room_name)
                             socketio.emit('game_over', {}, room=room_name)
+                            # Usuń z last_tick_times
+                            if event_id in last_tick_times:
+                                del last_tick_times[event_id]
+                    else:
+                        # Jeśli timer nie jest uruchomiony, usuń z last_tick_times
+                        if event_id in last_tick_times:
+                            del last_tick_times[event_id]
+                            
         except Exception as e:
             print(f"❌ Błąd w update_timers: {e}")
             import traceback
@@ -1415,4 +1457,5 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
