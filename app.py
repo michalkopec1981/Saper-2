@@ -657,42 +657,42 @@ def game_control():
     is_active = get_game_state(event_id, 'game_active', 'False') == 'True'  # ✅ DODANE
 
     if control == 'pause':
-    if is_running:
-        # ✅ PAUZOWANIE - zapisz aktualny czas
-        set_game_state(event_id, 'is_timer_running', 'False')
-        set_game_state(event_id, 'pause_start_time', datetime.utcnow().isoformat())
-        end_time_str = get_game_state(event_id, 'game_end_time')
-        if end_time_str:
-            time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
-            # ✅ Zapisz rzeczywisty czas pozostały (bez mnożenia/dzielenia)
-            set_game_state(event_id, 'time_left_on_pause', time_left)
-    else:
-        # ✅ WZNOWIENIE - oblicz czas z uwzględnieniem nowej prędkości
-        pause_start_str = get_game_state(event_id, 'pause_start_time')
-        if pause_start_str:
-            paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
-            total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
-            set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
-        
-        # ✅ POPRAWKA: Pobierz "rzeczywisty" czas pozostały (w sekundach gry)
-        time_left_paused = float(get_game_state(event_id, 'time_left_on_pause', 0))
-        time_speed = int(get_game_state(event_id, 'time_speed', 1))
-        
-        # ✅ KLUCZOWA ZMIANA:
-        # time_left_paused to czas GRY (np. 600s)
-        # Aby obliczyć ile to będzie RZECZYWISTYCH sekund: 600 / 3 = 200s
-        # ALE: jeśli podczas pauzy zmieniliśmy prędkość, to dzielenie jest poprawne
-        # Problem: Zapisujemy time_left jako "rzeczywisty czas" nie "czas gry"
-        
-        # ✅ WŁAŚCIWE ROZWIĄZANIE:
-        # Oblicz ile RZECZYWISTYCH sekund upłynie do końca gry
-        real_time_to_end = time_left_paused / time_speed
-        new_end_time = datetime.utcnow() + timedelta(seconds=real_time_to_end)
-        
-        set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
-        set_game_state(event_id, 'is_timer_running', 'True')
-        
-        print(f"🔄 Resumed: time_left={time_left_paused:.1f}s, speed=x{time_speed}, real_time={real_time_to_end:.1f}s")
+        if is_running:
+            # ✅ PAUZOWANIE - zapisz aktualny czas
+            set_game_state(event_id, 'is_timer_running', 'False')
+            set_game_state(event_id, 'pause_start_time', datetime.utcnow().isoformat())
+            end_time_str = get_game_state(event_id, 'game_end_time')
+            if end_time_str:
+                time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
+                # ✅ Zapisz rzeczywisty czas pozostały (bez mnożenia/dzielenia)
+                set_game_state(event_id, 'time_left_on_pause', time_left)
+        else:
+            # ✅ WZNOWIENIE - oblicz czas z uwzględnieniem nowej prędkości
+            pause_start_str = get_game_state(event_id, 'pause_start_time')
+            if pause_start_str:
+                paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
+                total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
+                set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
+            
+            # ✅ POPRAWKA: Pobierz "rzeczywisty" czas pozostały (w sekundach gry)
+            time_left_paused = float(get_game_state(event_id, 'time_left_on_pause', 0))
+            time_speed = int(get_game_state(event_id, 'time_speed', 1))
+            
+            # ✅ KLUCZOWA ZMIANA:
+            # time_left_paused to czas GRY (np. 600s)
+            # Aby obliczyć ile to będzie RZECZYWISTYCH sekund: 600 / 3 = 200s
+            # ALE: jeśli podczas pauzy zmieniliśmy prędkość, to dzielenie jest poprawne
+            # Problem: Zapisujemy time_left jako "rzeczywisty czas" nie "czas gry"
+            
+            # ✅ WŁAŚCIWE ROZWIĄZANIE:
+            # Oblicz ile RZECZYWISTYCH sekund upłynie do końca gry
+            real_time_to_end = time_left_paused / time_speed
+            new_end_time = datetime.utcnow() + timedelta(seconds=real_time_to_end)
+            
+            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+            set_game_state(event_id, 'is_timer_running', 'True')
+            
+            print(f"🔄 Resumed: time_left={time_left_paused:.1f}s, speed=x{time_speed}, real_time={real_time_to_end:.1f}s")
 
     elif control == 'force_win':
         set_game_state(event_id, 'game_active', 'False')
@@ -1469,6 +1469,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
