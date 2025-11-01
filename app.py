@@ -654,6 +654,7 @@ def game_control():
     value = data.get('value')
     
     is_running = get_game_state(event_id, 'is_timer_running', 'True') == 'True'
+    is_active = get_game_state(event_id, 'game_active', 'False') == 'True'  # ✅ DODANE
 
     if control == 'pause':
         if is_running:
@@ -672,7 +673,6 @@ def game_control():
             
             time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
             time_speed = int(get_game_state(event_id, 'time_speed', 1))
-            # ✅ POPRAWKA: Użyj time_speed przy obliczaniu nowego end_time
             new_end_time = datetime.utcnow() + timedelta(seconds=time_left / time_speed)
             set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
             set_game_state(event_id, 'is_timer_running', 'True')
@@ -688,30 +688,47 @@ def game_control():
         set_game_state(event_id, 'bonus_multiplier', new_val)
         
     elif control == 'speed':
-        # Zmiana prędkości - nie musimy przeliczyć end_time, bo update_timers() to zrobi
+        # ✅ POPRAWKA: Zmiana prędkości działa zawsze podczas aktywnej gry
         current_speed = int(get_game_state(event_id, 'time_speed', 1))
         new_speed = int(value) if str(current_speed) != str(value) else 1
-        set_game_state(event_id, 'time_speed', new_speed)
-        print(f"⚡ Speed changed to: x{new_speed}")
-      
+        
+        print(f"⚡ Speed change request: {current_speed}x → {new_speed}x")
+        print(f"   Game active: {is_active}, Timer running: {is_running}")
+        
         set_game_state(event_id, 'time_speed', new_speed)
         
-        # Jeśli timer jest uruchomiony, przeliczyć end_time
-        if is_active and is_running:
-            end_time_str = get_game_state(event_id, 'game_end_time')
-            if end_time_str:
-                # Oblicz pozostały czas przy STAREJ prędkości
-                old_time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
+        # ✅ Jeśli gra jest aktywna (niezależnie od pauzy), przeliczyć end_time
+        if is_active:
+            if is_running:
+                # Timer działa - przelicz end_time
+                end_time_str = get_game_state(event_id, 'game_end_time')
+                if end_time_str:
+                    # Oblicz pozostały czas przy STAREJ prędkości
+                    old_time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
+                    
+                    # Oblicz nowy end_time przy NOWEJ prędkości
+                    # Jeśli przyspieszamy (np. 1->10), czas powinien się skrócić
+                    # Jeśli zwalniamy (np. 10->1), czas powinien się wydłużyć
+                    real_time_left = old_time_left * current_speed / new_speed
+                    new_end_time = datetime.utcnow() + timedelta(seconds=real_time_left)
+                    set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+                    
+                    print(f"   Old time left: {old_time_left:.1f}s")
+                    print(f"   New time left: {real_time_left:.1f}s")
+            else:
+                # Timer jest zapauzowany - przelicz time_left_on_pause
+                time_left_on_pause = float(get_game_state(event_id, 'time_left_on_pause', 0))
                 
-                # Oblicz nowy end_time przy NOWEJ prędkości
-                # Konwertujemy czas z powrotem do "normalnego" czasu, potem stosujemy nową prędkość
-                real_time_left = old_time_left * current_speed / new_speed
-                new_end_time = datetime.utcnow() + timedelta(seconds=real_time_left)
-                set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+                # Przelicz pozostały czas z uwzględnieniem nowej prędkości
+                # Jeśli przyspieszamy (np. 1->10), czas powinien się skrócić
+                # Jeśli zwalniamy (np. 10->1), czas powinien się wydłużyć
+                new_time_left_on_pause = time_left_on_pause * current_speed / new_speed
+                set_game_state(event_id, 'time_left_on_pause', new_time_left_on_pause)
                 
-                print(f"⚡ Speed changed: {current_speed}x → {new_speed}x")
-                print(f"   Old time left: {old_time_left:.1f}s")
-                print(f"   New time left: {real_time_left:.1f}s")
+                print(f"   Paused - Old time left: {time_left_on_pause:.1f}s")
+                print(f"   Paused - New time left: {new_time_left_on_pause:.1f}s")
+        
+        print(f"✅ Speed changed successfully")
         
     elif control == 'language_player':
         set_game_state(event_id, 'language_player', value)
@@ -721,6 +738,8 @@ def game_control():
     
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
+
+
 @app.route('/fix-db-columns-v2')
 def fix_db_columns_v2():
     try:
@@ -1458,6 +1477,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
