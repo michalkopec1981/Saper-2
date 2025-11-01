@@ -178,16 +178,23 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
                 <div class="card-body">
-                    <div class="alert alert-info">Minigry aktywowane przez zielone kody QR.</div>
+                    <div class="alert alert-info">
+                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR. 
+                        Każda minigra wymaga zdobycia 20 punktów, aby otrzymać nagrodę.
+                    </div>
+                    
+                    <!-- TETRIS -->
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h5 class="mb-1">???? Tetris</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów</p>
+                                    <h5 class="mb-1">🎮 Tetris</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (ułóż linie)</p>
+                                    <small class="text-muted">Sterowanie: strzałki + obrót</small>
                                 </div>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle" style="width: 3em; height: 1.5em;">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle" 
+                                           style="width: 3em; height: 1.5em;">
                                     <label class="form-check-label ms-2" for="tetris-toggle">
                                         <span id="tetris-status" class="badge bg-secondary">Nieaktywny</span>
                                     </label>
@@ -195,6 +202,27 @@
                             </div>
                         </div>
                     </div>
+        
+                    <!-- ARKANOID -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🏓 Arkanoid</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zbij cegły)</p>
+                                    <small class="text-muted">3 życia | Sterowanie: przyciski ◄ ►</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="arkanoid-toggle" 
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="arkanoid-toggle">
+                                        <span id="arkanoid-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
@@ -788,6 +816,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/api/host/minigames/status')
             .then(res => res.json())
             .then(data => {
+                // Tetris
                 const tetrisToggle = document.getElementById('tetris-toggle');
                 const tetrisStatus = document.getElementById('tetris-status');
                 if (tetrisToggle && tetrisStatus) {
@@ -795,9 +824,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     tetrisStatus.textContent = data.tetris_enabled ? 'Aktywny' : 'Nieaktywny';
                     tetrisStatus.className = data.tetris_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
+                
+                // Arkanoid
+                const arkanoidToggle = document.getElementById('arkanoid-toggle');
+                const arkanoidStatus = document.getElementById('arkanoid-status');
+                if (arkanoidToggle && arkanoidStatus) {
+                    arkanoidToggle.checked = data.arkanoid_enabled;
+                    arkanoidStatus.textContent = data.arkanoid_enabled ? 'Aktywny' : 'Nieaktywny';
+                    arkanoidStatus.className = data.arkanoid_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
             });
     }
-
+    
+    // Tetris toggle
     document.getElementById('tetris-toggle')?.addEventListener('change', async (e) => {
         const enabled = e.target.checked;
         const statusEl = document.getElementById('tetris-status');
@@ -820,7 +859,31 @@ document.addEventListener('DOMContentLoaded', function () {
             e.target.checked = !enabled;
         }
     });
-
+    
+    // Arkanoid toggle
+    document.getElementById('arkanoid-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('arkanoid-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'arkanoid', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+    
     document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
         
     // =====================================================================
@@ -1038,3 +1101,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
