@@ -688,11 +688,12 @@ def game_control():
         set_game_state(event_id, 'bonus_multiplier', new_val)
         
     elif control == 'speed':
-        # ✅ POPRAWKA: Przy zmianie prędkości, przeliczyć game_end_time jeśli gra jest aktywna
-        is_active = get_game_state(event_id, 'game_active', 'False') == 'True'
+        # Zmiana prędkości - nie musimy przeliczyć end_time, bo update_timers() to zrobi
         current_speed = int(get_game_state(event_id, 'time_speed', 1))
         new_speed = int(value) if str(current_speed) != str(value) else 1
-        
+        set_game_state(event_id, 'time_speed', new_speed)
+        print(f"⚡ Speed changed to: x{new_speed}")
+      
         set_game_state(event_id, 'time_speed', new_speed)
         
         # Jeśli timer jest uruchomiony, przeliczyć end_time
@@ -1457,5 +1458,6 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
