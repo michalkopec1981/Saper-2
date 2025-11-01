@@ -688,35 +688,35 @@ def game_control():
         set_game_state(event_id, 'bonus_multiplier', new_val)
         
     elif control == 'speed':
-    # ✅ POPRAWKA: Zmiana prędkości bez natychmiastowego skracania czasu
-    current_speed = int(get_game_state(event_id, 'time_speed', 1))
-    new_speed = int(value) if str(current_speed) != str(value) else 1
-    
-    print(f"⚡ Speed change request: {current_speed}x → {new_speed}x")
-    print(f"   Game active: {is_active}, Timer running: {is_running}")
-    
-    set_game_state(event_id, 'time_speed', new_speed)
-    
-    # ✅ Jeśli timer jest zapauzowany, musimy przeliczyć time_left_on_pause
-    # aby po wznowieniu miał poprawny czas względem nowej prędkości
-    if is_active and not is_running:
-        time_left_on_pause = float(get_game_state(event_id, 'time_left_on_pause', 0))
+        # ✅ POPRAWKA: Zmiana prędkości bez natychmiastowego skracania czasu
+        current_speed = int(get_game_state(event_id, 'time_speed', 1))
+        new_speed = int(value) if str(current_speed) != str(value) else 1
         
-        # Przelicz end_time jaki będzie po wznowieniu
-        # Czas "realny" który upłynie = time_left_on_pause / new_speed
-        new_end_time = datetime.utcnow() + timedelta(seconds=time_left_on_pause / new_speed)
-        set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+        print(f"⚡ Speed change request: {current_speed}x → {new_speed}x")
+        print(f"   Game active: {is_active}, Timer running: {is_running}")
         
-        print(f"   Paused - time_left_on_pause: {time_left_on_pause:.1f}s")
-        print(f"   Paused - will use speed x{new_speed} after resume")
-    
-    # ✅ Jeśli timer działa, NIE przeliczamy game_end_time
-    # Funkcja update_timers() automatycznie zastosuje nową prędkość
-    if is_active and is_running:
-        print(f"   Running - update_timers() will apply new speed automatically")
-    
-    print(f"✅ Speed changed to x{new_speed}")
+        set_game_state(event_id, 'time_speed', new_speed)
         
+        # ✅ Jeśli timer jest zapauzowany, musimy przeliczyć time_left_on_pause
+        # aby po wznowieniu miał poprawny czas względem nowej prędkości
+        if is_active and not is_running:
+            time_left_on_pause = float(get_game_state(event_id, 'time_left_on_pause', 0))
+            
+            # Przelicz end_time jaki będzie po wznowieniu
+            # Czas "realny" który upłynie = time_left_on_pause / new_speed
+            new_end_time = datetime.utcnow() + timedelta(seconds=time_left_on_pause / new_speed)
+            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+            
+            print(f"   Paused - time_left_on_pause: {time_left_on_pause:.1f}s")
+            print(f"   Paused - will use speed x{new_speed} after resume")
+        
+        # ✅ Jeśli timer działa, NIE przeliczamy game_end_time
+        # Funkcja update_timers() automatycznie zastosuje nową prędkość
+        if is_active and is_running:
+            print(f"   Running - update_timers() will apply new speed automatically")
+        
+        print(f"✅ Speed changed to x{new_speed}")
+            
     elif control == 'language_player':
         set_game_state(event_id, 'language_player', value)
 
@@ -1464,6 +1464,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
