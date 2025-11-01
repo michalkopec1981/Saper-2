@@ -711,14 +711,29 @@ def game_control():
         print(f"⚡ Speed change request: {current_speed}x → {new_speed}x")
         print(f"   Game active: {is_active}, Timer running: {is_running}")
         
-        # ✅ TYLKO zmień time_speed - nic więcej
+        # ✅ Zmień time_speed
         set_game_state(event_id, 'time_speed', new_speed)
         
+        # ✅ Jeśli timer działa - update_timers() automatycznie zastosuje nową prędkość
         if is_active and is_running:
             print(f"   Running - update_timers() will apply new speed automatically")
         
+        # ✅ Jeśli timer jest zapauzowany - MUSIMY przeliczyć time_left_on_pause
         if is_active and not is_running:
-            print(f"   Paused - new speed x{new_speed} will be applied after resume")
+            time_left_real = float(get_game_state(event_id, 'time_left_on_pause', 0))
+            
+            # Konwertuj "rzeczywisty czas" na "czas gry" przy starej prędkości
+            game_time = time_left_real * current_speed
+            
+            # Konwertuj "czas gry" na "rzeczywisty czas" przy nowej prędkości
+            new_time_left_real = game_time / new_speed
+            
+            # Zapisz nowy rzeczywisty czas
+            set_game_state(event_id, 'time_left_on_pause', new_time_left_real)
+            
+            print(f"   Paused - old_real_time: {time_left_real:.1f}s")
+            print(f"   Paused - game_time: {game_time:.1f}s")
+            print(f"   Paused - new_real_time: {new_time_left_real:.1f}s")
         
         print(f"✅ Speed changed to x{new_speed}")
             
@@ -1469,6 +1484,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
