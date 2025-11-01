@@ -83,12 +83,68 @@
             </div>
         </div>
     </div>
+
+    <!-- 🎮 WIDOK GRY ARKANOID -->
+    <div id="arkanoid-game-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #16213e; z-index: 1000;">
+        <div class="d-flex flex-column" style="height: 100vh;">
+            <!-- Nagłówek (8%) -->
+            <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+                <h5 class="mb-0" style="font-size: 1.1rem;">🏓 ARKANOID</h5>
+                <div class="d-flex justify-content-between align-items-center px-3">
+                    <span id="arkanoid-player-name" style="font-size: 0.85rem;"></span>
+                    <div>
+                        <strong style="font-size: 0.9rem;">Punkty: <span id="arkanoid-score">0</span> / 20</strong>
+                        <span style="margin-left: 15px; font-size: 1rem;" id="arkanoid-lives">❤️❤️❤️</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Obszar gry z przyciskami po bokach (84%) -->
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+                <!-- Sekcja Start/Back (na środku, przed rozpoczęciem gry) - BIAŁE TŁO -->
+                <div id="arkanoid-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 class="mb-3" style="color: #333;">🏓 Arkanoid Challenge</h4>
+                    <p class="mb-4" style="color: #666;">Zbij cegły i zdobądź 20 punktów!</p>
+                    <div class="mb-3" style="color: #666; font-size: 0.9rem;">
+                        <div>❤️❤️❤️ Masz 3 życia</div>
+                        <div>Sterowanie: przyciski po bokach</div>
+                    </div>
+                    <button id="arkanoid-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START GRY</button>
+                    <br>
+                    <button id="arkanoid-back-btn" class="btn btn-outline-secondary">← Wróć do gry</button>
+                </div>
+                
+                <!-- Przyciski po lewej stronie (65px) -->
+                <div id="arkanoid-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                    <div class="d-flex flex-column gap-2">
+                        <button id="arkanoid-left-btn" class="btn btn-light" style="width: 65px; height: 130px; font-size: 48px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
+                    </div>
+                </div>
+                
+                <!-- Plansza gry (środek) -->
+                <canvas id="arkanoid-canvas" style="border: 3px solid #333; background-color: #1a1a2e; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 4px); z-index: 1;"></canvas>
+                
+                <!-- Przyciski po prawej stronie (65px) -->
+                <div id="arkanoid-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                    <div class="d-flex flex-column gap-2">
+                        <button id="arkanoid-right-btn" class="btn btn-light" style="width: 65px; height: 130px; font-size: 48px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Przycisk wyjścia (8%) -->
+            <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+                <button id="arkanoid-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">WYJDŹ Z GRY</button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='tetris.js') }}"></script>
+<script src="{{ url_for('static', filename='arkanoid.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const eventId = {{ event_id }};
@@ -236,9 +292,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayQuestion(data.question);
             } else if (data.status === 'photo_challenge') {
                 startPhotoChallenge();
-            } else if (data.status === 'minigame' && data.game === 'tetris') {
+            } else if (data.status === 'minigame') {
                 const currentScore = data.current_score || 0;
-                startTetrisGame(currentScore);
+                
+                if (data.game === 'tetris') {
+                    startTetrisGame(currentScore);
+                } else if (data.game === 'arkanoid') {
+                    startArkanoidGame(currentScore);
+                }
             } else if (data.status === 'info' || data.status === 'error') {
                 showMessage(data.message, data.status === 'error' ? 'danger' : 'info');
                 if (data.score !== undefined) {
@@ -443,6 +504,81 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('tetris-exit-btn').style.display = 'none';
                 document.getElementById('tetris-start-btn').style.display = 'inline-block';
                 document.getElementById('tetris-start-btn').textContent = 'KONTYNUUJ GRĘ';
+            }
+        };
+    }
+
+    // 🎮 Arkanoid game
+    function startArkanoidGame(currentScore = 0) {
+        // Ukryj główny widok
+        document.getElementById('main-view').style.display = 'none';
+        
+        // Pokaż widok Arkanoid (full screen)
+        const arkanoidView = document.getElementById('arkanoid-game-view');
+        arkanoidView.style.display = 'block';
+        
+        // Ustaw nazwę gracza i wynik
+        document.getElementById('arkanoid-player-name').textContent = playerName;
+        document.getElementById('arkanoid-score').textContent = currentScore;
+        
+        let arkanoidGame;
+        
+        // Przycisk Start
+        document.getElementById('arkanoid-start-btn').onclick = () => {
+            arkanoidGame = new ArkanoidGame('arkanoid-canvas', playerId, eventId, currentScore);
+            arkanoidGame.start();
+            
+            // Ukryj sekcję startu, pokaż kontrolki po bokach i przycisk wyjścia
+            document.getElementById('arkanoid-start-section').style.display = 'none';
+            document.getElementById('arkanoid-left-controls').style.display = 'block';
+            document.getElementById('arkanoid-right-controls').style.display = 'block';
+            document.getElementById('arkanoid-exit-btn').style.display = 'block';
+        };
+        
+        // Przycisk Wróć (na ekranie startowym)
+        document.getElementById('arkanoid-back-btn').onclick = () => {
+            if (arkanoidGame) {
+                arkanoidGame.gameRunning = false;
+                arkanoidGame.paddleMoving = 0; // Stop ruchu paletki
+            }
+            
+            // Ukryj Arkanoid
+            arkanoidView.style.display = 'none';
+            
+            // Pokaż główny widok
+            document.getElementById('main-view').style.display = 'block';
+            gameView.style.display = 'block';
+            
+            // Resetuj widok Arkanoid
+            document.getElementById('arkanoid-start-section').style.display = 'block';
+            document.getElementById('arkanoid-left-controls').style.display = 'none';
+            document.getElementById('arkanoid-right-controls').style.display = 'none';
+            document.getElementById('arkanoid-exit-btn').style.display = 'none';
+            document.getElementById('arkanoid-start-btn').style.display = 'inline-block';
+        };
+        
+        // Przycisk Wyjdź z gry (podczas gry)
+        document.getElementById('arkanoid-exit-btn').onclick = () => {
+            if (confirm('Czy na pewno chcesz wyjść z gry? Postęp zostanie zapisany.')) {
+                if (arkanoidGame) {
+                    arkanoidGame.gameRunning = false;
+                    arkanoidGame.paddleMoving = 0; // Stop ruchu paletki
+                }
+                
+                // Ukryj Arkanoid
+                arkanoidView.style.display = 'none';
+                
+                // Pokaż główny widok
+                document.getElementById('main-view').style.display = 'block';
+                gameView.style.display = 'block';
+                
+                // Resetuj widok Arkanoid
+                document.getElementById('arkanoid-start-section').style.display = 'block';
+                document.getElementById('arkanoid-left-controls').style.display = 'none';
+                document.getElementById('arkanoid-right-controls').style.display = 'none';
+                document.getElementById('arkanoid-exit-btn').style.display = 'none';
+                document.getElementById('arkanoid-start-btn').style.display = 'inline-block';
+                document.getElementById('arkanoid-start-btn').textContent = 'KONTYNUUJ GRĘ';
             }
         };
     }
