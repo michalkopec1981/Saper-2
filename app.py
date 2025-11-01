@@ -658,63 +658,49 @@ def game_control():
 
     if control == 'pause':
         if is_running:
-            # ✅ PAUZOWANIE - zapisz rzeczywisty czas I prędkość
+            # ✅ PAUZOWANIE - zapisz dokładnie tyle czasu ile pokazuje zegar
             set_game_state(event_id, 'is_timer_running', 'False')
             set_game_state(event_id, 'pause_start_time', datetime.utcnow().isoformat())
             end_time_str = get_game_state(event_id, 'game_end_time')
             if end_time_str:
-                time_left_real = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
-                set_game_state(event_id, 'time_left_on_pause', time_left_real)
-                
-                # ✅ NOWE: Zapisz przy jakiej prędkości zapauzowaliśmy
-                current_speed = int(get_game_state(event_id, 'time_speed', 1))
-                set_game_state(event_id, 'time_speed_on_pause', current_speed)
-                
-                print(f"⏸️  Paused: time_left_real={time_left_real:.1f}s at speed x{current_speed}")
+                # Zapisz dokładnie ile sekund pozostało do końca
+                time_left = (datetime.fromisoformat(end_time_str) - datetime.utcnow()).total_seconds()
+                set_game_state(event_id, 'time_left_on_pause', time_left)
+                print(f"⏸️  Paused at: {time_left:.1f}s")
         else:
-            # ✅ WZNOWIENIE - użyj zapisanego czasu
+            # ✅ WZNOWIENIE - wznów dokładnie z tego samego momentu
             pause_start_str = get_game_state(event_id, 'pause_start_time')
             if pause_start_str:
                 paused_duration = (datetime.utcnow() - datetime.fromisoformat(pause_start_str)).total_seconds()
                 total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
                 set_game_state(event_id, 'total_paused_duration', total_paused + paused_duration)
             
-            time_left_real = float(get_game_state(event_id, 'time_left_on_pause', 0))
-            new_end_time = datetime.utcnow() + timedelta(seconds=time_left_real)
+            # Pobierz dokładnie tyle czasu ile było podczas pauzy
+            time_left = float(get_game_state(event_id, 'time_left_on_pause', 0))
+            
+            # ✅ Wznów z dokładnie tego samego miejsca (bez przeliczania!)
+            # update_timers() zastosuje aktualną prędkość automatycznie
+            new_end_time = datetime.utcnow() + timedelta(seconds=time_left)
             set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
             set_game_state(event_id, 'is_timer_running', 'True')
             
-            time_speed = int(get_game_state(event_id, 'time_speed', 1))
-            print(f"▶️  Resumed: time_left_real={time_left_real:.1f}s, speed=x{time_speed}")
+            current_speed = int(get_game_state(event_id, 'time_speed', 1))
+            print(f"▶️  Resumed at: {time_left:.1f}s (speed x{current_speed})")
     
     elif control == 'speed':
         current_speed = int(get_game_state(event_id, 'time_speed', 1))
         new_speed = int(value) if str(current_speed) != str(value) else 1
         
-        print(f"⚡ Speed change: {current_speed}x → {new_speed}x (active={is_active}, running={is_running})")
+        print(f"⚡ Speed change: {current_speed}x → {new_speed}x")
         
+        # ✅ TYLKO zmień prędkość
+        # NIE modyfikuj time_left_on_pause - to zatrzymany czas!
         set_game_state(event_id, 'time_speed', new_speed)
         
-        if is_active and not is_running:
-            time_left_real = float(get_game_state(event_id, 'time_left_on_pause', 0))
-            
-            # ✅ POPRAWKA: Użyj prędkości ZAPISANEJ podczas pauzowania
-            speed_on_pause = int(get_game_state(event_id, 'time_speed_on_pause', 1))
-            
-            # Konwertuj na "czas gry"
-            game_time = time_left_real * speed_on_pause
-            
-            # Konwertuj na nowy "rzeczywisty czas"
-            new_time_left_real = game_time / new_speed
-            
-            set_game_state(event_id, 'time_left_on_pause', new_time_left_real)
-            # ✅ Aktualizuj zapisaną prędkość
-            set_game_state(event_id, 'time_speed_on_pause', new_speed)
-            
-            print(f"   Paused recalc: {time_left_real:.1f}s (x{speed_on_pause}) → game_time={game_time:.1f}s → {new_time_left_real:.1f}s (x{new_speed})")
-        elif is_active and is_running:
-            print(f"   Running - update_timers() will apply x{new_speed} automatically")
-        
+        if is_active and is_running:
+            print(f"   Running - update_timers() will apply x{new_speed}")
+        elif is_active and not is_running:
+            print(f"   Paused - x{new_speed} will be used after resume")        
     elif control == 'language_player':
         set_game_state(event_id, 'language_player', value)
 
@@ -1461,6 +1447,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
