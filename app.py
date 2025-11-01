@@ -785,7 +785,11 @@ def delete_player(player_id):
 def get_minigames_status():
     event_id = session['host_event_id']
     tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
-    return jsonify({'tetris_enabled': not tetris_disabled})
+    arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'True'
+    return jsonify({
+        'tetris_enabled': not tetris_disabled,
+        'arkanoid_enabled': not arkanoid_disabled
+    })
 
 @app.route('/api/host/minigames/toggle', methods=['POST'])
 @host_required
@@ -794,10 +798,22 @@ def toggle_minigame():
     data = request.json
     game_type = data.get('game_type')
     enabled = data.get('enabled', False)
+    
     if game_type == 'tetris':
         # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
         set_game_state(event_id, 'minigame_tetris_disabled', 'False' if enabled else 'True')
-        return jsonify({'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}', 'tetris_enabled': enabled})
+        return jsonify({
+            'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}', 
+            'tetris_enabled': enabled
+        })
+    elif game_type == 'arkanoid':
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_arkanoid_disabled', 'False' if enabled else 'True')
+        return jsonify({
+            'message': f'Arkanoid {"aktywowany" if enabled else "deaktywowany"}', 
+            'arkanoid_enabled': enabled
+        })
+    
     return jsonify({'error': 'Nieznany typ minigry'}), 400
 
 @app.route('/api/host/questions', methods=['GET', 'POST'])
@@ -1018,39 +1034,73 @@ def scan_qr():
             }
         })
     
-    # 🎮 ZIELONY KOD - TRYB TESTOWY TETRIS (wielokrotne użycie, bez ograniczeń)
+    # 🎮 ZIELONY KOD - MINIGRY (Tetris lub Arkanoid)
     elif qr_code.color == 'green':
-        print(f"=== GREEN CODE - TETRIS TEST MODE ===")
+        print(f"=== GREEN CODE - MINIGAME MODE ===")
         
-        # Sprawdź czy Tetris NIE został wyłączony
+        # Sprawdź czy Tetris lub Arkanoid są aktywne
         tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
-        print(f"Tetris disabled state: {tetris_disabled}")
+        arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
         
-        if tetris_disabled == 'True':
-            message = 'Ta minigra została wyłączona przez organizatora.'
-            print(f"Tetris is DISABLED - returning error")
+        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}")
+        
+        # Jeśli obie minigry są wyłączone
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True':
+            message = 'Wszystkie minigry zostały wyłączone przez organizatora.'
+            print(f"All minigames DISABLED - returning error")
             return jsonify({'status': 'info', 'message': message})
         
-        print(f"Tetris is ENABLED - checking player progress")
-        
-        # Sprawdź postęp gracza w Tetris
+        # Sprawdź postęp gracza w obu grach
         tetris_score_key = f'minigame_tetris_score_{player_id}'
-        current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
-        print(f"Player {player_id} Tetris score: {current_tetris_score}/20")
+        arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
         
-        if current_tetris_score >= 20:
-            message = f'Już ukończyłeś tę minigrę! Zdobyłeś {current_tetris_score} punktów Tetris.'
-            print(f"Player already completed Tetris")
+        current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
+        current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
+        
+        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20")
+        
+        # Sprawdź czy gracz ukończył obie gry
+        tetris_completed = current_tetris_score >= 20
+        arkanoid_completed = current_arkanoid_score >= 20
+        
+        # Jeśli ukończył obie, nie może grać więcej
+        if tetris_completed and arkanoid_completed:
+            message = 'Ukończyłeś już wszystkie minigry! Świetna robota!'
             return jsonify({'status': 'info', 'message': message})
         
-        # 🎮 TRYB DEWELOPERSKI: Zielony kod zawsze uruchamia Tetris (bez sprawdzania claimed_by_player_id)
-        print(f"🎮 DEV MODE: Starting Tetris game for player {player_id}")
-        return jsonify({
-            'status': 'minigame', 
-            'game': 'tetris', 
-            'current_score': current_tetris_score,
-            'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
-        })
+        # Wybierz dostępną minigrę
+        available_games = []
+        
+        if tetris_disabled != 'True' and not tetris_completed:
+            available_games.append('tetris')
+        
+        if arkanoid_disabled != 'True' and not arkanoid_completed:
+            available_games.append('arkanoid')
+        
+        # Jeśli nie ma dostępnych gier
+        if not available_games:
+            message = 'Brak dostępnych minigier do ukończenia.'
+            return jsonify({'status': 'info', 'message': message})
+        
+        # Wybierz grę (losowo jeśli są obie dostępne, lub tę jedną dostępną)
+        selected_game = random.choice(available_games)
+        
+        if selected_game == 'tetris':
+            print(f"🎮 Starting Tetris for player {player_id}")
+            return jsonify({
+                'status': 'minigame', 
+                'game': 'tetris', 
+                'current_score': current_tetris_score,
+                'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
+            })
+        else:  # arkanoid
+            print(f"🏓 Starting Arkanoid for player {player_id}")
+            return jsonify({
+                'status': 'minigame', 
+                'game': 'arkanoid', 
+                'current_score': current_arkanoid_score,
+                'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
+            })
     
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
     else:
@@ -1139,7 +1189,7 @@ def upload_photo():
     emit_leaderboard_update(room)
     return jsonify({'message': 'Zdjęcie dodane! Otrzymujesz 15 punktów.', 'score': player.score})
 
-# 🎉 NOWE ENDPOINTY DLA GŁOSOWANIA NA ZDJĘCIA
+# 🎉 ENDPOINTY DLA GŁOSOWANIA NA ZDJĘCIA
 
 @app.route('/api/photos/<int:event_id>', methods=['GET'])
 def get_photos(event_id):
@@ -1210,25 +1260,36 @@ def complete_minigame():
     player_id = data.get('player_id')
     game_type = data.get('game_type')
     score = data.get('score', 0)
+    
     player = db.session.get(Player, player_id)
     if not player:
         return jsonify({'error': 'Nie znaleziono gracza'}), 404
+    
+    # Sprawdź czy minigra jest aktywna
     if game_type == 'tetris':
-        # Sprawdź czy Tetris NIE został wyłączony (domyślnie jest aktywny)
         tetris_disabled = get_game_state(player.event_id, 'minigame_tetris_disabled', 'False')
         if tetris_disabled == 'True':
             return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_tetris_score_{player_id}'
+    elif game_type == 'arkanoid':
+        arkanoid_disabled = get_game_state(player.event_id, 'minigame_arkanoid_disabled', 'False')
+        if arkanoid_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_arkanoid_score_{player_id}'
+    else:
+        return jsonify({'error': 'Nieznany typ minigry'}), 400
     
-    # Pobierz aktualny wynik gracza w Tetris
-    tetris_score_key = f'minigame_tetris_score_{player_id}'
-    current_tetris_score = int(get_game_state(player.event_id, tetris_score_key, '0'))
+    # Pobierz aktualny wynik gracza w tej minigrze
+    current_score = int(get_game_state(player.event_id, score_key, '0'))
     
     # Dodaj zdobyte punkty do sumy
-    new_tetris_score = current_tetris_score + score
-    set_game_state(player.event_id, tetris_score_key, str(new_tetris_score))
+    new_score = current_score + score
+    set_game_state(player.event_id, score_key, str(new_score))
+    
+    game_name = 'Tetris' if game_type == 'tetris' else 'Arkanoid'
     
     # Sprawdź czy gracz osiągnął 20 punktów
-    if new_tetris_score >= 20:
+    if new_score >= 20:
         # Gracz ukończył wyzwanie - przyznaj nagrody
         bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
         points = 10 * bonus
@@ -1251,9 +1312,9 @@ def complete_minigame():
             'completed': True,
             'points_earned': points,
             'total_score': player.score,
-            'tetris_score': new_tetris_score,
+            f'{game_type}_score': new_score,
             'letter_revealed': revealed_letter,
-            'message': f'WYZWANIE UKOŃCZONE! Zdobyłeś {new_tetris_score} pkt w Tetris i otrzymujesz {points} punktów!' + (f' Odsłonięta litera: {revealed_letter}' if revealed_letter else '')
+            'message': f'WYZWANIE {game_name.upper()} UKOŃCZONE! Zdobyłeś {new_score} pkt i otrzymujesz {points} punktów!' + (f' Odsłonięta litera: {revealed_letter}' if revealed_letter else '')
         })
     else:
         # Gracz jeszcze nie osiągnął 20 punktów - może kontynuować
@@ -1263,8 +1324,8 @@ def complete_minigame():
             'completed': False,
             'points_earned': 0,
             'total_score': player.score,
-            'tetris_score': new_tetris_score,
-            'message': f'Postęp: {new_tetris_score}/20 pkt. Zeskanuj kod ponownie, aby kontynuować!'
+            f'{game_type}_score': new_score,
+            'message': f'Postęp w {game_name}: {new_score}/20 pkt. Zeskanuj kod ponownie, aby kontynuować!'
         })
 
 
@@ -1447,17 +1508,3 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
