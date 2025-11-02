@@ -199,10 +199,6 @@
                                     <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
                                     <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
                                 </div>
-                                <hr>
-                                <div class="d-grid gap-2">
-                                    <button id="force-win-btn" data-control="force_win" class="btn btn-primary" data-translate="force_win">Przedwczesna wygrana</button>
-                                </div>
                             </div>
                         </div>
                     </fieldset>
@@ -1178,6 +1174,64 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Store game active state
         isGameActive = state.game_active;
+        
+        // ✅ LOGIKA AKTYWACJI/DEAKTYWACJI PRZYCISKÓW
+        const startGameBtn = document.getElementById('start-game');
+        const pauseGameBtn = document.getElementById('pause-btn');
+        const stopGameBtn = document.getElementById('stop-game');
+        const resetGameBtn = document.getElementById('reset-game');
+        
+        if (state.game_active) {
+            // GRA JEST AKTYWNA
+            // Start - nieaktywny (blady)
+            if (startGameBtn) {
+                startGameBtn.disabled = true;
+                startGameBtn.classList.add('opacity-50');
+            }
+            
+            // Pauza - aktywny
+            if (pauseGameBtn) {
+                pauseGameBtn.disabled = false;
+                pauseGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Stop - aktywny
+            if (stopGameBtn) {
+                stopGameBtn.disabled = false;
+                stopGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Reset - aktywny
+            if (resetGameBtn) {
+                resetGameBtn.disabled = false;
+                resetGameBtn.classList.remove('opacity-50');
+            }
+        } else {
+            // GRA NIE JEST AKTYWNA
+            // Start - aktywny
+            if (startGameBtn) {
+                startGameBtn.disabled = false;
+                startGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Pauza - nieaktywny (blady)
+            if (pauseGameBtn) {
+                pauseGameBtn.disabled = true;
+                pauseGameBtn.classList.add('opacity-50');
+            }
+            
+            // Stop - nieaktywny (blady)
+            if (stopGameBtn) {
+                stopGameBtn.disabled = true;
+                stopGameBtn.classList.add('opacity-50');
+            }
+            
+            // Reset - nieaktywny (blady)
+            if (resetGameBtn) {
+                resetGameBtn.disabled = true;
+                resetGameBtn.classList.add('opacity-50');
+            }
+        }
         
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
