@@ -65,12 +65,16 @@
 
     <ul class="nav nav-tabs mb-4" id="hostTabs">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         {% if is_superhost %}
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
         {% endif %}
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
     </ul>
 
     <div class="tab-content">
@@ -138,25 +142,14 @@
                             <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Ustawienia przed grą</h5></div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label for="minutes-input" class="form-label" data-translate="game_duration">Czas gry w minutach:</label>
-                                    <input type="number" class="form-control" id="minutes-input" value="30" min="1">
+                                    <label for="game-duration-input" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="game-duration-input" value="60" min="1">
+                                        <button class="btn btn-primary" id="set-time-btn" data-translate="set_time_btn">Ustaw</button>
+                                    </div>
+                                    <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
                                 </div>
 
-                                <hr>
-                                <div class="mb-3">
-                                    <h6 data-translate="player_language">Język graczy</h6>
-                                    <div class="btn-group w-100" role="group" id="lang-player-controls">
-                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <h6 data-translate="host_language">Język prowadzącego</h6>
-                                    <div class="btn-group w-100" role="group" id="lang-host-controls">
-                                        <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
-                                        <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
-                                    </div>
-                                </div>
                                 <hr>
                                 <div class="d-grid gap-2">
                                     <button id="start-game" class="btn btn-success btn-lg" data-translate="start_game">Start Gry</button>
@@ -171,15 +164,6 @@
                         <div class="card mb-4">
                             <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Ustawienia w czasie gry</h5></div>
                             <div class="card-body" id="game-controls">
-                                <div class="mb-3" id="time-adjustment-section" style="display: none;">
-                                    <label for="time-adjust-input" class="form-label">Skracanie lub przedłużanie. Nowy czas aktywnej gry:</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="time-adjust-input" placeholder="Nowy czas w minutach" min="1">
-                                        <button class="btn btn-primary" id="time-adjust-btn">OK</button>
-                                    </div>
-                                    <small class="text-muted">Wpisz nowy całkowity czas gry w minutach (wymaga hasła hosta)</small>
-                                </div>
-                                                            
                                 <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
                                 <div class="btn-group w-100 mb-3" role="group">
                                     <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
@@ -203,6 +187,44 @@
                             </div>
                         </div>
                     </fieldset>
+                </div>
+            </div>
+        </div>
+        
+        {% if is_superhost %}
+        <div class="tab-pane fade" id="qrcodes">
+            <div class="card mx-auto">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
+                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
+                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+                    </div>
+                    <div id="qrcodes-status" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="tab-pane fade" id="password">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="password_tab">Hasło do odsłonięcia</h5></div>
+                <div class="card-body">
+                    <p data-translate="password_description">Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.</p>
+                    <div class="alert alert-secondary text-center" style="font-size: 2rem; letter-spacing: 10px; font-family: monospace;">
+                        <span id="current-password-display">_ _ _ _ _ _ _ _ _ _</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -283,32 +305,52 @@
                 </div>
             </div>
         </div>
-        
-        {% if is_superhost %}
-        <div class="tab-pane fade" id="qrcodes">
-            <div class="card mx-auto">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
-                    </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
-                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+        <div class="tab-pane fade" id="photo">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
+                <div class="card-body">
+                    <p data-translate="photo_description">Tutaj będą widoczne zdjęcia przesłane przez graczy.</p>
+                    <div class="alert alert-secondary text-center">
+                        <p class="mb-0">Wkrótce - galeria zdjęć z głosowaniem</p>
                     </div>
-                    <div id="qrcodes-status" class="mt-3"></div>
                 </div>
             </div>
         </div>
-        {% endif %}
+
+        <div class="tab-pane fade" id="ar">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
+                <div class="card-body">
+                    <p data-translate="ar_description">Tutaj będą dostępne funkcje AR.</p>
+                    <div class="alert alert-secondary text-center">
+                        <p class="mb-0">Wkrótce - funkcje AR</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="language">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="language_tab">Ustawienia języka</h5></div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 data-translate="player_language">Język graczy</h6>
+                        <div class="btn-group w-100" role="group" id="lang-player-controls">
+                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6 data-translate="host_language">Język prowadzącego</h6>
+                        <div class="btn-group w-100" role="group" id="lang-host-controls">
+                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -393,7 +435,18 @@
         tab_questions: 'Pytania',
         tab_minigames: 'Minigry',
         tab_qrcodes: 'Kody QR',
+        tab_password: 'Hasło',
+        tab_photo: 'Foto',
+        tab_ar: 'AR',
+        tab_language: 'Język',
         qr_management: 'Zarządzanie Kodami QR',
+        password_tab: 'Hasło do odsłonięcia',
+        password_description: 'Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.',
+        photo_tab: 'Galeria zdjęć',
+        photo_description: 'Tutaj będą widoczne zdjęcia przesłane przez graczy.',
+        ar_tab: 'Rozszerzona rzeczywistość (AR)',
+        ar_description: 'Tutaj będą dostępne funkcje AR.',
+        language_tab: 'Ustawienia języka',
         game_info: 'Informacje o grze',
         player_count: 'Liczba graczy:',
         completion_percentage: 'Procent ukończenia:',
@@ -409,7 +462,9 @@
         game_status_paused: 'Pauza',
         game_status_stopped: 'Stop. Zakończenie gry',
         pre_game_settings: 'Ustawienia przed grą',
-        game_duration: 'Czas gry w minutach:',
+        game_duration_label: 'Czas gry (minuty):',
+        game_duration_help: 'Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)',
+        set_time_btn: 'Ustaw',
         player_language: 'Język graczy',
         host_language: 'Język prowadzącego',
         lang_polish: 'Język polski',
@@ -456,7 +511,18 @@
         tab_questions: 'Questions',
         tab_minigames: 'Minigames',
         tab_qrcodes: 'QR Codes',
+        tab_password: 'Password',
+        tab_photo: 'Photo',
+        tab_ar: 'AR',
+        tab_language: 'Language',
         qr_management: 'QR Codes Management',
+        password_tab: 'Password to reveal',
+        password_description: 'Here you will see the password that players must reveal during the game.',
+        photo_tab: 'Photo gallery',
+        photo_description: 'Here you will see photos uploaded by players.',
+        ar_tab: 'Augmented Reality (AR)',
+        ar_description: 'AR features will be available here.',
+        language_tab: 'Language settings',
         game_info: 'Game information',
         player_count: 'Number of players:',
         completion_percentage: 'Completion percentage:',
@@ -472,7 +538,9 @@
         game_status_paused: 'Pause',
         game_status_stopped: 'Stop. Game ended',
         pre_game_settings: 'Pre-game settings',
-        game_duration: 'Game duration in minutes:',
+        game_duration_label: 'Game time (minutes):',
+        game_duration_help: 'Before game: set time. During game: change time (requires password)',
+        set_time_btn: 'Set',
         player_language: 'Players language',
         host_language: 'Host language',
         lang_polish: 'Polish language',
@@ -989,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     
     let isTimerRunning = false;
+    let isGameActive = false;
     
     async function sendGameControl(control, value = null) {
         console.log('🎮 Sending game control:', control, value);
@@ -1012,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Update player count
         if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
         
-        // ✅ Update completion percentage (nowe)
+        // ✅ Update completion percentage
         if (infoElements.completionPercentage) {
             infoElements.completionPercentage.textContent = `${state.completion_percentage || 0}%`;
         }
@@ -1045,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         
-        // ✅ Update game status (nowe)
+        // ✅ Update game status
         if (infoElements.gameStatus) {
             const statusEl = infoElements.gameStatus;
             const status = state.game_status || 'waiting';
@@ -1070,21 +1139,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 : translations[currentLanguage].resume;
         }
         
+        // Store game active state
+        isGameActive = state.game_active;
+        
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
         const inGameFieldset = document.getElementById('in-game-settings');
-        const timeAdjustSection = document.getElementById('time-adjustment-section');
+        const gameDurationInput = document.getElementById('game-duration-input');
+        const setTimeBtn = document.getElementById('set-time-btn');
         
         if (state.game_active) {
-            preGameFieldset.disabled = true;
+            preGameFieldset.disabled = false; // ✅ Zawsze dostępne
             inGameFieldset.disabled = false;
-            // ✅ Pokaż pole zmiany czasu podczas aktywnej gry
-            if (timeAdjustSection) timeAdjustSection.style.display = 'block';
+            // ✅ Zmień tekst przycisku podczas gry
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'Ustaw';
         } else {
             preGameFieldset.disabled = false;
             inGameFieldset.disabled = true;
-            // ✅ Ukryj pole zmiany czasu gdy gra nieaktywna
-            if (timeAdjustSection) timeAdjustSection.style.display = 'none';
+            // ✅ Przywróć oryginalny tekst przycisku
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'Ustaw';
+        }
+        
+        // ✅ Aktualizuj wyświetlanie hasła
+        const passwordDisplay = document.getElementById('current-password-display');
+        if (passwordDisplay && state.password) {
+            passwordDisplay.textContent = state.password.split('').join(' ');
         }
     }
     
@@ -1119,6 +1198,13 @@ document.addEventListener('DOMContentLoaded', function () {
         alert(data.message);
     });
     
+    socket.on('password_update', (password) => {
+        const passwordDisplay = document.getElementById('current-password-display');
+        if (passwordDisplay) {
+            passwordDisplay.textContent = password.split('').join(' ');
+        }
+    });
+    
     // Initial state load
     console.log('🔄 Loading initial state...');
     fetch('/api/host/state')
@@ -1138,9 +1224,54 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
+    // ✅ NOWY: Ujednolicona obsługa przycisku "Ustaw" / "Set"
+    document.getElementById('set-time-btn')?.addEventListener('click', async () => {
+        const minutes = parseInt(document.getElementById('game-duration-input').value);
+        console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
+        
+        if (isNaN(minutes) || minutes < 1) {
+            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
+            return;
+        }
+        
+        if (!isGameActive) {
+            // ✅ PRZED GRĄ: Po prostu zapisz wartość (nie uruchamiaj gry)
+            alert(`Czas gry ustawiony na ${minutes} minut. Kliknij "Start Gry", aby rozpocząć.`);
+        } else {
+            // ✅ PODCZAS GRY: Zmień czas (wymaga hasła)
+            const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
+            if (!password) return;
+            
+            if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${minutes} minut?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/host/adjust_time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        new_minutes: minutes,
+                        password: password 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Błąd zmiany czasu');
+                }
+                
+                alert(result.message || 'Czas gry został zmieniony!');
+            } catch (error) {
+                alert('Błąd: ' + error.message);
+            }
+        }
+    });
+    
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('minutes-input').value);
+        const minutes = parseInt(document.getElementById('game-duration-input').value);
         console.log('🎮 Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
@@ -1209,47 +1340,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         console.log('🎮 Sending game control:', control, value);
         sendGameControl(control, value);
-    });
-    
-    // =====================================================================
-    // ZMIANA CZASU GRY PODCZAS AKTYWNEJ ROZGRYWKI
-    // =====================================================================
-    document.getElementById('time-adjust-btn')?.addEventListener('click', async () => {
-        const newMinutes = parseInt(document.getElementById('time-adjust-input').value);
-        
-        if (isNaN(newMinutes) || newMinutes < 1) {
-            alert('Proszę wprowadzić poprawny czas (minimum 1 minuta).');
-            return;
-        }
-        
-        const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
-        if (!password) return;
-        
-        if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${newMinutes} minut?`)) {
-            return;
-        }
-        
-        try {
-            const response = await fetch('/api/host/adjust_time', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    new_minutes: newMinutes,
-                    password: password 
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd zmiany czasu');
-            }
-            
-            alert(result.message || 'Czas gry został zmieniony!');
-            document.getElementById('time-adjust-input').value = '';
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
     });
     
     console.log('✅ HOST PANEL INITIALIZED');
