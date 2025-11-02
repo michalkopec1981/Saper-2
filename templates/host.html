@@ -97,6 +97,17 @@
                                     <label for="minutes-input" class="form-label" data-translate="game_duration">Czas gry w minutach:</label>
                                     <input type="number" class="form-control" id="minutes-input" value="30" min="1">
                                 </div>
+
+                                <!-- ✅ NOWE POLE: Zmiana czasu podczas gry -->
+                                <div class="mb-3" id="time-adjustment-section" style="display: none;">
+                                    <label for="time-adjust-input" class="form-label">Skracanie lub przedłużanie. Nowy czas aktywnej gry:</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="time-adjust-input" placeholder="Nowy czas w minutach" min="1">
+                                        <button class="btn btn-primary" id="time-adjust-btn">OK</button>
+                                    </div>
+                                    <small class="text-muted">Wpisz nowy całkowity czas gry w minutach (wymaga hasła hosta)</small>
+                                </div>
+
                                 <hr>
                                 <div class="mb-3">
                                     <h6 data-translate="player_language">Język graczy</h6>
@@ -479,7 +490,7 @@ function formatTime(seconds) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('???? HOST PANEL INITIALIZING - Event ID:', EVENT_ID);
+    console.log('🎮 HOST PANEL INITIALIZING - Event ID:', EVENT_ID);
     
     const socket = io();
     const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
@@ -903,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let isTimerRunning = false;
     
     async function sendGameControl(control, value = null) {
-        console.log('???? Sending game control:', control, value);
+        console.log('🎮 Sending game control:', control, value);
         try {
             const response = await fetch('/api/host/game_control', {
                 method: 'POST',
@@ -912,14 +923,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             if (!response.ok) throw new Error('Server error');
             const result = await response.json();
-            console.log('??? Game control response:', result);
+            console.log('✅ Game control response:', result);
         } catch (error) {
-            console.error('??? Control error:', error);
+            console.error('❌ Control error:', error);
         }
     }
     
     function updateUI(state) {
-        console.log('???? Updating UI with state:', state);
+        console.log('🔄 Updating UI with state:', state);
         
         // Update player count and correct answers
         if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
@@ -965,33 +976,38 @@ document.addEventListener('DOMContentLoaded', function () {
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
         const inGameFieldset = document.getElementById('in-game-settings');
+        const timeAdjustSection = document.getElementById('time-adjustment-section');
         
         if (state.game_active) {
             preGameFieldset.disabled = true;
             inGameFieldset.disabled = false;
+            // ✅ Pokaż pole zmiany czasu podczas aktywnej gry
+            if (timeAdjustSection) timeAdjustSection.style.display = 'block';
         } else {
             preGameFieldset.disabled = false;
             inGameFieldset.disabled = true;
+            // ✅ Ukryj pole zmiany czasu gdy gra nieaktywna
+            if (timeAdjustSection) timeAdjustSection.style.display = 'none';
         }
     }
     
     // Socket.IO event handlers
     socket.on('connect', () => {
-        console.log('??? Socket connected, joining room for event:', EVENT_ID);
+        console.log('✅ Socket connected, joining room for event:', EVENT_ID);
         socket.emit('join', { event_id: EVENT_ID });
     });
     
     socket.on('disconnect', () => {
-        console.log('??? Socket disconnected');
+        console.log('❌ Socket disconnected');
     });
     
     socket.on('game_state_update', (state) => {
-        console.log('???? Game state update received:', state);
+        console.log('📡 Game state update received:', state);
         updateUI(state);
     });
     
     socket.on('timer_tick', (data) => {
-        console.log('?????? Timer tick:', data);
+        console.log('⏱️ Timer tick:', data);
         if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
         if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
         if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
@@ -1006,11 +1022,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     // Initial state load
-    console.log('???? Loading initial state...');
+    console.log('🔄 Loading initial state...');
     fetch('/api/host/state')
         .then(res => res.json())
         .then(state => {
-            console.log('??? Initial state loaded:', state);
+            console.log('✅ Initial state loaded:', state);
             updateUI(state);
             if (state.language_host === 'en') {
                 translatePage('en');
@@ -1022,12 +1038,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
             }
         })
-        .catch(error => console.error('??? Error loading initial state:', error));
+        .catch(error => console.error('❌ Error loading initial state:', error));
     
-    // ??? POPRAWIONY Start game button
+    // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('minutes-input').value);
-        console.log('???? Starting game with', minutes, 'minutes');
+        console.log('🎮 Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
             alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
@@ -1039,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         try {
-            console.log('???? Sending start game request...');
+            console.log('📤 Sending start game request...');
             const response = await fetch('/api/host/start_game', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1047,16 +1063,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             
             const result = await response.json();
-            console.log('???? Start game response:', result);
+            console.log('📥 Start game response:', result);
             
             if (!response.ok) {
                 throw new Error(result.error || 'Nieznany błąd uruchamiania gry');
             }
             
-            console.log('??? Game started successfully');
+            console.log('✅ Game started successfully');
             alert(result.message || 'Gra rozpoczęta!');
         } catch (error) {
-            console.error('??? Error starting game:', error);
+            console.error('❌ Error starting game:', error);
             alert('Błąd podczas uruchamiania gry: ' + error.message);
         }
     });
@@ -1093,13 +1109,52 @@ document.addEventListener('DOMContentLoaded', function () {
         const control = btn.dataset.control;
         const value = btn.dataset.value;
         
-        console.log('???? Sending game control:', control, value);
+        console.log('🎮 Sending game control:', control, value);
         sendGameControl(control, value);
     });
     
-    console.log('??? HOST PANEL INITIALIZED');
+    // =====================================================================
+    // ZMIANA CZASU GRY PODCZAS AKTYWNEJ ROZGRYWKI
+    // =====================================================================
+    document.getElementById('time-adjust-btn')?.addEventListener('click', async () => {
+        const newMinutes = parseInt(document.getElementById('time-adjust-input').value);
+        
+        if (isNaN(newMinutes) || newMinutes < 1) {
+            alert('Proszę wprowadzić poprawny czas (minimum 1 minuta).');
+            return;
+        }
+        
+        const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
+        if (!password) return;
+        
+        if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${newMinutes} minut?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/host/adjust_time', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    new_minutes: newMinutes,
+                    password: password 
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany czasu');
+            }
+            
+            alert(result.message || 'Czas gry został zmieniony!');
+            document.getElementById('time-adjust-input').value = '';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+    
+    console.log('✅ HOST PANEL INITIALIZED');
 });
 </script>
 {% endblock %}
-
-
