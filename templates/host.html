@@ -991,9 +991,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     socket.on('timer_tick', (data) => {
-        console.log('⏱️  Timer tick:', data);
-        // ✅ Używamy scaled_time_left zamiast time_left
-        if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.scaled_time_left);
+        console.log('?????? Timer tick:', data);
+        if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
         if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
         if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
     });
@@ -1102,7 +1101,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
-
-
 
 
