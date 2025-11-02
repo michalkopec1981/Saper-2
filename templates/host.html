@@ -28,6 +28,22 @@
         font-size: 0.875rem;
         color: #6c757d;
     }
+    /* Style dla statusu gry */
+    #info-game-status {
+        font-weight: 600;
+    }
+    #info-game-status.status-waiting {
+        color: #6c757d;
+    }
+    #info-game-status.status-active {
+        color: #198754;
+    }
+    #info-game-status.status-paused {
+        color: #ffc107;
+    }
+    #info-game-status.status-stopped {
+        color: #dc3545;
+    }
 </style>
 {% endblock %}
 
@@ -65,22 +81,50 @@
                     <div class="row">
                         <div class="col-md-4">
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="player_count">Liczba graczy:</span> <span id="info-player-count" class="badge bg-primary rounded-pill">0</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="correct_answers">Zdobyte nagrody:</span> <span id="info-correct-answers" class="badge bg-primary rounded-pill">0</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="language_label">Język:</span> <span id="info-language" class="badge bg-secondary">Polski</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="player_count">Liczba graczy:</span> 
+                                    <span id="info-player-count" class="badge bg-primary rounded-pill">0</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="completion_percentage">Procent ukończenia:</span> 
+                                    <span id="info-completion-percentage" class="badge bg-success rounded-pill">0%</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="language_host_label">Język prowadzącego:</span> 
+                                    <span id="info-language" class="badge bg-secondary">Polski</span>
+                                </li>
                             </ul>
                         </div>
                         <div class="col-md-4">
                              <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_left">Czas do końca:</span> <strong id="info-time-left">00:00</strong></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_net">Czas gry (netto):</span> <span id="info-time-elapsed">00:00</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="time_gross">Czas gry (brutto):</span> <span id="info-time-elapsed-pauses">00:00</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="time_left">Czas do końca:</span> 
+                                    <strong id="info-time-left">00:00</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="time_net">Czas gry (netto):</span> 
+                                    <span id="info-time-elapsed">00:00</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="time_gross">Czas gry (brutto):</span> 
+                                    <span id="info-time-elapsed-pauses">00:00</span>
+                                </li>
                             </ul>
                         </div>
                         <div class="col-md-4">
                              <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="current_bonus">Aktualna premia:</span> <span id="info-bonus" class="badge bg-success">Brak</span></li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center"><span data-translate="current_speed">Aktualne tempo:</span> <span id="info-speed" class="badge bg-info">x1</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="current_bonus">Aktualna premia:</span> 
+                                    <span id="info-bonus" class="badge bg-success">Brak</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="current_speed">Aktualne tempo:</span> 
+                                    <span id="info-speed" class="badge bg-info">x1</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span data-translate="game_status_label">Stan gry:</span> 
+                                    <span id="info-game-status" class="status-waiting">Oczekiwanie na Start</span>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -98,8 +142,6 @@
                                     <input type="number" class="form-control" id="minutes-input" value="30" min="1">
                                 </div>
 
-                                <!-- ✅ NOWE POLE: Zmiana czasu podczas gry -->
-                              
                                 <hr>
                                 <div class="mb-3">
                                     <h6 data-translate="player_language">Język graczy</h6>
@@ -354,13 +396,18 @@
         qr_management: 'Zarządzanie Kodami QR',
         game_info: 'Informacje o grze',
         player_count: 'Liczba graczy:',
-        correct_answers: 'Zdobyte nagrody:',
-        language_label: 'Język:',
+        completion_percentage: 'Procent ukończenia:',
+        language_host_label: 'Język prowadzącego:',
         time_left: 'Czas do końca:',
         time_net: 'Czas gry (netto):',
         time_gross: 'Czas gry (brutto):',
         current_bonus: 'Aktualna premia:',
         current_speed: 'Aktualne tempo:',
+        game_status_label: 'Stan gry:',
+        game_status_waiting: 'Oczekiwanie na Start',
+        game_status_active: 'Start. Gra aktywna',
+        game_status_paused: 'Pauza',
+        game_status_stopped: 'Stop. Zakończenie gry',
         pre_game_settings: 'Ustawienia przed grą',
         game_duration: 'Czas gry w minutach:',
         player_language: 'Język graczy',
@@ -412,13 +459,18 @@
         qr_management: 'QR Codes Management',
         game_info: 'Game information',
         player_count: 'Number of players:',
-        correct_answers: 'Rewards collected:',
-        language_label: 'Language:',
+        completion_percentage: 'Completion percentage:',
+        language_host_label: 'Host language:',
         time_left: 'Time left:',
         time_net: 'Game time (net):',
         time_gross: 'Game time (gross):',
         current_bonus: 'Current bonus:',
         current_speed: 'Current speed:',
+        game_status_label: 'Game status:',
+        game_status_waiting: 'Waiting for Start',
+        game_status_active: 'Start. Game active',
+        game_status_paused: 'Pause',
+        game_status_stopped: 'Stop. Game ended',
         pre_game_settings: 'Pre-game settings',
         game_duration: 'Game duration in minutes:',
         player_language: 'Players language',
@@ -484,12 +536,33 @@ function translatePage(lang) {
     if (pauseBtn && (pauseBtn.textContent.includes('Wznów') || pauseBtn.textContent.includes('Resume'))) {
         pauseBtn.textContent = translations[lang]['resume'];
     }
+    
+    // Update game status text
+    updateGameStatusText();
 }
 
 function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// ✅ Funkcja aktualizująca tekst statusu gry
+function updateGameStatusText() {
+    const statusEl = document.getElementById('info-game-status');
+    if (!statusEl) return;
+    
+    const currentStatus = statusEl.dataset.status;
+    if (!currentStatus) return;
+    
+    const statusTexts = {
+        'waiting': translations[currentLanguage].game_status_waiting,
+        'active': translations[currentLanguage].game_status_active,
+        'paused': translations[currentLanguage].game_status_paused,
+        'stopped': translations[currentLanguage].game_status_stopped
+    };
+    
+    statusEl.textContent = statusTexts[currentStatus] || statusTexts['waiting'];
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -905,13 +978,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // =====================================================================
     const infoElements = {
         playerCount: document.getElementById('info-player-count'),
-        correctAnswers: document.getElementById('info-correct-answers'),
+        completionPercentage: document.getElementById('info-completion-percentage'),
         language: document.getElementById('info-language'),
         timeLeft: document.getElementById('info-time-left'),
         timeElapsed: document.getElementById('info-time-elapsed'),
         timeElapsedPauses: document.getElementById('info-time-elapsed-pauses'),
         bonus: document.getElementById('info-bonus'),
-        speed: document.getElementById('info-speed')
+        speed: document.getElementById('info-speed'),
+        gameStatus: document.getElementById('info-game-status')
     };
     
     let isTimerRunning = false;
@@ -935,9 +1009,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateUI(state) {
         console.log('🔄 Updating UI with state:', state);
         
-        // Update player count and correct answers
+        // Update player count
         if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
-        if (infoElements.correctAnswers) infoElements.correctAnswers.textContent = state.correct_answers || 0;
+        
+        // ✅ Update completion percentage (nowe)
+        if (infoElements.completionPercentage) {
+            infoElements.completionPercentage.textContent = `${state.completion_percentage || 0}%`;
+        }
         
         // Update language display
         if (infoElements.language) {
@@ -965,6 +1043,22 @@ document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('[data-control="speed"]').forEach(btn => {
                 btn.classList.toggle('active-modifier', btn.dataset.value === String(speedVal));
             });
+        }
+        
+        // ✅ Update game status (nowe)
+        if (infoElements.gameStatus) {
+            const statusEl = infoElements.gameStatus;
+            const status = state.game_status || 'waiting';
+            statusEl.dataset.status = status;
+            
+            // Remove all status classes
+            statusEl.classList.remove('status-waiting', 'status-active', 'status-paused', 'status-stopped');
+            
+            // Add appropriate class
+            statusEl.classList.add(`status-${status}`);
+            
+            // Update text
+            updateGameStatusText();
         }
         
         // Update pause button text
@@ -1013,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('⏱️ Timer tick:', data);
         if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
         if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
+        // ✅ Zawsze aktualizuj czas brutto (również podczas pauzy)
         if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
     });
     
@@ -1161,7 +1256,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
-
-
-
-
