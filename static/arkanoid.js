@@ -32,7 +32,7 @@ class ArkanoidGame {
         this.ballSpeed = 3;
         
         // Cegły
-        this.brickRows = 5;
+        this.brickRows = 7;  // Zwiększono z 5 do 7 rzędów (więcej na wyższej planszy)
         this.brickCols = 8;
         this.brickWidth = 0;
         this.brickHeight = 20;
@@ -41,13 +41,15 @@ class ArkanoidGame {
         this.brickOffsetLeft = 0;
         this.bricks = [];
         
-        // Kolory cegieł (od najtrudniejszych do najłatwiejszych)
+        // Kolory cegieł (od najtrudniejszych do najłatwiejszych) - teraz 7 kolorów
         this.brickColors = [
-            { color: '#FF0D72', points: 5 },  // Czerwony - 5 pkt
-            { color: '#FF8E0D', points: 4 },  // Pomarańczowy - 4 pkt
-            { color: '#FFE138', points: 3 },  // Żółty - 3 pkt
-            { color: '#0DFF72', points: 2 },  // Zielony - 2 pkt
-            { color: '#0DC2FF', points: 1 }   // Niebieski - 1 pkt
+            { color: '#FF0D72', points: 7 },  // Czerwony - 7 pkt
+            { color: '#FF8E0D', points: 6 },  // Pomarańczowy - 6 pkt
+            { color: '#FFE138', points: 5 },  // Żółty - 5 pkt
+            { color: '#0DFF72', points: 4 },  // Zielony - 4 pkt
+            { color: '#0DC2FF', points: 3 },  // Niebieski - 3 pkt
+            { color: '#3877FF', points: 2 },  // Granatowy - 2 pkt
+            { color: '#F538FF', points: 1 }   // Fioletowy - 1 pkt
         ];
         
         this.initBricks();
@@ -60,16 +62,17 @@ class ArkanoidGame {
         const availableHeight = window.innerHeight * 0.84 - 4;
         const availableWidth = Math.min(window.innerHeight * 0.84 - 4, window.innerWidth - 142);
         
-        // Ustaw wymiary canvas - proporcje 3:4 (szerokość:wysokość)
-        const maxWidth = Math.min(availableWidth, 400);
-        const maxHeight = Math.min(availableHeight, 533);
+        // Ustaw wymiary canvas - proporcje ~3:5.5 (szerokość:wysokość) - wyższa plansza
+        const targetRatio = 0.545; // 3/5.5 ≈ 0.545
+        const maxWidth = Math.min(availableWidth, 350);
+        const maxHeight = Math.min(availableHeight, 640);
         
-        if (maxWidth / maxHeight < 0.75) {
+        if (maxWidth / maxHeight < targetRatio) {
             this.canvas.width = maxWidth;
-            this.canvas.height = maxWidth / 0.75;
+            this.canvas.height = maxWidth / targetRatio;
         } else {
             this.canvas.height = maxHeight;
-            this.canvas.width = maxHeight * 0.75;
+            this.canvas.width = maxHeight * targetRatio;
         }
     }
     
