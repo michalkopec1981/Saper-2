@@ -787,6 +787,27 @@ def adjust_time():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+# ✅ NOWY ENDPOINT: Wysyłanie komunikatów na ekran gry
+@app.route('/api/host/send_message', methods=['POST'])
+@host_required
+def send_message():
+    """Wysyła komunikat na ekran gry (display)"""
+    event_id = session['host_event_id']
+    data = request.json
+    message = data.get('message', '').strip()
+    
+    if not message:
+        return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
+    
+    if len(message) > 500:
+        return jsonify({'error': 'Wiadomość może mieć maksymalnie 500 znaków'}), 400
+    
+    # Wyślij komunikat przez Socket.IO do ekranu gry
+    room = f'event_{event_id}'
+    socketio.emit('host_message', {'message': message}, room=room)
+    
+    return jsonify({'message': 'Komunikat wysłany na ekran gry'})
+
 @app.route('/fix-db-columns-v2')
 def fix_db_columns_v2():
     try:
