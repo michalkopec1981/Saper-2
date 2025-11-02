@@ -99,15 +99,7 @@
                                 </div>
 
                                 <!-- ✅ NOWE POLE: Zmiana czasu podczas gry -->
-                                <div class="mb-3" id="time-adjustment-section" style="display: none;">
-                                    <label for="time-adjust-input" class="form-label">Skracanie lub przedłużanie. Nowy czas aktywnej gry:</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="time-adjust-input" placeholder="Nowy czas w minutach" min="1">
-                                        <button class="btn btn-primary" id="time-adjust-btn">OK</button>
-                                    </div>
-                                    <small class="text-muted">Wpisz nowy całkowity czas gry w minutach (wymaga hasła hosta)</small>
-                                </div>
-
+                              
                                 <hr>
                                 <div class="mb-3">
                                     <h6 data-translate="player_language">Język graczy</h6>
@@ -137,6 +129,15 @@
                         <div class="card mb-4">
                             <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Ustawienia w czasie gry</h5></div>
                             <div class="card-body" id="game-controls">
+                                <div class="mb-3" id="time-adjustment-section" style="display: none;">
+                                    <label for="time-adjust-input" class="form-label">Skracanie lub przedłużanie. Nowy czas aktywnej gry:</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="time-adjust-input" placeholder="Nowy czas w minutach" min="1">
+                                        <button class="btn btn-primary" id="time-adjust-btn">OK</button>
+                                    </div>
+                                    <small class="text-muted">Wpisz nowy całkowity czas gry w minutach (wymaga hasła hosta)</small>
+                                </div>
+                                
                                 <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
                                 <div class="btn-group w-100 mb-3" role="group">
                                     <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
@@ -1158,3 +1159,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
