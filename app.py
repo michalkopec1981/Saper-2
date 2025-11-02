@@ -710,6 +710,64 @@ def game_control():
     emit_full_state_update(f'event_{event_id}')
     return jsonify(get_full_game_state(event_id))
 
+# ✅ NOWY ENDPOINT: Zmiana czasu gry podczas aktywnej rozgrywki
+@app.route('/api/host/adjust_time', methods=['POST'])
+@host_required
+def adjust_time():
+    """Zmienia całkowity czas gry podczas aktywnej rozgrywki"""
+    event_id = session['host_event_id']
+    data = request.json
+    new_minutes = data.get('new_minutes')
+    password = data.get('password')
+    
+    # Walidacja
+    event = db.session.get(Event, event_id)
+    if not event or not password:
+        return jsonify({'error': 'Brak danych uwierzytelniających'}), 400
+        
+    if not event.check_password(password):
+        return jsonify({'error': 'Nieprawidłowe hasło!'}), 401
+    
+    if not new_minutes or new_minutes < 1:
+        return jsonify({'error': 'Nieprawidłowy czas (minimum 1 minuta)'}), 400
+    
+    # Sprawdź czy gra jest aktywna
+    is_active = get_game_state(event_id, 'game_active', 'False') == 'True'
+    if not is_active:
+        return jsonify({'error': 'Gra nie jest aktywna'}), 403
+    
+    is_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
+    
+    try:
+        # Oblicz nowy end_time
+        new_duration_seconds = int(new_minutes) * 60
+        
+        if is_running:
+            # ✅ Jeśli gra jest uruchomiona, ustaw nowy end_time od teraz
+            new_end_time = datetime.utcnow() + timedelta(seconds=new_duration_seconds)
+            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+            print(f"⏰ Adjusted time while running: {new_minutes} min (new end: {new_end_time})")
+        else:
+            # ✅ Jeśli gra jest zapauzowana, ustaw time_left_on_pause
+            set_game_state(event_id, 'time_left_on_pause', new_duration_seconds)
+            # Ustaw również game_end_time na przyszłość (będzie zaktualizowany przy wznowieniu)
+            new_end_time = datetime.utcnow() + timedelta(seconds=new_duration_seconds)
+            set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
+            print(f"⏸️  Adjusted time while paused: {new_minutes} min (time_left_on_pause: {new_duration_seconds}s)")
+        
+        # Aktualizuj initial_game_duration (dla statystyk)
+        set_game_state(event_id, 'initial_game_duration', new_duration_seconds)
+        
+        # Wyemituj aktualizację stanu
+        emit_full_state_update(f'event_{event_id}')
+        
+        return jsonify({'message': f'Czas gry został zmieniony na {new_minutes} minut.'})
+    except Exception as e:
+        print(f"❌ ERROR in adjust_time: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/fix-db-columns-v2')
 def fix_db_columns_v2():
     try:
