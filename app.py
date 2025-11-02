@@ -260,6 +260,23 @@ def get_full_game_state(event_id):
     except Exception:
         correct_answers = 0
 
+    # ✅ Obliczanie procentu ukończenia
+    total_questions = Question.query.filter_by(event_id=event_id).count()
+    completion_percentage = 0
+    if total_questions > 0:
+        completion_percentage = round((correct_answers / total_questions) * 100, 1)
+
+    # ✅ Określenie statusu gry
+    game_start_time = state_data.get('game_start_time')
+    if not is_active and not game_start_time:
+        game_status = 'waiting'  # Oczekiwanie na Start
+    elif is_active and is_timer_running:
+        game_status = 'active'   # Start. Gra aktywna
+    elif is_active and not is_timer_running:
+        game_status = 'paused'   # Pauza
+    else:
+        game_status = 'stopped'  # Stop. Zakończenie gry
+
     password_value = "SAPEREVENT"
     revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
     displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
@@ -271,6 +288,8 @@ def get_full_game_state(event_id):
         'password': displayed_password,
         'player_count': player_count,
         'correct_answers': correct_answers,
+        'completion_percentage': completion_percentage,  # ✅ Nowe pole
+        'game_status': game_status,  # ✅ Nowe pole
         'time_elapsed': time_elapsed,
         'time_elapsed_with_pauses': time_elapsed_with_pauses,
         'language_player': state_data.get('language_player') or 'pl',
