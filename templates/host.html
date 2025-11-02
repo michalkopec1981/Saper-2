@@ -139,20 +139,31 @@
                 <div class="col-lg-6">
                     <fieldset id="pre-game-settings">
                         <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Ustawienia przed grą</h5></div>
+                            <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Obsługa gry</h5></div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="game-duration-input" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="game-duration-input" value="60" min="1">
-                                        <button class="btn btn-primary" id="set-time-btn" data-translate="set_time_btn">Ustaw</button>
-                                    </div>
-                                    <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
+                                <div class="d-grid gap-2 mb-3">
+                                    <button id="start-game" class="btn btn-success btn-lg" data-translate="start_game">Start Gry</button>
+                                    <button id="pause-btn" data-control="pause" class="btn btn-warning btn-lg" data-translate="pause">Pauza</button>
+                                    <button id="stop-game" class="btn btn-danger btn-lg" data-translate="stop_game">Stop Gry</button>
+                                    <button id="reset-game" class="btn btn-dark btn-lg" data-translate="reset_game">Reset Gry</button>
                                 </div>
 
                                 <hr>
-                                <div class="d-grid gap-2">
-                                    <button id="start-game" class="btn btn-success btn-lg" data-translate="start_game">Start Gry</button>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold" data-translate="quick_access">Szybki dostęp do zakładek:</label>
+                                    <div class="d-grid gap-2">
+                                        {% if is_superhost %}
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="qrcodes" data-translate="tab_qrcodes">Kody QR</button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="password" data-translate="tab_password">Hasło</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="players" data-translate="tab_players">Gracze</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="questions" data-translate="tab_questions">Pytania</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button>
+                                        <button class="btn btn-outline-secondary btn-sm quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -162,8 +173,19 @@
                 <div class="col-lg-6">
                     <fieldset id="in-game-settings" disabled>
                         <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Ustawienia w czasie gry</h5></div>
+                            <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
                             <div class="card-body" id="game-controls">
+                                <div class="mb-3">
+                                    <label for="game-duration-input" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="game-duration-input" value="60" min="1">
+                                        <button class="btn btn-primary" id="set-time-btn" data-translate="set_time_btn">OK</button>
+                                    </div>
+                                    <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
+                                </div>
+
+                                <hr>
+
                                 <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
                                 <div class="btn-group w-100 mb-3" role="group">
                                     <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
@@ -180,9 +202,7 @@
                                 </div>
                                 <hr>
                                 <div class="d-grid gap-2">
-                                    <button id="pause-btn" data-control="pause" class="btn btn-warning" data-translate="pause">Pauza</button>
                                     <button id="force-win-btn" data-control="force_win" class="btn btn-primary" data-translate="force_win">Przedwczesna wygrana</button>
-                                    <button id="stop-game" class="btn btn-danger mt-2" data-translate="stop_game">Stop Gry</button>
                                 </div>
                             </div>
                         </div>
@@ -461,22 +481,24 @@
         game_status_active: 'Start. Gra aktywna',
         game_status_paused: 'Pauza',
         game_status_stopped: 'Stop. Zakończenie gry',
-        pre_game_settings: 'Ustawienia przed grą',
+        pre_game_settings: 'Obsługa gry',
         game_duration_label: 'Czas gry (minuty):',
         game_duration_help: 'Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)',
-        set_time_btn: 'Ustaw',
+        set_time_btn: 'OK',
         player_language: 'Język graczy',
         host_language: 'Język prowadzącego',
         lang_polish: 'Język polski',
         lang_english: 'Język angielski',
         start_game: 'Start Gry',
-        in_game_settings: 'Ustawienia w czasie gry',
+        in_game_settings: 'Tempo gry oraz punktacja',
         points_bonus: 'Premia punktowa:',
         time_speed: 'Tempo czasu:',
         pause: 'Pauza',
         resume: 'Wznów',
         force_win: 'Przedwczesna wygrana',
         stop_game: 'Stop Gry',
+        reset_game: 'Reset Gry',
+        quick_access: 'Szybki dostęp do zakładek:',
         questions_management: 'Zarządzanie pytaniami',
         players_management: 'Zarządzanie graczami',
         add_question: 'Dodaj pytanie',
@@ -537,22 +559,24 @@
         game_status_active: 'Start. Game active',
         game_status_paused: 'Pause',
         game_status_stopped: 'Stop. Game ended',
-        pre_game_settings: 'Pre-game settings',
+        pre_game_settings: 'Game Control',
         game_duration_label: 'Game time (minutes):',
         game_duration_help: 'Before game: set time. During game: change time (requires password)',
-        set_time_btn: 'Set',
+        set_time_btn: 'OK',
         player_language: 'Players language',
         host_language: 'Host language',
         lang_polish: 'Polish language',
         lang_english: 'English language',
         start_game: 'Start Game',
-        in_game_settings: 'In-game settings',
+        in_game_settings: 'Game Speed and Scoring',
         points_bonus: 'Points bonus:',
         time_speed: 'Time speed:',
         pause: 'Pause',
         resume: 'Resume',
         force_win: 'Force Win',
         stop_game: 'Stop Game',
+        reset_game: 'Reset Game',
+        quick_access: 'Quick access to tabs:',
         questions_management: 'Questions management',
         players_management: 'Players management',
         add_question: 'Add question',
@@ -638,6 +662,20 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const socket = io();
     const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
+    
+    // =====================================================================
+    // SZYBKI DOSTĘP DO ZAKŁADEK
+    // =====================================================================
+    document.querySelectorAll('.quick-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            const tabButton = document.querySelector(`button[data-bs-target="#${tabName}"]`);
+            if (tabButton) {
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        });
+    });
     
     // =====================================================================
     // SEKCJA KODÓW QR - TYLKO DLA SUPERHOST
@@ -1152,12 +1190,12 @@ document.addEventListener('DOMContentLoaded', function () {
             preGameFieldset.disabled = false; // ✅ Zawsze dostępne
             inGameFieldset.disabled = false;
             // ✅ Zmień tekst przycisku podczas gry
-            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'Ustaw';
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
         } else {
             preGameFieldset.disabled = false;
             inGameFieldset.disabled = true;
             // ✅ Przywróć oryginalny tekst przycisku
-            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'Ustaw';
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
         }
         
         // ✅ Aktualizuj wyświetlanie hasła
@@ -1224,7 +1262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
-    // ✅ NOWY: Ujednolicona obsługa przycisku "Ustaw" / "Set"
+    // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
     document.getElementById('set-time-btn')?.addEventListener('click', async () => {
         const minutes = parseInt(document.getElementById('game-duration-input').value);
         console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
@@ -1325,6 +1363,36 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             alert(result.message || 'Gra zatrzymana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+    
+    // Reset game button
+    document.getElementById('reset-game')?.addEventListener('click', async () => {
+        const password = prompt('Wprowadź hasło Hosta, aby zresetować grę:');
+        if (!password) return;
+        
+        if (!confirm('Czy na pewno chcesz zresetować całą grę? To usunie wszystkich graczy, pytania i dane gry!')) {
+            return;
+        }
+        
+        try {
+            // Weryfikuj hasło przez endpoint stop_game (możesz też dodać osobny endpoint)
+            // Na razie wykorzystamy istniejący endpoint do resetu z admina
+            const response = await fetch(`/api/admin/event/${EVENT_ID}/reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Błąd resetowania gry');
+            }
+            
+            alert(result.message || 'Gra została zresetowana');
+            location.reload(); // Odśwież stronę
         } catch (error) {
             alert('Błąd: ' + error.message);
         }
