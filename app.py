@@ -236,6 +236,9 @@ def get_full_game_state(event_id):
         time_left = max(0, (end_time - datetime.utcnow()).total_seconds())
     elif is_active and not is_timer_running:
         time_left = time_left_on_pause
+    
+    # ✅ Oblicz "scaled time left" - realny czas do końca z uwzględnieniem prędkości
+    scaled_time_left = time_left / time_speed if time_speed > 0 else time_left
 
     time_elapsed = 0
     time_elapsed_with_pauses = 0
@@ -268,6 +271,7 @@ def get_full_game_state(event_id):
         'game_active': is_active,
         'is_timer_running': is_timer_running,
         'time_left': time_left,
+        'scaled_time_left': scaled_time_left,  # ✅ DODANE
         'password': displayed_password,
         'player_count': player_count,
         'correct_answers': correct_answers,
@@ -1419,6 +1423,7 @@ def update_timers():
                         # Emit timer tick
                         socketio.emit('timer_tick', {
                             'time_left': time_left,
+                            'scaled_time_left': state['scaled_time_left'],  # ✅ DODANE
                             'time_elapsed': state['time_elapsed'],
                             'time_elapsed_with_pauses': state['time_elapsed_with_pauses']
                         }, room=room_name)
@@ -1508,3 +1513,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
