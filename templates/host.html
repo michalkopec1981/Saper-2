@@ -137,6 +137,7 @@
             </div>
 
             <div class="row">
+                <!-- Lewa kolumna: Obsługa gry -->
                 <div class="col-lg-6">
                     <fieldset id="pre-game-settings">
                         <div class="card mb-4">
@@ -170,29 +171,10 @@
                         </div>
                     </fieldset>
                 </div>
-
-<!-- ✅ NOWA SEKCJA: KOMUNIKATY -->
-                <div class="col-lg-12">
-                    <div class="card mb-4">
-                        <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
-                        <div class="card-body">
-                            <p class="text-muted small mb-3" data-translate="messages_description">
-                                Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
-                            </p>
-                            <div class="mb-3">
-                                <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
-                                <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
-                                <small class="text-muted">
-                                    <span id="message-char-count">0</span> / 500 znaków
-                                </small>
-                            </div>
-                            <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
-                            <div id="message-status" class="mt-2"></div>
-                        </div>
-                    </div>
-                </div>
                 
+                <!-- ✅ NOWA PRAWA KOLUMNA -->
                 <div class="col-lg-6">
+                    <!-- Tempo gry oraz punktacja -->
                     <fieldset id="in-game-settings" disabled>
                         <div class="card mb-4">
                             <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
@@ -225,7 +207,26 @@
                             </div>
                         </div>
                     </fieldset>
-                </div>
+                    
+                    <!-- Komunikaty na ekran gry -->
+                    <div class="card mb-4">
+                        <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3" data-translate="messages_description">
+                                Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
+                            </p>
+                            <div class="mb-3">
+                                <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
+                                <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
+                                <small class="text-muted">
+                                    <span id="message-char-count">0</span> / 500 znaków
+                                </small>
+                            </div>
+                            <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
+                            <div id="message-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div> <!-- Koniec prawej kolumny -->
             </div>
         </div>
         
@@ -1624,6 +1625,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
-
-
-
