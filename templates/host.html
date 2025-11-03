@@ -169,6 +169,27 @@
                     </fieldset>
                 </div>
 
+<!-- ✅ NOWA SEKCJA: KOMUNIKATY -->
+                <div class="col-lg-12">
+                    <div class="card mb-4">
+                        <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3" data-translate="messages_description">
+                                Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
+                            </p>
+                            <div class="mb-3">
+                                <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
+                                <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
+                                <small class="text-muted">
+                                    <span id="message-char-count">0</span> / 500 znaków
+                                </small>
+                            </div>
+                            <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
+                            <div id="message-status" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="col-lg-6">
                     <fieldset id="in-game-settings" disabled>
                         <div class="card mb-4">
@@ -1462,8 +1483,64 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('🎮 Sending game control:', control, value);
         sendGameControl(control, value);
     });
+
+// =====================================================================
+    // ✅ KOMUNIKATY NA EKRAN GRY
+    // =====================================================================
+    const messageInput = document.getElementById('host-message-input');
+    const charCount = document.getElementById('message-char-count');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const messageStatus = document.getElementById('message-status');
+
+    if (messageInput && charCount) {
+        messageInput.addEventListener('input', () => {
+            charCount.textContent = messageInput.value.length;
+        });
+    }
+
+    // Wysyłanie komunikatu
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', async () => {
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                messageStatus.innerHTML = '<div class="alert alert-warning">Wpisz treść komunikatu</div>';
+                setTimeout(() => messageStatus.innerHTML = '', 3000);
+                return;
+            }
+            
+            sendMessageBtn.disabled = true;
+            sendMessageBtn.textContent = 'Wysyłanie...';
+            
+            try {
+                const response = await fetch('/api/host/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Błąd wysyłania');
+                }
+                
+                messageStatus.innerHTML = '<div class="alert alert-success">✅ Komunikat wysłany!</div>';
+                messageInput.value = '';
+                charCount.textContent = '0';
+                
+                setTimeout(() => messageStatus.innerHTML = '', 3000);
+            } catch (error) {
+                messageStatus.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+            } finally {
+                sendMessageBtn.disabled = false;
+                sendMessageBtn.textContent = translations[currentLanguage].send_message || 'Wyślij komunikat';
+            }
+        });
+    }
     
     console.log('✅ HOST PANEL INITIALIZED');
 });
 </script>
 {% endblock %}
+
