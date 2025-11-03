@@ -1671,7 +1671,211 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     console.log('✅ HOST PANEL INITIALIZED');
+
+// =====================================================================
+    // ZARZĄDZANIE HASŁEM
+    // =====================================================================
+    let currentPassword = 'SAPEREVENT';
+    let revealedLetters = '';
+    let passwordMode = 'auto';
+    let selectedLettersForReveal = new Set();
+
+    // Załaduj stan hasła
+    async function loadPasswordState() {
+        try {
+            const response = await fetch('/api/host/password/state');
+            const data = await response.json();
+            
+            currentPassword = data.password;
+            revealedLetters = data.revealed_letters;
+            passwordMode = data.mode;
+            
+            // Aktualizuj input
+            document.getElementById('password-edit-input').value = currentPassword;
+            
+            // Aktualizuj przyciski trybu
+            document.querySelectorAll('#password-mode-controls button').forEach(b => b.classList.remove('active'));
+            if (passwordMode === 'auto') {
+                document.getElementById('password-auto-mode-btn').classList.add('active');
+                document.getElementById('manual-reveal-section').style.display = 'none';
+            } else {
+                document.getElementById('password-manual-mode-btn').classList.add('active');
+                document.getElementById('manual-reveal-section').style.display = 'block';
+                renderManualLetters();
+            }
+            
+        } catch (error) {
+            console.error('Błąd ładowania hasła:', error);
+        }
+    }
+
+    // Renderuj litery do ręcznego odkrywania
+    function renderManualLetters() {
+        const container = document.getElementById('manual-password-letters');
+        container.innerHTML = '';
+        selectedLettersForReveal.clear();
+        
+        for (let i = 0; i < currentPassword.length; i++) {
+            const char = currentPassword[i];
+            
+            if (char === ' ') {
+                // Spacja
+                const spaceEl = document.createElement('div');
+                spaceEl.style.width = '20px';
+                container.appendChild(spaceEl);
+            } else {
+                // Litera
+                const isRevealed = revealedLetters.toUpperCase().includes(char.toUpperCase());
+                
+                const btn = document.createElement('button');
+                btn.className = isRevealed ? 'btn btn-success' : 'btn btn-outline-danger';
+                btn.textContent = char;
+                btn.disabled = isRevealed;
+                btn.style.width = '50px';
+                btn.style.height = '50px';
+                btn.dataset.letter = char;
+                btn.dataset.index = i;
+                
+                if (!isRevealed) {
+                    btn.addEventListener('click', () => {
+                        if (btn.classList.contains('btn-outline-danger')) {
+                            // Zaznacz literę (czerwony → zielony)
+                            btn.classList.remove('btn-outline-danger');
+                            btn.classList.add('btn-success');
+                            selectedLettersForReveal.add(char);
+                        } else {
+                            // Odznacz literę (zielony → czerwony)
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-outline-danger');
+                            selectedLettersForReveal.delete(char);
+                        }
+                        
+                        // Aktywuj/dezaktywuj przycisk potwierdzenia
+                        document.getElementById('manual-reveal-confirm-btn').disabled = selectedLettersForReveal.size === 0;
+                    });
+                }
+                
+                container.appendChild(btn);
+            }
+        }
+    }
+
+    // Edycja hasła
+    document.getElementById('password-edit-ok-btn')?.addEventListener('click', async () => {
+        const newPassword = document.getElementById('password-edit-input').value.trim().toUpperCase();
+        const statusEl = document.getElementById('password-edit-status');
+        
+        if (!newPassword) {
+            statusEl.innerHTML = '<div class="alert alert-warning">Hasło nie może być puste</div>';
+            return;
+        }
+        
+        if (newPassword.length > 50) {
+            statusEl.innerHTML = '<div class="alert alert-warning">Hasło może mieć maksymalnie 50 znaków</div>';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/host/password/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPassword })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zapisu hasła');
+            }
+            
+            currentPassword = newPassword;
+            statusEl.innerHTML = '<div class="alert alert-success">✅ Hasło zaktualizowane!</div>';
+            
+            // Przeładuj stan hasła
+            loadPasswordState();
+            
+            setTimeout(() => statusEl.innerHTML = '', 3000);
+        } catch (error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+        }
+    });
+
+    // Zmiana trybu odkrywania
+    document.getElementById('password-mode-controls')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-mode]');
+        if (!btn) return;
+        
+        const mode = btn.dataset.mode;
+        
+        try {
+            const response = await fetch('/api/host/password/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany trybu');
+            }
+            
+            passwordMode = mode;
+            
+            // Aktualizuj przyciski
+            document.querySelectorAll('#password-mode-controls button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Pokaż/ukryj sekcję ręczną
+            if (mode === 'manual') {
+                document.getElementById('manual-reveal-section').style.display = 'block';
+                renderManualLetters();
+            } else {
+                document.getElementById('manual-reveal-section').style.display = 'none';
+            }
+            
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    // Potwierdzenie ręcznego odkrycia
+    document.getElementById('manual-reveal-confirm-btn')?.addEventListener('click', async () => {
+        if (selectedLettersForReveal.size === 0) return;
+        
+        const letters = Array.from(selectedLettersForReveal);
+        const statusEl = document.getElementById('manual-reveal-status');
+        
+        try {
+            const response = await fetch('/api/host/password/reveal_manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ letters })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd odkrywania liter');
+            }
+            
+            revealedLetters = result.revealed_letters;
+            statusEl.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
+            
+            // Odśwież litery
+            renderManualLetters();
+            
+            setTimeout(() => statusEl.innerHTML = '', 3000);
+        } catch (error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+        }
+    });
+
+    // Załaduj stan hasła przy otwarciu zakładki
+    document.querySelector('button[data-bs-target="#password"]')?.addEventListener('click', loadPasswordState);
+    
 });
 </script>
 {% endblock %}
+
 
