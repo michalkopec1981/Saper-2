@@ -1432,56 +1432,37 @@ def set_password_mode():
 @host_required
 def reveal_password_letters_manual():
     """Ręczne odkrycie wybranych liter hasła (po indeksach)"""
-    try:
-        event_id = session['host_event_id']
-        data = request.json
-        indices_to_reveal = data.get('indices', [])
-        
-        if not indices_to_reveal:
-            return jsonify({'error': 'Nie wybrano żadnych liter'}), 400
-        
-        # ✅ KONWERSJA NA INT OD RAZU NA POCZĄTKU
+    event_id = session['host_event_id']
+    data = request.json
+    indices_to_reveal = data.get('indices', [])
+    
+    if not indices_to_reveal:
+        return jsonify({'error': 'Nie wybrano żadnych liter'}), 400
+    
+    current_revealed = get_game_state(event_id, 'revealed_password_indices', '')
+    
+    revealed_set = set()
+    if current_revealed:
         try:
-            indices_as_ints = [int(idx) for idx in indices_to_reveal]
-        except (ValueError, TypeError) as e:
-            return jsonify({'error': f'Nieprawidłowe indeksy: {str(e)}'}), 400
-        
-        current_revealed = get_game_state(event_id, 'revealed_password_indices', '')
-        
-        revealed_set = set()
-        if current_revealed:
-            try:
-                revealed_set = set(map(int, current_revealed.split(',')))
-            except (ValueError, AttributeError):
-                revealed_set = set()
-        
-        # ✅ Dodaj nowe indeksy (już jako int)
-        for idx in indices_as_ints:
-            revealed_set.add(idx)
-        
-        revealed_indices_str = ','.join(map(str, sorted(revealed_set)))
-        set_game_state(event_id, 'revealed_password_indices', revealed_indices_str)
-        
-        # ✅ Wymuś commit
-        db.session.commit()
-        
-        emit_password_update(f'event_{event_id}')
-        
-        # ✅ Pobierz znaki (używając int indeksów)
-        password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
-        revealed_chars = [password[i] for i in indices_as_ints if i < len(password)]
-        
-        return jsonify({
-            'message': f'Odsłonięto litery: {", ".join(revealed_chars)}',
-            'revealed_indices': revealed_indices_str
-        })
-        
-    except Exception as e:
-        print(f"❌ ERROR in reveal_password_letters_manual: {e}")
-        import traceback
-        traceback.print_exc()
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+            revealed_set = set(map(int, current_revealed.split(',')))
+        except (ValueError, AttributeError):
+            revealed_set = set()
+    
+    for idx in indices_to_reveal:
+        revealed_set.add(int(idx))
+    
+    revealed_indices_str = ','.join(map(str, sorted(revealed_set)))
+    set_game_state(event_id, 'revealed_password_indices', revealed_indices_str)
+    
+    emit_password_update(f'event_{event_id}')
+    
+    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
+    revealed_chars = [password[i] for i in indices_to_reveal if i < len(password)]
+    
+    return jsonify({
+        'message': f'Odsłonięto litery: {", ".join(revealed_chars)}',
+        'revealed_indices': revealed_indices_str
+    })
 
 @app.route('/api/host/password/state', methods=['GET'])
 @host_required
@@ -1695,8 +1676,6 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
-
-
 
 
 
