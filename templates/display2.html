@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% block title %}Ekran 2 - Ranking i Zdjęcia - {{ event.name }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    body { 
+        background-color: #1a1a2e; 
+        color: white; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+    }
+    .container-fluid { 
+        height: 100vh; 
+        display: flex; 
+        flex-direction: column;
+        padding: 20px;
+    }
+    
+    /* Ranking Section - 40% */
+    .ranking-section {
+        flex: 0 0 40%;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .ranking-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .list-group-item { 
+        background-color: rgba(255,255,255,0.1); 
+        border-color: rgba(255,255,255,0.2); 
+        color: white;
+        font-size: 1.3rem;
+        padding: 15px 20px;
+    }
+    
+    .list-group-item:first-child {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #000;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .list-group-item:nth-child(2) {
+        background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+        color: #000;
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+    
+    .list-group-item:nth-child(3) {
+        background: linear-gradient(135deg, #cd7f32 0%, #d4a574 100%);
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+    
+    /* Photos Section - 40% */
+    .photos-section {
+        flex: 0 0 40%;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .photos-title {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 15px;
+        color: #ff6b9d;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .carousel-item img { 
+        max-height: 350px;
+        width: 100%; 
+        object-fit: contain;
+        border-radius: 10px;
+    }
+    
+    .carousel-caption { 
+        background-color: rgba(0, 0, 0, 0.8); 
+        padding: 15px; 
+        border-radius: 10px;
+    }
+    
+    .carousel-caption h5 { 
+        font-size: 1.5rem; 
+        margin: 0;
+        font-weight: bold;
+    }
+    
+    /* QR Code Section - 20% */
+    .qr-section {
+        flex: 0 0 20%;
+        background-color: rgba(255,255,255,0.95);
+        border-radius: 15px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .qr-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #1a1a2e;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    #qr-code-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    #qr-code-container canvas {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .qr-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        margin-top: 15px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <!-- Ranking Section -->
+    <div class="ranking-section">
+        <div class="ranking-title">🏆 RANKING 🏆</div>
+        <ul id="leaderboard" class="list-group"></ul>
+    </div>
+    
+    <!-- Photos Section -->
+    <div class="photos-section">
+        <div class="photos-title">📸 GALERIA ZDJĘĆ</div>
+        <div id="funny-photos-carousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+            <div class="carousel-inner" id="photos-carousel-inner">
+                <div class="carousel-item active">
+                    <div class="text-center p-5">
+                        <p style="font-size: 1.5rem;">📸 Czekamy na śmieszne zdjęcia!</p>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#funny-photos-carousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Poprzednie</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#funny-photos-carousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Następne</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- QR Code Section -->
+    <div class="qr-section">
+        <div class="qr-title">Zeskanuj kod, aby dołączyć do gry!</div>
+        <div id="qr-code-container"></div>
+        <div class="qr-subtitle">Użyj swojego telefonu</div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const EVENT_ID = {{ event.id }};
+    const socket = io();
+    const leaderboardEl = document.getElementById('leaderboard');
+    const photoCarouselInner = document.getElementById('photos-carousel-inner');
+    const qrContainer = document.getElementById('qr-code-container');
+    
+    // Generuj kod QR dla graczy (link do panelu gracza)
+    // Będzie to link do strony, gdzie gracze mogą się zarejestrować
+    const playerURL = window.location.origin + `/player/${EVENT_ID}/bialy`;
+    
+    QRCode.toCanvas(playerURL, {
+        errorCorrectionLevel: 'M',
+        width: 200,
+        margin: 2
+    }).then(canvas => {
+        qrContainer.appendChild(canvas);
+    }).catch(err => {
+        console.error('Błąd generowania kodu QR:', err);
+        qrContainer.innerHTML = '<p style="color: red;">Błąd generowania kodu QR</p>';
+    });
+    
+    // 📸 Funkcja ładowania zdjęć z serwera
+    async function loadPhotos() {
+        try {
+            const response = await fetch(`/api/photos/${EVENT_ID}`);
+            if (!response.ok) return;
+            
+            const photos = await response.json();
+            
+            if (photos.length === 0) {
+                photoCarouselInner.innerHTML = `
+                    <div class="carousel-item active">
+                        <div class="text-center p-5">
+                            <p style="font-size: 1.5rem;">📸 Czekamy na śmieszne zdjęcia!</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Wyczyść karuzele i dodaj zdjęcia
+            photoCarouselInner.innerHTML = '';
+            photos.forEach((photo, index) => {
+                const isActive = index === 0 ? 'active' : '';
+                const newItem = document.createElement('div');
+                newItem.className = `carousel-item ${isActive}`;
+                newItem.innerHTML = `
+                    <img src="${photo.image_url}" class="d-block w-100" alt="Zdjęcie gracza ${photo.player_name}">
+                    <div class="carousel-caption">
+                        <h5>👤 ${photo.player_name}</h5>
+                    </div>
+                `;
+                photoCarouselInner.appendChild(newItem);
+            });
+        } catch (error) {
+            console.error('Błąd ładowania zdjęć:', error);
+        }
+    }
+
+    socket.on('connect', () => {
+        console.log('✅ Socket connected');
+        socket.emit('join', { event_id: EVENT_ID });
+        loadPhotos(); // Załaduj istniejące zdjęcia
+    });
+
+    socket.on('leaderboard_update', (players) => {
+        leaderboardEl.innerHTML = '';
+        if (!players || players.length === 0) {
+            leaderboardEl.innerHTML = '<li class="list-group-item">Brak graczy w rankingu.</li>';
+            return;
+        }
+        
+        // Pokaż top 10 graczy
+        const topPlayers = players.slice(0, 10);
+        
+        topPlayers.forEach((p, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            
+            let medal = '';
+            if (index === 0) medal = '🥇';
+            else if (index === 1) medal = '🥈';
+            else if (index === 2) medal = '🥉';
+            else medal = `${index + 1}.`;
+            
+            li.innerHTML = `
+                <span>${medal} ${p.name}</span>
+                <span class="badge bg-primary rounded-pill" style="font-size: 1.2rem;">${p.score} pkt</span>
+            `;
+            leaderboardEl.appendChild(li);
+        });
+    });
+    
+    // 📸 Obsługa nowych zdjęć w czasie rzeczywistym
+    socket.on('new_photo', (data) => {
+        console.log('📸 Nowe zdjęcie otrzymane:', data);
+        
+        // Usuń placeholder jeśli istnieje
+        const placeholder = photoCarouselInner.querySelector('.text-center');
+        if (placeholder) {
+            photoCarouselInner.innerHTML = '';
+        }
+        
+        // Usuń klasę 'active' ze wszystkich elementów
+        photoCarouselInner.querySelectorAll('.carousel-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Dodaj nowe zdjęcie na początek (będzie aktywne)
+        const newItem = document.createElement('div');
+        newItem.className = 'carousel-item active';
+        newItem.innerHTML = `
+            <img src="${data.url}" class="d-block w-100" alt="Zdjęcie gracza ${data.player}">
+            <div class="carousel-caption">
+                <h5>👤 ${data.player}</h5>
+            </div>
+        `;
+        
+        // Wstaw na początek
+        photoCarouselInner.insertBefore(newItem, photoCarouselInner.firstChild);
+        
+        // Jeśli jest więcej niż 10 zdjęć, usuń najstarsze
+        const allItems = photoCarouselInner.querySelectorAll('.carousel-item');
+        if (allItems.length > 10) {
+            allItems[allItems.length - 1].remove();
+        }
+    });
+
+    // 📸 Obsługa resetowania zdjęć (przy starcie gry)
+    socket.on('photos_update', (photos) => {
+        console.log('📸 Reset galerii zdjęć');
+        photoCarouselInner.innerHTML = `
+            <div class="carousel-item active">
+                <div class="text-center p-5">
+                    <p style="font-size: 1.5rem;">📸 Czekamy na śmieszne zdjęcia!</p>
+                </div>
+            </div>
+        `;
+    });
+});
+</script>
+{% endblock %}
