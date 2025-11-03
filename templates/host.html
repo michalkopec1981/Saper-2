@@ -74,6 +74,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
     </ul>
 
@@ -161,6 +162,7 @@
                                         <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button></div>
                                         <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button></div>
                                         <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button></div>
+                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="display" data-translate="tab_display">Wyświetlacz</button></div>
                                         <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button></div>
                                     </div>
                                 </div>
@@ -366,6 +368,44 @@
             </div>
         </div>
 
+        <!-- ✅ NOWA ZAKŁADKA: WYŚWIETLACZ -->
+        <div class="tab-pane fade" id="display">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="display_tab">Ustawienia wyświetlacza</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 data-translate="display_screens">Liczba ekranów zewnętrznych:</h6>
+                        <div class="btn-group w-100" role="group" id="display-screens-controls">
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="1" data-translate="one_screen">1 Ekran</button>
+                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="display_screens" data-value="2" data-translate="two_screens">2 Ekrany</button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <strong>1 ekran:</strong> Bomba, hasło, ranking i zdjęcia na jednym ekranie<br>
+                            <strong>2 ekrany:</strong> Ekran 1 - Bomba i hasło | Ekran 2 - Ranking, zdjęcia i kod QR dla graczy
+                        </small>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Linki do ekranów:</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display1-link">
+                                🖥️ Ekran 1 - Główny wyświetlacz
+                            </a>
+                            <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
+                                🖥️ Ekran 2 - Ranking i zdjęcia
+                            </a>
+                        </div>
+                    </div>
+
+                    <div id="display-status" class="mt-3 alert alert-info">
+                        Aktualnie uruchomione: <strong>2 ekrany</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="tab-pane fade" id="language">
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="language_tab">Ustawienia języka</h5></div>
@@ -474,6 +514,7 @@
         tab_password: 'Hasło',
         tab_photo: 'Foto',
         tab_ar: 'AR',
+        tab_display: 'Wyświetlacz',
         tab_language: 'Język',
         qr_management: 'Zarządzanie Kodami QR',
         password_tab: 'Hasło do odsłonięcia',
@@ -482,6 +523,10 @@
         photo_description: 'Tutaj będą widoczne zdjęcia przesłane przez graczy.',
         ar_tab: 'Rozszerzona rzeczywistość (AR)',
         ar_description: 'Tutaj będą dostępne funkcje AR.',
+        display_tab: 'Ustawienia wyświetlacza',
+        display_screens: 'Liczba ekranów zewnętrznych:',
+        one_screen: '1 Ekran',
+        two_screens: '2 Ekrany',
         language_tab: 'Ustawienia języka',
         game_info: 'Informacje o grze',
         player_count: 'Liczba graczy:',
@@ -539,7 +584,7 @@
         warnings: 'Ostrzeżenia',
         question_category: 'Kategoria pytania:',
         category_company: 'Firmowe',
-        category_world: 'Światowe'
+        category_world: 'Światowe',
         host_messages: 'Komunikaty na ekran gry',
         messages_description: 'Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.',
         message_label: 'Treść komunikatu (max 500 znaków):',
@@ -556,6 +601,7 @@
         tab_password: 'Password',
         tab_photo: 'Photo',
         tab_ar: 'AR',
+        tab_display: 'Display',
         tab_language: 'Language',
         qr_management: 'QR Codes Management',
         password_tab: 'Password to reveal',
@@ -564,6 +610,10 @@
         photo_description: 'Here you will see photos uploaded by players.',
         ar_tab: 'Augmented Reality (AR)',
         ar_description: 'AR features will be available here.',
+        display_tab: 'Display settings',
+        display_screens: 'Number of external screens:',
+        one_screen: '1 Screen',
+        two_screens: '2 Screens',
         language_tab: 'Language settings',
         game_info: 'Game information',
         player_count: 'Number of players:',
@@ -621,7 +671,7 @@
         warnings: 'Warnings',
         question_category: 'Question category:',
         category_company: 'Company',
-        category_world: 'World'
+        category_world: 'World',
         host_messages: 'Messages on game screen',
         messages_description: 'Send a message that will appear on the main game screen. Use this to share important information with all participants.',
         message_label: 'Message content (max 500 characters):',
@@ -699,6 +749,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 tab.show();
             }
         });
+    });
+    
+    // =====================================================================
+    // WYŚWIETLACZ - PRZEŁĄCZANIE LICZBY EKRANÓW
+    // =====================================================================
+    document.getElementById('display-screens-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (btn) {
+            const screensCount = btn.dataset.value;
+            
+            // Update active state
+            document.querySelectorAll('#display-screens-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
+            
+            // Update status message
+            const statusDiv = document.getElementById('display-status');
+            if (statusDiv) {
+                statusDiv.innerHTML = `Aktualnie uruchomione: <strong>${screensCount} ${screensCount === '1' ? 'ekran' : 'ekrany'}</strong>`;
+            }
+            
+            // Możesz tutaj dodać zapisywanie ustawień do GameState jeśli potrzebne
+            console.log('Liczba ekranów ustawiona na:', screensCount);
+        }
     });
     
     // =====================================================================
@@ -1551,5 +1624,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
