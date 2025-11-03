@@ -14,6 +14,60 @@
     .carousel-item img { max-height: 250px; width: 100%; object-fit: contain; }
     .carousel-caption { background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; }
     .carousel-caption h5 { font-size: 1.2rem; margin: 0; }
+    /* Komunikaty hosta */
+    #host-message-overlay {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        max-width: 90%;
+        width: 800px;
+    }
+    
+    #host-message-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        font-size: 1.5rem;
+        text-align: center;
+        font-weight: bold;
+        animation: slideDown 0.5s ease-out, pulse 2s infinite;
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        50% {
+            box-shadow: 0 10px 60px rgba(102, 126, 234, 0.8);
+        }
+    }
+    
+    .message-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+        animation: bounce 1s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -189,6 +243,26 @@ document.addEventListener('DOMContentLoaded', function () {
             passwordEl.textContent = state.password.split('').join(' ');
         }
     });
+
+// Obsługa komunikatów od hosta
+    socket.on('host_message', (data) => {
+        console.log('📢 Otrzymano komunikat od hosta:', data.message);
+        
+        const overlay = document.getElementById('host-message-overlay');
+        const messageText = document.getElementById('host-message-text');
+        
+        if (overlay && messageText) {
+            messageText.textContent = data.message;
+            overlay.style.display = 'block';
+            
+            // Ukryj komunikat po 10 sekundach
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 10000);
+        }
+    });
+    
 });
 </script>
 {% endblock %}
+
