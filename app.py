@@ -1381,77 +1381,6 @@ def complete_minigame():
         })
 
 # --- API: PASSWORD MANAGEMENT ---
-@app.route('/api/host/password/reveal_manual', methods=['POST'])
-@host_required
-def reveal_password_letters_manual():
-    """Ręczne odkrycie wybranych liter hasła (po indeksach)"""
-    event_id = session['host_event_id']
-    data = request.json
-    indices_to_reveal = data.get('indices', [])  # Lista indeksów liter do odkrycia
-    
-    if not indices_to_reveal:
-        return jsonify({'error': 'Nie wybrano żadnych liter'}), 400
-    
-    # Pobierz aktualne odkryte indeksy
-    current_revealed = get_game_state(event_id, 'revealed_password_indices', '')
-    
-    # Parsuj jako zbiór indeksów
-    revealed_set = set()
-    if current_revealed:
-        revealed_set = set(map(int, current_revealed.split(',')))
-    
-    # Dodaj nowe indeksy
-    for idx in indices_to_reveal:
-        revealed_set.add(int(idx))
-    
-    # Zapisz z powrotem jako string
-    revealed_indices_str = ','.join(map(str, sorted(revealed_set)))
-    set_game_state(event_id, 'revealed_password_indices', revealed_indices_str)
-    
-    # Wyemituj aktualizację
-    emit_password_update(f'event_{event_id}')
-    
-    # Zwróć informację o odkrytych literach
-    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
-    revealed_chars = [password[i] for i in indices_to_reveal if i < len(password)]
-    
-    return jsonify({
-        'message': f'Odsłonięto litery: {", ".join(revealed_chars)}',
-        'revealed_indices': revealed_indices_str
-    })
-
-@app.route('/api/host/password/state', methods=['GET'])
-@host_required
-def get_password_state():
-    """Pobierz aktualny stan hasła"""
-    event_id = session['host_event_id']
-    
-    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
-    revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
-    mode = get_game_state(event_id, 'password_reveal_mode', 'auto')
-    
-    # Parsuj indeksy
-    revealed_indices = []
-    if revealed_indices_str:
-        revealed_indices = list(map(int, revealed_indices_str.split(',')))
-    
-    # Wygeneruj zasłonięte hasło (dla wyświetlacza)
-    displayed_password = ""
-    for i, char in enumerate(password):
-        if char == ' ':
-            displayed_password += '  '  # Spacja pozostaje spacją
-        elif i in revealed_indices:
-            displayed_password += char
-        else:
-            displayed_password += '_'
-    
-    return jsonify({
-        'password': password,
-        'revealed_letters': revealed_indices_str,  # String indeksów oddzielonych przecinkami
-        'displayed_password': displayed_password,
-        'mode': mode
-    })
-
 @app.route('/api/host/password/set', methods=['POST'])
 @host_required
 def set_password():
@@ -1471,13 +1400,9 @@ def set_password():
     if len(new_password) > 50:
         return jsonify({'error': 'Hasło może mieć maksymalnie 50 znaków'}), 400
     
-    # Zapisz hasło w GameState
     set_game_state(event_id, 'game_password', new_password)
-    
-    # Resetuj odkryte indeksy
     set_game_state(event_id, 'revealed_password_indices', '')
     
-    # Wyemituj aktualizację
     emit_password_update(f'event_{event_id}')
     
     return jsonify({
@@ -1491,7 +1416,7 @@ def set_password_mode():
     """Ustaw tryb odkrywania hasła (auto/manual)"""
     event_id = session['host_event_id']
     data = request.json
-    mode = data.get('mode', 'auto')  # 'auto' lub 'manual'
+    mode = data.get('mode', 'auto')
     
     if mode not in ['auto', 'manual']:
         return jsonify({'error': 'Nieprawidłowy tryb'}), 400
@@ -1500,6 +1425,75 @@ def set_password_mode():
     
     return jsonify({
         'message': f'Tryb odkrywania ustawiony na: {mode}',
+        'mode': mode
+    })
+
+@app.route('/api/host/password/reveal_manual', methods=['POST'])
+@host_required
+def reveal_password_letters_manual():
+    """Ręczne odkrycie wybranych liter hasła (po indeksach)"""
+    event_id = session['host_event_id']
+    data = request.json
+    indices_to_reveal = data.get('indices', [])
+    
+    if not indices_to_reveal:
+        return jsonify({'error': 'Nie wybrano żadnych liter'}), 400
+    
+    current_revealed = get_game_state(event_id, 'revealed_password_indices', '')
+    
+    revealed_set = set()
+    if current_revealed:
+        try:
+            revealed_set = set(map(int, current_revealed.split(',')))
+        except (ValueError, AttributeError):
+            revealed_set = set()
+    
+    for idx in indices_to_reveal:
+        revealed_set.add(int(idx))
+    
+    revealed_indices_str = ','.join(map(str, sorted(revealed_set)))
+    set_game_state(event_id, 'revealed_password_indices', revealed_indices_str)
+    
+    emit_password_update(f'event_{event_id}')
+    
+    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
+    revealed_chars = [password[i] for i in indices_to_reveal if i < len(password)]
+    
+    return jsonify({
+        'message': f'Odsłonięto litery: {", ".join(revealed_chars)}',
+        'revealed_indices': revealed_indices_str
+    })
+
+@app.route('/api/host/password/state', methods=['GET'])
+@host_required
+def get_password_state():
+    """Pobierz aktualny stan hasła"""
+    event_id = session['host_event_id']
+    
+    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
+    revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
+    mode = get_game_state(event_id, 'password_reveal_mode', 'auto')
+    
+    revealed_indices = []
+    if revealed_indices_str:
+        try:
+            revealed_indices = list(map(int, revealed_indices_str.split(',')))
+        except (ValueError, AttributeError):
+            revealed_indices = []
+    
+    displayed_password = ""
+    for i, char in enumerate(password):
+        if char == ' ':
+            displayed_password += '  '
+        elif i in revealed_indices:
+            displayed_password += char
+        else:
+            displayed_password += '_'
+    
+    return jsonify({
+        'password': password,
+        'revealed_letters': revealed_indices_str,
+        'displayed_password': displayed_password,
         'mode': mode
     })
 
@@ -1682,6 +1676,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
