@@ -418,6 +418,12 @@ def display(event_id):
     event = db.session.get(Event, event_id)
     return render_template('display.html', event=event)
 
+@app.route('/display2/<int:event_id>')
+def display2(event_id):
+    """Drugi ekran - ranking, zdjęcia i kod QR dla graczy"""
+    event = db.session.get(Event, event_id)
+    return render_template('display2.html', event=event)
+
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     is_admin = session.get('admin_logged_in', False)
@@ -1606,3 +1612,4 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
