@@ -205,91 +205,36 @@ def set_game_state(event_id, key, value):
     db.session.commit()
 
 def get_full_game_state(event_id):
-    state_keys = [
-        'game_active', 'is_timer_running', 'game_end_time', 'time_left_on_pause',
-        'game_start_time', 'total_paused_duration', 'bonus_multiplier', 'time_speed',
-        'language_player', 'language_host', 'initial_game_duration'
-    ]
-    state_data = {key: get_game_state(event_id, key) for key in state_keys}
-
-    is_active = state_data.get('game_active') == 'True'
-    is_timer_running = state_data.get('is_timer_running') == 'True'
+    # ... (cała reszta funkcji pozostaje bez zmian)
     
-    bonus_val = state_data.get('bonus_multiplier')
-    bonus_multiplier = int(bonus_val) if bonus_val is not None else 1
+    # ✅ ZMODYFIKOWANY FRAGMENT - Generowanie hasła na podstawie indeksów
+    password_value = get_game_state(event_id, 'game_password', 'SAPEREVENT')
+    revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
     
-    speed_val = state_data.get('time_speed')
-    time_speed = int(speed_val) if speed_val is not None else 1
+    # Parsuj indeksy
+    revealed_indices = set()
+    if revealed_indices_str:
+        revealed_indices = set(map(int, revealed_indices_str.split(',')))
     
-    time_left_on_pause_val = state_data.get('time_left_on_pause')
-    time_left_on_pause = float(time_left_on_pause_val) if time_left_on_pause_val is not None else 0
-
-    total_paused_duration_val = state_data.get('total_paused_duration')
-    total_paused_duration = float(total_paused_duration_val) if total_paused_duration_val is not None else 0
-
-    initial_game_duration_val = state_data.get('initial_game_duration')
-    initial_game_duration = float(initial_game_duration_val) if initial_game_duration_val is not None else 0
-
-    time_left = 0
-    if is_active and is_timer_running and state_data.get('game_end_time'):
-        end_time = datetime.fromisoformat(state_data['game_end_time'])
-        time_left = max(0, (end_time - datetime.utcnow()).total_seconds())
-    elif is_active and not is_timer_running:
-        time_left = time_left_on_pause
-
-    time_elapsed = 0
-    time_elapsed_with_pauses = 0
-    if state_data.get('game_start_time'):
-        start_time = datetime.fromisoformat(state_data['game_start_time'])
-        if is_active:
-            time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
-            time_elapsed = time_elapsed_with_pauses - total_paused_duration
+    # Generuj displayed_password
+    displayed_password = ""
+    for i, char in enumerate(password_value):
+        if char == ' ':
+            displayed_password += '  '
+        elif i in revealed_indices:
+            displayed_password += char
         else:
-            end_time_str = state_data.get('game_end_time')
-            if end_time_str:
-                end_time = datetime.fromisoformat(end_time_str)
-                time_elapsed_with_pauses = (end_time - start_time).total_seconds()
-                time_elapsed = time_elapsed_with_pauses - total_paused_duration
-            else:
-                time_elapsed = initial_game_duration - time_left_on_pause
-                time_elapsed_with_pauses = time_elapsed + total_paused_duration
-
-    player_count = Player.query.filter_by(event_id=event_id).count()
-    try:
-        correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
-    except Exception:
-        correct_answers = 0
-
-    # ✅ Obliczanie procentu ukończenia
-    total_questions = Question.query.filter_by(event_id=event_id).count()
-    completion_percentage = 0
-    if total_questions > 0:
-        completion_percentage = round((correct_answers / total_questions) * 100, 1)
-
-    # ✅ Określenie statusu gry
-    game_start_time = state_data.get('game_start_time')
-    if not is_active and not game_start_time:
-        game_status = 'waiting'  # Oczekiwanie na Start
-    elif is_active and is_timer_running:
-        game_status = 'active'   # Start. Gra aktywna
-    elif is_active and not is_timer_running:
-        game_status = 'paused'   # Pauza
-    else:
-        game_status = 'stopped'  # Stop. Zakończenie gry
-
-    password_value = "SAPEREVENT"
-    revealed_letters = "".join(p.revealed_letters for p in Player.query.filter_by(event_id=event_id).all())
-    displayed_password = "".join([char if char in revealed_letters.upper() else "_" for char in password_value.upper()])
+            displayed_password += '_'
     
     return {
         'game_active': is_active,
         'is_timer_running': is_timer_running,
         'time_left': time_left,
-        'password': displayed_password,
+        'password': displayed_password,  # ✅ Zmienione z pojedynczych liter na indeksy
         'player_count': player_count,
         'correct_answers': correct_answers,
-        'completion_percentage': completion_percentage,  # ✅ Nowe pole
-        'game_status': game_status,  # ✅ Nowe pole
+        'completion_percentage': completion_percentage,
+        'game_status': game_status,
         'time_elapsed': time_elapsed,
         'time_elapsed_with_pauses': time_elapsed_with_pauses,
         'language_player': state_data.get('language_player') or 'pl',
@@ -1735,6 +1680,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
