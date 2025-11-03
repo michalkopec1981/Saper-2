@@ -205,16 +205,86 @@ def set_game_state(event_id, key, value):
     db.session.commit()
 
 def get_full_game_state(event_id):
-    # ... (cała reszta funkcji pozostaje bez zmian)
+    # Pobierz podstawowe dane o stanie gry
+    is_active = get_game_state(event_id, 'game_active', 'False') == 'True'
+    is_timer_running = get_game_state(event_id, 'is_timer_running', 'False') == 'True'
     
-    # ✅ ZMODYFIKOWANY FRAGMENT - Generowanie hasła na podstawie indeksów
+    # Oblicz pozostały czas
+    time_left = 0
+    if is_active:
+        end_time_str = get_game_state(event_id, 'game_end_time')
+        if end_time_str:
+            try:
+                end_time = datetime.fromisoformat(end_time_str)
+                time_left = max(0, (end_time - datetime.utcnow()).total_seconds())
+            except (ValueError, AttributeError):
+                time_left = 0
+    
+    # Oblicz czas gry (netto i brutto)
+    time_elapsed = 0
+    time_elapsed_with_pauses = 0
+    
+    start_time_str = get_game_state(event_id, 'game_start_time')
+    if start_time_str:
+        try:
+            start_time = datetime.fromisoformat(start_time_str)
+            time_elapsed_with_pauses = (datetime.utcnow() - start_time).total_seconds()
+            
+            # Odejmij czas pauz dla czasu netto
+            total_paused = float(get_game_state(event_id, 'total_paused_duration', 0))
+            time_elapsed = time_elapsed_with_pauses - total_paused
+            
+            # Jeśli aktualnie w pauzie, dodaj czas od rozpoczęcia pauzy
+            if is_active and not is_timer_running:
+                pause_start_str = get_game_state(event_id, 'pause_start_time')
+                if pause_start_str:
+                    pause_start = datetime.fromisoformat(pause_start_str)
+                    current_pause_duration = (datetime.utcnow() - pause_start).total_seconds()
+                    time_elapsed = time_elapsed_with_pauses - total_paused - current_pause_duration
+        except (ValueError, AttributeError):
+            time_elapsed = 0
+            time_elapsed_with_pauses = 0
+    
+    # Liczba graczy
+    player_count = Player.query.filter_by(event_id=event_id).count()
+    
+    # Procent ukończenia
+    total_questions = Question.query.filter_by(event_id=event_id).count()
+    answered_questions = PlayerAnswer.query.filter_by(event_id=event_id).distinct(PlayerAnswer.question_id).count()
+    completion_percentage = int((answered_questions / total_questions * 100)) if total_questions > 0 else 0
+    
+    # Liczba poprawnych odpowiedzi
+    correct_answers = PlayerAnswer.query.filter_by(event_id=event_id).count()
+    
+    # Status gry
+    game_status = 'waiting'
+    if is_active:
+        if is_timer_running:
+            game_status = 'active'
+        else:
+            game_status = 'paused'
+    elif start_time_str:
+        game_status = 'stopped'
+    
+    # Język
+    language_player = get_game_state(event_id, 'language_player', 'pl')
+    language_host = get_game_state(event_id, 'language_host', 'pl')
+    
+    # Bonus i prędkość
+    bonus_multiplier = int(get_game_state(event_id, 'bonus_multiplier', 1))
+    time_speed = int(get_game_state(event_id, 'time_speed', 1))
+    
+    # ✅ Generowanie hasła na podstawie indeksów
     password_value = get_game_state(event_id, 'game_password', 'SAPEREVENT')
     revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
     
     # Parsuj indeksy
     revealed_indices = set()
     if revealed_indices_str:
-        revealed_indices = set(map(int, revealed_indices_str.split(',')))
+        try:
+            revealed_indices = set(map(int, revealed_indices_str.split(',')))
+        except (ValueError, AttributeError):
+            revealed_indices = set()
     
     # Generuj displayed_password
     displayed_password = ""
@@ -230,15 +300,15 @@ def get_full_game_state(event_id):
         'game_active': is_active,
         'is_timer_running': is_timer_running,
         'time_left': time_left,
-        'password': displayed_password,  # ✅ Zmienione z pojedynczych liter na indeksy
+        'password': displayed_password,
         'player_count': player_count,
         'correct_answers': correct_answers,
         'completion_percentage': completion_percentage,
         'game_status': game_status,
         'time_elapsed': time_elapsed,
         'time_elapsed_with_pauses': time_elapsed_with_pauses,
-        'language_player': state_data.get('language_player') or 'pl',
-        'language_host': state_data.get('language_host') or 'pl',
+        'language_player': language_player,
+        'language_host': language_host,
         'bonus_multiplier': bonus_multiplier,
         'time_speed': time_speed
     }
@@ -1676,6 +1746,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
