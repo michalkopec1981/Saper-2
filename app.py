@@ -1432,6 +1432,115 @@ def complete_minigame():
             'message': f'Postęp w {game_name}: {new_score}/20 pkt. Zeskanuj kod ponownie, aby kontynuować!'
         })
 
+# --- API: PASSWORD MANAGEMENT ---
+@app.route('/api/host/password/set', methods=['POST'])
+@host_required
+def set_password():
+    """Ustaw nowe hasło (tylko przed startem gry)"""
+    event_id = session['host_event_id']
+    is_active = get_game_state(event_id, 'game_active', 'False') == 'True'
+    
+    if is_active:
+        return jsonify({'error': 'Nie można zmieniać hasła podczas aktywnej gry'}), 403
+    
+    data = request.json
+    new_password = data.get('password', '').upper().strip()
+    
+    if not new_password:
+        return jsonify({'error': 'Hasło nie może być puste'}), 400
+    
+    if len(new_password) > 50:
+        return jsonify({'error': 'Hasło może mieć maksymalnie 50 znaków'}), 400
+    
+    # Zapisz hasło w GameState
+    set_game_state(event_id, 'game_password', new_password)
+    
+    # Resetuj odkryte litery
+    set_game_state(event_id, 'revealed_password_letters', '')
+    
+    # Wyemituj aktualizację
+    emit_password_update(f'event_{event_id}')
+    
+    return jsonify({
+        'message': 'Hasło zostało zaktualizowane',
+        'password': new_password
+    })
+
+@app.route('/api/host/password/mode', methods=['POST'])
+@host_required
+def set_password_mode():
+    """Ustaw tryb odkrywania hasła (auto/manual)"""
+    event_id = session['host_event_id']
+    data = request.json
+    mode = data.get('mode', 'auto')  # 'auto' lub 'manual'
+    
+    if mode not in ['auto', 'manual']:
+        return jsonify({'error': 'Nieprawidłowy tryb'}), 400
+    
+    set_game_state(event_id, 'password_reveal_mode', mode)
+    
+    return jsonify({
+        'message': f'Tryb odkrywania ustawiony na: {mode}',
+        'mode': mode
+    })
+
+@app.route('/api/host/password/reveal_manual', methods=['POST'])
+@host_required
+def reveal_password_letters_manual():
+    """Ręczne odkrycie wybranych liter hasła"""
+    event_id = session['host_event_id']
+    data = request.json
+    letters_to_reveal = data.get('letters', [])  # Lista liter do odkrycia
+    
+    if not letters_to_reveal:
+        return jsonify({'error': 'Nie wybrano żadnych liter'}), 400
+    
+    # Pobierz aktualne odkryte litery
+    current_revealed = get_game_state(event_id, 'revealed_password_letters', '')
+    
+    # Dodaj nowe litery (bez duplikatów)
+    for letter in letters_to_reveal:
+        if letter.upper() not in current_revealed.upper():
+            current_revealed += letter.upper()
+    
+    set_game_state(event_id, 'revealed_password_letters', current_revealed)
+    
+    # Wyemituj aktualizację
+    emit_password_update(f'event_{event_id}')
+    
+    return jsonify({
+        'message': f'Odsłonięto litery: {", ".join(letters_to_reveal)}',
+        'revealed_letters': current_revealed
+    })
+
+@app.route('/api/host/password/state', methods=['GET'])
+@host_required
+def get_password_state():
+    """Pobierz aktualny stan hasła"""
+    event_id = session['host_event_id']
+    
+    password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
+    revealed_letters = get_game_state(event_id, 'revealed_password_letters', '')
+    mode = get_game_state(event_id, 'password_reveal_mode', 'auto')
+    
+    # Wygeneruj zasłonięte hasło
+    displayed_password = ""
+    for char in password:
+        if char == ' ':
+            displayed_password += '  '  # Spacja pozostaje spacją
+        elif char.upper() in revealed_letters.upper():
+            displayed_password += char
+        else:
+            displayed_password += '_'
+    
+    return jsonify({
+        'password': password,
+        'revealed_letters': revealed_letters,
+        'displayed_password': displayed_password,
+        'mode': mode
+    })
+
+
 
 
 # ===================================================================
@@ -1612,4 +1721,5 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
