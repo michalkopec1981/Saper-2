@@ -1204,33 +1204,35 @@ def process_answer():
         points = 10 * bonus
         player.score += points
         
-        # ✅ NOWA LOGIKA: Sprawdź tryb odkrywania hasła
+        # ✅ ZMODYFIKOWANA LOGIKA: Sprawdź tryb odkrywania hasła
         password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
         
         if password_mode == 'auto':
-            # Tryb automatyczny - odkryj literę z pytania
-            player.revealed_letters += question.letter_to_reveal
-        else:
-            # Tryb ręczny - NIE odkrywaj litery automatycznie
-            # Sprawdź czy gracz osiągnął 50% możliwych punktów
-            total_questions = Question.query.filter_by(event_id=player.event_id).count()
-            max_possible_points = total_questions * 10  # 10 pkt za każde pytanie
+            # Tryb automatyczny - odkryj losową nieodkrytą literę
+            password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+            revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
             
-            if max_possible_points > 0 and player.score >= (max_possible_points * 0.5):
-                # Gracz osiągnął 50% - odkryj jedną losową literę z hasła
-                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
-                revealed_letters = get_game_state(player.event_id, 'revealed_password_letters', '')
+            # Parsuj odkryte indeksy
+            revealed_indices = set()
+            if revealed_indices_str:
+                revealed_indices = set(map(int, revealed_indices_str.split(',')))
+            
+            # Znajdź nieodkryte indeksy (pomijając spacje)
+            available_indices = [i for i in range(len(password_value)) 
+                               if password_value[i] != ' ' and i not in revealed_indices]
+            
+            if available_indices:
+                import random
+                revealed_index = random.choice(available_indices)
+                revealed_indices.add(revealed_index)
                 
-                available_letters = [l for l in password_value if l != ' ' and l.upper() not in revealed_letters.upper()]
-                if available_letters:
-                    import random
-                    revealed_letter = random.choice(available_letters)
-                    revealed_letters += revealed_letter
-                    set_game_state(player.event_id, 'revealed_password_letters', revealed_letters)
-                    emit_password_update(f'event_{player.event_id}')
+                # Zapisz zaktualizowane indeksy
+                revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+                
+                emit_password_update(f'event_{player.event_id}')
         
         db.session.commit()
-        emit_password_update(f'event_{player.event_id}')
         emit_leaderboard_update(f'event_{player.event_id}')
         return jsonify({'correct': True, 'letter': question.letter_to_reveal, 'score': player.score})
     else:
@@ -1680,6 +1682,7 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
 
