@@ -1540,7 +1540,60 @@ def get_password_state():
         'mode': mode
     })
 
-
+@app.route('/api/player/answer', methods=['POST'])
+def process_answer():
+    data = request.json
+    player_id, question_id, answer = data.get('player_id'), data.get('question_id'), data.get('answer')
+    player, question = db.session.get(Player, player_id), db.session.get(Question, question_id)
+    if not player or not question: return jsonify({'error': 'Invalid data'}), 404
+    
+    db.session.add(PlayerAnswer(player_id=player_id, question_id=question_id, event_id=player.event_id))
+    bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
+    
+    # Zwiększ licznik wyświetleń
+    question.times_shown += 1
+    
+    if answer == question.correct_answer:
+        # Zwiększ licznik poprawnych odpowiedzi
+        question.times_correct += 1
+        
+        points = 10 * bonus
+        player.score += points
+        
+        # ✅ NOWA LOGIKA: Sprawdź tryb odkrywania hasła
+        password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
+        
+        if password_mode == 'auto':
+            # Tryb automatyczny - odkryj literę z pytania
+            player.revealed_letters += question.letter_to_reveal
+        else:
+            # Tryb ręczny - NIE odkrywaj litery automatycznie
+            # Sprawdź czy gracz osiągnął 50% możliwych punktów
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            max_possible_points = total_questions * 10  # 10 pkt za każde pytanie
+            
+            if max_possible_points > 0 and player.score >= (max_possible_points * 0.5):
+                # Gracz osiągnął 50% - odkryj jedną losową literę z hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_letters = get_game_state(player.event_id, 'revealed_password_letters', '')
+                
+                available_letters = [l for l in password_value if l != ' ' and l.upper() not in revealed_letters.upper()]
+                if available_letters:
+                    import random
+                    revealed_letter = random.choice(available_letters)
+                    revealed_letters += revealed_letter
+                    set_game_state(player.event_id, 'revealed_password_letters', revealed_letters)
+                    emit_password_update(f'event_{player.event_id}')
+        
+        db.session.commit()
+        emit_password_update(f'event_{player.event_id}')
+        emit_leaderboard_update(f'event_{player.event_id}')
+        return jsonify({'correct': True, 'letter': question.letter_to_reveal, 'score': player.score})
+    else:
+        player.score = max(0, player.score - 5)
+        db.session.commit()
+        emit_leaderboard_update(f'event_{player.event_id}')
+        return jsonify({'correct': False, 'score': player.score})
 
 
 # ===================================================================
@@ -1721,5 +1774,6 @@ if __name__ == '__main__':
     print("=" * 60)
     
     socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+
 
 
