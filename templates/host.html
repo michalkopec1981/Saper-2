@@ -257,12 +257,61 @@
         {% endif %}
 
         <div class="tab-pane fade" id="password">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="password_tab">Hasło do odsłonięcia</h5></div>
+            <div class="card mb-3">
+                <div class="card-header"><h5 class="card-title mb-0">1. Edycja hasła</h5></div>
                 <div class="card-body">
-                    <p data-translate="password_description">Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.</p>
+                    <p class="text-muted small">Wpisz hasło, które gracze będą odsłaniać podczas gry (możliwe tylko przed startem gry).</p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="password-edit-input" maxlength="50" placeholder="np. SAPEREVENT" value="SAPEREVENT">
+                        <button class="btn btn-primary" id="password-edit-ok-btn">OK</button>
+                    </div>
+                    <small class="text-muted">Max 50 znaków. Spacje są dozwolone.</small>
+                    <div id="password-edit-status" class="mt-2"></div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><h5 class="card-title mb-0">2. Stan hasła</h5></div>
+                <div class="card-body">
+                    <p class="text-muted small">Aktualny stan hasła - odsłonięte i zasłonięte litery.</p>
                     <div class="alert alert-secondary text-center" style="font-size: 2rem; letter-spacing: 10px; font-family: monospace;">
                         <span id="current-password-display">_ _ _ _ _ _ _ _ _ _</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">3. Kontrola hasła</h5></div>
+                <div class="card-body">
+                    <p class="text-muted small">Wybierz tryb odkrywania liter hasła.</p>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tryb odkrywania:</label>
+                        <div class="btn-group w-100" role="group" id="password-mode-controls">
+                            <button type="button" class="btn btn-outline-success active" id="password-auto-mode-btn" data-mode="auto">
+                                🤖 Odkrywanie automatyczne
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="password-manual-mode-btn" data-mode="manual">
+                                ✋ Odkrywanie ręczne
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <strong>Automatyczne:</strong> Litera odkrywana gdy gracz zdobędzie 50% możliwych punktów<br>
+                            <strong>Ręczne:</strong> Host sam wybiera litery do odkrycia
+                        </small>
+                    </div>
+
+                    <!-- Sekcja odkrywania ręcznego -->
+                    <div id="manual-reveal-section" style="display: none;">
+                        <hr>
+                        <h6 class="mb-3">Wybierz litery do odsłonięcia:</h6>
+                        <div id="manual-password-letters" class="d-flex flex-wrap gap-2 justify-content-center mb-3" style="font-size: 1.5rem; font-family: monospace;">
+                            <!-- Litery będą generowane dynamicznie -->
+                        </div>
+                        <button class="btn btn-success w-100" id="manual-reveal-confirm-btn" disabled>
+                            Potwierdź odsłonięcie wybranych liter
+                        </button>
+                        <div id="manual-reveal-status" class="mt-2"></div>
                     </div>
                 </div>
             </div>
@@ -1625,3 +1674,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
