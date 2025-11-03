@@ -270,49 +270,44 @@
                 </div>
             </div>
 
-            <div class="card mb-3">
-                <div class="card-header"><h5 class="card-title mb-0">2. Stan hasła</h5></div>
-                <div class="card-body">
-                    <p class="text-muted small">Aktualny stan hasła - odsłonięte i zasłonięte litery.</p>
-                    <div class="alert alert-secondary text-center" style="font-size: 2rem; letter-spacing: 10px; font-family: monospace;">
-                        <span id="current-password-display">_ _ _ _ _ _ _ _ _ _</span>
-                    </div>
-                </div>
-            </div>
-
             <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">3. Kontrola hasła</h5></div>
+                <div class="card-header"><h5 class="card-title mb-0">2. Kontrola hasła</h5></div>
                 <div class="card-body">
-                    <p class="text-muted small">Wybierz tryb odkrywania liter hasła.</p>
+                    <p class="text-muted small">Zarządzaj odkrywaniem liter hasła. Odkrywanie ręczne jest zawsze dostępne.</p>
                     
+                    <!-- Przełącznik automatycznego odkrywania -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Tryb odkrywania:</label>
-                        <div class="btn-group w-100" role="group" id="password-mode-controls">
-                            <button type="button" class="btn btn-outline-success active" id="password-auto-mode-btn" data-mode="auto">
-                                🤖 Odkrywanie automatyczne
-                            </button>
-                            <button type="button" class="btn btn-outline-primary" id="password-manual-mode-btn" data-mode="manual">
-                                ✋ Odkrywanie ręczne
-                            </button>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">Odkrywanie automatyczne:</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle" 
+                                       style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="password-auto-reveal-toggle">
+                                    <span id="auto-reveal-status" class="badge bg-success">Włączone</span>
+                                </label>
+                            </div>
                         </div>
-                        <small class="text-muted d-block mt-2">
-                            <strong>Automatyczne:</strong> Litera odkrywana gdy gracz zdobędzie 50% możliwych punktów<br>
-                            <strong>Ręczne:</strong> Host sam wybiera litery do odkrycia
+                        <small class="text-muted d-block">
+                            Gdy włączone: litery odkrywane automatycznie gdy gracz zdobędzie 50% możliwych punktów (oznaczone na zielono).<br>
+                            Odkrywanie ręczne jest zawsze dostępne niezależnie od ustawienia.
                         </small>
                     </div>
 
-                    <!-- Sekcja odkrywania ręcznego -->
-                    <div id="manual-reveal-section" style="display: none;">
-                        <hr>
-                        <h6 class="mb-3">Wybierz litery do odsłonięcia:</h6>
-                        <div id="manual-password-letters" class="d-flex flex-wrap gap-2 justify-content-center mb-3" style="font-size: 1.5rem; font-family: monospace;">
-                            <!-- Litery będą generowane dynamicznie -->
-                        </div>
-                        <button class="btn btn-success w-100" id="manual-reveal-confirm-btn" disabled>
-                            Potwierdź odsłonięcie wybranych liter
-                        </button>
-                        <div id="manual-reveal-status" class="mt-2"></div>
+                    <hr>
+
+                    <!-- Sekcja odkrywania hasła -->
+                    <h6 class="mb-3">Hasło do odsłonięcia:</h6>
+                    <p class="text-muted small mb-3">
+                        🟢 Zielone - odsłonięte | 🔴 Czerwone - zakryte<br>
+                        Kliknij na czerwoną literę, aby ją odsłonić ręcznie. Każda litera jest traktowana indywidualnie.
+                    </p>
+                    <div id="password-letters-display" class="d-flex flex-wrap gap-2 justify-content-center mb-3" style="font-size: 1.8rem; font-family: monospace;">
+                        <!-- Litery będą generowane dynamicznie -->
                     </div>
+                    <button class="btn btn-success w-100" id="reveal-selected-letters-btn" disabled>
+                        Potwierdź odsłonięcie wybranych liter
+                    </button>
+                    <div id="password-reveal-status" class="mt-2"></div>
                 </div>
             </div>
         </div>
@@ -1442,7 +1437,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     socket.on('password_update', (password) => {
-        const passwordDisplay = document.getElementById('current-password-display');
         if (passwordDisplay) {
             passwordDisplay.textContent = password.split('').join(' ');
         }
@@ -1673,94 +1667,105 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('✅ HOST PANEL INITIALIZED');
 
 // =====================================================================
-    // ZARZĄDZANIE HASŁEM
-    // =====================================================================
-    let currentPassword = 'SAPEREVENT';
-    let revealedLetters = '';
-    let passwordMode = 'auto';
-    let selectedLettersForReveal = new Set();
+// ZARZĄDZANIE HASŁEM - NOWY SYSTEM Z INDEKSAMI
+// =====================================================================
 
-    // Załaduj stan hasła
+    let currentPassword = 'SAPEREVENT';
+    let revealedLettersIndices = new Set();
+    let autoRevealEnabled = true;
+    let selectedLettersForReveal = new Set();
+    let passwordLetters = [];
+    
     async function loadPasswordState() {
         try {
             const response = await fetch('/api/host/password/state');
             const data = await response.json();
             
             currentPassword = data.password;
-            revealedLetters = data.revealed_letters;
-            passwordMode = data.mode;
+            autoRevealEnabled = data.mode === 'auto';
             
-            // Aktualizuj input
+            revealedLettersIndices.clear();
+            if (data.revealed_letters) {
+                const indices = data.revealed_letters.split(',').filter(x => x);
+                indices.forEach(idx => revealedLettersIndices.add(parseInt(idx)));
+            }
+            
             document.getElementById('password-edit-input').value = currentPassword;
             
-            // Aktualizuj przyciski trybu
-            document.querySelectorAll('#password-mode-controls button').forEach(b => b.classList.remove('active'));
-            if (passwordMode === 'auto') {
-                document.getElementById('password-auto-mode-btn').classList.add('active');
-                document.getElementById('manual-reveal-section').style.display = 'none';
-            } else {
-                document.getElementById('password-manual-mode-btn').classList.add('active');
-                document.getElementById('manual-reveal-section').style.display = 'block';
-                renderManualLetters();
+            const autoToggle = document.getElementById('password-auto-reveal-toggle');
+            const autoStatus = document.getElementById('auto-reveal-status');
+            if (autoToggle && autoStatus) {
+                autoToggle.checked = autoRevealEnabled;
+                autoStatus.textContent = autoRevealEnabled ? 'Włączone' : 'Wyłączone';
+                autoStatus.className = autoRevealEnabled ? 'badge bg-success' : 'badge bg-secondary';
             }
+            
+            renderPasswordLetters();
             
         } catch (error) {
             console.error('Błąd ładowania hasła:', error);
         }
     }
-
-    // Renderuj litery do ręcznego odkrywania
-    function renderManualLetters() {
-        const container = document.getElementById('manual-password-letters');
+    
+    function renderPasswordLetters() {
+        const container = document.getElementById('password-letters-display');
+        if (!container) return;
+        
         container.innerHTML = '';
+        passwordLetters = [];
         selectedLettersForReveal.clear();
         
         for (let i = 0; i < currentPassword.length; i++) {
             const char = currentPassword[i];
+            const isRevealed = revealedLettersIndices.has(i);
+            
+            passwordLetters.push({ char, index: i, revealed: isRevealed });
             
             if (char === ' ') {
-                // Spacja
                 const spaceEl = document.createElement('div');
-                spaceEl.style.width = '20px';
+                spaceEl.style.width = '30px';
+                spaceEl.style.height = '50px';
                 container.appendChild(spaceEl);
             } else {
-                // Litera
-                const isRevealed = revealedLetters.toUpperCase().includes(char.toUpperCase());
-                
                 const btn = document.createElement('button');
-                btn.className = isRevealed ? 'btn btn-success' : 'btn btn-outline-danger';
+                btn.className = isRevealed ? 'btn btn-success' : 'btn btn-danger';
                 btn.textContent = char;
-                btn.disabled = isRevealed;
+                btn.disabled = false;
                 btn.style.width = '50px';
                 btn.style.height = '50px';
-                btn.dataset.letter = char;
+                btn.style.fontSize = '1.5rem';
+                btn.style.fontWeight = 'bold';
                 btn.dataset.index = i;
                 
-                if (!isRevealed) {
-                    btn.addEventListener('click', () => {
-                        if (btn.classList.contains('btn-outline-danger')) {
-                            // Zaznacz literę (czerwony → zielony)
-                            btn.classList.remove('btn-outline-danger');
-                            btn.classList.add('btn-success');
-                            selectedLettersForReveal.add(char);
-                        } else {
-                            // Odznacz literę (zielony → czerwony)
-                            btn.classList.remove('btn-success');
-                            btn.classList.add('btn-outline-danger');
-                            selectedLettersForReveal.delete(char);
-                        }
-                        
-                        // Aktywuj/dezaktywuj przycisk potwierdzenia
-                        document.getElementById('manual-reveal-confirm-btn').disabled = selectedLettersForReveal.size === 0;
-                    });
-                }
+                btn.addEventListener('click', () => {
+                    if (isRevealed) return;
+                    
+                    if (btn.classList.contains('btn-danger')) {
+                        btn.classList.remove('btn-danger');
+                        btn.classList.add('btn-warning');
+                        selectedLettersForReveal.add(i);
+                    } else if (btn.classList.contains('btn-warning')) {
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-danger');
+                        selectedLettersForReveal.delete(i);
+                    }
+                    
+                    const confirmBtn = document.getElementById('reveal-selected-letters-btn');
+                    if (confirmBtn) {
+                        confirmBtn.disabled = selectedLettersForReveal.size === 0;
+                    }
+                });
                 
                 container.appendChild(btn);
             }
         }
+        
+        const confirmBtn = document.getElementById('reveal-selected-letters-btn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+        }
     }
-
-    // Edycja hasła
+    
     document.getElementById('password-edit-ok-btn')?.addEventListener('click', async () => {
         const newPassword = document.getElementById('password-edit-input').value.trim().toUpperCase();
         const statusEl = document.getElementById('password-edit-status');
@@ -1789,9 +1794,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             currentPassword = newPassword;
+            revealedLettersIndices.clear();
             statusEl.innerHTML = '<div class="alert alert-success">✅ Hasło zaktualizowane!</div>';
             
-            // Przeładuj stan hasła
             loadPasswordState();
             
             setTimeout(() => statusEl.innerHTML = '', 3000);
@@ -1799,15 +1804,13 @@ document.addEventListener('DOMContentLoaded', function () {
             statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
         }
     });
-
-    // Zmiana trybu odkrywania
-    document.getElementById('password-mode-controls')?.addEventListener('click', async (e) => {
-        const btn = e.target.closest('button[data-mode]');
-        if (!btn) return;
-        
-        const mode = btn.dataset.mode;
+    
+    document.getElementById('password-auto-reveal-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('auto-reveal-status');
         
         try {
+            const mode = enabled ? 'auto' : 'manual';
             const response = await fetch('/api/host/password/mode', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1820,37 +1823,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(result.error || 'Błąd zmiany trybu');
             }
             
-            passwordMode = mode;
-            
-            // Aktualizuj przyciski
-            document.querySelectorAll('#password-mode-controls button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Pokaż/ukryj sekcję ręczną
-            if (mode === 'manual') {
-                document.getElementById('manual-reveal-section').style.display = 'block';
-                renderManualLetters();
-            } else {
-                document.getElementById('manual-reveal-section').style.display = 'none';
-            }
+            autoRevealEnabled = enabled;
+            statusEl.textContent = enabled ? 'Włączone' : 'Wyłączone';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
             
         } catch (error) {
             alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
         }
     });
-
-    // Potwierdzenie ręcznego odkrycia
-    document.getElementById('manual-reveal-confirm-btn')?.addEventListener('click', async () => {
+    
+    document.getElementById('reveal-selected-letters-btn')?.addEventListener('click', async () => {
         if (selectedLettersForReveal.size === 0) return;
         
-        const letters = Array.from(selectedLettersForReveal);
-        const statusEl = document.getElementById('manual-reveal-status');
+        const indices = Array.from(selectedLettersForReveal);
+        const statusEl = document.getElementById('password-reveal-status');
         
         try {
             const response = await fetch('/api/host/password/reveal_manual', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ letters })
+                body: JSON.stringify({ indices })
             });
             
             const result = await response.json();
@@ -1859,23 +1852,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(result.error || 'Błąd odkrywania liter');
             }
             
-            revealedLetters = result.revealed_letters;
+            indices.forEach(idx => revealedLettersIndices.add(idx));
+            
             statusEl.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
             
-            // Odśwież litery
-            renderManualLetters();
+            renderPasswordLetters();
             
             setTimeout(() => statusEl.innerHTML = '', 3000);
         } catch (error) {
             statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
         }
     });
-
-    // Załaduj stan hasła przy otwarciu zakładki
+    
     document.querySelector('button[data-bs-target="#password"]')?.addEventListener('click', loadPasswordState);
     
 });
 </script>
 {% endblock %}
+
 
 
