@@ -243,63 +243,7 @@
             </div>
         </div>
                 
-                <!-- ✅ NOWA PRAWA KOLUMNA -->
-                <div class="col-lg-6">
-                    <!-- Tempo gry oraz punktacja -->
-                    <fieldset id="in-game-settings" disabled>
-                        <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
-                            <div class="card-body" id="game-controls">
-                                <div class="mb-3">
-                                    <label for="game-duration-input" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="game-duration-input" value="60" min="1">
-                                        <button class="btn btn-primary" id="set-time-btn" data-translate="set_time_btn">OK</button>
-                                    </div>
-                                    <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
-                                </div>
-
-                                <hr>
-
-                                <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
-                                <div class="btn-group w-100 mb-3" role="group">
-                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
-                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
-                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
-                                    <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
-                                </div>
-                                <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
-                                <div class="btn-group w-100 mb-3" role="group">
-                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
-                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
-                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
-                                    <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
-                    
-                    <!-- Komunikaty na ekran gry -->
-                    <div class="card mb-4">
-                        <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
-                        <div class="card-body">
-                            <p class="text-muted small mb-3" data-translate="messages_description">
-                                Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
-                            </p>
-                            <div class="mb-3">
-                                <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
-                                <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
-                                <small class="text-muted">
-                                    <span id="message-char-count">0</span> / 500 znaków
-                                </small>
-                            </div>
-                            <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
-                            <div id="message-status" class="mt-2"></div>
-                        </div>
-                    </div>
-                </div> <!-- Koniec prawej kolumny -->
-            </div>
-        </div>
+               
         
         {% if is_superhost %}
         <div class="tab-pane fade" id="qrcodes">
@@ -1588,6 +1532,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
                 document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
             }
+            
+            // ✅ Załaduj stan hasła od razu przy inicjalizacji
+            loadPasswordState();
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
@@ -2039,6 +1986,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
