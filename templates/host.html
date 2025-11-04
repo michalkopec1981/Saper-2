@@ -1820,6 +1820,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (confirmBtn) {
             confirmBtn.disabled = true;
         }
+        
+        // ✅ NOWE: Aktualizuj również podgląd w zakładce Gra
+        renderGamePasswordPreview();
     }
     
     document.getElementById('password-edit-ok-btn')?.addEventListener('click', async () => {
@@ -1925,6 +1928,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
