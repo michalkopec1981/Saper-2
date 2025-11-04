@@ -647,6 +647,7 @@
         messages_description: 'Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.',
         message_label: 'Treść komunikatu (max 500 znaków):',
         send_message: 'Wyślij komunikat',
+        password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
     },
     en: {
         host_title: 'GAME ORGANIZATION',
@@ -734,6 +735,7 @@
         messages_description: 'Send a message that will appear on the main game screen. Use this to share important information with all participants.',
         message_label: 'Message content (max 500 characters):',
         send_message: 'Send message',
+        password_preview: 'Password',  // ⬅️ DODAJ TĘ LINIĘ
     }
 };
 
@@ -1688,6 +1690,40 @@ document.addEventListener('DOMContentLoaded', function () {
     let autoRevealEnabled = true;
     let selectedLettersForReveal = new Set();
     let passwordLetters = [];
+
+
+      // ✅ NOWA FUNKCJA: Renderowanie podglądu hasła w zakładce Gra
+    function renderGamePasswordPreview() {
+        const container = document.getElementById('game-password-display');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        for (let i = 0; i < currentPassword.length; i++) {
+            const char = currentPassword[i];
+            const isRevealed = revealedLettersIndices.has(i);
+            
+            if (char === ' ') {
+                // Spacja = odstęp
+                const spaceEl = document.createElement('div');
+                spaceEl.style.width = '15px';
+                spaceEl.style.height = '30px';
+                container.appendChild(spaceEl);
+            } else {
+                // Litera = badge (czerwony lub zielony)
+                const span = document.createElement('span');
+                span.className = isRevealed ? 'badge bg-success' : 'badge bg-danger';
+                span.textContent = char;
+                span.style.fontSize = '0.9rem';      // Mniejsza czcionka
+                span.style.width = '28px';           // Mniejszy rozmiar
+                span.style.height = '28px';
+                span.style.display = 'inline-flex';
+                span.style.alignItems = 'center';
+                span.style.justifyContent = 'center';
+                container.appendChild(span);
+            }
+        }
+    }
     
     async function loadPasswordState() {
         try {
@@ -1882,6 +1918,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
