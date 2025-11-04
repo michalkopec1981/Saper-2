@@ -1751,6 +1751,9 @@ document.addEventListener('DOMContentLoaded', function () {
             
             renderPasswordLetters();
             
+       // ✅ NOWE: Renderuj również podgląd w zakładce Gra
+            renderGamePasswordPreview();
+            
         } catch (error) {
             console.error('Błąd ładowania hasła:', error);
         }
@@ -1918,6 +1921,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
