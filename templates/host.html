@@ -1452,9 +1452,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     socket.on('password_update', (password) => {
+        const passwordDisplay = document.getElementById('current-password-display');
         if (passwordDisplay) {
             passwordDisplay.textContent = password.split('').join(' ');
         }
+        
+        // ✅ NOWE: Aktualizuj również podgląd hasła w zakładce Gra
+        loadPasswordState();
     });
     
     // Initial state load
@@ -1921,6 +1925,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
