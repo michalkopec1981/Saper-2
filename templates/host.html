@@ -81,6 +81,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
@@ -89,6 +90,7 @@
 
     <div class="tab-content">
         <div class="tab-pane fade show active" id="game">
+            <!-- 1. INFORMACJE O GRZE (bez zmian) -->
             <div class="card mb-4">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="game_info">Informacje o grze</h5></div>
                 <div class="card-body">
@@ -144,8 +146,70 @@
                     </div>
                 </div>
             </div>
-
-            <!-- ✅ NOWE: Pole Hasło pod Informacje o grze - pełna szerokość, klikalne -->
+        
+            <!-- 2. OBSŁUGA GRY (nowa pozycja - pełna szerokość) -->
+            <fieldset id="pre-game-settings">
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Obsługa gry</h5></div>
+                    <div class="card-body">
+                        <!-- Pierwszy rząd: główne przyciski sterowania -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-3">
+                                <button id="start-game" class="btn btn-success w-100" data-translate="start_game">Start Gry</button>
+                            </div>
+                            <div class="col-3">
+                                <button id="pause-btn" data-control="pause" class="btn btn-warning w-100" data-translate="pause">Pauza</button>
+                            </div>
+                            <div class="col-3">
+                                <button id="stop-game" class="btn btn-danger w-100" data-translate="stop_game">Stop Gry</button>
+                            </div>
+                            <div class="col-3">
+                                <button id="reset-game" class="btn btn-dark w-100" data-translate="reset_game">Reset Gry</button>
+                            </div>
+                        </div>
+        
+                        <hr>
+        
+                        <!-- Drugi rząd: szybki dostęp do zakładek -->
+                        <div class="row g-2">
+                            {% if is_superhost %}
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="qrcodes" data-translate="tab_qrcodes">Kody QR</button>
+                            </div>
+                            {% endif %}
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="password" data-translate="tab_password">Hasło</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="players" data-translate="tab_players">Gracze</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="questions" data-translate="tab_questions">Pytania</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="display" data-translate="tab_display">Wyświetlacz</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="timing" data-translate="tab_timing">Czas i tempo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        
+            <!-- 3. POLE HASŁO (pełna szerokość, klikalne) -->
             <div class="card mb-4" id="password-preview-card">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="password_preview">Hasło</h5>
@@ -159,41 +223,25 @@
                 </div>
             </div>
             
-            <div class="row">
-                <!-- Lewa kolumna: Obsługa gry -->
-                <div class="col-lg-6">
-                    <fieldset id="pre-game-settings">
-                        <div class="card mb-4">
-                            <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Obsługa gry</h5></div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2 mb-3">
-                                    <button id="start-game" class="btn btn-success btn-lg" data-translate="start_game">Start Gry</button>
-                                    <button id="pause-btn" data-control="pause" class="btn btn-warning btn-lg" data-translate="pause">Pauza</button>
-                                    <button id="stop-game" class="btn btn-danger btn-lg" data-translate="stop_game">Stop Gry</button>
-                                    <button id="reset-game" class="btn btn-dark btn-lg" data-translate="reset_game">Reset Gry</button>
-                                </div>
-
-                                <hr>
-
-                                <div class="mb-3">
-                                    <div class="row g-2">
-                                        {% if is_superhost %}
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="qrcodes" data-translate="tab_qrcodes">Kody QR</button></div>
-                                        {% endif %}
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="password" data-translate="tab_password">Hasło</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="players" data-translate="tab_players">Gracze</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="questions" data-translate="tab_questions">Pytania</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="display" data-translate="tab_display">Wyświetlacz</button></div>
-                                        <div class="col-3"><button class="btn btn-secondary btn-sm w-100 text-white quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </fieldset>
+            <!-- 4. KOMUNIKATY NA EKRAN GRY (pełna szerokość) -->
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3" data-translate="messages_description">
+                        Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
+                    </p>
+                    <div class="mb-3">
+                        <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
+                        <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
+                        <small class="text-muted">
+                            <span id="message-char-count">0</span> / 500 znaków
+                        </small>
+                    </div>
+                    <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
+                    <div id="message-status" class="mt-2"></div>
                 </div>
+            </div>
+        </div>
                 
                 <!-- ✅ NOWA PRAWA KOLUMNA -->
                 <div class="col-lg-6">
@@ -436,6 +484,41 @@
             </div>
         </div>
 
+        <div class="tab-pane fade" id="timing">
+            <fieldset id="timing-settings" disabled>
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0" data-translate="timing_settings">Czas i tempo gry</h5></div>
+                    <div class="card-body" id="timing-controls">
+                        <div class="mb-3">
+                            <label for="game-duration-input-2" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="game-duration-input-2" value="60" min="1">
+                                <button class="btn btn-primary" id="set-time-btn-2" data-translate="set_time_btn">OK</button>
+                            </div>
+                            <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
+                        </div>
+        
+                        <hr>
+        
+                        <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
+                        </div>
+                        <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
         <!-- ✅ NOWA ZAKŁADKA: WYŚWIETLACZ -->
         <div class="tab-pane fade" id="display">
             <div class="card">
@@ -658,6 +741,8 @@
         message_label: 'Treść komunikatu (max 500 znaków):',
         send_message: 'Wyślij komunikat',
         password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
+        tab_timing: 'Czas i tempo',
+        timing_settings: 'Czas i tempo gry',
     },
     en: {
         host_title: 'GAME ORGANIZATION',
@@ -746,6 +831,8 @@
         message_label: 'Message content (max 500 characters):',
         send_message: 'Send message',
         password_preview: 'Password',  // ⬅️ DODAJ TĘ LINIĘ
+        tab_timing: 'Time & Speed',
+        timing_settings: 'Game Time and Speed',
     }
 };
 
