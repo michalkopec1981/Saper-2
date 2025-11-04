@@ -243,7 +243,28 @@
             </div>
         </div>
                 
-               
+            <!-- 5. TEMPO GRY ORAZ PUNKTACJA (pełna szerokość) -->
+            <fieldset id="in-game-settings" disabled>
+                <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
+                    <div class="card-body" id="game-controls">
+                        <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
+                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
+                        </div>
+                        <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>   
         
         {% if is_superhost %}
         <div class="tab-pane fade" id="qrcodes">
@@ -1986,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
