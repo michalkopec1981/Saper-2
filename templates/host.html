@@ -1554,8 +1554,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
             }
             
-            // ✅ Załaduj stan hasła od razu przy inicjalizacji
-            loadPasswordState();
+            // ✅ Załaduj stan hasła od razu przy inicjalizacji - WYMUSZONY
+            setTimeout(() => loadPasswordState(), 100);
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
@@ -2007,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
