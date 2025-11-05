@@ -1559,54 +1559,13 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
-    // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
-    document.getElementById('set-time-btn')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
-        console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
-        
-        if (isNaN(minutes) || minutes < 1) {
-            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
-            return;
-        }
-        
-        if (!isGameActive) {
-            // ✅ PRZED GRĄ: Po prostu zapisz wartość (nie uruchamiaj gry)
-            alert(`Czas gry ustawiony na ${minutes} minut. Kliknij "Start Gry", aby rozpocząć.`);
-        } else {
-            // ✅ PODCZAS GRY: Zmień czas (wymaga hasła)
-            const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
-            if (!password) return;
-            
-            if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${minutes} minut?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/host/adjust_time', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        new_minutes: minutes,
-                        password: password 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Błąd zmiany czasu');
-                }
-                
-                alert(result.message || 'Czas gry został zmieniony!');
-            } catch (error) {
-                alert('Błąd: ' + error.message);
-            }
-        }
-    });
+    // Przycisk Start Gry - obsługa poniżej
     
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
+        const gameDurationInput = document.getElementById('game-duration-input');
+        const minutes = gameDurationInput ? parseInt(gameDurationInput.value) : 30;
+        
         console.log('🎮 Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
@@ -2007,6 +1966,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
 
 
 
