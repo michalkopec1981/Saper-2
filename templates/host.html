@@ -53,6 +53,30 @@
     #password-preview-card:hover {
         background-color: #f8f9fa;
     }
+
+    /* Styl dla zakładki Minigry */
+    #minigry-tab {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    #minigry-tab:hover {
+        background-color: #0b5ed7 !important;
+        color: white !important;
+    }
+    #minigry-tab.active {
+        background-color: #0a58ca !important;
+        color: white !important;
+    }
+
+    /* Styl dla przycisku szybkiej nawigacji Minigry */
+    .quick-tab-btn[data-tab="minigames"] {
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+    .quick-tab-btn[data-tab="minigames"]:hover {
+        background-color: #0b5ed7 !important;
+        border-color: #0b5ed7 !important;
+    }
 </style>
 {% endblock %}
 
@@ -80,7 +104,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
+        <li class="nav-item"><button id="minigry-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
