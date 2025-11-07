@@ -3,6 +3,7 @@ monkey.patch_all()
 
 import os
 import random
+import json
 from flask import Flask, render_template, request, jsonify, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit, join_room
@@ -10,6 +11,14 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
+
+# Import dla Claude API
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    print("⚠️  anthropic package not installed. AI question generation will be limited.")
 
 # Inicjalizacja
 app = Flask(__name__)
@@ -133,6 +142,35 @@ class GameState(db.Model):
     value = db.Column(db.String(255), nullable=False)
     __table_args__ = (db.UniqueConstraint('event_id', 'key', name='_event_key_uc'),)
 
+class AICategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    is_enabled = db.Column(db.Boolean, default=True)
+    is_custom = db.Column(db.Boolean, default=False)
+    difficulty_level = db.Column(db.String(20), default='easy')
+    __table_args__ = (db.UniqueConstraint('event_id', 'name', name='_event_category_uc'),)
+
+class AIQuestion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey('ai_category.id', ondelete='CASCADE'), nullable=False)
+    text = db.Column(db.String(500), nullable=False)
+    option_a = db.Column(db.String(200), nullable=False)
+    option_b = db.Column(db.String(200), nullable=False)
+    option_c = db.Column(db.String(200), nullable=False)
+    correct_answer = db.Column(db.String(1), nullable=False)
+    source = db.Column(db.String(20), default='generated')
+    times_shown = db.Column(db.Integer, default=0)
+    times_correct = db.Column(db.Integer, default=0)
+
+class AIPlayerAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('ai_question.id', ondelete='CASCADE'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_ai_question_uc'),)
+
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
@@ -194,6 +232,110 @@ def init_db_command():
 
 
 # --- Funkcje Pomocnicze ---
+def init_default_ai_categories(event_id):
+    """Inicjalizuje domyślne 10 kategorii AI dla eventu"""
+    default_categories = [
+        'Historia powszechna',
+        'Geografia',
+        'Znane postaci',
+        'Muzyka',
+        'Literatura',
+        'Kuchnia',
+        'Film',
+        'Nauki ścisłe',
+        'Historia Polski',
+        'Sport'
+    ]
+
+    for cat_name in default_categories:
+        existing = AICategory.query.filter_by(event_id=event_id, name=cat_name).first()
+        if not existing:
+            category = AICategory(
+                event_id=event_id,
+                name=cat_name,
+                is_enabled=True,
+                is_custom=False,
+                difficulty_level='easy'
+            )
+            db.session.add(category)
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error initializing AI categories: {e}")
+
+def generate_ai_questions_with_claude(category_name, difficulty_level='easy', count=10):
+    """Generuje pytania AI przy użyciu Claude API"""
+    if not ANTHROPIC_AVAILABLE:
+        return {'error': 'Claude API nie jest dostępne. Zainstaluj pakiet anthropic.'}
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return {'error': 'Brak klucza API dla Claude (ANTHROPIC_API_KEY)'}
+
+    difficulty_mapping = {
+        'easy': 'łatwy (podstawowa wiedza ogólna)',
+        'medium': 'średni (wymaga pewnej wiedzy specjalistycznej)',
+        'advanced': 'zaawansowany (wymaga głębokiej wiedzy specjalistycznej)'
+    }
+
+    difficulty_desc = difficulty_mapping.get(difficulty_level, 'łatwy')
+
+    prompt = f"""Wygeneruj dokładnie {count} pytań testowych z kategorii "{category_name}" na poziomie trudności: {difficulty_desc}.
+
+Każde pytanie powinno:
+- Mieć treść pytania (maksymalnie 200 znaków)
+- Mieć 3 odpowiedzi (A, B, C) - każda maksymalnie 100 znaków
+- Mieć jedną poprawną odpowiedź (A, B lub C)
+
+Zwróć odpowiedź w formacie JSON (tylko czysty JSON, bez żadnego dodatkowego tekstu):
+[
+  {{
+    "text": "Treść pytania?",
+    "option_a": "Odpowiedź A",
+    "option_b": "Odpowiedź B",
+    "option_c": "Odpowiedź C",
+    "correct_answer": "A"
+  }},
+  ...
+]
+
+WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudności."""
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=4000,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
+        )
+
+        # Wyciągnij treść odpowiedzi
+        response_text = message.content[0].text.strip()
+
+        # Usuń ewentualne markdown backticks
+        if response_text.startswith('```json'):
+            response_text = response_text[7:]
+        if response_text.startswith('```'):
+            response_text = response_text[3:]
+        if response_text.endswith('```'):
+            response_text = response_text[:-3]
+
+        response_text = response_text.strip()
+
+        # Parse JSON
+        questions = json.loads(response_text)
+
+        return {'success': True, 'questions': questions}
+
+    except Exception as e:
+        print(f"Error generating AI questions: {e}")
+        return {'error': f'Błąd podczas generowania pytań: {str(e)}'}
+
 def get_game_state(event_id, key, default=None):
     state = GameState.query.filter_by(event_id=event_id, key=key).first()
     return state.value if state else default
@@ -464,6 +606,8 @@ def manage_events():
         db.session.add(new_event)
         try:
             db.session.commit()
+            # Inicjalizuj domyślne kategorie AI dla nowego eventu
+            init_default_ai_categories(new_id)
         except Exception as e:
             db.session.rollback()
             return jsonify({'error': 'Błąd podczas tworzenia eventu'}), 500
@@ -547,7 +691,14 @@ def reset_event(event_id):
         FunnyPhoto.query.filter_by(event_id=event_id).delete()
         PhotoVote.query.filter_by(event_id=event_id).delete()
         GameState.query.filter_by(event_id=event_id).delete()
+        AIQuestion.query.filter_by(event_id=event_id).delete()
+        AIPlayerAnswer.query.filter_by(event_id=event_id).delete()
+        AICategory.query.filter_by(event_id=event_id).delete()
         db.session.commit()
+
+        # Reinicjalizuj domyślne kategorie AI
+        init_default_ai_categories(event_id)
+
         room = f'event_{event_id}'
         emit_leaderboard_update(room)
         emit_password_update(room)
@@ -574,6 +725,70 @@ def admin_generate_qr_codes():
             db.session.add(QRCode(code_identifier=f"{prefix}{i}", color=color, event_id=event_id))
     db.session.commit()
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
+
+# --- API: ADMIN AI Questions Management ---
+@app.route('/api/admin/ai/categories/<int:event_id>', methods=['GET'])
+@admin_required
+def get_admin_ai_categories(event_id):
+    """Pobierz wszystkie kategorie AI dla eventu (Admin)"""
+    categories = AICategory.query.filter_by(event_id=event_id).all()
+    result = []
+
+    for cat in categories:
+        question_count = AIQuestion.query.filter_by(category_id=cat.id).count()
+        result.append({
+            'id': cat.id,
+            'name': cat.name,
+            'is_enabled': cat.is_enabled,
+            'is_custom': cat.is_custom,
+            'difficulty_level': cat.difficulty_level,
+            'question_count': question_count
+        })
+
+    return jsonify(result)
+
+@app.route('/api/admin/ai/questions/<int:category_id>', methods=['GET'])
+@admin_required
+def get_admin_ai_questions(category_id):
+    """Pobierz wszystkie pytania AI dla kategorii (Admin)"""
+    questions = AIQuestion.query.filter_by(category_id=category_id).all()
+    return jsonify([{
+        'id': q.id,
+        'text': q.text,
+        'option_a': q.option_a,
+        'option_b': q.option_b,
+        'option_c': q.option_c,
+        'correct_answer': q.correct_answer,
+        'source': q.source,
+        'times_shown': q.times_shown,
+        'times_correct': q.times_correct
+    } for q in questions])
+
+@app.route('/api/admin/ai/question/<int:question_id>', methods=['PUT', 'DELETE'])
+@admin_required
+def update_or_delete_ai_question(question_id):
+    """Edytuj lub usuń pytanie AI (Admin)"""
+    question = db.session.get(AIQuestion, question_id)
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    if request.method == 'PUT':
+        data = request.json
+        question.text = data.get('text', question.text)
+        question.option_a = data.get('option_a', question.option_a)
+        question.option_b = data.get('option_b', question.option_b)
+        question.option_c = data.get('option_c', question.option_c)
+        question.correct_answer = data.get('correct_answer', question.correct_answer)
+        question.source = 'edited'
+        db.session.commit()
+
+        return jsonify({'message': 'Pytanie zaktualizowane'})
+
+    if request.method == 'DELETE':
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie usunięte'})
 
 @app.route('/api/host/qrcodes', methods=['GET'])
 @host_required
@@ -1020,6 +1235,135 @@ def get_host_qr_counts():
     }
     return jsonify(counts)
 
+# --- API: HOST AI Categories ---
+@app.route('/api/host/ai/categories', methods=['GET', 'POST'])
+@host_required
+def manage_ai_categories():
+    event_id = session['host_event_id']
+
+    if request.method == 'GET':
+        categories = AICategory.query.filter_by(event_id=event_id).all()
+        return jsonify([{
+            'id': c.id,
+            'name': c.name,
+            'is_enabled': c.is_enabled,
+            'is_custom': c.is_custom,
+            'difficulty_level': c.difficulty_level
+        } for c in categories])
+
+    if request.method == 'POST':
+        data = request.json
+        name = data.get('name', '').strip()
+        difficulty = data.get('difficulty_level', 'easy')
+
+        if not name:
+            return jsonify({'error': 'Nazwa kategorii nie może być pusta'}), 400
+
+        # Sprawdź czy kategoria już istnieje
+        existing = AICategory.query.filter_by(event_id=event_id, name=name).first()
+        if existing:
+            return jsonify({'error': 'Kategoria o tej nazwie już istnieje'}), 409
+
+        new_category = AICategory(
+            event_id=event_id,
+            name=name,
+            is_enabled=True,
+            is_custom=True,
+            difficulty_level=difficulty
+        )
+        db.session.add(new_category)
+        db.session.commit()
+
+        return jsonify({
+            'id': new_category.id,
+            'name': new_category.name,
+            'is_enabled': new_category.is_enabled,
+            'is_custom': new_category.is_custom,
+            'difficulty_level': new_category.difficulty_level
+        })
+
+@app.route('/api/host/ai/category/<int:category_id>', methods=['PUT', 'DELETE'])
+@host_required
+def update_or_delete_ai_category(category_id):
+    event_id = session['host_event_id']
+    category = AICategory.query.filter_by(id=category_id, event_id=event_id).first()
+
+    if not category:
+        return jsonify({'error': 'Nie znaleziono kategorii'}), 404
+
+    if request.method == 'PUT':
+        data = request.json
+        category.is_enabled = data.get('is_enabled', category.is_enabled)
+        category.difficulty_level = data.get('difficulty_level', category.difficulty_level)
+        db.session.commit()
+
+        return jsonify({
+            'id': category.id,
+            'name': category.name,
+            'is_enabled': category.is_enabled,
+            'is_custom': category.is_custom,
+            'difficulty_level': category.difficulty_level
+        })
+
+    if request.method == 'DELETE':
+        if not category.is_custom:
+            return jsonify({'error': 'Nie można usunąć predefiniowanej kategorii'}), 403
+
+        AIQuestion.query.filter_by(category_id=category_id).delete()
+        db.session.delete(category)
+        db.session.commit()
+
+        return jsonify({'message': 'Kategoria została usunięta'})
+
+@app.route('/api/host/ai/generate_questions/<int:category_id>', methods=['POST'])
+@host_required
+def generate_questions_for_category(category_id):
+    """Generuje pytania AI dla custom kategorii używając Claude API"""
+    event_id = session['host_event_id']
+    category = AICategory.query.filter_by(id=category_id, event_id=event_id).first()
+
+    if not category:
+        return jsonify({'error': 'Nie znaleziono kategorii'}), 404
+
+    if not category.is_custom:
+        return jsonify({'error': 'Generowanie pytań dostępne tylko dla custom kategorii'}), 403
+
+    data = request.json
+    count = data.get('count', 10)
+
+    # Generuj pytania używając Claude API
+    result = generate_ai_questions_with_claude(
+        category.name,
+        category.difficulty_level,
+        count
+    )
+
+    if 'error' in result:
+        return jsonify(result), 500
+
+    # Zapisz wygenerowane pytania do bazy
+    generated_count = 0
+    for q_data in result['questions']:
+        new_question = AIQuestion(
+            event_id=event_id,
+            category_id=category_id,
+            text=q_data['text'],
+            option_a=q_data['option_a'],
+            option_b=q_data['option_b'],
+            option_c=q_data['option_c'],
+            correct_answer=q_data['correct_answer'].upper(),
+            source='generated'
+        )
+        db.session.add(new_question)
+        generated_count += 1
+
+    db.session.commit()
+
+    return jsonify({
+        'message': f'Wygenerowano {generated_count} pytań dla kategorii {category.name}',
+        'count': generated_count
+    })
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():
@@ -1118,46 +1462,67 @@ def scan_qr():
     # BIAŁE I ŻÓŁTE KODY (wielorazowe - quizy)
     if qr_code.color in ['white', 'yellow']:
         last_scan = PlayerScan.query.filter_by(
-            player_id=player_id, 
+            player_id=player_id,
             color_category=qr_code.color
         ).order_by(PlayerScan.scan_time.desc()).first()
-        
+
         if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
             wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
             return jsonify({
-                'status': 'wait', 
+                'status': 'wait',
                 'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'
             }), 429
-        
+
         db.session.add(PlayerScan(
-            player_id=player_id, 
-            qrcode_id=qr_code.id, 
-            event_id=event_id, 
+            player_id=player_id,
+            qrcode_id=qr_code.id,
+            event_id=event_id,
             color_category=qr_code.color
         ))
-        
-        quiz_category = 'company' if qr_code.color == 'white' else 'world'
+        db.session.commit()
+
+        # BIAŁY KOD - wybór między pytaniami ręcznymi i AI
+        if qr_code.color == 'white':
+            # Sprawdź czy są dostępne pytania AI
+            active_ai_categories = AICategory.query.filter_by(event_id=event_id, is_enabled=True).all()
+
+            # Jeśli są aktywne kategorie AI, pokaż wybór kategorii
+            if active_ai_categories:
+                return jsonify({
+                    'status': 'ai_categories',
+                    'categories': [{
+                        'id': cat.id,
+                        'name': cat.name,
+                        'difficulty_level': cat.difficulty_level
+                    } for cat in active_ai_categories]
+                })
+            # Jeśli nie ma kategorii AI, pokaż pytania ręczne
+            quiz_category = 'company'
+        else:
+            # ŻÓŁTY KOD - pytania world
+            quiz_category = 'world'
+
+        # Pokaż pytania ręczne (dla żółtego lub białego bez kategorii AI)
         answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
         question = Question.query.filter(
-            Question.id.notin_(answered_ids), 
-            Question.event_id == event_id, 
+            Question.id.notin_(answered_ids),
+            Question.event_id == event_id,
             Question.category == quiz_category
         ).order_by(db.func.random()).first()
-        
+
         if not question:
             return jsonify({
-                'status': 'info', 
+                'status': 'info',
                 'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'
             })
-        
-        db.session.commit()
+
         return jsonify({
-            'status': 'question', 
+            'status': 'question',
             'question': {
-                'id': question.id, 
-                'text': question.text, 
-                'option_a': question.option_a, 
-                'option_b': question.option_b, 
+                'id': question.id,
+                'text': question.text,
+                'option_a': question.option_a,
+                'option_b': question.option_b,
                 'option_c': question.option_c
             }
         })
@@ -1277,6 +1642,108 @@ def scan_qr():
         db.session.commit()
         emit_leaderboard_update(f'event_{event_id}')
         return jsonify({'status': 'info', 'message': message, 'score': player.score})
+
+# --- API: PLAYER AI Questions ---
+@app.route('/api/player/ai/categories/<int:event_id>', methods=['GET'])
+def get_ai_categories_for_player(event_id):
+    """Pobierz aktywne kategorie AI dla gracza"""
+    categories = AICategory.query.filter_by(event_id=event_id, is_enabled=True).all()
+    return jsonify([{
+        'id': c.id,
+        'name': c.name,
+        'difficulty_level': c.difficulty_level
+    } for c in categories])
+
+@app.route('/api/player/ai/get_question', methods=['POST'])
+def get_ai_question():
+    """Pobierz losowe pytanie AI z wybranej kategorii"""
+    data = request.json
+    player_id = data.get('player_id')
+    category_id = data.get('category_id')
+    event_id = data.get('event_id')
+
+    player = db.session.get(Player, player_id)
+    category = db.session.get(AICategory, category_id)
+
+    if not player or not category:
+        return jsonify({'error': 'Nieprawidłowe dane'}), 404
+
+    # Znajdź pytania na które gracz jeszcze nie odpowiedział
+    answered_ids = [ans.question_id for ans in AIPlayerAnswer.query.filter_by(player_id=player_id).all()]
+
+    question = AIQuestion.query.filter(
+        AIQuestion.category_id == category_id,
+        AIQuestion.event_id == event_id,
+        AIQuestion.id.notin_(answered_ids) if answered_ids else True
+    ).order_by(db.func.random()).first()
+
+    if not question:
+        return jsonify({
+            'status': 'info',
+            'message': f'Odpowiedziałeś na wszystkie pytania z kategorii {category.name}!'
+        })
+
+    # Zwiększ licznik wyświetleń
+    question.times_shown += 1
+    db.session.commit()
+
+    return jsonify({
+        'status': 'question',
+        'question': {
+            'id': question.id,
+            'text': question.text,
+            'option_a': question.option_a,
+            'option_b': question.option_b,
+            'option_c': question.option_c,
+            'category_name': category.name
+        }
+    })
+
+@app.route('/api/player/ai/answer', methods=['POST'])
+def process_ai_answer():
+    """Przetwarza odpowiedź na pytanie AI"""
+    data = request.json
+    player_id = data.get('player_id')
+    question_id = data.get('question_id')
+    answer = data.get('answer')
+
+    player = db.session.get(Player, player_id)
+    question = db.session.get(AIQuestion, question_id)
+
+    if not player or not question:
+        return jsonify({'error': 'Nieprawidłowe dane'}), 404
+
+    # Zapisz odpowiedź gracza
+    db.session.add(AIPlayerAnswer(
+        player_id=player_id,
+        question_id=question_id,
+        event_id=player.event_id
+    ))
+
+    if answer == question.correct_answer:
+        # Zwiększ licznik poprawnych odpowiedzi
+        question.times_correct += 1
+
+        # Punkty za pytania AI - 5 punktów
+        player.score += 5
+
+        db.session.commit()
+        emit_leaderboard_update(f'event_{player.event_id}')
+
+        return jsonify({
+            'correct': True,
+            'score': player.score,
+            'message': 'Poprawna odpowiedź! +5 punktów'
+        })
+    else:
+        # Brak odjęcia punktów za błędną odpowiedź w pytaniach AI
+        db.session.commit()
+
+        return jsonify({
+            'correct': False,
+            'score': player.score,
+            'message': 'Niepoprawna odpowiedź'
+        })
 
 @app.route('/api/player/answer', methods=['POST'])
 def process_answer():

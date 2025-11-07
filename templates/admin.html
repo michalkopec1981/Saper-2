@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-sm btn-danger btn-delete btn-fixed-width" ${deleteBtnVisibility}>Usuń Event</button>
                         <button class="btn btn-sm btn-danger btn-reset btn-fixed-width">Reset Gry</button>
                         <a href="/admin/qrcodes/${event.id}" class="btn btn-sm btn-secondary btn-fixed-width">Kody QR</a>
+                        <button class="btn btn-sm btn-info btn-ai-questions btn-fixed-width" data-event-id="${event.id}">Pytania AI</button>
                         <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary btn-fixed-width">Panel Hosta</a>
                         <button class="btn btn-sm btn-success btn-save btn-fixed-width">Zapisz Zmiany</button>
                     </div>
@@ -302,6 +303,151 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Obsługa przycisku "Pytania AI"
+    eventsContainer.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('btn-ai-questions')) {
+            const eventId = e.target.dataset.eventId;
+            showAIQuestionsModal(eventId);
+        }
+    });
+
+    async function showAIQuestionsModal(eventId) {
+        // Pobierz kategorie AI
+        const categories = await fetchApi(`/api/admin/ai/categories/${eventId}`);
+        if (!categories) return;
+
+        // Utwórz modal
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'aiQuestionsModal';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Pytania AI - Event #${eventId}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Wybierz kategorię:</h6>
+                        <div id="ai-categories-buttons" class="d-flex flex-wrap gap-2 mb-3"></div>
+                        <hr>
+                        <div id="ai-questions-container"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const categoriesButtons = modal.querySelector('#ai-categories-buttons');
+        const questionsContainer = modal.querySelector('#ai-questions-container');
+
+        categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-primary';
+            btn.textContent = `${cat.name} (${cat.question_count})`;
+            btn.onclick = () => loadAIQuestions(cat.id, cat.name, questionsContainer);
+            categoriesButtons.appendChild(btn);
+        });
+
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+
+        modal.addEventListener('hidden.bs.modal', () => {
+            modal.remove();
+        });
+    }
+
+    async function loadAIQuestions(categoryId, categoryName, container) {
+        const questions = await fetchApi(`/api/admin/ai/questions/${categoryId}`);
+        if (!questions) return;
+
+        if (questions.length === 0) {
+            container.innerHTML = '<p class="text-muted">Brak pytań w tej kategorii.</p>';
+            return;
+        }
+
+        container.innerHTML = `<h6>Pytania z kategorii: ${categoryName}</h6>`;
+
+        questions.forEach((q, index) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'card mb-2';
+            questionCard.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <strong>${index + 1}. ${q.text}</strong>
+                            <div class="mt-2">
+                                <span class="badge ${q.correct_answer === 'A' ? 'bg-success' : 'bg-secondary'}">A) ${q.option_a}</span>
+                                <span class="badge ${q.correct_answer === 'B' ? 'bg-success' : 'bg-secondary'}">B) ${q.option_b}</span>
+                                <span class="badge ${q.correct_answer === 'C' ? 'bg-success' : 'bg-secondary'}">C) ${q.option_c}</span>
+                            </div>
+                            <div class="mt-2 text-muted small">
+                                Wyświetlono: ${q.times_shown} | Poprawne: ${q.times_correct} | Źródło: ${q.source}
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-warning" onclick="editAIQuestion(${q.id})">Edytuj</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteAIQuestion(${q.id}, ${categoryId}, '${categoryName}')">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(questionCard);
+        });
+    }
+
+    window.editAIQuestion = async function(questionId) {
+        // Pobierz szczegóły pytania i umożliw edycję
+        const newText = prompt('Nowa treść pytania:');
+        if (!newText) return;
+
+        const optionA = prompt('Odpowiedź A:');
+        const optionB = prompt('Odpowiedź B:');
+        const optionC = prompt('Odpowiedź C:');
+        const correctAnswer = prompt('Poprawna odpowiedź (A, B lub C):').toUpperCase();
+
+        if (!optionA || !optionB || !optionC || !['A', 'B', 'C'].includes(correctAnswer)) {
+            showStatus('Nieprawidłowe dane pytania', 'danger');
+            return;
+        }
+
+        const result = await fetchApi(`/api/admin/ai/question/${questionId}`, {
+            method: 'PUT',
+            body: {
+                text: newText,
+                option_a: optionA,
+                option_b: optionB,
+                option_c: optionC,
+                correct_answer: correctAnswer
+            }
+        });
+
+        if (result) {
+            showStatus('Pytanie zaktualizowane', 'success');
+            // Reload modal
+            const btn = document.querySelector('.btn-ai-questions');
+            if (btn) btn.click();
+        }
+    };
+
+    window.deleteAIQuestion = async function(questionId, categoryId, categoryName) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        const result = await fetchApi(`/api/admin/ai/question/${questionId}`, {
+            method: 'DELETE'
+        });
+
+        if (result) {
+            showStatus('Pytanie usunięte', 'success');
+            // Reload questions for this category
+            const container = document.getElementById('ai-questions-container');
+            if (container) {
+                loadAIQuestions(categoryId, categoryName, container);
+            }
+        }
+    };
 
     loadEvents();
 });
