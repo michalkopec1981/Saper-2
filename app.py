@@ -271,12 +271,21 @@ def init_default_ai_categories(event_id):
 
 def generate_ai_questions_with_claude(category_name, difficulty_level='easy', count=10):
     """Generuje pytania AI przy użyciu Claude API"""
+    print(f"🤖 Attempting to generate {count} AI questions for category: {category_name}")
+
     if not ANTHROPIC_AVAILABLE:
-        return {'error': 'Claude API nie jest dostępne. Zainstaluj pakiet anthropic.'}
+        error_msg = 'Claude API nie jest dostępne. Zainstaluj pakiet anthropic.'
+        print(f"❌ {error_msg}")
+        return {'error': error_msg}
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
-        return {'error': 'Brak klucza API dla Claude (ANTHROPIC_API_KEY)'}
+        error_msg = 'Brak klucza API dla Claude. Ustaw zmienną środowiskową ANTHROPIC_API_KEY w konfiguracji serwera.'
+        print(f"❌ {error_msg}")
+        print(f"ℹ️  Dostępne zmienne środowiskowe: {', '.join([k for k in os.environ.keys() if 'ANTHROPIC' in k.upper() or 'API' in k.upper()])}")
+        return {'error': error_msg}
+
+    print(f"✅ API key found (length: {len(api_key)}, starts with: {api_key[:10]}...)")
 
     difficulty_mapping = {
         'easy': 'łatwy (podstawowa wiedza ogólna)',
@@ -308,7 +317,10 @@ Zwróć odpowiedź w formacie JSON (tylko czysty JSON, bez żadnego dodatkowego 
 WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudności."""
 
     try:
+        print(f"📡 Connecting to Claude API...")
         client = anthropic.Anthropic(api_key=api_key)
+
+        print(f"🔄 Sending request to Claude API...")
         message = client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=4000,
@@ -317,6 +329,8 @@ WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudnośc
                 "content": prompt
             }]
         )
+
+        print(f"✅ Received response from Claude API")
 
         # Wyciągnij treść odpowiedzi
         response_text = message.content[0].text.strip()
@@ -334,11 +348,16 @@ WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudnośc
         # Parse JSON
         questions = json.loads(response_text)
 
+        print(f"✅ Successfully generated {len(questions)} questions")
         return {'success': True, 'questions': questions}
 
     except Exception as e:
-        print(f"Error generating AI questions: {e}")
-        return {'error': f'Błąd podczas generowania pytań: {str(e)}'}
+        error_type = type(e).__name__
+        error_msg = str(e)
+        print(f"❌ Error generating AI questions [{error_type}]: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return {'error': f'Błąd podczas generowania pytań: {error_msg}'}
 
 def get_game_state(event_id, key, default=None):
     state = GameState.query.filter_by(event_id=event_id, key=key).first()
