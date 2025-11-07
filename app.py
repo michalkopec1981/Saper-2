@@ -1,6 +1,10 @@
 from gevent import monkey
 monkey.patch_all()
 
+# Załaduj zmienne środowiskowe z pliku .env
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import random
 import json
