@@ -22,6 +22,13 @@
              <div id="answers" class="d-grid gap-2 mt-3"></div>
         </div>
         <div id="message-section" style="display: none;" class="alert"></div>
+
+        <!-- Wybór kategorii AI -->
+        <div id="ai-category-selection" style="display: none;" class="text-center">
+            <h3>Wybierz kategorię:</h3>
+            <p class="text-muted">Pytania AI - 5 punktów za poprawną odpowiedź</p>
+            <div id="ai-categories-buttons" class="d-grid gap-2 mt-3"></div>
+        </div>
     </div>
     
     <!-- 📸 WIDOK APARATU DO ZDJĘĆ -->
@@ -210,19 +217,23 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentQuestionId = null;
 
     const socket = io();
-    
+
     // Elements
     const nameInputSection = document.getElementById('name-input-section');
     const gameView = document.getElementById('game-view');
     const quizSection = document.getElementById('quiz-section');
     const messageSection = document.getElementById('message-section');
     const photoCaptureView = document.getElementById('photo-capture-view');
+    const aiCategorySelection = document.getElementById('ai-category-selection');
+    const aiCategoriesButtons = document.getElementById('ai-categories-buttons');
     const playerNameInput = document.getElementById('player-name');
     const registerBtn = document.getElementById('register-btn');
     const playerNameDisplay = document.getElementById('player-name-display');
     const playerScoreDisplay = document.getElementById('player-score');
     const questionEl = document.getElementById('question');
     const answersEl = document.getElementById('answers');
+
+    let isAIQuestion = false;
 
     // Photo capture elements
     const cameraFeed = document.getElementById('camera-feed');
@@ -257,7 +268,66 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         messageSection.style.display = 'none';
+        aiCategorySelection.style.display = 'none';
         quizSection.style.display = 'block';
+    }
+
+    // Wyświetl kategorie AI do wyboru
+    async function displayAICategories(categories) {
+        aiCategoriesButtons.innerHTML = '';
+
+        if (!categories || categories.length === 0) {
+            showMessage('Brak dostępnych kategorii AI', 'info');
+            return;
+        }
+
+        categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-primary btn-lg';
+            btn.textContent = cat.name;
+            btn.onclick = () => selectAICategory(cat.id);
+            aiCategoriesButtons.appendChild(btn);
+        });
+
+        messageSection.style.display = 'none';
+        quizSection.style.display = 'none';
+        aiCategorySelection.style.display = 'block';
+    }
+
+    // Wybór kategorii AI i pobranie pytania
+    async function selectAICategory(categoryId) {
+        try {
+            const response = await fetch('/api/player/ai/get_question', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    player_id: parseInt(playerId),
+                    category_id: categoryId,
+                    event_id: parseInt(eventId)
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage(data.error || 'Błąd pobierania pytania', 'danger');
+                return;
+            }
+
+            if (data.status === 'info') {
+                showMessage(data.message, 'info');
+                aiCategorySelection.style.display = 'none';
+                return;
+            }
+
+            if (data.status === 'question') {
+                isAIQuestion = true;
+                displayQuestion(data.question);
+            }
+        } catch (error) {
+            console.error('Error selecting AI category:', error);
+            showMessage('Błąd połączenia z serwerem', 'danger');
+        }
     }
 
     // Register player
@@ -345,7 +415,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (data.status === 'question') {
+                isAIQuestion = false;
                 displayQuestion(data.question);
+            } else if (data.status === 'ai_categories') {
+                // Pokazuje wybór kategorii AI
+                displayAICategories(data.categories);
             } else if (data.status === 'photo_challenge') {
                 startPhotoChallenge();
             } else if (data.status === 'minigame') {
@@ -375,23 +449,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.target.tagName === 'BUTTON') {
             const answer = event.target.dataset.answer;
             try {
-                const response = await fetch('/api/player/answer', {
+                // Różne endpointy dla pytań AI i normalnych
+                const endpoint = isAIQuestion ? '/api/player/ai/answer' : '/api/player/answer';
+
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        player_id: parseInt(playerId), 
-                        question_id: currentQuestionId, 
-                        answer 
+                    body: JSON.stringify({
+                        player_id: parseInt(playerId),
+                        question_id: currentQuestionId,
+                        answer
                     })
                 });
 
                 const data = await response.json();
                 playerScoreDisplay.textContent = data.score;
 
-                if (data.correct) {
-                    showMessage(`✅ Dobrze! Zdobywasz punkty i literę: ${data.letter}`, 'success');
+                if (isAIQuestion) {
+                    // Pytania AI
+                    if (data.correct) {
+                        showMessage(data.message || '✅ Poprawna odpowiedź! +5 punktów', 'success');
+                    } else {
+                        showMessage(data.message || '❌ Niepoprawna odpowiedź', 'danger');
+                    }
                 } else {
-                    showMessage('❌ Zła odpowiedź. Tracisz 5 punktów.', 'danger');
+                    // Pytania normalne
+                    if (data.correct) {
+                        showMessage(`✅ Dobrze! Zdobywasz punkty i literę: ${data.letter}`, 'success');
+                    } else {
+                        showMessage('❌ Zła odpowiedź. Tracisz 5 punktów.', 'danger');
+                    }
                 }
             } catch (error) {
                 showMessage('Błąd połączenia z serwerem', 'danger');
