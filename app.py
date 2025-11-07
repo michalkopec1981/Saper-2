@@ -905,9 +905,11 @@ def get_minigames_status():
     event_id = session['host_event_id']
     tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
     arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'True'
+    snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'True'
     return jsonify({
         'tetris_enabled': not tetris_disabled,
-        'arkanoid_enabled': not arkanoid_disabled
+        'arkanoid_enabled': not arkanoid_disabled,
+        'snake_enabled': not snake_disabled
     })
 
 @app.route('/api/host/minigames/toggle', methods=['POST'])
@@ -922,17 +924,24 @@ def toggle_minigame():
         # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
         set_game_state(event_id, 'minigame_tetris_disabled', 'False' if enabled else 'True')
         return jsonify({
-            'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}', 
+            'message': f'Tetris {"aktywowany" if enabled else "deaktywowany"}',
             'tetris_enabled': enabled
         })
     elif game_type == 'arkanoid':
         # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
         set_game_state(event_id, 'minigame_arkanoid_disabled', 'False' if enabled else 'True')
         return jsonify({
-            'message': f'Arkanoid {"aktywowany" if enabled else "deaktywowany"}', 
+            'message': f'Arkanoid {"aktywowany" if enabled else "deaktywowany"}',
             'arkanoid_enabled': enabled
         })
-    
+    elif game_type == 'snake':
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_snake_disabled', 'False' if enabled else 'True')
+        return jsonify({
+            'message': f'Snake {"aktywowany" if enabled else "deaktywowany"}',
+            'snake_enabled': enabled
+        })
+
     return jsonify({'error': 'Nieznany typ minigry'}), 400
 
 @app.route('/api/host/questions', methods=['GET', 'POST'])
@@ -1157,68 +1166,83 @@ def scan_qr():
     elif qr_code.color == 'green':
         print(f"=== GREEN CODE - MINIGAME MODE ===")
         
-        # Sprawdź czy Tetris lub Arkanoid są aktywne
+        # Sprawdź czy minigry są aktywne
         tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
         arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
-        
-        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}")
-        
-        # Jeśli obie minigry są wyłączone
-        if tetris_disabled == 'True' and arkanoid_disabled == 'True':
+        snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False')
+
+        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}")
+
+        # Jeśli wszystkie minigry są wyłączone
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True':
             message = 'Wszystkie minigry zostały wyłączone przez organizatora.'
             print(f"All minigames DISABLED - returning error")
             return jsonify({'status': 'info', 'message': message})
-        
-        # Sprawdź postęp gracza w obu grach
+
+        # Sprawdź postęp gracza we wszystkich grach
         tetris_score_key = f'minigame_tetris_score_{player_id}'
         arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
-        
+        snake_score_key = f'minigame_snake_score_{player_id}'
+
         current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
         current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
-        
-        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20")
-        
-        # Sprawdź czy gracz ukończył obie gry
+        current_snake_score = int(get_game_state(event_id, snake_score_key, '0'))
+
+        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20")
+
+        # Sprawdź czy gracz ukończył wszystkie gry
         tetris_completed = current_tetris_score >= 20
         arkanoid_completed = current_arkanoid_score >= 20
-        
-        # Jeśli ukończył obie, nie może grać więcej
-        if tetris_completed and arkanoid_completed:
+        snake_completed = current_snake_score >= 20
+
+        # Jeśli ukończył wszystkie, nie może grać więcej
+        if tetris_completed and arkanoid_completed and snake_completed:
             message = 'Ukończyłeś już wszystkie minigry! Świetna robota!'
             return jsonify({'status': 'info', 'message': message})
-        
+
         # Wybierz dostępną minigrę
         available_games = []
-        
+
         if tetris_disabled != 'True' and not tetris_completed:
             available_games.append('tetris')
-        
+
         if arkanoid_disabled != 'True' and not arkanoid_completed:
             available_games.append('arkanoid')
+
+        if snake_disabled != 'True' and not snake_completed:
+            available_games.append('snake')
         
         # Jeśli nie ma dostępnych gier
         if not available_games:
             message = 'Brak dostępnych minigier do ukończenia.'
             return jsonify({'status': 'info', 'message': message})
         
-        # Wybierz grę (losowo jeśli są obie dostępne, lub tę jedną dostępną)
+        # Wybierz grę (losowo jeśli są dostępne, lub tę jedną dostępną)
         selected_game = random.choice(available_games)
-        
+
         if selected_game == 'tetris':
             print(f"🎮 Starting Tetris for player {player_id}")
             return jsonify({
-                'status': 'minigame', 
-                'game': 'tetris', 
+                'status': 'minigame',
+                'game': 'tetris',
                 'current_score': current_tetris_score,
                 'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
             })
-        else:  # arkanoid
+        elif selected_game == 'arkanoid':
             print(f"🏓 Starting Arkanoid for player {player_id}")
             return jsonify({
-                'status': 'minigame', 
-                'game': 'arkanoid', 
+                'status': 'minigame',
+                'game': 'arkanoid',
                 'current_score': current_arkanoid_score,
                 'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
+            })
+        else:  # snake
+            print(f"🐍 Starting Snake for player {player_id}")
+            return jsonify({
+                'status': 'minigame',
+                'game': 'snake',
+                'current_score': current_snake_score,
+                'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/20 pkt'
             })
     
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
@@ -1398,17 +1422,22 @@ def complete_minigame():
         if arkanoid_disabled == 'True':
             return jsonify({'error': 'Ta minigra została wyłączona'}), 403
         score_key = f'minigame_arkanoid_score_{player_id}'
+    elif game_type == 'snake':
+        snake_disabled = get_game_state(player.event_id, 'minigame_snake_disabled', 'False')
+        if snake_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_snake_score_{player_id}'
     else:
         return jsonify({'error': 'Nieznany typ minigry'}), 400
-    
+
     # Pobierz aktualny wynik gracza w tej minigrze
     current_score = int(get_game_state(player.event_id, score_key, '0'))
-    
+
     # Dodaj zdobyte punkty do sumy
     new_score = current_score + score
     set_game_state(player.event_id, score_key, str(new_score))
-    
-    game_name = 'Tetris' if game_type == 'tetris' else 'Arkanoid'
+
+    game_name = 'Tetris' if game_type == 'tetris' else ('Arkanoid' if game_type == 'arkanoid' else 'Snake')
     
     # Sprawdź czy gracz osiągnął 20 punktów
     if new_score >= 20:
