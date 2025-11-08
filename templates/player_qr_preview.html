@@ -53,12 +53,18 @@
         margin: 20px 0;
     }
 
-    .qr-container canvas {
+    .qr-container #player-qr {
+        display: inline-block;
         border: 5px solid #667eea;
         border-radius: 15px;
         padding: 20px;
         background: white;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-container canvas,
+    .qr-container img {
+        display: block;
     }
 
     .qr-label {
@@ -237,7 +243,7 @@
         <div class="qr-section">
             <div class="qr-label">📱 Zeskanuj, aby dołączyć do gry</div>
             <div class="qr-container">
-                <canvas id="player-qr"></canvas>
+                <div id="player-qr"></div>
             </div>
             <div class="url-display">{{ register_url }}</div>
         </div>
@@ -280,7 +286,7 @@
 {% block scripts %}
 {{ super() }}
 <!-- QR Code Generation Library -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -288,20 +294,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const registerUrl = "{{ register_url }}";
 
     // Generate QR code
-    const canvas = document.getElementById('player-qr');
-    QRCode.toCanvas(canvas, registerUrl, {
-        width: 300,
-        margin: 2,
-        color: {
-            dark: '#667eea',
-            light: '#ffffff'
-        }
-    }, function(error) {
-        if (error) {
-            console.error('Error generating QR code:', error);
-            alert('Błąd generowania kodu QR');
-        }
-    });
+    const qrContainer = document.getElementById('player-qr');
+
+    try {
+        // Clear any existing content
+        qrContainer.innerHTML = '';
+
+        // Create QR code
+        new QRCode(qrContainer, {
+            text: registerUrl,
+            width: 300,
+            height: 300,
+            colorDark: '#667eea',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        console.log('QR code generated successfully for:', registerUrl);
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        qrContainer.innerHTML = '<div style="color: red; padding: 20px;">Błąd generowania kodu QR. Odśwież stronę.</div>';
+    }
 
     // Load player count
     loadPlayerCount();
@@ -324,7 +337,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function downloadQR() {
-    const canvas = document.getElementById('player-qr');
+    const qrContainer = document.getElementById('player-qr');
+    const canvas = qrContainer.querySelector('canvas');
+
+    if (!canvas) {
+        alert('Kod QR nie został jeszcze wygenerowany. Proszę czekać.');
+        return;
+    }
+
     const url = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.download = 'player_qr_code.png';
