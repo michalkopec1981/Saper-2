@@ -1372,8 +1372,8 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
         }
     }
-    
-    document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', loadQuestions);
+
+    // Event listener dla zakładki Pytania przeniesiony na dół (po definicji funkcji AI)
 
     // =====================================================================
     // MINIGRY
@@ -2573,10 +2573,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event listener dla zakładki Pytania AI
     document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAIQuestions);
 
-    // Event listener dla zakładki Pytania (kategorie)
+    // Event listener dla zakładki Pytania (kategorie + zwykłe pytania)
     document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', () => {
-        loadCategoryButtons();
-        loadAICategories();
+        loadQuestions();  // Załaduj zwykłe pytania
+        loadCategoryButtons();  // Załaduj przyciski kategorii AI
+        loadAICategories();  // Załaduj zarządzanie kategoriami AI
     });
 
     // Event listener dla przycisku generowania wszystkich pytań
