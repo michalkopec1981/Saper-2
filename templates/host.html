@@ -1710,8 +1710,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
         const inGameFieldset = document.getElementById('in-game-settings');
-        const gameDurationInput = document.getElementById('game-duration-input');
-        const setTimeBtn = document.getElementById('set-time-btn');
+        const gameDurationInput = document.getElementById('game-duration-input-2');
+        const setTimeBtn = document.getElementById('set-time-btn-2');
         
         if (state.game_active) {
             preGameFieldset.disabled = false; // ✅ Zawsze dostępne
@@ -1796,8 +1796,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => console.error('❌ Error loading initial state:', error));
     
     // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
-    document.getElementById('set-time-btn')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
+    document.getElementById('set-time-btn-2')?.addEventListener('click', async () => {
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
         console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
         
         if (isNaN(minutes) || minutes < 1) {
@@ -1842,7 +1842,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
         console.log('🎮 Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
