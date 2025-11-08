@@ -2490,6 +2490,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===================================================
     // OGÓLNE PYTANIA Z KATEGORIAMI
     // ===================================================
+
+    // Funkcja pomocnicza do escapowania HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     const generalCategories = [
         { name: 'Historia powszechna', id: 'hist_pow' },
         { name: 'Historia Polski', id: 'hist_pl' },
