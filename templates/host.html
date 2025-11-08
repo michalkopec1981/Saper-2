@@ -104,7 +104,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">Pytania AI</button></li>
         <li class="nav-item"><button id="minigry-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
@@ -385,6 +385,63 @@
         </div>
         
         <div class="tab-pane fade" id="questions">
+            <!-- Gotowe pytania według kategorii -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Gotowe pytania według kategorii</h5>
+                    <p class="text-muted mb-0 mt-2 small">Wybierz kategorię, aby zobaczyć i edytować gotowe pytania. Możesz także zarządzać kategoriami AI.</p>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-3">Kategorie pytań AI:</h6>
+                    <div id="category-buttons-list" class="mb-3"></div>
+
+                    <hr>
+
+                    <h6 class="mb-3">Zarządzanie kategoriami AI:</h6>
+                    <div id="ai-categories-management" class="mb-4">
+                        <div class="alert alert-info mb-3">
+                            <strong>Szybki start:</strong> Wygeneruj po 20 gotowych pytań dla wszystkich kategorii
+                            <button class="btn btn-primary btn-sm ms-3" id="generate-all-questions-btn">
+                                Generuj pytania dla wszystkich kategorii
+                            </button>
+                        </div>
+                        <h6 class="mb-3">Predefiniowane kategorie:</h6>
+                        <div id="ai-categories-list" class="mb-4"></div>
+
+                        <hr>
+
+                        <h6 class="mb-3">Dodaj własną kategorię:</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
+                                <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
+                                <select class="form-select" id="custom-category-difficulty">
+                                    <option value="easy">Łatwy</option>
+                                    <option value="medium">Średni</option>
+                                    <option value="advanced">Zaawansowany</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
+                            </div>
+                        </div>
+
+                        <div id="custom-categories-list" class="mt-4"></div>
+                    </div>
+
+                    <!-- Lista pytań z wybranej kategorii -->
+                    <div id="category-questions-list" class="mt-4" style="display: none;">
+                        <h6 class="mb-3">Pytania z kategorii: <span id="selected-category-name"></span></h6>
+                        <button class="btn btn-secondary btn-sm mb-3" id="back-to-categories-btn">← Powrót do kategorii</button>
+                        <div id="category-questions-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zarządzanie pytaniami -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
@@ -399,35 +456,17 @@
         <div class="tab-pane fade" id="ai">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
-                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
+                    <h5 class="card-title mb-0">Lista pytań AI</h5>
+                    <p class="text-muted mb-0 mt-2 small">Tutaj możesz przeglądać i edytować wszystkie wygenerowane pytania AI. Za poprawną odpowiedź gracz otrzymuje 5 punktów.</p>
                 </div>
                 <div class="card-body">
-                    <h6 class="mb-3">Predefiniowane kategorie:</h6>
-                    <div id="ai-categories-list" class="mb-4"></div>
-
-                    <hr>
-
-                    <h6 class="mb-3">Dodaj własną kategorię:</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
-                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
-                            <select class="form-select" id="custom-category-difficulty">
-                                <option value="easy">Łatwy</option>
-                                <option value="medium">Średni</option>
-                                <option value="advanced">Zaawansowany</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
-                        </div>
+                    <div class="mb-3">
+                        <label for="ai-question-category-filter" class="form-label">Filtruj według kategorii:</label>
+                        <select class="form-select" id="ai-question-category-filter">
+                            <option value="">Wszystkie kategorie</option>
+                        </select>
                     </div>
-
-                    <div id="custom-categories-list" class="mt-4"></div>
+                    <div id="ai-questions-list"></div>
                 </div>
             </div>
         </div>
@@ -495,6 +534,26 @@
                                            style="width: 3em; height: 1.5em;">
                                     <label class="form-check-label ms-2" for="snake-toggle">
                                         <span id="snake-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PAC-MAN -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">👻 PacMan</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zjadaj kropki, unikaj duchów)</p>
+                                    <small class="text-muted">Power pellets = duchy niebieskie | Sterowanie: przyciski ▲ ▼ ◄ ►</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="pacman-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="pacman-toggle">
+                                        <span id="pacman-status" class="badge bg-secondary">Nieaktywny</span>
                                     </label>
                                 </div>
                             </div>
@@ -1349,6 +1408,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     snakeStatus.textContent = data.snake_enabled ? 'Aktywny' : 'Nieaktywny';
                     snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
+
+                // PacMan
+                const pacmanToggle = document.getElementById('pacman-toggle');
+                const pacmanStatus = document.getElementById('pacman-status');
+                if (pacmanToggle && pacmanStatus) {
+                    pacmanToggle.checked = data.pacman_enabled;
+                    pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
+                    pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
             });
     }
     
@@ -1410,6 +1478,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ game_type: 'snake', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('pacman-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('pacman-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'pacman', enabled })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
@@ -2278,7 +2369,248 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
+    // Funkcja do ładowania listy pytań AI w zakładce "Pytania AI"
+    async function loadAIQuestions() {
+        try {
+            const categoryFilter = document.getElementById('ai-question-category-filter').value;
+            const url = categoryFilter ? `/api/host/ai/questions?category_id=${categoryFilter}` : '/api/host/ai/questions';
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            const questionsList = document.getElementById('ai-questions-list');
+            const categorySelect = document.getElementById('ai-question-category-filter');
+
+            // Załaduj kategorie do filtra
+            if (data.categories) {
+                categorySelect.innerHTML = '<option value="">Wszystkie kategorie</option>';
+                data.categories.forEach(cat => {
+                    categorySelect.innerHTML += `<option value="${cat.id}" ${categoryFilter == cat.id ? 'selected' : ''}>${cat.name}</option>`;
+                });
+            }
+
+            // Wyświetl pytania
+            questionsList.innerHTML = '';
+            if (data.questions && data.questions.length > 0) {
+                data.questions.forEach(q => {
+                    const questionCard = document.createElement('div');
+                    questionCard.className = 'card mb-3';
+                    questionCard.innerHTML = `
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">${q.category_name}</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-primary me-2" onclick="editAIQuestion(${q.id})">
+                                        <i class="bi bi-pencil"></i> Edytuj
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteAIQuestion(${q.id})">
+                                        <i class="bi bi-trash"></i> Usuń
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="mb-2"><strong>Pytanie:</strong> ${q.text}</p>
+                            <p class="mb-1"><strong>A:</strong> ${q.option_a}</p>
+                            <p class="mb-1"><strong>B:</strong> ${q.option_b}</p>
+                            <p class="mb-1"><strong>C:</strong> ${q.option_c}</p>
+                            <p class="mb-1"><strong>Poprawna odpowiedź:</strong> <span class="badge bg-success">${q.correct_answer}</span></p>
+                            <p class="mb-0 text-muted small">Wyświetlone: ${q.times_shown || 0} razy | Poprawne: ${q.times_correct || 0} razy</p>
+                        </div>
+                    `;
+                    questionsList.appendChild(questionCard);
+                });
+            } else {
+                questionsList.innerHTML = '<p class="text-muted">Brak pytań AI. Wygeneruj pytania w zakładce Pytania.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading AI questions:', error);
+        }
+    }
+
+    // Funkcja do edycji pytania AI
+    window.editAIQuestion = async function(questionId) {
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`);
+            const question = await response.json();
+
+            const newText = prompt('Tekst pytania:', question.text);
+            if (newText === null) return;
+
+            const newOptionA = prompt('Odpowiedź A:', question.option_a);
+            if (newOptionA === null) return;
+
+            const newOptionB = prompt('Odpowiedź B:', question.option_b);
+            if (newOptionB === null) return;
+
+            const newOptionC = prompt('Odpowiedź C:', question.option_c);
+            if (newOptionC === null) return;
+
+            const newCorrectAnswer = prompt('Poprawna odpowiedź (A/B/C):', question.correct_answer);
+            if (newCorrectAnswer === null || !['A', 'B', 'C'].includes(newCorrectAnswer.toUpperCase())) {
+                alert('Poprawna odpowiedź musi być A, B lub C');
+                return;
+            }
+
+            const updateResponse = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: newText,
+                    option_a: newOptionA,
+                    option_b: newOptionB,
+                    option_c: newOptionC,
+                    correct_answer: newCorrectAnswer.toUpperCase()
+                })
+            });
+
+            if (!updateResponse.ok) throw new Error('Błąd aktualizacji pytania');
+
+            alert('Pytanie zostało zaktualizowane');
+            loadAIQuestions();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do usuwania pytania AI
+    window.deleteAIQuestion = async function(questionId) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+
+            alert('Pytanie zostało usunięte');
+            loadAIQuestions();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do ładowania przycisków kategorii
+    async function loadCategoryButtons() {
+        try {
+            const response = await fetch('/api/host/ai/categories');
+            const categories = await response.json();
+
+            const buttonsList = document.getElementById('category-buttons-list');
+            buttonsList.innerHTML = '';
+
+            categories.forEach(cat => {
+                if (cat.is_enabled) {
+                    const button = document.createElement('button');
+                    button.className = 'btn btn-outline-primary me-2 mb-2';
+                    button.textContent = cat.name;
+                    button.onclick = () => showCategoryQuestions(cat.id, cat.name);
+                    buttonsList.appendChild(button);
+                }
+            });
+
+            if (buttonsList.children.length === 0) {
+                buttonsList.innerHTML = '<p class="text-muted">Brak aktywnych kategorii. Włącz kategorie poniżej.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading category buttons:', error);
+        }
+    }
+
+    // Funkcja do wyświetlania pytań z wybranej kategorii
+    window.showCategoryQuestions = async function(categoryId, categoryName) {
+        try {
+            const response = await fetch(`/api/host/ai/questions?category_id=${categoryId}`);
+            const data = await response.json();
+
+            document.getElementById('selected-category-name').textContent = categoryName;
+            document.getElementById('ai-categories-management').style.display = 'none';
+            document.getElementById('category-buttons-list').parentElement.parentElement.style.display = 'none';
+            document.getElementById('category-questions-list').style.display = 'block';
+
+            const content = document.getElementById('category-questions-content');
+            content.innerHTML = '';
+
+            if (data.questions && data.questions.length > 0) {
+                data.questions.forEach(q => {
+                    const questionCard = document.createElement('div');
+                    questionCard.className = 'card mb-3';
+                    questionCard.innerHTML = `
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">ID: ${q.id}</h6>
+                                <button class="btn btn-sm btn-primary" onclick="editAIQuestion(${q.id})">
+                                    <i class="bi bi-pencil"></i> Edytuj
+                                </button>
+                            </div>
+                            <p class="mb-2"><strong>Pytanie:</strong> ${q.text}</p>
+                            <p class="mb-1"><strong>A:</strong> ${q.option_a}</p>
+                            <p class="mb-1"><strong>B:</strong> ${q.option_b}</p>
+                            <p class="mb-1"><strong>C:</strong> ${q.option_c}</p>
+                            <p class="mb-0"><strong>Poprawna odpowiedź:</strong> <span class="badge bg-success">${q.correct_answer}</span></p>
+                        </div>
+                    `;
+                    content.appendChild(questionCard);
+                });
+            } else {
+                content.innerHTML = '<p class="text-muted">Brak pytań w tej kategorii. Wygeneruj pytania klikając "Generuj pytania".</p>';
+            }
+        } catch (error) {
+            console.error('Error loading category questions:', error);
+            alert('Błąd ładowania pytań: ' + error.message);
+        }
+    };
+
+    // Event listener dla przycisku powrotu do kategorii
+    document.getElementById('back-to-categories-btn')?.addEventListener('click', () => {
+        document.getElementById('category-questions-list').style.display = 'none';
+        document.getElementById('ai-categories-management').style.display = 'block';
+        document.getElementById('category-buttons-list').parentElement.parentElement.style.display = 'block';
+    });
+
+    // Event listener dla filtra kategorii w zakładce Pytania AI
+    document.getElementById('ai-question-category-filter')?.addEventListener('change', loadAIQuestions);
+
+    // Event listener dla zakładki Pytania AI
+    document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAIQuestions);
+
+    // Event listener dla zakładki Pytania (kategorie)
+    document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', () => {
+        loadCategoryButtons();
+        loadAICategories();
+    });
+
+    // Event listener dla przycisku generowania wszystkich pytań
+    document.getElementById('generate-all-questions-btn')?.addEventListener('click', async () => {
+        if (!confirm('Czy na pewno chcesz wygenerować po 20 pytań dla wszystkich kategorii? To może potrwać kilka minut.')) {
+            return;
+        }
+
+        const btn = document.getElementById('generate-all-questions-btn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Generowanie pytań... Proszę czekać...';
+
+        try {
+            const response = await fetch('/api/host/ai/generate_all_questions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd generowania pytań');
+            }
+
+            alert(result.message + '\n\nSzczegóły:\n' + result.details.join('\n'));
+            loadCategoryButtons();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    });
 
 });
 </script>

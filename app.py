@@ -240,15 +240,15 @@ def init_default_ai_categories(event_id):
     """Inicjalizuje domyślne 10 kategorii AI dla eventu"""
     default_categories = [
         'Historia powszechna',
-        'Geografia',
-        'Znane postaci',
+        'Historia Polski',
+        'Geografia świata',
+        'Geografia Polski',
+        'Gry Komputery i sprzęt',
         'Muzyka',
-        'Literatura',
         'Kuchnia',
         'Film',
-        'Nauki ścisłe',
-        'Historia Polski',
-        'Sport'
+        'Sport',
+        'Nauki ścisłe'
     ]
 
     for cat_name in default_categories:
@@ -1125,10 +1125,12 @@ def get_minigames_status():
     tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
     arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'True'
     snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'True'
+    pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False') == 'True'
     return jsonify({
         'tetris_enabled': not tetris_disabled,
         'arkanoid_enabled': not arkanoid_disabled,
-        'snake_enabled': not snake_disabled
+        'snake_enabled': not snake_disabled,
+        'pacman_enabled': not pacman_disabled
     })
 
 @app.route('/api/host/minigames/toggle', methods=['POST'])
@@ -1159,6 +1161,13 @@ def toggle_minigame():
         return jsonify({
             'message': f'Snake {"aktywowany" if enabled else "deaktywowany"}',
             'snake_enabled': enabled
+        })
+    elif game_type == 'pacman':
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_pacman_disabled', 'False' if enabled else 'True')
+        return jsonify({
+            'message': f'PacMan {"aktywowany" if enabled else "deaktywowany"}',
+            'pacman_enabled': enabled
         })
 
     return jsonify({'error': 'Nieznany typ minigry'}), 400
@@ -1368,6 +1377,155 @@ def generate_questions_for_category(category_id):
         'count': generated_count
     })
 
+@app.route('/api/host/ai/questions', methods=['GET'])
+@host_required
+def get_host_ai_questions():
+    """Pobierz wszystkie pytania AI lub dla konkretnej kategorii (Host)"""
+    event_id = session['host_event_id']
+    category_id = request.args.get('category_id', type=int)
+
+    if category_id:
+        questions = AIQuestion.query.filter_by(event_id=event_id, category_id=category_id).all()
+    else:
+        questions = AIQuestion.query.filter_by(event_id=event_id).all()
+
+    # Pobierz także kategorie dla filtra
+    categories = AICategory.query.filter_by(event_id=event_id).all()
+
+    return jsonify({
+        'questions': [{
+            'id': q.id,
+            'category_id': q.category_id,
+            'category_name': q.category.name if q.category else 'Nieznana',
+            'text': q.text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'correct_answer': q.correct_answer,
+            'source': q.source,
+            'times_shown': q.times_shown,
+            'times_correct': q.times_correct
+        } for q in questions],
+        'categories': [{
+            'id': c.id,
+            'name': c.name
+        } for c in categories]
+    })
+
+@app.route('/api/host/ai/question/<int:question_id>', methods=['GET'])
+@host_required
+def get_host_ai_question(question_id):
+    """Pobierz pojedyncze pytanie AI (Host)"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    return jsonify({
+        'id': question.id,
+        'text': question.text,
+        'option_a': question.option_a,
+        'option_b': question.option_b,
+        'option_c': question.option_c,
+        'correct_answer': question.correct_answer
+    })
+
+@app.route('/api/host/ai/question/<int:question_id>', methods=['PUT'])
+@host_required
+def update_host_ai_question(question_id):
+    """Edytuj pytanie AI (Host)"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    data = request.json
+    question.text = data.get('text', question.text)
+    question.option_a = data.get('option_a', question.option_a)
+    question.option_b = data.get('option_b', question.option_b)
+    question.option_c = data.get('option_c', question.option_c)
+    question.correct_answer = data.get('correct_answer', question.correct_answer).upper()
+    question.source = 'edited'
+    db.session.commit()
+
+    return jsonify({'message': 'Pytanie zaktualizowane'})
+
+@app.route('/api/host/ai/question/<int:question_id>', methods=['DELETE'])
+@host_required
+def delete_host_ai_question(question_id):
+    """Usuń pytanie AI (Host)"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    db.session.delete(question)
+    db.session.commit()
+
+    return jsonify({'message': 'Pytanie usunięte'})
+
+@app.route('/api/host/ai/generate_all_questions', methods=['POST'])
+@host_required
+def generate_all_default_questions():
+    """Generuje po 20 pytań dla wszystkich predefiniowanych kategorii (Host)"""
+    event_id = session['host_event_id']
+
+    # Pobierz wszystkie predefiniowane kategorie
+    categories = AICategory.query.filter_by(event_id=event_id, is_custom=False).all()
+
+    if not categories:
+        return jsonify({'error': 'Brak predefiniowanych kategorii. Odśwież stronę.'}), 404
+
+    results = []
+    total_generated = 0
+
+    for category in categories:
+        # Sprawdź czy kategoria już ma pytania
+        existing_count = AIQuestion.query.filter_by(event_id=event_id, category_id=category.id).count()
+
+        if existing_count >= 20:
+            results.append(f"{category.name}: już ma {existing_count} pytań (pominięto)")
+            continue
+
+        # Generuj 20 pytań dla kategorii
+        result = generate_ai_questions_with_claude(
+            category.name,
+            category.difficulty_level,
+            20
+        )
+
+        if 'error' in result:
+            results.append(f"{category.name}: błąd - {result['error']}")
+            continue
+
+        # Zapisz wygenerowane pytania do bazy
+        generated_count = 0
+        for q_data in result['questions']:
+            new_question = AIQuestion(
+                event_id=event_id,
+                category_id=category.id,
+                text=q_data['text'],
+                option_a=q_data['option_a'],
+                option_b=q_data['option_b'],
+                option_c=q_data['option_c'],
+                correct_answer=q_data['correct_answer'].upper(),
+                source='generated'
+            )
+            db.session.add(new_question)
+            generated_count += 1
+
+        db.session.commit()
+        total_generated += generated_count
+        results.append(f"{category.name}: wygenerowano {generated_count} pytań")
+
+    return jsonify({
+        'message': f'Proces zakończony. Wygenerowano łącznie {total_generated} nowych pytań.',
+        'details': results
+    })
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():
@@ -1539,11 +1697,12 @@ def scan_qr():
         tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
         arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
         snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False')
+        pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False')
 
-        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}")
+        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}, PacMan disabled: {pacman_disabled}")
 
         # Jeśli wszystkie minigry są wyłączone
-        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True':
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True' and pacman_disabled == 'True':
             message = 'Wszystkie minigry zostały wyłączone przez organizatora.'
             print(f"All minigames DISABLED - returning error")
             return jsonify({'status': 'info', 'message': message})
@@ -1552,20 +1711,23 @@ def scan_qr():
         tetris_score_key = f'minigame_tetris_score_{player_id}'
         arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
         snake_score_key = f'minigame_snake_score_{player_id}'
+        pacman_score_key = f'minigame_pacman_score_{player_id}'
 
         current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
         current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
         current_snake_score = int(get_game_state(event_id, snake_score_key, '0'))
+        current_pacman_score = int(get_game_state(event_id, pacman_score_key, '0'))
 
-        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20")
+        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20, PacMan: {current_pacman_score}/20")
 
         # Sprawdź czy gracz ukończył wszystkie gry
         tetris_completed = current_tetris_score >= 20
         arkanoid_completed = current_arkanoid_score >= 20
         snake_completed = current_snake_score >= 20
+        pacman_completed = current_pacman_score >= 20
 
         # Jeśli ukończył wszystkie, nie może grać więcej
-        if tetris_completed and arkanoid_completed and snake_completed:
+        if tetris_completed and arkanoid_completed and snake_completed and pacman_completed:
             message = 'Ukończyłeś już wszystkie minigry! Świetna robota!'
             return jsonify({'status': 'info', 'message': message})
 
@@ -1580,6 +1742,9 @@ def scan_qr():
 
         if snake_disabled != 'True' and not snake_completed:
             available_games.append('snake')
+
+        if pacman_disabled != 'True' and not pacman_completed:
+            available_games.append('pacman')
         
         # Jeśli nie ma dostępnych gier
         if not available_games:
@@ -1605,13 +1770,21 @@ def scan_qr():
                 'current_score': current_arkanoid_score,
                 'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
             })
-        else:  # snake
+        elif selected_game == 'snake':
             print(f"🐍 Starting Snake for player {player_id}")
             return jsonify({
                 'status': 'minigame',
                 'game': 'snake',
                 'current_score': current_snake_score,
                 'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/20 pkt'
+            })
+        else:  # pacman
+            print(f"👻 Starting PacMan for player {player_id}")
+            return jsonify({
+                'status': 'minigame',
+                'game': 'pacman',
+                'current_score': current_pacman_score,
+                'message': f'👻 Minigra PacMan! Twój postęp: {current_pacman_score}/20 pkt'
             })
     
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
@@ -1898,6 +2071,11 @@ def complete_minigame():
         if snake_disabled == 'True':
             return jsonify({'error': 'Ta minigra została wyłączona'}), 403
         score_key = f'minigame_snake_score_{player_id}'
+    elif game_type == 'pacman':
+        pacman_disabled = get_game_state(player.event_id, 'minigame_pacman_disabled', 'False')
+        if pacman_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_pacman_score_{player_id}'
     else:
         return jsonify({'error': 'Nieznany typ minigry'}), 400
 
@@ -1908,7 +2086,8 @@ def complete_minigame():
     new_score = current_score + score
     set_game_state(player.event_id, score_key, str(new_score))
 
-    game_name = 'Tetris' if game_type == 'tetris' else ('Arkanoid' if game_type == 'arkanoid' else 'Snake')
+    game_name_map = {'tetris': 'Tetris', 'arkanoid': 'Arkanoid', 'snake': 'Snake', 'pacman': 'PacMan'}
+    game_name = game_name_map.get(game_type, 'Unknown')
     
     # Sprawdź czy gracz osiągnął 20 punktów
     if new_score >= 20:
