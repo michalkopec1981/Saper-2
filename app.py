@@ -571,8 +571,26 @@ def logout_impersonate():
 
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
-def player_view(event_id, qr_code): 
+def player_view(event_id, qr_code):
     return render_template('player.html', qr_code=qr_code, event_id=event_id)
+
+@app.route('/player_dashboard/<int:event_id>/<int:player_id>')
+def player_dashboard(event_id, player_id):
+    """Panel gracza z informacjami o grze w czasie rzeczywistym"""
+    player = db.session.get(Player, player_id)
+    event = db.session.get(Event, event_id)
+
+    if not player or player.event_id != event_id:
+        return "Nie znaleziono gracza lub nieprawidłowy event", 404
+
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    return render_template('player_dashboard.html',
+                         player_id=player_id,
+                         player_name=player.name,
+                         event_id=event_id,
+                         event_name=event.name)
 
 @app.route('/display/<int:event_id>')
 def display(event_id):
@@ -592,6 +610,38 @@ def list_qrcodes_public(event_id):
     if not (is_admin or is_host): return "Brak autoryzacji", 401
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
+
+@app.route('/player_qrcodes/<int:event_id>')
+@host_required
+def player_qrcodes(event_id):
+    """Wyświetla kody QR dla wszystkich graczy do ich dashboard'ów"""
+    # Sprawdź czy host ma dostęp do tego eventu
+    if session.get('host_event_id') != event_id:
+        return "Brak autoryzacji", 401
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Pobierz wszystkich graczy
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.name).all()
+
+    # Generuj dane dla kodów QR (URL do dashboard każdego gracza)
+    player_data = []
+    for player in players:
+        # URL do dashboard gracza
+        dashboard_url = url_for('player_dashboard', event_id=event_id, player_id=player.id, _external=True)
+        player_data.append({
+            'id': player.id,
+            'name': player.name,
+            'score': player.score,
+            'dashboard_url': dashboard_url
+        })
+
+    return render_template('player_qrcodes.html',
+                         event=event,
+                         players=player_data,
+                         event_id=event_id)
 
 # ===================================================================
 # --- API Endpoints ---
@@ -1035,17 +1085,20 @@ def send_message():
     event_id = session['host_event_id']
     data = request.json
     message = data.get('message', '').strip()
-    
+
     if not message:
         return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
-    
+
     if len(message) > 500:
         return jsonify({'error': 'Wiadomość może mieć maksymalnie 500 znaków'}), 400
-    
+
+    # Zapisz komunikat w GameState dla dashboard'u graczy
+    set_game_state(event_id, 'host_message', message)
+
     # Wyślij komunikat przez Socket.IO do ekranu gry
     room = f'event_{event_id}'
     socketio.emit('host_message', {'message': message}, room=room)
-    
+
     return jsonify({'message': 'Komunikat wysłany na ekran gry'})
 
 @app.route('/fix-db-columns-v2')
@@ -1870,6 +1923,162 @@ def check_vote(photo_id, player_id):
     """Sprawdź czy gracz zagłosował na dane zdjęcie"""
     vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
     return jsonify({'voted': vote is not None})
+
+@app.route('/api/player_dashboard/state', methods=['GET'])
+def get_player_dashboard_state():
+    """Zwraca pełny stan gry dla panelu gracza"""
+    event_id = request.args.get('event_id', type=int)
+    player_id = request.args.get('player_id', type=int)
+
+    if not event_id or not player_id:
+        return jsonify({'error': 'Brak event_id lub player_id'}), 400
+
+    player = db.session.get(Player, player_id)
+    event = db.session.get(Event, event_id)
+
+    if not player or player.event_id != event_id:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    if not event:
+        return jsonify({'error': 'Nie znaleziono eventu'}), 404
+
+    # Pobierz stan gry
+    game_state = get_full_game_state(event_id)
+
+    # Policz aktywnych graczy
+    active_players = Player.query.filter_by(event_id=event_id).count()
+
+    # Policz dostępne punkty (pytania + AI questions)
+    total_questions = Question.query.filter_by(event_id=event_id).count()
+    total_ai_questions = AIQuestion.query.filter_by(event_id=event_id).count()
+
+    # Policz ile pytań gracz już odpowiedział
+    answered_questions = PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).count()
+    answered_ai_questions = AIPlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).count()
+
+    # Oblicz możliwe punkty do zdobycia
+    bonus_multiplier = int(game_state.get('bonus_multiplier', 1))
+    remaining_regular_questions = max(0, total_questions - answered_questions)
+    remaining_ai_questions = max(0, total_ai_questions - answered_ai_questions)
+
+    # Regularne pytania: 10 punktów * bonus, AI pytania: 5 punktów
+    points_available = (remaining_regular_questions * 10 * bonus_multiplier) + (remaining_ai_questions * 5)
+
+    # Oblicz łączne zdobyte punkty (teoretycznie powinny być równe player.score)
+    total_earned = player.score
+
+    # Hasło
+    password_value = game_state.get('game_password', 'SAPEREVENT')
+    revealed_indices_str = game_state.get('revealed_password_indices', '')
+    revealed_indices = set()
+    if revealed_indices_str:
+        revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+    displayed_password = ""
+    for i, char in enumerate(password_value):
+        if char == ' ':
+            displayed_password += '  '
+        elif i in revealed_indices:
+            displayed_password += char
+        else:
+            displayed_password += '_'
+
+    # Czas pozostały
+    time_remaining = 0
+    if game_state.get('game_active') == 'True' and game_state.get('is_timer_running') == 'True':
+        end_time_str = game_state.get('game_end_time')
+        if end_time_str:
+            try:
+                end_time = datetime.fromisoformat(end_time_str)
+                now = datetime.utcnow()
+                time_remaining = max(0, int((end_time - now).total_seconds()))
+            except:
+                time_remaining = 0
+
+    # Komunikat hosta (ostatni wysłany)
+    host_message = game_state.get('host_message', '')
+
+    return jsonify({
+        'game_name': event.name,
+        'player_name': player.name,
+        'player_score': player.score,
+        'active_players': active_players,
+        'total_points_earned': total_earned,
+        'points_available': points_available,
+        'time_speed': int(game_state.get('time_speed', 1)),
+        'point_bonus': int(game_state.get('bonus_multiplier', 1)),
+        'time_remaining': time_remaining,
+        'password_display': displayed_password,
+        'host_message': host_message,
+        'game_active': game_state.get('game_active') == 'True'
+    })
+
+@app.route('/api/player/selfies', methods=['GET'])
+def get_player_selfies():
+    """Zwraca listę selfie dla galerii gracza"""
+    event_id = request.args.get('event_id', type=int)
+
+    if not event_id:
+        return jsonify({'error': 'Brak event_id'}), 400
+
+    photos = FunnyPhoto.query.filter_by(event_id=event_id).order_by(
+        FunnyPhoto.votes.desc(), FunnyPhoto.timestamp.desc()
+    ).all()
+
+    return jsonify({
+        'selfies': [{
+            'id': p.id,
+            'player_name': p.player_name,
+            'image_url': p.image_url,
+            'votes': p.votes,
+            'timestamp': p.timestamp.isoformat()
+        } for p in photos]
+    })
+
+@app.route('/api/player/selfie/vote', methods=['POST'])
+def vote_player_selfie():
+    """Głosowanie na selfie z panelu gracza"""
+    data = request.json
+    photo_id = data.get('photo_id')
+    player_id = data.get('player_id')
+    event_id = data.get('event_id')
+
+    if not photo_id or not player_id or not event_id:
+        return jsonify({'error': 'Brak wymaganych danych'}), 400
+
+    player = db.session.get(Player, player_id)
+    photo = db.session.get(FunnyPhoto, photo_id)
+
+    if not player or not photo:
+        return jsonify({'error': 'Nie znaleziono gracza lub zdjęcia'}), 404
+
+    if player.event_id != event_id or photo.event_id != event_id:
+        return jsonify({'error': 'Nieprawidłowy event'}), 400
+
+    # Sprawdź czy gracz już głosował
+    existing_vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
+
+    if existing_vote:
+        return jsonify({'success': False, 'message': 'Już zagłosowałeś na to zdjęcie'}), 400
+
+    # Dodaj głos
+    new_vote = PhotoVote(photo_id=photo_id, player_id=player_id, event_id=event_id)
+    db.session.add(new_vote)
+    photo.votes += 1
+    db.session.commit()
+
+    # Wyemituj aktualizację
+    room = f'event_{event_id}'
+    socketio.emit('photo_vote_update', {
+        'photo_id': photo_id,
+        'votes': photo.votes
+    }, room=room)
+
+    return jsonify({
+        'success': True,
+        'votes': photo.votes,
+        'message': 'Głos oddany!'
+    })
 
 @app.route('/api/player/minigame/complete', methods=['POST'])
 def complete_minigame():

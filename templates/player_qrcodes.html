@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}Kody QR Graczy - {{ event.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .header-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .header-section h1 {
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .header-section p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-custom {
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-back {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+    }
+
+    .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .qr-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+
+    .qr-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .player-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .player-score {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 15px;
+    }
+
+    .qr-code-container {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+    }
+
+    .qr-code-container canvas {
+        border: 3px solid #667eea;
+        border-radius: 10px;
+        padding: 10px;
+        background: white;
+    }
+
+    .dashboard-url {
+        font-size: 0.75rem;
+        color: #999;
+        word-break: break-all;
+        margin-top: 10px;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .stats {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #999;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    @media print {
+        body {
+            background: white;
+        }
+
+        .header-section,
+        .action-buttons,
+        .btn-back,
+        .btn-print {
+            display: none;
+        }
+
+        .qr-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .qr-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    }
+
+    .empty-state {
+        background: white;
+        border-radius: 15px;
+        padding: 60px 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .empty-state h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+
+    .empty-state p {
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 1400px;">
+    <!-- Header -->
+    <div class="header-section">
+        <h1>📱 Kody QR Graczy</h1>
+        <p>{{ event.name }}</p>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">Liczba graczy</div>
+                <div class="stat-value">{{ players|length }}</div>
+            </div>
+        </div>
+        <div class="action-buttons">
+            <button onclick="window.print()" class="btn-custom btn-print">
+                🖨️ Drukuj wszystkie kody QR
+            </button>
+            <button onclick="window.location.href='/host/{{ event_id }}'" class="btn-custom btn-back">
+                ← Powrót do panelu hosta
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Codes Grid -->
+    {% if players %}
+    <div class="qr-grid">
+        {% for player in players %}
+        <div class="qr-card">
+            <div class="player-name">{{ player.name }}</div>
+            <div class="player-score">Punkty: {{ player.score }}</div>
+
+            <!-- QR Code -->
+            <div class="qr-code-container">
+                <canvas id="qr-{{ player.id }}"></canvas>
+            </div>
+
+            <!-- URL -->
+            <div class="dashboard-url">
+                {{ player.dashboard_url }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>Brak graczy</h3>
+        <p>Jeszcze nikt nie dołączył do gry. Poczekaj, aż gracze się zarejestrują.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- QR Code Generation Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const players = {{ players | tojson }};
+
+    // Generate QR codes for each player
+    players.forEach(player => {
+        const canvas = document.getElementById('qr-' + player.id);
+        if (canvas) {
+            QRCode.toCanvas(canvas, player.dashboard_url, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#667eea',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('Error generating QR code for player ' + player.name + ':', error);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
