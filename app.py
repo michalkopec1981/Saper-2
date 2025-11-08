@@ -310,7 +310,7 @@ WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudnośc
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-sonnet-4-5-20250929",  # Claude Sonnet 4.5 - najnowszy model
+            model="claude-sonnet-4-5",  # Alias - automatycznie najnowsza wersja
             max_tokens=4000,
             messages=[{
                 "role": "user",
