@@ -541,15 +541,10 @@
                 <div class="card mb-4">
                     <div class="card-header"><h5 class="card-title mb-0" data-translate="timing_settings">Czas i tempo gry</h5></div>
                     <div class="card-body" id="timing-controls">
-                        <div class="mb-3">
-                            <label for="game-duration-input-2" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="game-duration-input-2" value="60" min="1">
-                                <button class="btn btn-primary" id="set-time-btn-2" data-translate="set_time_btn">OK</button>
-                            </div>
-                            <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
+                        <div class="alert alert-info">
+                            <small data-translate="timing_info">Czas gry można ustawić w zakładce "Gra" przed kliknięciem przycisku Start.</small>
                         </div>
-        
+
                         <hr>
         
                         <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
@@ -795,6 +790,7 @@
         password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
         tab_timing: 'Czas i tempo',
         timing_settings: 'Czas i tempo gry',
+        timing_info: 'Czas gry można ustawić w zakładce "Gra" przed kliknięciem przycisku Start.',
     },
     en: {
         host_title: 'GAME ORGANIZATION',
@@ -885,6 +881,7 @@
         password_preview: 'Password',  // ⬅️ DODAJ TĘ LINIĘ
         tab_timing: 'Time & Speed',
         timing_settings: 'Game Time and Speed',
+        timing_info: 'Game duration can be set in the "Game" tab before clicking the Start button.',
     }
 };
 
