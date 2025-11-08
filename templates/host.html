@@ -293,6 +293,30 @@
         
         {% if is_superhost %}
         <div class="tab-pane fade" id="qrcodes">
+            <!-- Kod QR Gracza -->
+            <div class="card mx-auto mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">📱 Kod QR Gracza</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <strong>ℹ️ Instrukcja:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Ten kod QR pozwala graczom dołączyć do gry</li>
+                            <li>Gracz skanuje kod, wpisuje swoje imię i otrzymuje dostęp do panelu</li>
+                            <li>Wydrukuj i umieść kod w widocznym miejscu</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/player_qr_preview/{{ event_id }}" target="_blank" class="btn btn-success btn-lg">
+                            🔍 Podgląd i Druk Kodu QR
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zarządzanie Kodami QR -->
             <div class="card mx-auto">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>

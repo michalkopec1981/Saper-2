@@ -592,6 +592,38 @@ def player_dashboard(event_id, player_id):
                          event_id=event_id,
                          event_name=event.name)
 
+@app.route('/player_register/<int:event_id>')
+def player_register(event_id):
+    """Strona rejestracji gracza - dostępna przez skan kodu QR"""
+    event = db.session.get(Event, event_id)
+
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    return render_template('player_register.html',
+                         event_id=event_id,
+                         event_name=event.name)
+
+@app.route('/player_qr_preview/<int:event_id>')
+@host_required
+def player_qr_preview(event_id):
+    """Podgląd i druk kodu QR do rejestracji graczy"""
+    # Sprawdź czy host ma dostęp do tego eventu
+    if session.get('host_event_id') != event_id:
+        return "Brak autoryzacji", 401
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # URL do rejestracji gracza
+    register_url = url_for('player_register', event_id=event_id, _external=True)
+
+    return render_template('player_qr_preview.html',
+                         event=event,
+                         register_url=register_url,
+                         event_id=event_id)
+
 @app.route('/display/<int:event_id>')
 def display(event_id):
     event = db.session.get(Event, event_id)
