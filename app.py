@@ -605,13 +605,8 @@ def player_register(event_id):
                          event_name=event.name)
 
 @app.route('/player_qr_preview/<int:event_id>')
-@host_required
 def player_qr_preview(event_id):
     """Podgląd i druk kodu QR do rejestracji graczy"""
-    # Sprawdź czy host ma dostęp do tego eventu
-    if session.get('host_event_id') != event_id:
-        return "Brak autoryzacji", 401
-
     event = db.session.get(Event, event_id)
     if not event:
         return "Nie znaleziono eventu", 404
