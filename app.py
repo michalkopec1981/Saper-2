@@ -322,7 +322,7 @@ WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudnośc
 
         print(f"🔄 Sending request to Claude API...")
         message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             max_tokens=4000,
             messages=[{
                 "role": "user",
