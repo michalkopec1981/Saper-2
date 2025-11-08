@@ -385,52 +385,33 @@
         </div>
         
         <div class="tab-pane fade" id="questions">
-            <!-- Gotowe pytania według kategorii -->
+            <!-- Pytania AI -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Gotowe pytania według kategorii</h5>
-                    <p class="text-muted mb-0 mt-2 small">Wybierz kategorię, aby zobaczyć i edytować gotowe pytania. Możesz także zarządzać kategoriami AI.</p>
+                    <h5 class="card-title mb-0">Pytania AI</h5>
+                    <p class="text-muted mb-0 mt-2 small">Dodaj własne kategorie pytań AI, które będą generowane automatycznie.</p>
                 </div>
                 <div class="card-body">
-                    <h6 class="mb-3">Kategorie pytań AI:</h6>
-                    <div id="category-buttons-list" class="mb-3"></div>
-
-                    <hr>
-
-                    <h6 class="mb-3">Zarządzanie kategoriami AI:</h6>
-                    <div id="ai-categories-management" class="mb-4">
-                        <div class="alert alert-info mb-3">
-                            <strong>Szybki start:</strong> Wygeneruj po 20 gotowych pytań dla wszystkich kategorii
-                            <button class="btn btn-primary btn-sm ms-3" id="generate-all-questions-btn">
-                                Generuj pytania dla wszystkich kategorii
-                            </button>
+                    <h6 class="mb-3">Dodaj własną kategorię:</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
+                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
                         </div>
-                        <h6 class="mb-3">Predefiniowane kategorie:</h6>
-                        <div id="ai-categories-list" class="mb-4"></div>
-
-                        <hr>
-
-                        <h6 class="mb-3">Dodaj własną kategorię:</h6>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
-                                <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
-                                <select class="form-select" id="custom-category-difficulty">
-                                    <option value="easy">Łatwy</option>
-                                    <option value="medium">Średni</option>
-                                    <option value="advanced">Zaawansowany</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
-                            </div>
+                        <div class="col-md-4">
+                            <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
+                            <select class="form-select" id="custom-category-difficulty">
+                                <option value="easy">Łatwy</option>
+                                <option value="hard">Trudny</option>
+                                <option value="mixed">Mieszany</option>
+                            </select>
                         </div>
-
-                        <div id="custom-categories-list" class="mt-4"></div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
+                        </div>
                     </div>
+
+                    <div id="custom-categories-list" class="mt-4"></div>
 
                     <!-- Lista pytań z wybranej kategorii -->
                     <div id="category-questions-list" class="mt-4" style="display: none;">
@@ -441,14 +422,27 @@
                 </div>
             </div>
 
-            <!-- Zarządzanie pytaniami -->
-            <div class="card">
+            <!-- Własne pytania -->
+            <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
+                    <h5 class="card-title mb-0">Własne pytania</h5>
                     <button class="btn btn-primary" id="add-question-btn" data-translate="add_question">Dodaj pytanie</button>
                 </div>
                 <div class="card-body">
                     <div id="questions-list"></div>
+                </div>
+            </div>
+
+            <!-- Pytania ogólne z kategoriami -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Pytania ogólne z kategoriami</h5>
+                    <p class="text-muted mb-0 mt-2 small">Przeglądaj gotowe pytania podzielone na kategorie tematyczne.</p>
+                </div>
+                <div class="card-body">
+                    <div id="general-questions-categories" class="mb-3">
+                        <p class="text-muted">Funkcjonalność w przygotowaniu...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2217,10 +2211,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/api/host/ai/categories');
             const categories = await response.json();
 
-            const predefinedList = document.getElementById('ai-categories-list');
             const customList = document.getElementById('custom-categories-list');
-
-            predefinedList.innerHTML = '';
             customList.innerHTML = '';
 
             categories.forEach(cat => {
@@ -2228,9 +2219,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 categoryItem.className = 'card mb-3';
 
                 const difficultyBadge = cat.difficulty_level === 'easy' ? 'success' :
-                                       cat.difficulty_level === 'medium' ? 'warning' : 'danger';
+                                       cat.difficulty_level === 'hard' ? 'danger' :
+                                       cat.difficulty_level === 'mixed' ? 'warning' : 'secondary';
                 const difficultyText = cat.difficulty_level === 'easy' ? 'Łatwy' :
-                                      cat.difficulty_level === 'medium' ? 'Średni' : 'Zaawansowany';
+                                      cat.difficulty_level === 'hard' ? 'Trudny' :
+                                      cat.difficulty_level === 'mixed' ? 'Mieszany' : cat.difficulty_level;
 
                 categoryItem.innerHTML = `
                     <div class="card-body">
@@ -2245,23 +2238,17 @@ document.addEventListener('DOMContentLoaded', function () {
                                        onchange="toggleAICategory(${cat.id}, this.checked)">
                                 <label class="form-check-label">Aktywna</label>
                             </div>
-                            ${cat.is_custom ? `
-                                <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
-                                    Generuj pytania
-                                </button>
-                                <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
-                                    Usuń
-                                </button>
-                            ` : ''}
+                            <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
+                                Generuj pytania
+                            </button>
+                            <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
+                                Usuń
+                            </button>
                         </div>
                     </div>
                 `;
 
-                if (cat.is_custom) {
-                    customList.appendChild(categoryItem);
-                } else {
-                    predefinedList.appendChild(categoryItem);
-                }
+                customList.appendChild(categoryItem);
             });
 
             if (customList.children.length === 0) {
@@ -2489,83 +2476,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Funkcja do ładowania przycisków kategorii
-    async function loadCategoryButtons() {
-        try {
-            const response = await fetch('/api/host/ai/categories');
-            const categories = await response.json();
-
-            const buttonsList = document.getElementById('category-buttons-list');
-            buttonsList.innerHTML = '';
-
-            categories.forEach(cat => {
-                if (cat.is_enabled) {
-                    const button = document.createElement('button');
-                    button.className = 'btn btn-outline-primary me-2 mb-2';
-                    button.textContent = cat.name;
-                    button.onclick = () => showCategoryQuestions(cat.id, cat.name);
-                    buttonsList.appendChild(button);
-                }
-            });
-
-            if (buttonsList.children.length === 0) {
-                buttonsList.innerHTML = '<p class="text-muted">Brak aktywnych kategorii. Włącz kategorie poniżej.</p>';
-            }
-        } catch (error) {
-            console.error('Error loading category buttons:', error);
-        }
-    }
-
-    // Funkcja do wyświetlania pytań z wybranej kategorii
-    window.showCategoryQuestions = async function(categoryId, categoryName) {
-        try {
-            const response = await fetch(`/api/host/ai/questions?category_id=${categoryId}`);
-            const data = await response.json();
-
-            document.getElementById('selected-category-name').textContent = categoryName;
-            document.getElementById('ai-categories-management').style.display = 'none';
-            document.getElementById('category-buttons-list').parentElement.parentElement.style.display = 'none';
-            document.getElementById('category-questions-list').style.display = 'block';
-
-            const content = document.getElementById('category-questions-content');
-            content.innerHTML = '';
-
-            if (data.questions && data.questions.length > 0) {
-                data.questions.forEach(q => {
-                    const questionCard = document.createElement('div');
-                    questionCard.className = 'card mb-3';
-                    questionCard.innerHTML = `
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="mb-0">ID: ${q.id}</h6>
-                                <button class="btn btn-sm btn-primary" onclick="editAIQuestion(${q.id})">
-                                    <i class="bi bi-pencil"></i> Edytuj
-                                </button>
-                            </div>
-                            <p class="mb-2"><strong>Pytanie:</strong> ${q.text}</p>
-                            <p class="mb-1"><strong>A:</strong> ${q.option_a}</p>
-                            <p class="mb-1"><strong>B:</strong> ${q.option_b}</p>
-                            <p class="mb-1"><strong>C:</strong> ${q.option_c}</p>
-                            <p class="mb-0"><strong>Poprawna odpowiedź:</strong> <span class="badge bg-success">${q.correct_answer}</span></p>
-                        </div>
-                    `;
-                    content.appendChild(questionCard);
-                });
-            } else {
-                content.innerHTML = '<p class="text-muted">Brak pytań w tej kategorii. Wygeneruj pytania klikając "Generuj pytania".</p>';
-            }
-        } catch (error) {
-            console.error('Error loading category questions:', error);
-            alert('Błąd ładowania pytań: ' + error.message);
-        }
-    };
-
-    // Event listener dla przycisku powrotu do kategorii
-    document.getElementById('back-to-categories-btn')?.addEventListener('click', () => {
-        document.getElementById('category-questions-list').style.display = 'none';
-        document.getElementById('ai-categories-management').style.display = 'block';
-        document.getElementById('category-buttons-list').parentElement.parentElement.style.display = 'block';
-    });
+    // Funkcje loadCategoryButtons i showCategoryQuestions zostały usunięte
+    // ponieważ przyciski kategorii zostały usunięte z interfejsu
 
     // Event listener dla filtra kategorii w zakładce Pytania AI
     document.getElementById('ai-question-category-filter')?.addEventListener('change', loadAIQuestions);
@@ -2573,44 +2485,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event listener dla zakładki Pytania AI
     document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAIQuestions);
 
-    // Event listener dla zakładki Pytania (kategorie + zwykłe pytania)
+    // Event listener dla zakładki Pytania
     document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', () => {
         loadQuestions();  // Załaduj zwykłe pytania
-        loadCategoryButtons();  // Załaduj przyciski kategorii AI
-        loadAICategories();  // Załaduj zarządzanie kategoriami AI
-    });
-
-    // Event listener dla przycisku generowania wszystkich pytań
-    document.getElementById('generate-all-questions-btn')?.addEventListener('click', async () => {
-        if (!confirm('Czy na pewno chcesz wygenerować po 20 pytań dla wszystkich kategorii? To może potrwać kilka minut.')) {
-            return;
-        }
-
-        const btn = document.getElementById('generate-all-questions-btn');
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Generowanie pytań... Proszę czekać...';
-
-        try {
-            const response = await fetch('/api/host/ai/generate_all_questions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd generowania pytań');
-            }
-
-            alert(result.message + '\n\nSzczegóły:\n' + result.details.join('\n'));
-            loadCategoryButtons();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
-        }
+        loadAICategories();  // Załaduj kategorie AI
     });
 
 });
