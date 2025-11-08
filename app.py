@@ -175,6 +175,37 @@ class AIPlayerAnswer(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_ai_question_uc'),)
 
+class GeneralQuestion(db.Model):
+    """Pytania ogólne - dostępne globalnie dla wszystkich eventów"""
+    id = db.Column(db.Integer, primary_key=True)
+    category_name = db.Column(db.String(100), nullable=False)
+    difficulty_level = db.Column(db.String(20), nullable=False)  # 'easy' lub 'hard'
+    text = db.Column(db.String(500), nullable=False)
+    option_a = db.Column(db.String(200), nullable=False)
+    option_b = db.Column(db.String(200), nullable=False)
+    option_c = db.Column(db.String(200), nullable=False)
+    correct_answer = db.Column(db.String(1), nullable=False)  # A, B lub C
+    times_shown = db.Column(db.Integer, default=0)
+    times_correct = db.Column(db.Integer, default=0)
+    __table_args__ = (db.Index('idx_category_difficulty', 'category_name', 'difficulty_level'),)
+
+class GeneralCategoryState(db.Model):
+    """Stan kategorii ogólnych dla każdego eventu"""
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    category_name = db.Column(db.String(100), nullable=False)
+    is_enabled = db.Column(db.Boolean, default=True)
+    difficulty_preference = db.Column(db.String(20), default='easy')  # 'easy' lub 'hard'
+    __table_args__ = (db.UniqueConstraint('event_id', 'category_name', name='_event_general_category_uc'),)
+
+class GeneralPlayerAnswer(db.Model):
+    """Odpowiedzi graczy na pytania ogólne"""
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('general_question.id', ondelete='CASCADE'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_general_question_uc'),)
+
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
@@ -1525,6 +1556,146 @@ def generate_all_default_questions():
         'message': f'Proces zakończony. Wygenerowano łącznie {total_generated} nowych pytań.',
         'details': results
     })
+
+# --- API: GENERAL QUESTIONS (Pytania ogólne z kategoriami) ---
+
+@app.route('/api/host/general/questions', methods=['GET'])
+@host_required
+def get_general_questions():
+    """Pobierz pytania ogólne dla konkretnej kategorii i poziomu"""
+    category = request.args.get('category')
+    difficulty = request.args.get('difficulty', 'easy')
+
+    if not category:
+        return jsonify({'error': 'Brak nazwy kategorii'}), 400
+
+    questions = GeneralQuestion.query.filter_by(
+        category_name=category,
+        difficulty_level=difficulty
+    ).all()
+
+    return jsonify({
+        'questions': [{
+            'id': q.id,
+            'category_name': q.category_name,
+            'difficulty_level': q.difficulty_level,
+            'text': q.text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'correct_answer': q.correct_answer,
+            'times_shown': q.times_shown,
+            'times_correct': q.times_correct
+        } for q in questions]
+    })
+
+@app.route('/api/host/general/question/<int:question_id>', methods=['GET'])
+@host_required
+def get_general_question(question_id):
+    """Pobierz pojedyncze pytanie ogólne"""
+    question = GeneralQuestion.query.get(question_id)
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    return jsonify({
+        'id': question.id,
+        'text': question.text,
+        'option_a': question.option_a,
+        'option_b': question.option_b,
+        'option_c': question.option_c,
+        'correct_answer': question.correct_answer
+    })
+
+@app.route('/api/host/general/question/<int:question_id>', methods=['PUT'])
+@host_required
+def update_general_question(question_id):
+    """Edytuj pytanie ogólne"""
+    question = GeneralQuestion.query.get(question_id)
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    data = request.json
+    question.text = data.get('text', question.text)
+    question.option_a = data.get('option_a', question.option_a)
+    question.option_b = data.get('option_b', question.option_b)
+    question.option_c = data.get('option_c', question.option_c)
+    question.correct_answer = data.get('correct_answer', question.correct_answer).upper()
+    db.session.commit()
+
+    return jsonify({'message': 'Pytanie zaktualizowane'})
+
+@app.route('/api/host/general/category_states', methods=['GET'])
+@host_required
+def get_general_category_states():
+    """Pobierz stany kategorii ogólnych dla danego eventu"""
+    event_id = session['host_event_id']
+
+    # Lista 10 kategorii
+    categories = [
+        'Historia powszechna', 'Historia Polski',
+        'Geografia świata', 'Geografia Polski',
+        'Gry Komputery i sprzęt', 'Muzyka',
+        'Kuchnia', 'Film', 'Sport', 'Nauki ścisłe'
+    ]
+
+    states = []
+    for cat_name in categories:
+        state = GeneralCategoryState.query.filter_by(
+            event_id=event_id,
+            category_name=cat_name
+        ).first()
+
+        if not state:
+            # Utwórz domyślny stan jeśli nie istnieje
+            state = GeneralCategoryState(
+                event_id=event_id,
+                category_name=cat_name,
+                is_enabled=True,
+                difficulty_preference='easy'
+            )
+            db.session.add(state)
+
+        states.append({
+            'category_name': state.category_name,
+            'is_enabled': state.is_enabled,
+            'difficulty_preference': state.difficulty_preference
+        })
+
+    db.session.commit()
+    return jsonify({'states': states})
+
+@app.route('/api/host/general/category_state', methods=['PUT'])
+@host_required
+def update_general_category_state():
+    """Aktualizuj stan kategorii ogólnej dla eventu"""
+    event_id = session['host_event_id']
+    data = request.json
+
+    category_name = data.get('category_name')
+    if not category_name:
+        return jsonify({'error': 'Brak nazwy kategorii'}), 400
+
+    state = GeneralCategoryState.query.filter_by(
+        event_id=event_id,
+        category_name=category_name
+    ).first()
+
+    if not state:
+        state = GeneralCategoryState(
+            event_id=event_id,
+            category_name=category_name
+        )
+        db.session.add(state)
+
+    if 'is_enabled' in data:
+        state.is_enabled = data['is_enabled']
+    if 'difficulty_preference' in data:
+        state.difficulty_preference = data['difficulty_preference']
+
+    db.session.commit()
+    return jsonify({'message': 'Stan kategorii zaktualizowany'})
 
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required

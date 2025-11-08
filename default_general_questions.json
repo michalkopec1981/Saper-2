@@ -1,0 +1,262 @@
+{
+  "Historia powszechna": {
+    "easy": [
+      {"text": "W którym roku rozpoczęła się II wojna światowa?", "option_a": "1939", "option_b": "1941", "option_c": "1945", "correct_answer": "A"},
+      {"text": "Kto był pierwszym prezydentem USA?", "option_a": "George Washington", "option_b": "Thomas Jefferson", "option_c": "Abraham Lincoln", "correct_answer": "A"},
+      {"text": "W którym kraju zbudowano piramidy?", "option_a": "Egipt", "option_b": "Meksyk", "option_c": "Indie", "correct_answer": "A"},
+      {"text": "Kto odkrył Amerykę w 1492 roku?", "option_a": "Krzysztof Kolumb", "option_b": "Ferdynand Magellan", "option_c": "Amerigo Vespucci", "correct_answer": "A"},
+      {"text": "Który cesarz rządził Francją na początku XIX wieku?", "option_a": "Napoleon Bonaparte", "option_b": "Ludwik XIV", "option_c": "Karol Wielki", "correct_answer": "A"},
+      {"text": "W którym roku upadł Mur Berliński?", "option_a": "1989", "option_b": "1991", "option_c": "1987", "correct_answer": "A"},
+      {"text": "Który wódz mongolski podbił większość Azji?", "option_a": "Czyngis-chan", "option_b": "Attyla", "option_c": "Tamerlan", "correct_answer": "A"},
+      {"text": "Gdzie miała miejsce rewolucja październikowa 1917 roku?", "option_a": "Rosja", "option_b": "Niemcy", "option_c": "Francja", "correct_answer": "A"},
+      {"text": "W którym roku zakończyła się I wojna światowa?", "option_a": "1918", "option_b": "1914", "option_c": "1920", "correct_answer": "A"},
+      {"text": "Kto był dyktatorem Niemiec podczas II wojny światowej?", "option_a": "Adolf Hitler", "option_b": "Benito Mussolini", "option_c": "Josef Stalin", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "W którym roku podpisano traktat westfalski kończący wojnę trzydziestoletnią?", "option_a": "1648", "option_b": "1635", "option_c": "1660", "correct_answer": "A"},
+      {"text": "Który rzymski cesarz wydał edykt mediolański?", "option_a": "Konstantyn Wielki", "option_b": "Dioklecjan", "option_c": "Juliusz Cezar", "correct_answer": "A"},
+      {"text": "W którym roku nastąpił rozbiór Cesarstwa Karolińskiego?", "option_a": "843 (Verdun)", "option_b": "800", "option_c": "911", "correct_answer": "A"},
+      {"text": "Kto dowodził flotą perską w bitwie pod Salaminą?", "option_a": "Kserkses I", "option_b": "Dariusz I", "option_c": "Cyrus II", "correct_answer": "A"},
+      {"text": "W którym roku wybuchło powstanie bokserów w Chinach?", "option_a": "1899", "option_b": "1885", "option_c": "1911", "correct_answer": "A"},
+      {"text": "Który traktat zakończył wojnę o sukcesję hiszpańską?", "option_a": "Utrechcki", "option_b": "Paryski", "option_c": "Wiedeński", "correct_answer": "A"},
+      {"text": "Kto był pierwszym shogunem Japonii?", "option_a": "Minamoto Yoritomo", "option_b": "Tokugawa Ieyasu", "option_c": "Oda Nobunaga", "correct_answer": "A"},
+      {"text": "W którym roku założono Ligę Narodów?", "option_a": "1920", "option_b": "1918", "option_c": "1945", "correct_answer": "A"},
+      {"text": "Która dynastia zbudowała Zakazane Miasto w Pekinie?", "option_a": "Ming", "option_b": "Qing", "option_c": "Tang", "correct_answer": "A"},
+      {"text": "W którym roku miała miejsce bitwa pod Hastings?", "option_a": "1066", "option_b": "1054", "option_c": "1099", "correct_answer": "A"}
+    ]
+  },
+  "Historia Polski": {
+    "easy": [
+      {"text": "W którym roku Polska odzyskała niepodległość?", "option_a": "1918", "option_b": "1920", "option_c": "1945", "correct_answer": "A"},
+      {"text": "Który król Polski zatrzymał Turków pod Wiedniem?", "option_a": "Jan III Sobieski", "option_b": "Kazimierz Wielki", "option_c": "Władysław Jagiełło", "correct_answer": "A"},
+      {"text": "W którym roku Polska wstąpiła do Unii Europejskiej?", "option_a": "2004", "option_b": "2000", "option_c": "2007", "correct_answer": "A"},
+      {"text": "Kto był pierwszym królem Polski?", "option_a": "Bolesław Chrobry", "option_b": "Mieszko I", "option_c": "Kazimierz Wielki", "correct_answer": "A"},
+      {"text": "W którym roku miała miejsce bitwa pod Grunwaldem?", "option_a": "1410", "option_b": "1453", "option_c": "1385", "correct_answer": "A"},
+      {"text": "Który polski papież został wybrany w 1978 roku?", "option_a": "Jan Paweł II", "option_b": "Benedykt XVI", "option_c": "Franciszek", "correct_answer": "A"},
+      {"text": "Ile było rozbiorów Polski?", "option_a": "3", "option_b": "2", "option_c": "4", "correct_answer": "A"},
+      {"text": "W którym mieście podpisano unię polsko-litewską w 1569?", "option_a": "Lublin", "option_b": "Warszawa", "option_c": "Kraków", "correct_answer": "A"},
+      {"text": "Kto był przywódcą Solidarności?", "option_a": "Lech Wałęsa", "option_b": "Wojciech Jaruzelski", "option_c": "Tadeusz Mazowiecki", "correct_answer": "A"},
+      {"text": "W którym roku wprowadzono stan wojenny w Polsce?", "option_a": "1981", "option_b": "1989", "option_c": "1970", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "W którym roku miał miejsce sejm niemy?", "option_a": "1717", "option_b": "1652", "option_c": "1764", "correct_answer": "A"},
+      {"text": "Który król Polski był jednocześnie królem Węgier i Czech?", "option_a": "Władysław Warneńczyk", "option_b": "Kazimierz Jagiellończyk", "option_c": "Ludwik Węgierski", "correct_answer": "A"},
+      {"text": "W którym roku odbyła się konfederacja barska?", "option_a": "1768", "option_b": "1772", "option_c": "1733", "correct_answer": "A"},
+      {"text": "Kto był ostatnim królem Polski?", "option_a": "Stanisław August Poniatowski", "option_b": "August III Sas", "option_c": "Stanisław Leszczyński", "correct_answer": "A"},
+      {"text": "Która ustawa została przyjęta 3 maja 1791 roku?", "option_a": "Konstytucja 3 Maja", "option_b": "Artykuły henrykowskie", "option_c": "Pacta conventa", "correct_answer": "A"},
+      {"text": "W którym roku miała miejsce elekcja viritim Augusta III?", "option_a": "1733", "option_b": "1697", "option_c": "1764", "correct_answer": "A"},
+      {"text": "Który książę Polski zjednoczył ziemie polskie w XIV wieku?", "option_a": "Władysław Łokietek", "option_b": "Kazimierz Wielki", "option_c": "Przemysł II", "correct_answer": "A"},
+      {"text": "W którym roku Polska zawarła unię personalną z Litwą w Krewie?", "option_a": "1385", "option_b": "1410", "option_c": "1569", "correct_answer": "A"},
+      {"text": "Kto był twórcą polskiej szkoły romantycznej w poezji?", "option_a": "Adam Mickiewicz", "option_b": "Juliusz Słowacki", "option_c": "Zygmunt Krasiński", "correct_answer": "A"},
+      {"text": "W którym roku odbył się zjazd gnieźnieński?", "option_a": "1000", "option_b": "966", "option_c": "1025", "correct_answer": "A"}
+    ]
+  },
+  "Geografia świata": {
+    "easy": [
+      {"text": "Która rzeka jest najdłuższa na świecie?", "option_a": "Nil", "option_b": "Amazonka", "option_c": "Jangcy", "correct_answer": "A"},
+      {"text": "Jaka jest stolica Francji?", "option_a": "Paryż", "option_b": "Marsylia", "option_c": "Lyon", "correct_answer": "A"},
+      {"text": "Na którym kontynencie znajduje się pustynia Sahara?", "option_a": "Afryka", "option_b": "Azja", "option_c": "Australia", "correct_answer": "A"},
+      {"text": "Który ocean jest największy?", "option_a": "Spokojny", "option_b": "Atlantycki", "option_c": "Indyjski", "correct_answer": "A"},
+      {"text": "Jaki jest najwyższy szczyt świata?", "option_a": "Mount Everest", "option_b": "K2", "option_c": "Kilimandżaro", "correct_answer": "A"},
+      {"text": "W którym kraju znajduje się Wieża Eiffla?", "option_a": "Francja", "option_b": "Włochy", "option_c": "Hiszpania", "correct_answer": "A"},
+      {"text": "Ile kontynentów jest na Ziemi?", "option_a": "7", "option_b": "5", "option_c": "6", "correct_answer": "A"},
+      {"text": "Jaka jest stolica Wielkiej Brytanii?", "option_a": "Londyn", "option_b": "Manchester", "option_c": "Liverpool", "correct_answer": "A"},
+      {"text": "Które państwo ma największą powierzchnię?", "option_a": "Rosja", "option_b": "Kanada", "option_c": "Chiny", "correct_answer": "A"},
+      {"text": "Na jakim kontynencie leży Brazylia?", "option_a": "Ameryka Południowa", "option_b": "Ameryka Północna", "option_c": "Afryka", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "Jaka jest stolica Kazachstanu?", "option_a": "Astana (Nur-Sultan)", "option_b": "Ałmaty", "option_c": "Biszkek", "correct_answer": "A"},
+      {"text": "Który kraj ma najwięcej wysp?", "option_a": "Szwecja", "option_b": "Indonezja", "option_c": "Filipiny", "correct_answer": "A"},
+      {"text": "Gdzie znajduje się najniżej położony punkt na Ziemi?", "option_a": "Morze Martwe", "option_b": "Dolina Śmierci", "option_c": "Kotlina Kaspijska", "correct_answer": "A"},
+      {"text": "Która pustynia jest największa na świecie (poza Antarktydą)?", "option_a": "Sahara", "option_b": "Arabia", "option_c": "Gobi", "correct_answer": "A"},
+      {"text": "Jaka jest stolica Mongolii?", "option_a": "Ułan Bator", "option_b": "Astana", "option_c": "Biszkek", "correct_answer": "A"},
+      {"text": "Który wulkan zniszczył Pompeje w 79 roku n.e.?", "option_a": "Wezuwiusz", "option_b": "Etna", "option_c": "Stromboli", "correct_answer": "A"},
+      {"text": "Ile państw graniczy z Chinami?", "option_a": "14", "option_b": "10", "option_c": "12", "correct_answer": "A"},
+      {"text": "Jaka jest stolica Bhutanu?", "option_a": "Thimphu", "option_b": "Katmandu", "option_c": "Dhaka", "correct_answer": "A"},
+      {"text": "Który kanał łączy Morze Śródziemne z Czerwonym?", "option_a": "Sueski", "option_b": "Panamski", "option_c": "Koryncki", "correct_answer": "A"},
+      {"text": "Na jakiej szerokości geograficznej leży równik?", "option_a": "0 stopni", "option_b": "23.5 stopni", "option_c": "66.5 stopni", "correct_answer": "A"}
+    ]
+  },
+  "Geografia Polski": {
+    "easy": [
+      {"text": "Jaka jest stolica Polski?", "option_a": "Warszawa", "option_b": "Kraków", "option_c": "Gdańsk", "correct_answer": "A"},
+      {"text": "Która rzeka przepływa przez Warszawę?", "option_a": "Wisła", "option_b": "Odra", "option_c": "Warta", "correct_answer": "A"},
+      {"text": "Jak nazywa się najwyższy szczyt w Polsce?", "option_a": "Rysy", "option_b": "Giewont", "option_c": "Śnieżka", "correct_answer": "A"},
+      {"text": "Nad jakim morzem leży Polska?", "option_a": "Bałtyckim", "option_b": "Śródziemnym", "option_c": "Północnym", "correct_answer": "A"},
+      {"text": "W jakim paśmie górskim leży Zakopane?", "option_a": "Tatry", "option_b": "Sudety", "option_c": "Bieszczady", "correct_answer": "A"},
+      {"text": "Ile województw jest w Polsce?", "option_a": "16", "option_b": "14", "option_c": "18", "correct_answer": "A"},
+      {"text": "Które miasto było stolicą Polski przed Warszawą?", "option_a": "Kraków", "option_b": "Poznań", "option_c": "Gniezno", "correct_answer": "A"},
+      {"text": "Jaka jest najdłuższa rzeka w Polsce?", "option_a": "Wisła", "option_b": "Odra", "option_c": "Bug", "correct_answer": "A"},
+      {"text": "Które jezioro jest największe w Polsce?", "option_a": "Śniardwy", "option_b": "Mamry", "option_c": "Niegocin", "correct_answer": "A"},
+      {"text": "W którym mieście znajduje się Sukiennice?", "option_a": "Kraków", "option_b": "Warszawa", "option_c": "Wrocław", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "Jaka jest długość polskiego wybrzeża?", "option_a": "770 km", "option_b": "524 km", "option_c": "1200 km", "correct_answer": "A"},
+      {"text": "Które pasmo górskie znajduje się między Polską a Czechami?", "option_a": "Sudety", "option_b": "Karpaty", "option_c": "Góry Świętokrzyskie", "correct_answer": "A"},
+      {"text": "Jaka jest powierzchnia Polski?", "option_a": "312 679 km²", "option_b": "290 000 km²", "option_c": "350 000 km²", "correct_answer": "A"},
+      {"text": "Który rezerwat w Polsce jest najstarszy?", "option_a": "Białowieża", "option_b": "Ojcowski", "option_c": "Świętokrzyski", "correct_answer": "A"},
+      {"text": "Jak nazywa się najwyższy szczyt Sudetów?", "option_a": "Śnieżka", "option_b": "Śnieżnik", "option_c": "Babia Góra", "correct_answer": "A"},
+      {"text": "W którym województwie znajduje się Pojezierze Mazurskie?", "option_a": "Warmińsko-mazurskie", "option_b": "Pomorskie", "option_c": "Podlaskie", "correct_answer": "A"},
+      {"text": "Jaki jest najwyższy punkt Beskidów?", "option_a": "Babia Góra (1725 m)", "option_b": "Pilsko (1557 m)", "option_c": "Turbacz (1310 m)", "correct_answer": "A"},
+      {"text": "Która rzeka jest największym dopływem Wisły?", "option_a": "Bug", "option_b": "San", "option_c": "Narew", "correct_answer": "A"},
+      {"text": "Ile parków narodowych jest w Polsce?", "option_a": "23", "option_b": "18", "option_c": "30", "correct_answer": "A"},
+      {"text": "Która polska jaskinia jest najdłuższa?", "option_a": "Wielka Śnieżna", "option_b": "Niedźwiedzia", "option_c": "Raj", "correct_answer": "A"}
+    ]
+  },
+  "Gry Komputery i sprzęt": {
+    "easy": [
+      {"text": "Która firma stworzyła system operacyjny Windows?", "option_a": "Microsoft", "option_b": "Apple", "option_c": "Google", "correct_answer": "A"},
+      {"text": "Jak nazywa się gra z kultowym hydraulikiem Mario?", "option_a": "Super Mario Bros", "option_b": "Sonic", "option_c": "Crash Bandicoot", "correct_answer": "A"},
+      {"text": "Co oznacza skrót RAM?", "option_a": "Random Access Memory", "option_b": "Read Access Memory", "option_c": "Rapid Access Mode", "correct_answer": "A"},
+      {"text": "Która konsola należy do Sony?", "option_a": "PlayStation", "option_b": "Xbox", "option_c": "Nintendo Switch", "correct_answer": "A"},
+      {"text": "Kto stworzył grę Minecraft?", "option_a": "Markus Persson (Notch)", "option_b": "Gabe Newell", "option_c": "Shigeru Miyamoto", "correct_answer": "A"},
+      {"text": "Która firma produkuje procesory Intel?", "option_a": "Intel Corporation", "option_b": "AMD", "option_c": "NVIDIA", "correct_answer": "A"},
+      {"text": "W której grze walczą tytani i terrorzyści?", "option_a": "Counter-Strike", "option_b": "Call of Duty", "option_c": "Battlefield", "correct_answer": "A"},
+      {"text": "Jak nazywa się popularna gra battle royale od Epic Games?", "option_a": "Fortnite", "option_b": "PUBG", "option_c": "Apex Legends", "correct_answer": "A"},
+      {"text": "Która firma stworzyła konsolę Xbox?", "option_a": "Microsoft", "option_b": "Sony", "option_c": "Nintendo", "correct_answer": "A"},
+      {"text": "Co to jest GPU?", "option_a": "Karta graficzna", "option_b": "Procesor", "option_c": "Dysk twardy", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "W którym roku powstała pierwsza wersja UNIX?", "option_a": "1969", "option_b": "1975", "option_c": "1981", "correct_answer": "A"},
+      {"text": "Który język programowania stworzył Bjarne Stroustrup?", "option_a": "C++", "option_b": "Java", "option_c": "Python", "correct_answer": "A"},
+      {"text": "Ile bitów ma adres IPv6?", "option_a": "128", "option_b": "64", "option_c": "256", "correct_answer": "A"},
+      {"text": "Jaka architektura procesora jest w Apple M1?", "option_a": "ARM", "option_b": "x86", "option_c": "RISC-V", "correct_answer": "A"},
+      {"text": "W którym roku powstała gra Half-Life?", "option_a": "1998", "option_b": "1999", "option_c": "2000", "correct_answer": "A"},
+      {"text": "Która firma opracowała technologię CUDA?", "option_a": "NVIDIA", "option_b": "AMD", "option_c": "Intel", "correct_answer": "A"},
+      {"text": "Jaki protokół wykorzystuje DNS?", "option_a": "UDP/TCP port 53", "option_b": "TCP port 80", "option_c": "UDP port 67", "correct_answer": "A"},
+      {"text": "W którym roku powstała pierwsza konsola PlayStation?", "option_a": "1994", "option_b": "1996", "option_c": "1998", "correct_answer": "A"},
+      {"text": "Który procesor Intel był pierwszym 64-bitowym?", "option_a": "Itanium", "option_b": "Pentium 4", "option_c": "Core 2 Duo", "correct_answer": "A"},
+      {"text": "Jaka jest częstotliwość standardu Wi-Fi 802.11ac?", "option_a": "5 GHz", "option_b": "2.4 GHz", "option_c": "6 GHz", "correct_answer": "A"}
+    ]
+  },
+  "Muzyka": {
+    "easy": [
+      {"text": "Kto jest autorem 'Symfonii księżycowej'?", "option_a": "Ludwig van Beethoven", "option_b": "Wolfgang Mozart", "option_c": "Johann Bach", "correct_answer": "A"},
+      {"text": "Który zespół nagrał piosenkę 'Bohemian Rhapsody'?", "option_a": "Queen", "option_b": "The Beatles", "option_c": "Pink Floyd", "correct_answer": "A"},
+      {"text": "Z ilu linii składa się pięciolinia?", "option_a": "5", "option_b": "4", "option_c": "6", "correct_answer": "A"},
+      {"text": "Który instrument ma 88 klawiszy?", "option_a": "Fortepian", "option_b": "Organy", "option_c": "Keyboard", "correct_answer": "A"},
+      {"text": "Kto napisał 'Cztery pory roku'?", "option_a": "Antonio Vivaldi", "option_b": "Johann Bach", "option_c": "Georg Händel", "correct_answer": "A"},
+      {"text": "Ile strun ma klasyczna gitara?", "option_a": "6", "option_b": "7", "option_c": "5", "correct_answer": "A"},
+      {"text": "Który zespół nagrał album 'The Dark Side of the Moon'?", "option_a": "Pink Floyd", "option_b": "Led Zeppelin", "option_c": "Deep Purple", "correct_answer": "A"},
+      {"text": "Jak nazywa się najwyższa męska partia wokalna?", "option_a": "Tenor", "option_b": "Baryton", "option_c": "Bas", "correct_answer": "A"},
+      {"text": "Który kompozytor był głuchy w późniejszym okresie życia?", "option_a": "Beethoven", "option_b": "Mozart", "option_c": "Bach", "correct_answer": "A"},
+      {"text": "Z jakiego kraju pochodzi zespół ABBA?", "option_a": "Szwecja", "option_b": "Norwegia", "option_c": "Finlandia", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "W której tonacji napisana jest 'Symfonia z Nowego Świata' Dvořáka?", "option_a": "e-moll", "option_b": "d-moll", "option_c": "c-moll", "correct_answer": "A"},
+      {"text": "Który zespół nagrał album 'OK Computer' w 1997?", "option_a": "Radiohead", "option_b": "Blur", "option_c": "Oasis", "correct_answer": "A"},
+      {"text": "Ile symfonii napisał Beethoven?", "option_a": "9", "option_b": "10", "option_c": "8", "correct_answer": "A"},
+      {"text": "Kto skomponował operę 'Pierścień Nibelunga'?", "option_a": "Richard Wagner", "option_b": "Giuseppe Verdi", "option_c": "Giacomo Puccini", "correct_answer": "A"},
+      {"text": "Który producent stworzył album 'Thriller' Michaela Jacksona?", "option_a": "Quincy Jones", "option_b": "Phil Spector", "option_c": "George Martin", "correct_answer": "A"},
+      {"text": "W którym roku ukazał się album 'Sgt. Pepper's Lonely Hearts Club Band'?", "option_a": "1967", "option_b": "1969", "option_c": "1965", "correct_answer": "A"},
+      {"text": "Jaki interwał to mała tercja?", "option_a": "3 półtony", "option_b": "4 półtony", "option_c": "2 półtony", "correct_answer": "A"},
+      {"text": "Który gitarzysta grał w zespole Led Zeppelin?", "option_a": "Jimmy Page", "option_b": "Eric Clapton", "option_c": "Jimi Hendrix", "correct_answer": "A"},
+      {"text": "Kto napisał 'Requiem' d-moll K. 626?", "option_a": "Wolfgang Mozart", "option_b": "Johann Bach", "option_c": "Antonio Vivaldi", "correct_answer": "A"},
+      {"text": "Który wokalista był liderem zespołu The Doors?", "option_a": "Jim Morrison", "option_b": "Janis Joplin", "option_c": "Jimi Hendrix", "correct_answer": "A"}
+    ]
+  },
+  "Kuchnia": {
+    "easy": [
+      {"text": "Z czego robi się guacamole?", "option_a": "Awokado", "option_b": "Pomidory", "option_c": "Papryka", "correct_answer": "A"},
+      {"text": "Jaka jest podstawa sosu carbonara?", "option_a": "Jajka i bekon", "option_b": "Śmietana", "option_c": "Sos pomidorowy", "correct_answer": "A"},
+      {"text": "Które warzywo jest głównym składnikiem barszczu?", "option_a": "Burak", "option_b": "Marchew", "option_c": "Kapusta", "correct_answer": "A"},
+      {"text": "Skąd pochodzi sushi?", "option_a": "Japonia", "option_b": "Chiny", "option_c": "Korea", "correct_answer": "A"},
+      {"text": "Jaki ser wykorzystuje się do tradycyjnej pizzy Margherita?", "option_a": "Mozzarella", "option_b": "Parmezan", "option_c": "Gouda", "correct_answer": "A"},
+      {"text": "Która przyprawa jest najdroższa na świecie?", "option_a": "Szafran", "option_b": "Wanilia", "option_c": "Kardamon", "correct_answer": "A"},
+      {"text": "Z jakiego kraju pochodzi paella?", "option_a": "Hiszpania", "option_b": "Portugalia", "option_c": "Włochy", "correct_answer": "A"},
+      {"text": "Co to jest roux w gotowaniu?", "option_a": "Zasmażka z mąki i tłuszczu", "option_b": "Sos pomidorowy", "option_c": "Marynata", "correct_answer": "A"},
+      {"text": "Jakie mięso jest głównym składnikiem beef wellington?", "option_a": "Polędwica wołowa", "option_b": "Schab wieprzowy", "option_c": "Pierś kurczaka", "correct_answer": "A"},
+      {"text": "Który naród wynalazł croissanta?", "option_a": "Austriacy", "option_b": "Francuzi", "option_c": "Włosi", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "Jaka jest idealna temperatura podania czerwonego wina?", "option_a": "16-18°C", "option_b": "20-22°C", "option_c": "12-14°C", "correct_answer": "A"},
+      {"text": "Co to jest mise en place?", "option_a": "Przygotowanie składników przed gotowaniem", "option_b": "Francuska technika podania", "option_c": "Rodzaj sosu", "correct_answer": "A"},
+      {"text": "Jaka jest różnica między bulionem a wywarem?", "option_a": "Bulion z mięsa, wywar z kości", "option_b": "Bulion gęstszy", "option_c": "To to samo", "correct_answer": "A"},
+      {"text": "Co to jest sous vide?", "option_a": "Gotowanie w próżni w niskiej temp.", "option_b": "Smażenie bez tłuszczu", "option_c": "Pieczenie w piekarniku", "correct_answer": "A"},
+      {"text": "Która technika kulinarna polega na krótkim blanszowaniu?", "option_a": "Blanchowanie", "option_b": "Pochowanie", "option_c": "Brązowanie", "correct_answer": "A"},
+      {"text": "Jaki alkohol dodaje się do flambirowania?", "option_a": "Wysoko%owy (koniak, rum)", "option_b": "Wino", "option_c": "Piwo", "correct_answer": "A"},
+      {"text": "Co to jest demi-glace?", "option_a": "Gęsty brązowy sos", "option_b": "Rodzaj ciasta", "option_c": "Technika pieczenia", "correct_answer": "A"},
+      {"text": "W jakiej temperaturze twardnieje białko jajka?", "option_a": "62-65°C", "option_b": "70-75°C", "option_c": "80-85°C", "correct_answer": "A"},
+      {"text": "Co to jest brunoise?", "option_a": "Kostka 2-3mm", "option_b": "Cienkie paski", "option_c": "Grube plasterki", "correct_answer": "A"},
+      {"text": "Jaki jest stosunek ryżu do wody w risotto?", "option_a": "1:3-4", "option_b": "1:2", "option_c": "1:1", "correct_answer": "A"}
+    ]
+  },
+  "Film": {
+    "easy": [
+      {"text": "Kto wyreżyserował 'Titanica'?", "option_a": "James Cameron", "option_b": "Steven Spielberg", "option_c": "Christopher Nolan", "correct_answer": "A"},
+      {"text": "Jak nazywa się młody czarodziej z Hogwartu?", "option_a": "Harry Potter", "option_b": "Ron Weasley", "option_c": "Draco Malfoy", "correct_answer": "A"},
+      {"text": "W którym roku powstał pierwszy film o Jamesie Bondzie?", "option_a": "1962", "option_b": "1965", "option_c": "1970", "correct_answer": "A"},
+      {"text": "Kto zagrał Joker w 'Mrocznym Rycerzu'?", "option_a": "Heath Ledger", "option_b": "Joaquin Phoenix", "option_c": "Jack Nicholson", "correct_answer": "A"},
+      {"text": "Który film wygrał Oscara w 2020?", "option_a": "Parasite", "option_b": "Joker", "option_c": "1917", "correct_answer": "A"},
+      {"text": "Jak nazywa się reżyser trylogii 'Władca Pierścieni'?", "option_a": "Peter Jackson", "option_b": "George Lucas", "option_c": "Ridley Scott", "correct_answer": "A"},
+      {"text": "Który aktor grał Iron Mana w MCU?", "option_a": "Robert Downey Jr.", "option_b": "Chris Evans", "option_c": "Chris Hemsworth", "correct_answer": "A"},
+      {"text": "W którym roku powstał 'Ojciec Chrzestny'?", "option_a": "1972", "option_b": "1975", "option_c": "1980", "correct_answer": "A"},
+      {"text": "Kto wyreżyserował 'Incepcję'?", "option_a": "Christopher Nolan", "option_b": "Denis Villeneuve", "option_c": "Ridley Scott", "correct_answer": "A"},
+      {"text": "Jak nazywa się planeta w 'Avatarze'?", "option_a": "Pandora", "option_b": "LV-426", "option_c": "Tatooine", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "Który film otrzymał najwięcej Oscarów w historii (11)?", "option_a": "Ben Hur / Titanic / LoTR 3", "option_b": "Ojciec Chrzestny", "option_c": "Casablanca", "correct_answer": "A"},
+      {"text": "Kto skomponował muzykę do 'Gwiezdnych Wojen'?", "option_a": "John Williams", "option_b": "Hans Zimmer", "option_c": "Ennio Morricone", "correct_answer": "A"},
+      {"text": "W którym roku powstał 'Obywatel Kane'?", "option_a": "1941", "option_b": "1939", "option_c": "1945", "correct_answer": "A"},
+      {"text": "Który reżyser nakręcił 'Siedem Samurajów'?", "option_a": "Akira Kurosawa", "option_b": "Yasujirō Ozu", "option_c": "Hayao Miyazaki", "correct_answer": "A"},
+      {"text": "Jaki jest pierwszy film w historii kina?", "option_a": "Wyjście robotników z fabryki", "option_b": "Podróż na Księżyc", "option_c": "Wielki napad na pociąg", "correct_answer": "A"},
+      {"text": "Który aktor zagrał w 'Taxidriverze' i 'Wściekłym Byku'?", "option_a": "Robert De Niro", "option_b": "Al Pacino", "option_c": "Joe Pesci", "correct_answer": "A"},
+      {"text": "Kto wyreżyserował 'Łowcę Androidów'?", "option_a": "Ridley Scott", "option_b": "James Cameron", "option_c": "Denis Villeneuve", "correct_answer": "A"},
+      {"text": "W którym roku powstał pierwszy film dźwiękowy 'Śpiewak Jazzbandu'?", "option_a": "1927", "option_b": "1930", "option_c": "1925", "correct_answer": "A"},
+      {"text": "Który operator filmował 'Łowcę Androidów' i 'Blade Runner 2049'?", "option_a": "Roger Deakins", "option_b": "Emmanuel Lubezki", "option_c": "Greig Fraser", "correct_answer": "A"},
+      {"text": "Kto wyreżyserował 'Pulp Fiction'?", "option_a": "Quentin Tarantino", "option_b": "Martin Scorsese", "option_c": "Coen Brothers", "correct_answer": "A"}
+    ]
+  },
+  "Sport": {
+    "easy": [
+      {"text": "Ile graczy jest w drużynie piłkarskiej na boisku?", "option_a": "11", "option_b": "10", "option_c": "12", "correct_answer": "A"},
+      {"text": "Kto jest nazywany 'królem piłki nożnej'?", "option_a": "Pelé", "option_b": "Diego Maradona", "option_c": "Lionel Messi", "correct_answer": "A"},
+      {"text": "W którym sporcie używa się rakiety i lotki?", "option_a": "Badminton", "option_b": "Tenis", "option_c": "Squash", "correct_answer": "A"},
+      {"text": "Ile punktów jest za koszówkę w koszykówce z wolnego rzutu?", "option_a": "1", "option_b": "2", "option_c": "3", "correct_answer": "A"},
+      {"text": "Jak nazywa się finałowy turniej tenisowy w Londynie?", "option_a": "Wimbledon", "option_b": "US Open", "option_c": "Australian Open", "correct_answer": "A"},
+      {"text": "Ile olimpijskich złotych medali zdobył Michael Phelps?", "option_a": "23", "option_b": "18", "option_c": "28", "correct_answer": "A"},
+      {"text": "W jakim kraju powstała siatkówka?", "option_a": "USA", "option_b": "Wielka Brytania", "option_c": "Kanada", "correct_answer": "A"},
+      {"text": "Ile rund jest w typowej walce bokserskiej?", "option_a": "12", "option_b": "10", "option_c": "15", "correct_answer": "A"},
+      {"text": "Który kraj wygrał najwięcej Mistrzostw Świata w piłce nożnej?", "option_a": "Brazylia", "option_b": "Niemcy", "option_c": "Argentyna", "correct_answer": "A"},
+      {"text": "Jak nazywa się najważniejszy wyścig kolarski?", "option_a": "Tour de France", "option_b": "Giro d'Italia", "option_c": "Vuelta a España", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "W którym roku Polska zdobyła złoto olimpijskie w piłce nożnej?", "option_a": "1972", "option_b": "1976", "option_c": "1980", "correct_answer": "A"},
+      {"text": "Kto zdobył najwięcej punktów w karierze NBA?", "option_a": "LeBron James", "option_b": "Kareem Abdul-Jabbar", "option_c": "Michael Jordan", "correct_answer": "A"},
+      {"text": "Ile czasu trwa maraton w godzinach (rekord świata)?", "option_a": "~2:01", "option_b": "~2:30", "option_c": "~1:50", "correct_answer": "A"},
+      {"text": "Który kolarz wygrał najwięcej Tour de France?", "option_a": "Lance Armstrong/Eddy Merckx", "option_b": "Miguel Indurain", "option_c": "Bernard Hinault", "correct_answer": "A"},
+      {"text": "Ile setów trzeba wygrać w finale Wimbledonu męskiego?", "option_a": "3 (z 5)", "option_b": "2 (z 3)", "option_c": "4 (z 7)", "correct_answer": "A"},
+      {"text": "Który zawodnik F1 ma najwięcej tytułów mistrzowskich?", "option_a": "Lewis Hamilton/M.Schumacher", "option_b": "Ayrton Senna", "option_c": "Alain Prost", "correct_answer": "A"},
+      {"text": "W którym roku odbyły się pierwsze nowożytne Igrzyska Olimpijskie?", "option_a": "1896", "option_b": "1900", "option_c": "1892", "correct_answer": "A"},
+      {"text": "Ile punktów daje try w rugby?", "option_a": "5", "option_b": "7", "option_c": "3", "correct_answer": "A"},
+      {"text": "Kto jest rekordzistą świata w biegu na 100m?", "option_a": "Usain Bolt (9.58s)", "option_b": "Carl Lewis", "option_c": "Tyson Gay", "correct_answer": "A"},
+      {"text": "Ile medali olimpijskich zdobyła Irena Szewińska?", "option_a": "7", "option_b": "5", "option_c": "9", "correct_answer": "A"}
+    ]
+  },
+  "Nauki ścisłe": {
+    "easy": [
+      {"text": "Jaki jest wzór chemiczny wody?", "option_a": "H2O", "option_b": "CO2", "option_c": "O2", "correct_answer": "A"},
+      {"text": "Która planeta jest najbliżej Słońca?", "option_a": "Merkury", "option_b": "Wenus", "option_c": "Ziemia", "correct_answer": "A"},
+      {"text": "Ile wynosi prędkość światła (w przybliżeniu)?", "option_a": "300 000 km/s", "option_b": "150 000 km/s", "option_c": "500 000 km/s", "correct_answer": "A"},
+      {"text": "Kto sformułował teorię względności?", "option_a": "Albert Einstein", "option_b": "Isaac Newton", "option_c": "Niels Bohr", "correct_answer": "A"},
+      {"text": "Ile chromosomów ma człowiek?", "option_a": "46", "option_b": "44", "option_c": "48", "correct_answer": "A"},
+      {"text": "Jakie jest pH czystej wody?", "option_a": "7", "option_b": "5", "option_c": "9", "correct_answer": "A"},
+      {"text": "Kto odkrył penicylinę?", "option_a": "Alexander Fleming", "option_b": "Louis Pasteur", "option_c": "Robert Koch", "correct_answer": "A"},
+      {"text": "Jak nazywa się najmniejsza jednostka życia?", "option_a": "Komórka", "option_b": "Molekuła", "option_c": "Atom", "correct_answer": "A"},
+      {"text": "Ile planet jest w Układzie Słonecznym?", "option_a": "8", "option_b": "9", "option_c": "7", "correct_answer": "A"},
+      {"text": "Co oznacza symbol Au w chemii?", "option_a": "Złoto", "option_b": "Srebro", "option_c": "Aluminium", "correct_answer": "A"}
+    ],
+    "hard": [
+      {"text": "Jaka jest stała Plancka?", "option_a": "6.626 × 10⁻³⁴ J·s", "option_b": "3.14 × 10⁻³⁴ J·s", "option_c": "9.81 × 10⁻³⁴ J·s", "correct_answer": "A"},
+      {"text": "Ile wynosi liczba Avogadro?", "option_a": "6.022 × 10²³", "option_b": "3.14 × 10²³", "option_c": "9.81 × 10²³", "correct_answer": "A"},
+      {"text": "Która cząstka pośredniczy w oddziaływaniu silnym?", "option_a": "Gluon", "option_b": "Foton", "option_c": "Bozon W", "correct_answer": "A"},
+      {"text": "Jaki jest wzór na energię w teorii względności?", "option_a": "E=mc²", "option_b": "E=mv²", "option_c": "E=mgh", "correct_answer": "A"},
+      {"text": "Ile wynosi masa elektronu?", "option_a": "9.109 × 10⁻³¹ kg", "option_b": "1.672 × 10⁻²⁷ kg", "option_c": "1.0 × 10⁻³⁰ kg", "correct_answer": "A"},
+      {"text": "Który kwark ma największą masę?", "option_a": "Top", "option_b": "Bottom", "option_c": "Charm", "correct_answer": "A"},
+      {"text": "Jaka jest temperatura zera bezwzględnego w Celsjuszach?", "option_a": "-273.15°C", "option_b": "-300°C", "option_c": "-250°C", "correct_answer": "A"},
+      {"text": "Ile wynosi stosunek obwodu koła do średnicy (π)?", "option_a": "3.14159...", "option_b": "2.71828...", "option_c": "1.61803...", "correct_answer": "A"},
+      {"text": "Który pierwiastek ma liczbę atomową 79?", "option_a": "Złoto (Au)", "option_b": "Rtęć (Hg)", "option_c": "Srebro (Ag)", "correct_answer": "A"},
+      {"text": "Jaka cząstka została odkryta w CERN w 2012?", "option_a": "Bozon Higgsa", "option_b": "Kwark top", "option_c": "Neutrino taonowe", "correct_answer": "A"}
+    ]
+  }
+}

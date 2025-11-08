@@ -437,12 +437,10 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Pytania ogólne z kategoriami</h5>
-                    <p class="text-muted mb-0 mt-2 small">Przeglądaj gotowe pytania podzielone na kategorie tematyczne.</p>
+                    <p class="text-muted mb-0 mt-2 small">Gotowe pytania podzielone na kategorie tematyczne, dostępne dla wszystkich eventów.</p>
                 </div>
                 <div class="card-body">
-                    <div id="general-questions-categories" class="mb-3">
-                        <p class="text-muted">Funkcjonalność w przygotowaniu...</p>
-                    </div>
+                    <div id="general-questions-categories"></div>
                 </div>
             </div>
         </div>
@@ -2241,6 +2239,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
                                 Generuj pytania
                             </button>
+                            <button class="btn btn-sm btn-info ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
+                                Edytuj
+                            </button>
                             <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
                                 Usuń
                             </button>
@@ -2476,8 +2477,303 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Funkcje loadCategoryButtons i showCategoryQuestions zostały usunięte
-    // ponieważ przyciski kategorii zostały usunięte z interfejsu
+    // Funkcja do edycji pytań z kategorii AI
+    window.editCategoryQuestions = async function(categoryId, categoryName) {
+        window.location.href = `#ai`;
+        document.querySelector('button[data-bs-target="#ai"]').click();
+        setTimeout(() => {
+            document.getElementById('ai-question-category-filter').value = categoryId;
+            document.getElementById('ai-question-category-filter').dispatchEvent(new Event('change'));
+        }, 300);
+    };
+
+    // ===================================================
+    // OGÓLNE PYTANIA Z KATEGORIAMI
+    // ===================================================
+    const generalCategories = [
+        { name: 'Historia powszechna', id: 'hist_pow' },
+        { name: 'Historia Polski', id: 'hist_pl' },
+        { name: 'Geografia świata', id: 'geo_swiat' },
+        { name: 'Geografia Polski', id: 'geo_pl' },
+        { name: 'Gry Komputery i sprzęt', id: 'gry_komp' },
+        { name: 'Muzyka', id: 'muzyka' },
+        { name: 'Kuchnia', id: 'kuchnia' },
+        { name: 'Film', id: 'film' },
+        { name: 'Sport', id: 'sport' },
+        { name: 'Nauki ścisłe', id: 'nauki' }
+    ];
+
+    async function loadGeneralQuestions() {
+        const container = document.getElementById('general-questions-categories');
+        container.innerHTML = '';
+
+        try {
+            // Pobierz stany kategorii z API
+            const response = await fetch('/api/host/general/category_states');
+            const data = await response.json();
+            const states = data.states || [];
+
+            for (const category of generalCategories) {
+                // Znajdź stan dla tej kategorii
+                const state = states.find(s => s.category_name === category.name) || {
+                    is_enabled: true,
+                    difficulty_preference: 'easy'
+                };
+
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'card mb-3';
+
+                categoryCard.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${category.name}</h6>
+                            </div>
+                            <div class="me-3">
+                                <label class="form-label mb-0 me-2" style="font-size: 0.875rem;">Poziom:</label>
+                                <select class="form-select form-select-sm d-inline-block" style="width: auto;" id="difficulty-${category.id}" onchange="saveGeneralCategoryState('${category.name}')">
+                                    <option value="easy" ${state.difficulty_preference === 'easy' ? 'selected' : ''}>Łatwy</option>
+                                    <option value="hard" ${state.difficulty_preference === 'hard' ? 'selected' : ''}>Trudny</option>
+                                </select>
+                            </div>
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input" type="checkbox" id="active-${category.id}" ${state.is_enabled ? 'checked' : ''} onchange="saveGeneralCategoryState('${category.name}')">
+                                <label class="form-check-label">Aktywna</label>
+                            </div>
+                            <button class="btn btn-sm btn-info" onclick="editGeneralQuestions('${category.id}', '${category.name}')">
+                                Edytuj
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(categoryCard);
+            }
+        } catch (error) {
+            console.error('Błąd podczas ładowania ogólnych pytań:', error);
+            alert('Błąd podczas ładowania ogólnych pytań');
+        }
+    }
+
+    window.saveGeneralCategoryState = async function(categoryName) {
+        // Znajdź odpowiednie ID kategorii
+        const category = generalCategories.find(c => c.name === categoryName);
+        if (!category) return;
+
+        const difficulty = document.getElementById(`difficulty-${category.id}`).value;
+        const isEnabled = document.getElementById(`active-${category.id}`).checked;
+
+        try {
+            const response = await fetch('/api/host/general/category_state', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category_name: categoryName,
+                    is_enabled: isEnabled,
+                    difficulty_preference: difficulty
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd zapisywania stanu kategorii');
+            }
+        } catch (error) {
+            console.error('Błąd podczas zapisywania stanu kategorii:', error);
+            alert('Błąd podczas zapisywania stanu kategorii');
+        }
+    };
+
+    window.editGeneralQuestions = async function(categoryId, categoryName) {
+        const difficulty = document.getElementById(`difficulty-${categoryId}`).value;
+        const difficultyText = difficulty === 'easy' ? 'Łatwy' : 'Trudny';
+
+        try {
+            // Pobierz pytania dla tej kategorii i poziomu trudności
+            const response = await fetch(`/api/host/general/questions?category=${encodeURIComponent(categoryName)}&difficulty=${difficulty}`);
+            const data = await response.json();
+            const questions = data.questions || [];
+
+            // Wyświetl modal z pytaniami
+            showGeneralQuestionsModal(categoryName, difficultyText, questions);
+        } catch (error) {
+            console.error('Błąd podczas ładowania pytań:', error);
+            alert('Błąd podczas ładowania pytań');
+        }
+    };
+
+    function showGeneralQuestionsModal(categoryName, difficultyText, questions) {
+        // Utwórz modal HTML
+        const modalHTML = `
+            <div class="modal fade" id="generalQuestionsModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edycja pytań: ${categoryName} (${difficultyText})</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5%;">#</th>
+                                            <th style="width: 30%;">Pytanie</th>
+                                            <th style="width: 15%;">Odp. A</th>
+                                            <th style="width: 15%;">Odp. B</th>
+                                            <th style="width: 15%;">Odp. C</th>
+                                            <th style="width: 10%;">Poprawna</th>
+                                            <th style="width: 10%;">Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="generalQuestionsTableBody">
+                                        ${questions.map((q, index) => `
+                                            <tr>
+                                                <td>${index + 1}</td>
+                                                <td>${escapeHtml(q.text)}</td>
+                                                <td>${escapeHtml(q.option_a)}</td>
+                                                <td>${escapeHtml(q.option_b)}</td>
+                                                <td>${escapeHtml(q.option_c)}</td>
+                                                <td><span class="badge bg-success">${q.correct_answer}</span></td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary" onclick="editSingleGeneralQuestion(${q.id})">
+                                                        Edytuj
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Usuń poprzedni modal jeśli istnieje
+        const oldModal = document.getElementById('generalQuestionsModal');
+        if (oldModal) {
+            oldModal.remove();
+        }
+
+        // Dodaj modal do body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('generalQuestionsModal'));
+        modal.show();
+    }
+
+    window.editSingleGeneralQuestion = async function(questionId) {
+        try {
+            // Pobierz pytanie
+            const response = await fetch(`/api/host/general/question/${questionId}`);
+            const question = await response.json();
+
+            // Wyświetl formularz edycji
+            showEditGeneralQuestionForm(question);
+        } catch (error) {
+            console.error('Błąd podczas ładowania pytania:', error);
+            alert('Błąd podczas ładowania pytania');
+        }
+    };
+
+    function showEditGeneralQuestionForm(question) {
+        const formHTML = `
+            <div class="modal fade" id="editGeneralQuestionModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edycja pytania</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editGeneralQuestionForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Pytanie:</label>
+                                    <input type="text" class="form-control" id="edit-question-text" value="${escapeHtml(question.text)}" maxlength="500">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Odpowiedź A:</label>
+                                    <input type="text" class="form-control" id="edit-option-a" value="${escapeHtml(question.option_a)}" maxlength="200">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Odpowiedź B:</label>
+                                    <input type="text" class="form-control" id="edit-option-b" value="${escapeHtml(question.option_b)}" maxlength="200">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Odpowiedź C:</label>
+                                    <input type="text" class="form-control" id="edit-option-c" value="${escapeHtml(question.option_c)}" maxlength="200">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Poprawna odpowiedź:</label>
+                                    <select class="form-select" id="edit-correct-answer">
+                                        <option value="A" ${question.correct_answer === 'A' ? 'selected' : ''}>A</option>
+                                        <option value="B" ${question.correct_answer === 'B' ? 'selected' : ''}>B</option>
+                                        <option value="C" ${question.correct_answer === 'C' ? 'selected' : ''}>C</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                            <button type="button" class="btn btn-primary" onclick="saveGeneralQuestion(${question.id})">Zapisz</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Usuń poprzedni modal jeśli istnieje
+        const oldModal = document.getElementById('editGeneralQuestionModal');
+        if (oldModal) {
+            oldModal.remove();
+        }
+
+        // Dodaj modal do body
+        document.body.insertAdjacentHTML('beforeend', formHTML);
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('editGeneralQuestionModal'));
+        modal.show();
+    }
+
+    window.saveGeneralQuestion = async function(questionId) {
+        const text = document.getElementById('edit-question-text').value;
+        const option_a = document.getElementById('edit-option-a').value;
+        const option_b = document.getElementById('edit-option-b').value;
+        const option_c = document.getElementById('edit-option-c').value;
+        const correct_answer = document.getElementById('edit-correct-answer').value;
+
+        if (!text || !option_a || !option_b || !option_c) {
+            alert('Wszystkie pola muszą być wypełnione');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/general/question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, option_a, option_b, option_c, correct_answer })
+            });
+
+            if (response.ok) {
+                alert('Pytanie zostało zaktualizowane');
+                // Zamknij modal edycji
+                bootstrap.Modal.getInstance(document.getElementById('editGeneralQuestionModal')).hide();
+                // Zamknij modal listy i odśwież
+                bootstrap.Modal.getInstance(document.getElementById('generalQuestionsModal')).hide();
+            } else {
+                throw new Error('Błąd podczas zapisywania pytania');
+            }
+        } catch (error) {
+            console.error('Błąd podczas zapisywania pytania:', error);
+            alert('Błąd podczas zapisywania pytania');
+        }
+    };
 
     // Event listener dla filtra kategorii w zakładce Pytania AI
     document.getElementById('ai-question-category-filter')?.addEventListener('change', loadAIQuestions);
@@ -2489,6 +2785,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', () => {
         loadQuestions();  // Załaduj zwykłe pytania
         loadAICategories();  // Załaduj kategorie AI
+        loadGeneralQuestions();  // Załaduj ogólne pytania z kategoriami
     });
 
 });
