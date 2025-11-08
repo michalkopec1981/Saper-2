@@ -522,9 +522,26 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
                 <div class="card-body">
-                    <p data-translate="ar_description">Tutaj będą dostępne funkcje AR.</p>
-                    <div class="alert alert-secondary text-center">
-                        <p class="mb-0">Wkrótce - funkcje AR</p>
+                    <h6>1. Zdefiniuj obiekty AR</h6>
+                    <p class="text-muted">Sfotografuj przedmioty, które będą wyzwalać gry po rozpoznaniu przez graczy.</p>
+
+                    <div class="row g-3 mb-4" id="ar-objects-container">
+                        <!-- Obiekty AR będą dodawane tutaj dynamicznie -->
+                    </div>
+
+                    <button class="btn btn-success mb-4" onclick="addNewARObject()">
+                        + Dodaj nowy obiekt AR
+                    </button>
+
+                    <hr>
+
+                    <h6>2. Kod QR dla graczy (AR Scanner)</h6>
+                    <p class="text-muted">Wygeneruj kod QR, który gracze będą skanować, aby uruchomić skaner AR.</p>
+                    <div class="text-center">
+                        <div id="ar-player-qr" class="mb-3"></div>
+                        <button class="btn btn-primary" onclick="generateARPlayerQR()">
+                            Wygeneruj QR dla skanowania AR
+                        </button>
                     </div>
                 </div>
             </div>
@@ -2279,6 +2296,213 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
+
+    // ============ AR FUNKCJE ============
+
+    let arObjectsCounter = 0;
+
+    window.addNewARObject = function() {
+        arObjectsCounter++;
+        const container = document.getElementById('ar-objects-container');
+        const objectDiv = document.createElement('div');
+        objectDiv.className = 'col-md-6';
+        objectDiv.id = `ar-object-${arObjectsCounter}`;
+        objectDiv.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h6>Obiekt AR #${arObjectsCounter}</h6>
+                    <div id="ar-preview-${arObjectsCounter}" class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                        <span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>
+                    </div>
+                    <input type="text" class="form-control mb-2" id="ar-name-${arObjectsCounter}" placeholder="Nazwa obiektu (np. Butelka)">
+                    <select class="form-select mb-2" id="ar-game-${arObjectsCounter}">
+                        <option value="snake">🐍 Snake</option>
+                        <option value="quiz">❓ Quiz</option>
+                        <option value="tetris">🧱 Tetris</option>
+                        <option value="arkanoid">🎮 Arkanoid</option>
+                    </select>
+                    <button class="btn btn-primary w-100 mb-2" onclick="captureARObject(${arObjectsCounter})">
+                        📸 Zrób zdjęcie obiektu
+                    </button>
+                    <button class="btn btn-danger w-100" onclick="removeARObject(${arObjectsCounter})">
+                        🗑️ Usuń
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(objectDiv);
+    };
+
+    window.removeARObject = function(objectId) {
+        const objectDiv = document.getElementById(`ar-object-${objectId}`);
+        if (objectDiv) {
+            objectDiv.remove();
+        }
+    };
+
+    window.captureARObject = async function(objectId) {
+        const nameInput = document.getElementById(`ar-name-${objectId}`);
+        const gameSelect = document.getElementById(`ar-game-${objectId}`);
+        const previewDiv = document.getElementById(`ar-preview-${objectId}`);
+
+        const objectName = nameInput.value.trim();
+        if (!objectName) {
+            alert('Podaj nazwę obiektu!');
+            return;
+        }
+
+        try {
+            // Otwórz kamerę
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+
+            // Utwórz video element
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.style.width = '100%';
+
+            // Pokaż podgląd kamery
+            previewDiv.innerHTML = '';
+            previewDiv.appendChild(video);
+
+            // Dodaj przycisk do zrobienia zdjęcia
+            const captureBtn = document.createElement('button');
+            captureBtn.className = 'btn btn-success mt-2';
+            captureBtn.textContent = '📸 Zrób zdjęcie';
+            captureBtn.onclick = async function() {
+                // Zrób zdjęcie
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+
+                // Konwertuj na base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                // Zatrzymaj kamerę
+                stream.getTracks().forEach(track => track.stop());
+
+                // Pokaż zdjęcie
+                const img = document.createElement('img');
+                img.src = imageData;
+                img.style.width = '100%';
+                previewDiv.innerHTML = '';
+                previewDiv.appendChild(img);
+
+                // Wyślij do backendu
+                const response = await fetch('/api/host/ar/setup-object', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        object_name: objectName,
+                        image_data: imageData,
+                        game_type: gameSelect.value
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Obiekt AR zapisany!');
+                } else {
+                    alert('❌ Błąd: ' + result.error);
+                }
+            };
+
+            previewDiv.appendChild(captureBtn);
+
+            // Dodaj przycisk do anulowania
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-secondary mt-2 ms-2';
+            cancelBtn.textContent = 'Anuluj';
+            cancelBtn.onclick = function() {
+                stream.getTracks().forEach(track => track.stop());
+                previewDiv.innerHTML = '<span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>';
+            };
+            previewDiv.appendChild(cancelBtn);
+
+        } catch (error) {
+            alert('Błąd dostępu do kamery: ' + error.message);
+        }
+    };
+
+    window.generateARPlayerQR = function() {
+        const qrDiv = document.getElementById('ar-player-qr');
+        qrDiv.innerHTML = '';
+
+        // URL do AR scannera
+        const arScannerUrl = `${window.location.origin}/ar-scanner/{{ event.id }}`;
+
+        // Generuj QR kod używając biblioteki
+        new QRCode(qrDiv, {
+            text: arScannerUrl,
+            width: 256,
+            height: 256
+        });
+
+        // Dodaj link
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'mt-2';
+        linkDiv.innerHTML = `<a href="${arScannerUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Otwórz AR Scanner</a>`;
+        qrDiv.appendChild(linkDiv);
+    };
+
+    // Załaduj istniejące obiekty AR przy otwieraniu zakładki
+    document.querySelector('button[data-bs-target="#ar"]')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/host/ar/objects');
+            const result = await response.json();
+
+            const container = document.getElementById('ar-objects-container');
+            container.innerHTML = '';
+
+            if (result.objects && result.objects.length > 0) {
+                result.objects.forEach((obj, index) => {
+                    arObjectsCounter++;
+                    const objectDiv = document.createElement('div');
+                    objectDiv.className = 'col-md-6';
+                    objectDiv.id = `ar-object-${arObjectsCounter}`;
+                    objectDiv.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>${obj.object_name}</h6>
+                                <div class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                                    <img src="${obj.image_data}" style="width: 100%; max-height: 200px; object-fit: contain;">
+                                </div>
+                                <p class="mb-2"><strong>Gra:</strong> ${obj.game_type}</p>
+                                <button class="btn btn-danger w-100" onclick="deleteARObject(${obj.id})">
+                                    🗑️ Usuń
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(objectDiv);
+                });
+            }
+        } catch (error) {
+            console.error('Błąd ładowania obiektów AR:', error);
+        }
+    });
+
+    window.deleteARObject = async function(objectId) {
+        if (!confirm('Czy na pewno chcesz usunąć ten obiekt AR?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Odśwież listę
+                document.querySelector('button[data-bs-target="#ar"]').click();
+            } else {
+                alert('Błąd usuwania obiektu');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
 
 });
 </script>
