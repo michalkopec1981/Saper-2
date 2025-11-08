@@ -24,6 +24,18 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     print("⚠️  anthropic package not installed. AI question generation will be limited.")
 
+# Import dla rozpoznawania obrazów AR
+try:
+    import cv2
+    import numpy as np
+    from PIL import Image
+    import base64
+    import io
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    print("⚠️  opencv-python not installed. AR features will be limited.")
+
 # Inicjalizacja
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
@@ -174,6 +186,16 @@ class AIPlayerAnswer(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('ai_question.id', ondelete='CASCADE'), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_ai_question_uc'),)
+
+class ARObject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    object_name = db.Column(db.String(100), nullable=False)
+    image_data = db.Column(db.Text, nullable=False)  # Base64 zakodowany obraz
+    image_features = db.Column(db.Text, nullable=True)  # JSON z cechami obrazu dla rozpoznawania
+    game_type = db.Column(db.String(50), nullable=False)  # 'snake', 'quiz', 'tetris', 'arkanoid'
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
@@ -669,6 +691,14 @@ def player_qrcodes(event_id):
                          event=event,
                          players=player_data,
                          event_id=event_id)
+
+@app.route('/ar-scanner/<int:event_id>')
+def ar_scanner(event_id):
+    """Strona AR Scanner dla graczy"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+    return render_template('ar_scanner.html', event=event)
 
 # ===================================================================
 # --- API Endpoints ---
@@ -2462,6 +2492,204 @@ def on_join(data):
         join_room(room)
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
         emit_leaderboard_update(room)
+
+# ===================================================================
+# --- AR (Augmented Reality) Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/ar/objects', methods=['GET'])
+@host_required
+def get_ar_objects():
+    """Pobierz listę obiektów AR dla eventu"""
+    event_id = session['host_event_id']
+    objects = ARObject.query.filter_by(event_id=event_id, is_active=True).all()
+
+    result = []
+    for obj in objects:
+        result.append({
+            'id': obj.id,
+            'object_name': obj.object_name,
+            'image_data': obj.image_data,
+            'game_type': obj.game_type,
+            'created_at': obj.created_at.isoformat()
+        })
+
+    return jsonify({'objects': result})
+
+@app.route('/api/host/ar/setup-object', methods=['POST'])
+@host_required
+def setup_ar_object():
+    """Zapisz nowy obiekt AR z obrazem"""
+    if not CV2_AVAILABLE:
+        return jsonify({'error': 'OpenCV nie jest zainstalowany. AR nie jest dostępne.'}), 500
+
+    data = request.json
+    event_id = session['host_event_id']
+
+    object_name = data.get('object_name')
+    image_data = data.get('image_data')
+    game_type = data.get('game_type')
+
+    if not all([object_name, image_data, game_type]):
+        return jsonify({'error': 'Brakuje wymaganych danych'}), 400
+
+    try:
+        # Dekoduj obraz z base64
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+        image = Image.open(io.BytesIO(image_bytes))
+
+        # Konwertuj na OpenCV format
+        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Wyciągnij cechy obrazu (ORB - szybkie i dobre do obiektów)
+        orb = cv2.ORB_create(nfeatures=500)
+        keypoints, descriptors = orb.detectAndCompute(cv_image, None)
+
+        # Zapisz cechy jako JSON
+        features = {
+            'descriptors': descriptors.tolist() if descriptors is not None else [],
+            'shape': cv_image.shape
+        }
+
+        # Zapisz do bazy
+        ar_object = ARObject(
+            event_id=event_id,
+            object_name=object_name,
+            image_data=image_data,
+            image_features=json.dumps(features),
+            game_type=game_type
+        )
+        db.session.add(ar_object)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Obiekt AR zapisany',
+            'object_id': ar_object.id
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Błąd zapisu obiektu AR: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/host/ar/object/<int:object_id>', methods=['DELETE'])
+@host_required
+def delete_ar_object(object_id):
+    """Usuń obiekt AR"""
+    event_id = session['host_event_id']
+    ar_object = ARObject.query.filter_by(id=object_id, event_id=event_id).first()
+
+    if not ar_object:
+        return jsonify({'error': 'Obiekt nie znaleziony'}), 404
+
+    db.session.delete(ar_object)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Obiekt usunięty'})
+
+@app.route('/api/player/ar/recognize', methods=['POST'])
+def recognize_ar_object():
+    """Rozpoznaj obiekt AR z obrazu przesłanego przez gracza"""
+    if not CV2_AVAILABLE:
+        return jsonify({'recognized': False, 'error': 'OpenCV nie jest zainstalowany'}), 500
+
+    data = request.json
+    image_data = data.get('image_data')
+    event_id = data.get('event_id')
+
+    if not all([image_data, event_id]):
+        return jsonify({'recognized': False, 'error': 'Brakuje danych'}), 400
+
+    try:
+        # Dekoduj obraz
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+        image = Image.open(io.BytesIO(image_bytes))
+        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Wyciągnij cechy
+        orb = cv2.ORB_create(nfeatures=500)
+        kp_test, des_test = orb.detectAndCompute(cv_image, None)
+
+        if des_test is None:
+            return jsonify({'recognized': False})
+
+        # Pobierz obiekty AR dla eventu
+        ar_objects = ARObject.query.filter_by(event_id=event_id, is_active=True).all()
+
+        if not ar_objects:
+            return jsonify({'recognized': False, 'error': 'Brak obiektów AR dla tego eventu'})
+
+        # Porównaj z zapisanymi obiektami
+        best_match = None
+        best_score = 0
+
+        for ar_obj in ar_objects:
+            if not ar_obj.image_features:
+                continue
+
+            features = json.loads(ar_obj.image_features)
+            descriptors_list = features.get('descriptors', [])
+
+            if not descriptors_list:
+                continue
+
+            des_ref = np.array(descriptors_list, dtype=np.uint8)
+
+            if len(des_ref) > 0:
+                # Użyj BFMatcher do porównania
+                bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+                matches = bf.match(des_ref, des_test)
+
+                # Oblicz score (więcej dopasowań = lepszy wynik)
+                score = len(matches)
+
+                if score > best_score and score > 15:  # Próg minimum 15 dopasowań
+                    best_score = score
+                    best_match = ar_obj
+
+        if best_match:
+            # Obiekt rozpoznany!
+            response_data = {
+                'recognized': True,
+                'game_type': best_match.game_type,
+                'object_name': best_match.object_name,
+                'confidence': best_score
+            }
+
+            # Jeśli to quiz, pobierz losowe pytanie
+            if best_match.game_type == 'quiz':
+                # Pobierz pytanie, które gracz jeszcze nie widział
+                player_id = data.get('player_id')
+                if player_id:
+                    # Sprawdź, które pytania gracz już widział
+                    answered_ids = [ans.question_id for ans in
+                                  PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).all()]
+
+                    # Pobierz pytanie, którego gracz jeszcze nie widział
+                    question = Question.query.filter(
+                        Question.event_id == event_id,
+                        ~Question.id.in_(answered_ids)
+                    ).order_by(db.func.random()).first()
+
+                    if question:
+                        response_data['question'] = {
+                            'id': question.id,
+                            'text': question.text,
+                            'option_a': question.option_a,
+                            'option_b': question.option_b,
+                            'option_c': question.option_c
+                        }
+
+            return jsonify(response_data)
+
+        return jsonify({'recognized': False})
+
+    except Exception as e:
+        print(f"Błąd rozpoznawania AR: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'recognized': False, 'error': str(e)}), 500
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':
