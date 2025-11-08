@@ -1,5 +1,5 @@
-import eventlet
-eventlet.monkey_patch()
+from gevent import monkey
+monkey.patch_all()
 
 # Załaduj zmienne środowiskowe z pliku .env
 from dotenv import load_dotenv
@@ -47,9 +47,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Konfiguracja SocketIO
-socketio = SocketIO(app,
-                    async_mode='eventlet',
-                    cors_allowed_origins="*",
+socketio = SocketIO(app, 
+                    async_mode='gevent', 
+                    cors_allowed_origins="*", 
                     manage_session=True,
                     engineio_logger=False,
                     logger=True,
