@@ -368,15 +368,30 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label class="form-label fw-bold mb-0">Odkrywanie automatyczne:</label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle" 
+                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle"
                                        style="width: 3em; height: 1.5em;" checked>
                                 <label class="form-check-label ms-2" for="password-auto-reveal-toggle">
                                     <span id="auto-reveal-status" class="badge bg-success">Włączone</span>
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Ustawienie procentu odkrywania -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Udział % gry do aktywacji litery:</label>
+                            <div class="input-group" style="max-width: 200px;">
+                                <input type="number" class="form-control" id="auto-reveal-percentage"
+                                       min="1" max="100" value="50" step="1">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                Gdy gracz zdobędzie ten procent punktów z puli, odkryje losową literę.<br>
+                                Przykład: max punktów 400, ustawienie 10% = odkrycie litery co 40 punktów.
+                            </small>
+                        </div>
+
                         <small class="text-muted d-block">
-                            Gdy włączone: litery odkrywane automatycznie gdy gracz zdobędzie 50% możliwych punktów (oznaczone na zielono).<br>
+                            Gdy włączone: litery odkrywane automatycznie według powyższego ustawienia (oznaczone na zielono).<br>
                             Odkrywanie ręczne jest zawsze dostępne niezależnie od ustawienia.
                         </small>
                     </div>
@@ -2068,21 +2083,27 @@ document.addEventListener('DOMContentLoaded', function () {
             
             currentPassword = data.password;
             autoRevealEnabled = data.mode === 'auto';
-            
+
             revealedLettersIndices.clear();
             if (data.revealed_letters) {
                 const indices = data.revealed_letters.split(',').filter(x => x);
                 indices.forEach(idx => revealedLettersIndices.add(parseInt(idx)));
             }
-            
+
             document.getElementById('password-edit-input').value = currentPassword;
-            
+
             const autoToggle = document.getElementById('password-auto-reveal-toggle');
             const autoStatus = document.getElementById('auto-reveal-status');
             if (autoToggle && autoStatus) {
                 autoToggle.checked = autoRevealEnabled;
                 autoStatus.textContent = autoRevealEnabled ? 'Włączone' : 'Wyłączone';
                 autoStatus.className = autoRevealEnabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            // Ustaw wartość procentu
+            const percentageInput = document.getElementById('auto-reveal-percentage');
+            if (percentageInput && data.reveal_percentage) {
+                percentageInput.value = data.reveal_percentage;
             }
             
             renderPasswordLetters();
@@ -2223,7 +2244,38 @@ document.addEventListener('DOMContentLoaded', function () {
             e.target.checked = !enabled;
         }
     });
-    
+
+    // Event listener dla zmiany procentu odkrywania
+    document.getElementById('auto-reveal-percentage')?.addEventListener('change', async (e) => {
+        const percentage = parseInt(e.target.value);
+
+        if (isNaN(percentage) || percentage < 1 || percentage > 100) {
+            alert('Procent musi być w zakresie 1-100');
+            e.target.value = 50; // Reset do domyślnej wartości
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/password/reveal_percentage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ percentage })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany procentu');
+            }
+
+            console.log(`Procent odkrywania ustawiony na: ${percentage}%`);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            loadPasswordState(); // Przeładuj wartość z serwera
+        }
+    });
+
     document.getElementById('reveal-selected-letters-btn')?.addEventListener('click', async () => {
         if (selectedLettersForReveal.size === 0) return;
         

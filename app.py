@@ -1860,6 +1860,60 @@ def process_ai_answer():
         # Punkty za pytania AI - 5 punktów
         player.score += 5
 
+        # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
+        password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
+
+        if password_mode == 'auto':
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
+                    emit_password_update(f'event_{player.event_id}')
+
         db.session.commit()
         emit_leaderboard_update(f'event_{player.event_id}')
 
@@ -1900,31 +1954,57 @@ def process_answer():
         
         # ✅ ZMODYFIKOWANA LOGIKA: Sprawdź tryb odkrywania hasła
         password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
-        
+
         if password_mode == 'auto':
-            # Tryb automatyczny - odkryj losową nieodkrytą literę
-            password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
-            revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
-            
-            # Parsuj odkryte indeksy
-            revealed_indices = set()
-            if revealed_indices_str:
-                revealed_indices = set(map(int, revealed_indices_str.split(',')))
-            
-            # Znajdź nieodkryte indeksy (pomijając spacje)
-            available_indices = [i for i in range(len(password_value)) 
-                               if password_value[i] != ' ' and i not in revealed_indices]
-            
-            if available_indices:
-                import random
-                revealed_index = random.choice(available_indices)
-                revealed_indices.add(revealed_index)
-                
-                # Zapisz zaktualizowane indeksy
-                revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
-                set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
-                
-                emit_password_update(f'event_{player.event_id}')
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
+                    emit_password_update(f'event_{player.event_id}')
         
         db.session.commit()
         emit_leaderboard_update(f'event_{player.event_id}')
@@ -2201,15 +2281,59 @@ def complete_minigame():
         bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
         points = 10 * bonus
         player.score += points
-        
-        password = "SAPEREVENT"
-        available_letters = [l for l in password if l not in player.revealed_letters.upper()]
-        if available_letters:
-            revealed_letter = random.choice(available_letters)
-            player.revealed_letters += revealed_letter
-        else:
-            revealed_letter = None
-        
+
+        # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
+        password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
+
+        if password_mode == 'auto':
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
         db.session.commit()
         emit_password_update(f'event_{player.event_id}')
         emit_leaderboard_update(f'event_{player.event_id}')
@@ -2272,15 +2396,37 @@ def set_password_mode():
     event_id = session['host_event_id']
     data = request.json
     mode = data.get('mode', 'auto')
-    
+
     if mode not in ['auto', 'manual']:
         return jsonify({'error': 'Nieprawidłowy tryb'}), 400
-    
+
     set_game_state(event_id, 'password_reveal_mode', mode)
-    
+
     return jsonify({
         'message': f'Tryb odkrywania ustawiony na: {mode}',
         'mode': mode
+    })
+
+@app.route('/api/host/password/reveal_percentage', methods=['POST'])
+@host_required
+def set_password_reveal_percentage():
+    """Ustaw procent punktów wymagany do odkrycia litery"""
+    event_id = session['host_event_id']
+    data = request.json
+    percentage = data.get('percentage', 50)
+
+    try:
+        percentage = int(percentage)
+        if percentage < 1 or percentage > 100:
+            return jsonify({'error': 'Procent musi być w zakresie 1-100'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Nieprawidłowa wartość procentu'}), 400
+
+    set_game_state(event_id, 'password_reveal_percentage', str(percentage))
+
+    return jsonify({
+        'message': f'Procent odkrywania ustawiony na: {percentage}%',
+        'percentage': percentage
     })
 
 @app.route('/api/host/password/reveal_manual', methods=['POST'])
@@ -2328,14 +2474,15 @@ def get_password_state():
     password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
     revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
     mode = get_game_state(event_id, 'password_reveal_mode', 'auto')
-    
+    percentage = int(get_game_state(event_id, 'password_reveal_percentage', '50'))
+
     revealed_indices = []
     if revealed_indices_str:
         try:
             revealed_indices = list(map(int, revealed_indices_str.split(',')))
         except (ValueError, AttributeError):
             revealed_indices = []
-    
+
     displayed_password = ""
     for i, char in enumerate(password):
         if char == ' ':
@@ -2344,12 +2491,13 @@ def get_password_state():
             displayed_password += char
         else:
             displayed_password += '_'
-    
+
     return jsonify({
         'password': password,
         'revealed_letters': revealed_indices_str,
         'displayed_password': displayed_password,
-        'mode': mode
+        'mode': mode,
+        'reveal_percentage': percentage
     })
 
 
