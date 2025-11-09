@@ -563,6 +563,26 @@
                         </div>
                     </div>
 
+                    <!-- T-REX -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🦖 T-Rex</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (unikaj przeszkód)</p>
+                                    <small class="text-muted">Sterowanie: przycisk skoku</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="trex-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="trex-toggle">
+                                        <span id="trex-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
@@ -1532,6 +1552,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
                     pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
+
+                // T-Rex
+                const trexToggle = document.getElementById('trex-toggle');
+                const trexStatus = document.getElementById('trex-status');
+                if (trexToggle && trexStatus) {
+                    trexToggle.checked = data.trex_enabled;
+                    trexStatus.textContent = data.trex_enabled ? 'Aktywny' : 'Nieaktywny';
+                    trexStatus.className = data.trex_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
             });
     }
     
@@ -1616,6 +1645,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ game_type: 'pacman', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('trex-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('trex-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'trex', enabled })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
