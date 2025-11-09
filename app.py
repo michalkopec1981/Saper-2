@@ -2864,16 +2864,28 @@ def recognize_ar_object():
 
             if len(des_ref) > 0:
                 # Użyj BFMatcher do porównania
-                bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-                matches = bf.match(des_ref, des_test)
+                bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+                matches = bf.knnMatch(des_ref, des_test, k=2)
 
-                # Oblicz score (więcej dopasowań = lepszy wynik)
-                score = len(matches)
+                # ✅ FILTROWANIE DOBRYCH DOPASOWAŃ (Lowe's ratio test)
+                good_matches = []
+                for match_pair in matches:
+                    if len(match_pair) == 2:
+                        m, n = match_pair
+                        # Jeśli najlepsze dopasowanie jest znacznie lepsze niż drugie, akceptuj
+                        if m.distance < 0.75 * n.distance:
+                            good_matches.append(m)
 
-                if score > best_score and score > 15:  # Próg minimum 15 dopasowań
+                # Oblicz score (liczba dobrych dopasowań)
+                score = len(good_matches)
+
+                # ✅ ZWIĘKSZONY PRÓG: minimum 50 dobrych dopasowań (było 15)
+                if score > best_score and score > 50:
                     best_score = score
                     best_match = ar_obj
 
+        # ✅ ZAWSZE ZWRACAJ CONFIDENCE (nawet gdy nie rozpoznano)
+        # Pozwala to wyświetlić graczowi postęp dopasowania
         if best_match:
             # Obiekt rozpoznany!
             response_data = {
@@ -2909,7 +2921,11 @@ def recognize_ar_object():
 
             return jsonify(response_data)
 
-        return jsonify({'recognized': False})
+        # Nie rozpoznano obiektu, ale zwróć najlepszy wynik (dla wizualizacji)
+        return jsonify({
+            'recognized': False,
+            'confidence': best_score  # Pokaż graczowi jak blisko był
+        })
 
     except Exception as e:
         print(f"Błąd rozpoznawania AR: {e}")

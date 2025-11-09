@@ -220,7 +220,8 @@ function startScanning() {
     document.getElementById('ar-status').textContent = 'Szukam obiektów...';
     document.getElementById('ar-status').className = 'text-center text-primary';
 
-    // Skanuj co 1 sekundę
+    // ✅ ZWIĘKSZONY INTERWAŁ: Skanuj co 2 sekundy (było 1 sekunda)
+    // Daje graczowi więcej czasu na ustawienie kamery
     scanInterval = setInterval(async () => {
         if (!scanning) return;
 
@@ -229,7 +230,7 @@ function startScanning() {
         } catch (error) {
             console.error('Błąd skanowania:', error);
         }
-    }, 1000);
+    }, 2000);
 }
 
 async function scanForObjects() {
@@ -259,6 +260,26 @@ async function scanForObjects() {
     });
 
     const result = await response.json();
+
+    // ✅ WIZUALNY WSKAŹNIK JAKOŚCI DOPASOWANIA
+    if (result.confidence) {
+        const confidence = result.confidence;
+        const statusEl = document.getElementById('ar-status');
+
+        if (confidence >= 50) {
+            // Wysokie dopasowanie - prawdopodobnie rozpozna
+            statusEl.textContent = `🎯 Dopasowanie: ${confidence}/50+ (DOBRY OBIEKT!)`;
+            statusEl.className = 'text-center text-success';
+        } else if (confidence >= 30) {
+            // Średnie dopasowanie - zbliżanie się
+            statusEl.textContent = `🔍 Dopasowanie: ${confidence}/50 (jeszcze trochę...)`;
+            statusEl.className = 'text-center text-warning';
+        } else {
+            // Słabe dopasowanie - szukaj dalej
+            statusEl.textContent = `❌ Dopasowanie: ${confidence}/50 (szukam...)`;
+            statusEl.className = 'text-center text-muted';
+        }
+    }
 
     if (result.recognized) {
         // Obiekt rozpoznany!
