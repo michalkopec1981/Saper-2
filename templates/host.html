@@ -293,6 +293,30 @@
         
         {% if is_superhost %}
         <div class="tab-pane fade" id="qrcodes">
+            <!-- Kod QR Gracza -->
+            <div class="card mx-auto mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">📱 Kod QR Gracza</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <strong>ℹ️ Instrukcja:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Ten kod QR pozwala graczom dołączyć do gry</li>
+                            <li>Gracz skanuje kod, wpisuje swoje imię i otrzymuje dostęp do panelu</li>
+                            <li>Wydrukuj i umieść kod w widocznym miejscu</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/player_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
+                            🔍 Podgląd i Druk Kodu QR
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zarządzanie Kodami QR -->
             <div class="card mx-auto">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
@@ -310,6 +334,9 @@
                     <div class="d-grid gap-2 mt-4">
                         <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
                         <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
+                        <a href="/player_qrcodes/{{ event.id }}" target="_blank" class="btn btn-success">
+                            📱 Kody QR dla Graczy (Dashboard)
+                        </a>
                     </div>
                     <div id="qrcodes-status" class="mt-3"></div>
                 </div>
@@ -341,15 +368,30 @@
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <label class="form-label fw-bold mb-0">Odkrywanie automatyczne:</label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle" 
+                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle"
                                        style="width: 3em; height: 1.5em;" checked>
                                 <label class="form-check-label ms-2" for="password-auto-reveal-toggle">
                                     <span id="auto-reveal-status" class="badge bg-success">Włączone</span>
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Ustawienie procentu odkrywania -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Udział % gry do aktywacji litery:</label>
+                            <div class="input-group" style="max-width: 200px;">
+                                <input type="number" class="form-control" id="auto-reveal-percentage"
+                                       min="1" max="100" value="50" step="1">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                Gdy gracz zdobędzie ten procent punktów z puli, odkryje losową literę.<br>
+                                Przykład: max punktów 400, ustawienie 10% = odkrycie litery co 40 punktów.
+                            </small>
+                        </div>
+
                         <small class="text-muted d-block">
-                            Gdy włączone: litery odkrywane automatycznie gdy gracz zdobędzie 50% możliwych punktów (oznaczone na zielono).<br>
+                            Gdy włączone: litery odkrywane automatycznie według powyższego ustawienia (oznaczone na zielono).<br>
                             Odkrywanie ręczne jest zawsze dostępne niezależnie od ustawienia.
                         </small>
                     </div>
@@ -501,6 +543,46 @@
                         </div>
                     </div>
 
+                    <!-- PAC-MAN -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">👻 PacMan</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zjadaj kropki, unikaj duchów)</p>
+                                    <small class="text-muted">Power pellets = duchy niebieskie | Sterowanie: przyciski ▲ ▼ ◄ ►</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="pacman-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="pacman-toggle">
+                                        <span id="pacman-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- T-REX -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🦖 T-Rex</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (unikaj przeszkód)</p>
+                                    <small class="text-muted">Sterowanie: przycisk skoku</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="trex-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="trex-toggle">
+                                        <span id="trex-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
@@ -522,9 +604,26 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
                 <div class="card-body">
-                    <p data-translate="ar_description">Tutaj będą dostępne funkcje AR.</p>
-                    <div class="alert alert-secondary text-center">
-                        <p class="mb-0">Wkrótce - funkcje AR</p>
+                    <h6>1. Zdefiniuj obiekty AR</h6>
+                    <p class="text-muted">Sfotografuj przedmioty, które będą wyzwalać gry po rozpoznaniu przez graczy.</p>
+
+                    <div class="row g-3 mb-4" id="ar-objects-container">
+                        <!-- Obiekty AR będą dodawane tutaj dynamicznie -->
+                    </div>
+
+                    <button class="btn btn-success mb-4" onclick="addNewARObject()">
+                        + Dodaj nowy obiekt AR
+                    </button>
+
+                    <hr>
+
+                    <h6>2. Kod QR dla graczy (AR Scanner)</h6>
+                    <p class="text-muted">Wygeneruj kod QR, który gracze będą skanować, aby uruchomić skaner AR.</p>
+                    <div class="text-center">
+                        <div id="ar-player-qr" class="mb-3"></div>
+                        <button class="btn btn-primary" onclick="generateARPlayerQR()">
+                            Wygeneruj QR dla skanowania AR
+                        </button>
                     </div>
                 </div>
             </div>
@@ -612,6 +711,7 @@
                         <div class="btn-group w-100" role="group" id="lang-player-controls">
                             <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
                             <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="de" data-translate="lang_german">Język niemiecki</button>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -619,6 +719,7 @@
                         <div class="btn-group w-100" role="group" id="lang-host-controls">
                             <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
                             <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="de" data-translate="lang_german">Język niemiecki</button>
                         </div>
                     </div>
                 </div>
@@ -747,6 +848,7 @@
         host_language: 'Język prowadzącego',
         lang_polish: 'Język polski',
         lang_english: 'Język angielski',
+        lang_german: 'Język niemiecki',
         start_game: 'Start Gry',
         in_game_settings: 'Tempo gry oraz punktacja',
         points_bonus: 'Premia punktowa:',
@@ -837,6 +939,7 @@
         host_language: 'Host language',
         lang_polish: 'Polish language',
         lang_english: 'English language',
+        lang_german: 'German language',
         start_game: 'Start Game',
         in_game_settings: 'Game Speed and Scoring',
         points_bonus: 'Points bonus:',
@@ -876,9 +979,100 @@
         messages_description: 'Send a message that will appear on the main game screen. Use this to share important information with all participants.',
         message_label: 'Message content (max 500 characters):',
         send_message: 'Send message',
-        password_preview: 'Password',  // ⬅️ DODAJ TĘ LINIĘ
+        password_preview: 'Password',
         tab_timing: 'Time & Speed',
         timing_settings: 'Game Time and Speed',
+    },
+    de: {
+        host_title: 'SPIELORGANISATION',
+        open_display: 'Spielbildschirm öffnen',
+        tab_game: 'Spiel',
+        tab_players: 'Spieler',
+        tab_questions: 'Fragen',
+        tab_minigames: 'Minispiele',
+        tab_qrcodes: 'QR-Codes',
+        tab_password: 'Passwort',
+        tab_photo: 'Foto',
+        tab_ar: 'AR',
+        tab_display: 'Anzeige',
+        tab_language: 'Sprache',
+        qr_management: 'QR-Code-Verwaltung',
+        password_tab: 'Zu enthüllendes Passwort',
+        password_description: 'Hier sehen Sie das Passwort, das die Spieler während des Spiels aufdecken müssen.',
+        photo_tab: 'Fotogalerie',
+        photo_description: 'Hier sehen Sie von Spielern hochgeladene Fotos.',
+        ar_tab: 'Erweiterte Realität (AR)',
+        ar_description: 'AR-Funktionen werden hier verfügbar sein.',
+        display_tab: 'Anzeigeeinstellungen',
+        display_screens: 'Anzahl externer Bildschirme:',
+        one_screen: '1 Bildschirm',
+        two_screens: '2 Bildschirme',
+        language_tab: 'Spracheinstellungen',
+        game_info: 'Spielinformationen',
+        player_count: 'Anzahl der Spieler:',
+        completion_percentage: 'Abschlussrate:',
+        language_host_label: 'Moderatorsprache:',
+        time_left: 'Verbleibende Zeit:',
+        time_net: 'Spielzeit (netto):',
+        time_gross: 'Spielzeit (brutto):',
+        current_bonus: 'Aktueller Bonus:',
+        current_speed: 'Aktuelle Geschwindigkeit:',
+        game_status_label: 'Spielstatus:',
+        game_status_waiting: 'Warten auf Start',
+        game_status_active: 'Start. Spiel aktiv',
+        game_status_paused: 'Pause',
+        game_status_stopped: 'Stopp. Spiel beendet',
+        pre_game_settings: 'Spielsteuerung',
+        game_duration_label: 'Spielzeit (Minuten):',
+        game_duration_help: 'Vor dem Spiel: Zeit einstellen. Während des Spiels: Zeit ändern (erfordert Passwort)',
+        set_time_btn: 'OK',
+        player_language: 'Spielersprache',
+        host_language: 'Moderatorsprache',
+        lang_polish: 'Polnische Sprache',
+        lang_english: 'Englische Sprache',
+        lang_german: 'Deutsche Sprache',
+        start_game: 'Spiel starten',
+        in_game_settings: 'Spielgeschwindigkeit und Punktzahl',
+        points_bonus: 'Punktebonus:',
+        time_speed: 'Zeitgeschwindigkeit:',
+        pause: 'Pause',
+        resume: 'Fortsetzen',
+        force_win: 'Erzwungener Sieg',
+        stop_game: 'Spiel stoppen',
+        reset_game: 'Spiel zurücksetzen',
+        quick_access: 'Schnellzugriff auf Registerkarten:',
+        questions_management: 'Fragenverwaltung',
+        players_management: 'Spielerverwaltung',
+        add_question: 'Frage hinzufügen',
+        question_modal_title: 'Frage hinzufügen',
+        question_text: 'Fragetext:',
+        answers: 'Antworten:',
+        difficulty_level: 'Schwierigkeitsgrad:',
+        easy: 'Einfach',
+        medium: 'Mittel',
+        hard: 'Schwer',
+        letter_reveal: 'Zu enthüllender Buchstabe:',
+        cancel: 'Abbrechen',
+        save: 'Speichern',
+        edit: 'Bearbeiten',
+        delete: 'Löschen',
+        shown: 'Angezeigt',
+        correct: 'Richtig',
+        times: 'Mal',
+        admin_impersonate: 'Sie sind als Admin im Host-Panel angemeldet.',
+        back_to_admin: 'Zurück zum Admin-Panel',
+        warn: 'Warnen',
+        warnings: 'Warnungen',
+        question_category: 'Fragenkategorie:',
+        category_company: 'Firma',
+        category_world: 'Welt',
+        host_messages: 'Nachrichten auf dem Spielbildschirm',
+        messages_description: 'Senden Sie eine Nachricht, die auf dem Hauptspielbildschirm erscheint. Verwenden Sie dies, um wichtige Informationen mit allen Teilnehmern zu teilen.',
+        message_label: 'Nachrichteninhalt (max. 500 Zeichen):',
+        send_message: 'Nachricht senden',
+        password_preview: 'Passwort',
+        tab_timing: 'Zeit & Tempo',
+        timing_settings: 'Spielzeit und Geschwindigkeit',
     }
 };
 
@@ -1349,6 +1543,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     snakeStatus.textContent = data.snake_enabled ? 'Aktywny' : 'Nieaktywny';
                     snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
+
+                // PacMan
+                const pacmanToggle = document.getElementById('pacman-toggle');
+                const pacmanStatus = document.getElementById('pacman-status');
+                if (pacmanToggle && pacmanStatus) {
+                    pacmanToggle.checked = data.pacman_enabled;
+                    pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
+                    pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // T-Rex
+                const trexToggle = document.getElementById('trex-toggle');
+                const trexStatus = document.getElementById('trex-status');
+                if (trexToggle && trexStatus) {
+                    trexToggle.checked = data.trex_enabled;
+                    trexStatus.textContent = data.trex_enabled ? 'Aktywny' : 'Nieaktywny';
+                    trexStatus.className = data.trex_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
             });
     }
     
@@ -1410,6 +1622,52 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ game_type: 'snake', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('pacman-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('pacman-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'pacman', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('trex-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('trex-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'trex', enabled })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
@@ -1588,8 +1846,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
         const inGameFieldset = document.getElementById('in-game-settings');
-        const gameDurationInput = document.getElementById('game-duration-input');
-        const setTimeBtn = document.getElementById('set-time-btn');
+        const gameDurationInput = document.getElementById('game-duration-input-2');
+        const setTimeBtn = document.getElementById('set-time-btn-2');
         
         if (state.game_active) {
             preGameFieldset.disabled = false; // ✅ Zawsze dostępne
@@ -1674,8 +1932,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => console.error('❌ Error loading initial state:', error));
     
     // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
-    document.getElementById('set-time-btn')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
+    document.getElementById('set-time-btn-2')?.addEventListener('click', async () => {
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
         console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
         
         if (isNaN(minutes) || minutes < 1) {
@@ -1720,7 +1978,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input').value);
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
         console.log('🎮 Starting game with', minutes, 'minutes');
         
         if (isNaN(minutes) || minutes < 1) {
@@ -1929,21 +2187,27 @@ document.addEventListener('DOMContentLoaded', function () {
             
             currentPassword = data.password;
             autoRevealEnabled = data.mode === 'auto';
-            
+
             revealedLettersIndices.clear();
             if (data.revealed_letters) {
                 const indices = data.revealed_letters.split(',').filter(x => x);
                 indices.forEach(idx => revealedLettersIndices.add(parseInt(idx)));
             }
-            
+
             document.getElementById('password-edit-input').value = currentPassword;
-            
+
             const autoToggle = document.getElementById('password-auto-reveal-toggle');
             const autoStatus = document.getElementById('auto-reveal-status');
             if (autoToggle && autoStatus) {
                 autoToggle.checked = autoRevealEnabled;
                 autoStatus.textContent = autoRevealEnabled ? 'Włączone' : 'Wyłączone';
                 autoStatus.className = autoRevealEnabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            // Ustaw wartość procentu
+            const percentageInput = document.getElementById('auto-reveal-percentage');
+            if (percentageInput && data.reveal_percentage) {
+                percentageInput.value = data.reveal_percentage;
             }
             
             renderPasswordLetters();
@@ -2084,7 +2348,38 @@ document.addEventListener('DOMContentLoaded', function () {
             e.target.checked = !enabled;
         }
     });
-    
+
+    // Event listener dla zmiany procentu odkrywania
+    document.getElementById('auto-reveal-percentage')?.addEventListener('change', async (e) => {
+        const percentage = parseInt(e.target.value);
+
+        if (isNaN(percentage) || percentage < 1 || percentage > 100) {
+            alert('Procent musi być w zakresie 1-100');
+            e.target.value = 50; // Reset do domyślnej wartości
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/password/reveal_percentage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ percentage })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany procentu');
+            }
+
+            console.log(`Procent odkrywania ustawiony na: ${percentage}%`);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            loadPasswordState(); // Przeładuj wartość z serwera
+        }
+    });
+
     document.getElementById('reveal-selected-letters-btn')?.addEventListener('click', async () => {
         if (selectedLettersForReveal.size === 0) return;
         
@@ -2279,6 +2574,213 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
+
+    // ============ AR FUNKCJE ============
+
+    let arObjectsCounter = 0;
+
+    window.addNewARObject = function() {
+        arObjectsCounter++;
+        const container = document.getElementById('ar-objects-container');
+        const objectDiv = document.createElement('div');
+        objectDiv.className = 'col-md-6';
+        objectDiv.id = `ar-object-${arObjectsCounter}`;
+        objectDiv.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h6>Obiekt AR #${arObjectsCounter}</h6>
+                    <div id="ar-preview-${arObjectsCounter}" class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                        <span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>
+                    </div>
+                    <input type="text" class="form-control mb-2" id="ar-name-${arObjectsCounter}" placeholder="Nazwa obiektu (np. Butelka)">
+                    <select class="form-select mb-2" id="ar-game-${arObjectsCounter}">
+                        <option value="snake">🐍 Snake</option>
+                        <option value="quiz">❓ Quiz</option>
+                        <option value="tetris">🧱 Tetris</option>
+                        <option value="arkanoid">🎮 Arkanoid</option>
+                    </select>
+                    <button class="btn btn-primary w-100 mb-2" onclick="captureARObject(${arObjectsCounter})">
+                        📸 Zrób zdjęcie obiektu
+                    </button>
+                    <button class="btn btn-danger w-100" onclick="removeARObject(${arObjectsCounter})">
+                        🗑️ Usuń
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(objectDiv);
+    };
+
+    window.removeARObject = function(objectId) {
+        const objectDiv = document.getElementById(`ar-object-${objectId}`);
+        if (objectDiv) {
+            objectDiv.remove();
+        }
+    };
+
+    window.captureARObject = async function(objectId) {
+        const nameInput = document.getElementById(`ar-name-${objectId}`);
+        const gameSelect = document.getElementById(`ar-game-${objectId}`);
+        const previewDiv = document.getElementById(`ar-preview-${objectId}`);
+
+        const objectName = nameInput.value.trim();
+        if (!objectName) {
+            alert('Podaj nazwę obiektu!');
+            return;
+        }
+
+        try {
+            // Otwórz kamerę
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+
+            // Utwórz video element
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.style.width = '100%';
+
+            // Pokaż podgląd kamery
+            previewDiv.innerHTML = '';
+            previewDiv.appendChild(video);
+
+            // Dodaj przycisk do zrobienia zdjęcia
+            const captureBtn = document.createElement('button');
+            captureBtn.className = 'btn btn-success mt-2';
+            captureBtn.textContent = '📸 Zrób zdjęcie';
+            captureBtn.onclick = async function() {
+                // Zrób zdjęcie
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+
+                // Konwertuj na base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                // Zatrzymaj kamerę
+                stream.getTracks().forEach(track => track.stop());
+
+                // Pokaż zdjęcie
+                const img = document.createElement('img');
+                img.src = imageData;
+                img.style.width = '100%';
+                previewDiv.innerHTML = '';
+                previewDiv.appendChild(img);
+
+                // Wyślij do backendu
+                const response = await fetch('/api/host/ar/setup-object', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        object_name: objectName,
+                        image_data: imageData,
+                        game_type: gameSelect.value
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Obiekt AR zapisany!');
+                } else {
+                    alert('❌ Błąd: ' + result.error);
+                }
+            };
+
+            previewDiv.appendChild(captureBtn);
+
+            // Dodaj przycisk do anulowania
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-secondary mt-2 ms-2';
+            cancelBtn.textContent = 'Anuluj';
+            cancelBtn.onclick = function() {
+                stream.getTracks().forEach(track => track.stop());
+                previewDiv.innerHTML = '<span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>';
+            };
+            previewDiv.appendChild(cancelBtn);
+
+        } catch (error) {
+            alert('Błąd dostępu do kamery: ' + error.message);
+        }
+    };
+
+    window.generateARPlayerQR = function() {
+        const qrDiv = document.getElementById('ar-player-qr');
+        qrDiv.innerHTML = '';
+
+        // URL do AR scannera
+        const arScannerUrl = `${window.location.origin}/ar-scanner/{{ event.id }}`;
+
+        // Generuj QR kod używając biblioteki
+        new QRCode(qrDiv, {
+            text: arScannerUrl,
+            width: 256,
+            height: 256
+        });
+
+        // Dodaj link
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'mt-2';
+        linkDiv.innerHTML = `<a href="${arScannerUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Otwórz AR Scanner</a>`;
+        qrDiv.appendChild(linkDiv);
+    };
+
+    // Załaduj istniejące obiekty AR przy otwieraniu zakładki
+    document.querySelector('button[data-bs-target="#ar"]')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/host/ar/objects');
+            const result = await response.json();
+
+            const container = document.getElementById('ar-objects-container');
+            container.innerHTML = '';
+
+            if (result.objects && result.objects.length > 0) {
+                result.objects.forEach((obj, index) => {
+                    arObjectsCounter++;
+                    const objectDiv = document.createElement('div');
+                    objectDiv.className = 'col-md-6';
+                    objectDiv.id = `ar-object-${arObjectsCounter}`;
+                    objectDiv.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>${obj.object_name}</h6>
+                                <div class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                                    <img src="${obj.image_data}" style="width: 100%; max-height: 200px; object-fit: contain;">
+                                </div>
+                                <p class="mb-2"><strong>Gra:</strong> ${obj.game_type}</p>
+                                <button class="btn btn-danger w-100" onclick="deleteARObject(${obj.id})">
+                                    🗑️ Usuń
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(objectDiv);
+                });
+            }
+        } catch (error) {
+            console.error('Błąd ładowania obiektów AR:', error);
+        }
+    });
+
+    window.deleteARObject = async function(objectId) {
+        if (!confirm('Czy na pewno chcesz usunąć ten obiekt AR?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Odśwież listę
+                document.querySelector('button[data-bs-target="#ar"]').click();
+            } else {
+                alert('Błąd usuwania obiektu');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
 
 });
 </script>

@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% block title %}Dołącz do gry - {{ event_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .register-container {
+        max-width: 500px;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .register-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    .game-logo {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+
+    .game-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .game-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .form-label {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-join {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-join:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-join:active {
+        transform: translateY(0);
+    }
+
+    .btn-join:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .loading {
+        display: none;
+        margin-top: 20px;
+    }
+
+    .loading.active {
+        display: block;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+        background: #fee;
+        color: #c33;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .error-message.active {
+        display: block;
+    }
+
+    .language-selector {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .lang-btn {
+        width: 45px;
+        height: 30px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+    }
+
+    .lang-btn:hover {
+        border-color: #667eea;
+        transform: scale(1.1);
+    }
+
+    .lang-btn.active {
+        border-color: #667eea;
+        border-width: 3px;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <div class="game-logo">🎮</div>
+        <h1 class="game-title" id="game-title">{{ event_name }}</h1>
+        <p class="game-subtitle" data-lang="welcome">Witaj w grze!</p>
+
+        <!-- Language Selector -->
+        <div class="language-selector">
+            <button class="lang-btn active" data-lang="pl" title="Polski">🇵🇱</button>
+            <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+            <button class="lang-btn" data-lang="de" title="Deutsch">🇩🇪</button>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="register-form">
+            <div class="form-group">
+                <label for="player-name" class="form-label" data-lang="name_label">
+                    Podaj swoje imię lub nazwę drużyny:
+                </label>
+                <input
+                    type="text"
+                    id="player-name"
+                    class="form-control"
+                    data-lang-placeholder="name_placeholder"
+                    placeholder="Twoje imię..."
+                    required
+                    maxlength="80"
+                    autocomplete="off"
+                >
+            </div>
+
+            <button type="submit" class="btn-join" id="join-btn" data-lang="join_button">
+                🚀 Dołącz do gry
+            </button>
+        </form>
+
+        <div class="error-message" id="error-message"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p data-lang="loading">Rejestracja...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Translations
+const translations = {
+    pl: {
+        welcome: 'Witaj w grze!',
+        name_label: 'Podaj swoje imię lub nazwę drużyny:',
+        name_placeholder: 'Twoje imię...',
+        join_button: '🚀 Dołącz do gry',
+        loading: 'Rejestracja...',
+        error_empty: 'Proszę podać imię lub nazwę drużyny.',
+        error_generic: 'Wystąpił błąd. Spróbuj ponownie.'
+    },
+    en: {
+        welcome: 'Welcome to the game!',
+        name_label: 'Enter your name or team name:',
+        name_placeholder: 'Your name...',
+        join_button: '🚀 Join the game',
+        loading: 'Registering...',
+        error_empty: 'Please enter your name or team name.',
+        error_generic: 'An error occurred. Please try again.'
+    },
+    de: {
+        welcome: 'Willkommen im Spiel!',
+        name_label: 'Geben Sie Ihren Namen oder Teamnamen ein:',
+        name_placeholder: 'Ihr Name...',
+        join_button: '🚀 Spiel beitreten',
+        loading: 'Registrierung...',
+        error_empty: 'Bitte geben Sie Ihren Namen oder Teamnamen ein.',
+        error_generic: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const eventId = {{ event_id }};
+    let currentLang = localStorage.getItem('player_lang') || 'pl';
+
+    const form = document.getElementById('register-form');
+    const nameInput = document.getElementById('player-name');
+    const joinBtn = document.getElementById('join-btn');
+    const loading = document.getElementById('loading');
+    const errorMessage = document.getElementById('error-message');
+
+    // Language switching
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentLang = btn.dataset.lang;
+            localStorage.setItem('player_lang', currentLang);
+            updateLanguage();
+
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+
+        if (btn.dataset.lang === currentLang) {
+            btn.classList.add('active');
+        }
+    });
+
+    function updateLanguage() {
+        const trans = translations[currentLang];
+        document.querySelectorAll('[data-lang]').forEach(el => {
+            const key = el.dataset.lang;
+            if (trans[key]) {
+                el.textContent = trans[key];
+            }
+        });
+
+        document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
+            const key = el.dataset.langPlaceholder;
+            if (trans[key]) {
+                el.placeholder = trans[key];
+            }
+        });
+    }
+
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.add('active');
+    }
+
+    function hideError() {
+        errorMessage.classList.remove('active');
+    }
+
+    // Form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const name = nameInput.value.trim();
+        if (!name) {
+            showError(translations[currentLang].error_empty);
+            return;
+        }
+
+        // Show loading
+        joinBtn.disabled = true;
+        loading.classList.add('active');
+
+        try {
+            const response = await fetch('/api/player/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    event_id: eventId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || translations[currentLang].error_generic);
+            }
+
+            // Save player info
+            const playerId = data.id;
+            localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+            localStorage.setItem(`saperPlayerName_${eventId}`, name);
+
+            // Redirect to dashboard
+            window.location.href = `/player_dashboard/${eventId}/${playerId}`;
+
+        } catch (error) {
+            console.error('Registration error:', error);
+            showError(error.message || translations[currentLang].error_generic);
+            joinBtn.disabled = false;
+            loading.classList.remove('active');
+        }
+    });
+
+    // Initialize language
+    updateLanguage();
+
+    // Auto-focus on name input
+    nameInput.focus();
+});
+</script>
+{% endblock %}

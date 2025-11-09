@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% block title %}AR Scanner - {{ event.name }}{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    #camera-feed {
+        width: 100%;
+        max-height: 400px;
+        border-radius: 8px;
+        background: #000;
+    }
+
+    #ar-status {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 20px 0;
+    }
+
+    .scanning-indicator {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border: 3px solid transparent;
+        border-radius: 8px;
+        animation: scan-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes scan-pulse {
+        0%, 100% {
+            border-color: rgba(0, 123, 255, 0);
+        }
+        50% {
+            border-color: rgba(0, 123, 255, 0.8);
+        }
+    }
+
+    .object-found {
+        border: 5px solid #28a745 !important;
+        animation: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="text-center">
+        <h1>🔍 AR Scanner</h1>
+        <h3 class="text-muted">{{ event.name }}</h3>
+        <hr>
+    </div>
+
+    <!-- Sekcja podania imienia -->
+    <div id="name-input-section" class="text-center">
+        <p class="lead">Zanim rozpoczniesz skanowanie, podaj swoje imię:</p>
+        <div class="mb-3">
+            <input type="text" class="form-control" id="player-name" placeholder="Twoje imię lub nazwa drużyny" required>
+        </div>
+        <button id="start-scanner-btn" class="btn btn-primary btn-lg">
+            Rozpocznij skanowanie AR
+        </button>
+    </div>
+
+    <!-- Sekcja skanera AR -->
+    <div id="scanner-section" style="display: none;">
+        <div id="ar-status" class="text-center text-primary">
+            Szukam obiektów...
+        </div>
+
+        <div style="position: relative;">
+            <video id="camera-feed" autoplay playsinline></video>
+            <div id="scanning-indicator" class="scanning-indicator"></div>
+        </div>
+
+        <canvas id="capture-canvas" style="display: none;"></canvas>
+
+        <div class="mt-3 text-center">
+            <p class="text-muted">Skieruj kamerę na obiekt skonfigurowany przez organizatora</p>
+            <button id="stop-scanner-btn" class="btn btn-secondary">
+                Zatrzymaj skaner
+            </button>
+        </div>
+
+        <div id="player-info" class="mt-3 text-center">
+            <p class="mb-0"><strong>Gracz:</strong> <span id="player-name-display"></span></p>
+            <p class="mb-0"><strong>Punkty:</strong> <span id="player-score">0</span></p>
+        </div>
+    </div>
+
+    <!-- Sekcja pytania quiz (jeśli rozpoznany obiekt to quiz) -->
+    <div id="quiz-section" style="display: none;" class="text-center">
+        <h3>Pytanie:</h3>
+        <p id="question-text" class="lead"></p>
+        <div id="answers" class="d-grid gap-2 mt-3"></div>
+    </div>
+
+    <!-- Sekcja gry Snake -->
+    <div id="snake-game-section" style="display: none;">
+        <div class="text-center">
+            <h3>🐍 Snake</h3>
+            <p>Zdobądź 20 punktów!</p>
+            <canvas id="snake-canvas" width="300" height="300" style="border: 2px solid #333; background: #000;"></canvas>
+            <div class="mt-3">
+                <button class="btn btn-primary btn-lg" onclick="moveSnake('up')">▲</button><br>
+                <button class="btn btn-primary btn-lg me-2" onclick="moveSnake('left')">◄</button>
+                <button class="btn btn-primary btn-lg" onclick="moveSnake('right')">►</button><br>
+                <button class="btn btn-primary btn-lg mt-2" onclick="moveSnake('down')">▼</button>
+            </div>
+            <p class="mt-3"><strong>Wynik:</strong> <span id="snake-score">0</span> / 20</p>
+        </div>
+    </div>
+
+    <!-- Komunikaty -->
+    <div id="message-section" style="display: none;" class="alert mt-3"></div>
+</div>
+
+<script>
+const EVENT_ID = {{ event.id }};
+let playerId = null;
+let playerName = null;
+let scanning = false;
+let scanInterval = null;
+let stream = null;
+
+// Rozpocznij skaner
+document.getElementById('start-scanner-btn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('player-name');
+    playerName = nameInput.value.trim();
+
+    if (!playerName) {
+        alert('Podaj swoje imię!');
+        return;
+    }
+
+    // Zarejestruj gracza lub pobierz dane istniejącego
+    try {
+        // Tutaj możesz dodać API call do zarejestrowania gracza
+        // Na razie użyjemy localStorage
+        const storedPlayerId = localStorage.getItem(`player_${EVENT_ID}_id`);
+        const storedName = localStorage.getItem(`player_${EVENT_ID}_name`);
+
+        if (storedPlayerId && storedName === playerName) {
+            playerId = parseInt(storedPlayerId);
+        } else {
+            // Dla uproszczenia, używamy timestamp jako ID
+            playerId = Date.now();
+            localStorage.setItem(`player_${EVENT_ID}_id`, playerId);
+            localStorage.setItem(`player_${EVENT_ID}_name`, playerName);
+        }
+
+        document.getElementById('player-name-display').textContent = playerName;
+
+        // Ukryj sekcję imienia, pokaż skaner
+        document.getElementById('name-input-section').style.display = 'none';
+        document.getElementById('scanner-section').style.display = 'block';
+
+        // Uruchom kamerę
+        await startCamera();
+        startScanning();
+
+    } catch (error) {
+        alert('Błąd: ' + error.message);
+    }
+});
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
+
+        const video = document.getElementById('camera-feed');
+        video.srcObject = stream;
+        video.play();
+    } catch (error) {
+        alert('Nie można uruchomić kamery: ' + error.message);
+        throw error;
+    }
+}
+
+function startScanning() {
+    scanning = true;
+    document.getElementById('ar-status').textContent = 'Szukam obiektów...';
+    document.getElementById('ar-status').className = 'text-center text-primary';
+
+    // Skanuj co 1 sekundę
+    scanInterval = setInterval(async () => {
+        if (!scanning) return;
+
+        try {
+            await scanForObjects();
+        } catch (error) {
+            console.error('Błąd skanowania:', error);
+        }
+    }, 1000);
+}
+
+async function scanForObjects() {
+    const video = document.getElementById('camera-feed');
+    const canvas = document.getElementById('capture-canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Dostosuj rozmiar canvas do video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Zrób snapshot
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Konwertuj do base64
+    const imageData = canvas.toDataURL('image/jpeg', 0.7);
+
+    // Wyślij do API
+    const response = await fetch('/api/player/ar/recognize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            image_data: imageData,
+            event_id: EVENT_ID,
+            player_id: playerId
+        })
+    });
+
+    const result = await response.json();
+
+    if (result.recognized) {
+        // Obiekt rozpoznany!
+        objectRecognized(result);
+    }
+}
+
+function objectRecognized(result) {
+    // Zatrzymaj skanowanie
+    scanning = false;
+    clearInterval(scanInterval);
+
+    // Zatrzymaj kamerę
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+
+    // Pokaż komunikat
+    document.getElementById('ar-status').textContent = `✅ Rozpoznano: ${result.object_name}!`;
+    document.getElementById('ar-status').className = 'text-center text-success';
+    document.getElementById('scanning-indicator').className = 'scanning-indicator object-found';
+
+    // Ukryj skaner
+    setTimeout(() => {
+        document.getElementById('scanner-section').style.display = 'none';
+
+        // Uruchom odpowiednią grę
+        if (result.game_type === 'quiz') {
+            showQuiz(result.question);
+        } else if (result.game_type === 'snake') {
+            showSnakeGame();
+        } else if (result.game_type === 'tetris') {
+            showMessage('Tetris nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
+        } else if (result.game_type === 'arkanoid') {
+            showMessage('Arkanoid nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
+        }
+    }, 2000);
+}
+
+function showQuiz(question) {
+    if (!question) {
+        showMessage('Brak dostępnych pytań!', 'warning');
+        return;
+    }
+
+    document.getElementById('quiz-section').style.display = 'block';
+    document.getElementById('question-text').textContent = question.text;
+
+    const answersDiv = document.getElementById('answers');
+    answersDiv.innerHTML = '';
+
+    const options = [
+        { key: 'a', text: question.option_a },
+        { key: 'b', text: question.option_b },
+        { key: 'c', text: question.option_c }
+    ];
+
+    options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-outline-primary btn-lg';
+        btn.textContent = `${option.key.toUpperCase()}: ${option.text}`;
+        btn.onclick = () => submitAnswer(question.id, option.key);
+        answersDiv.appendChild(btn);
+    });
+}
+
+async function submitAnswer(questionId, answer) {
+    // Tutaj dodaj logikę sprawdzania odpowiedzi
+    // Dla uproszczenia, po prostu pokazujemy komunikat
+    showMessage('Odpowiedź przesłana! Wróć do skanera, aby kontynuować.', 'success');
+
+    setTimeout(() => {
+        resetScanner();
+    }, 3000);
+}
+
+function showSnakeGame() {
+    document.getElementById('snake-game-section').style.display = 'block';
+    // Tutaj dodaj logikę gry Snake
+    showMessage('Gra Snake - steruj strzałkami!', 'info');
+}
+
+function showMessage(text, type = 'info') {
+    const messageDiv = document.getElementById('message-section');
+    messageDiv.textContent = text;
+    messageDiv.className = `alert alert-${type} mt-3`;
+    messageDiv.style.display = 'block';
+
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+function resetScanner() {
+    document.getElementById('quiz-section').style.display = 'none';
+    document.getElementById('snake-game-section').style.display = 'none';
+    document.getElementById('scanner-section').style.display = 'block';
+
+    startCamera().then(() => {
+        startScanning();
+    });
+}
+
+document.getElementById('stop-scanner-btn').addEventListener('click', () => {
+    scanning = false;
+    clearInterval(scanInterval);
+
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+
+    document.getElementById('scanner-section').style.display = 'none';
+    document.getElementById('name-input-section').style.display = 'block';
+});
+</script>
+{% endblock %}

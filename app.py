@@ -24,6 +24,18 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     print("⚠️  anthropic package not installed. AI question generation will be limited.")
 
+# Import dla rozpoznawania obrazów AR
+try:
+    import cv2
+    import numpy as np
+    from PIL import Image
+    import base64
+    import io
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    print("⚠️  opencv-python not installed. AR features will be limited.")
+
 # Inicjalizacja
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
@@ -175,6 +187,16 @@ class AIPlayerAnswer(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_ai_question_uc'),)
 
+class ARObject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    object_name = db.Column(db.String(100), nullable=False)
+    image_data = db.Column(db.Text, nullable=False)  # Base64 zakodowany obraz
+    image_features = db.Column(db.Text, nullable=True)  # JSON z cechami obrazu dla rozpoznawania
+    game_type = db.Column(db.String(50), nullable=False)  # 'snake', 'quiz', 'tetris', 'arkanoid'
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
@@ -271,12 +293,21 @@ def init_default_ai_categories(event_id):
 
 def generate_ai_questions_with_claude(category_name, difficulty_level='easy', count=10):
     """Generuje pytania AI przy użyciu Claude API"""
+    print(f"🤖 Attempting to generate {count} AI questions for category: {category_name}")
+
     if not ANTHROPIC_AVAILABLE:
-        return {'error': 'Claude API nie jest dostępne. Zainstaluj pakiet anthropic.'}
+        error_msg = 'Claude API nie jest dostępne. Zainstaluj pakiet anthropic.'
+        print(f"❌ {error_msg}")
+        return {'error': error_msg}
 
     api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
-        return {'error': 'Brak klucza API dla Claude (ANTHROPIC_API_KEY)'}
+        error_msg = 'Brak klucza API dla Claude. Ustaw zmienną środowiskową ANTHROPIC_API_KEY w konfiguracji serwera.'
+        print(f"❌ {error_msg}")
+        print(f"ℹ️  Dostępne zmienne środowiskowe: {', '.join([k for k in os.environ.keys() if 'ANTHROPIC' in k.upper() or 'API' in k.upper()])}")
+        return {'error': error_msg}
+
+    print(f"✅ API key found (length: {len(api_key)}, starts with: {api_key[:10]}...)")
 
     difficulty_mapping = {
         'easy': 'łatwy (podstawowa wiedza ogólna)',
@@ -308,15 +339,20 @@ Zwróć odpowiedź w formacie JSON (tylko czysty JSON, bez żadnego dodatkowego 
 WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudności."""
 
     try:
+        print(f"📡 Connecting to Claude API...")
         client = anthropic.Anthropic(api_key=api_key)
+
+        print(f"🔄 Sending request to Claude API...")
         message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=4000,
             messages=[{
                 "role": "user",
                 "content": prompt
             }]
         )
+
+        print(f"✅ Received response from Claude API")
 
         # Wyciągnij treść odpowiedzi
         response_text = message.content[0].text.strip()
@@ -334,11 +370,16 @@ WAŻNE: Pytania muszą być w języku polskim i odpowiednie do poziomu trudnośc
         # Parse JSON
         questions = json.loads(response_text)
 
+        print(f"✅ Successfully generated {len(questions)} questions")
         return {'success': True, 'questions': questions}
 
     except Exception as e:
-        print(f"Error generating AI questions: {e}")
-        return {'error': f'Błąd podczas generowania pytań: {str(e)}'}
+        error_type = type(e).__name__
+        error_msg = str(e)
+        print(f"❌ Error generating AI questions [{error_type}]: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return {'error': f'Błąd podczas generowania pytań: {error_msg}'}
 
 def get_game_state(event_id, key, default=None):
     state = GameState.query.filter_by(event_id=event_id, key=key).first()
@@ -571,8 +612,53 @@ def logout_impersonate():
 
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
-def player_view(event_id, qr_code): 
+def player_view(event_id, qr_code):
     return render_template('player.html', qr_code=qr_code, event_id=event_id)
+
+@app.route('/player_dashboard/<int:event_id>/<int:player_id>')
+def player_dashboard(event_id, player_id):
+    """Panel gracza z informacjami o grze w czasie rzeczywistym"""
+    player = db.session.get(Player, player_id)
+    event = db.session.get(Event, event_id)
+
+    if not player or player.event_id != event_id:
+        return "Nie znaleziono gracza lub nieprawidłowy event", 404
+
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    return render_template('player_dashboard.html',
+                         player_id=player_id,
+                         player_name=player.name,
+                         event_id=event_id,
+                         event_name=event.name)
+
+@app.route('/player_register/<int:event_id>')
+def player_register(event_id):
+    """Strona rejestracji gracza - dostępna przez skan kodu QR"""
+    event = db.session.get(Event, event_id)
+
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    return render_template('player_register.html',
+                         event_id=event_id,
+                         event_name=event.name)
+
+@app.route('/player_qr_preview/<int:event_id>')
+def player_qr_preview(event_id):
+    """Podgląd i druk kodu QR do rejestracji graczy"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # URL do rejestracji gracza
+    register_url = url_for('player_register', event_id=event_id, _external=True)
+
+    return render_template('player_qr_preview.html',
+                         event=event,
+                         register_url=register_url,
+                         event_id=event_id)
 
 @app.route('/display/<int:event_id>')
 def display(event_id):
@@ -592,6 +678,46 @@ def list_qrcodes_public(event_id):
     if not (is_admin or is_host): return "Brak autoryzacji", 401
     qrcodes = QRCode.query.filter_by(event_id=event_id).all()
     return render_template('qrcodes.html', qrcodes=qrcodes, event_id=event_id)
+
+@app.route('/player_qrcodes/<int:event_id>')
+@host_required
+def player_qrcodes(event_id):
+    """Wyświetla kody QR dla wszystkich graczy do ich dashboard'ów"""
+    # Sprawdź czy host ma dostęp do tego eventu
+    if session.get('host_event_id') != event_id:
+        return "Brak autoryzacji", 401
+
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Pobierz wszystkich graczy
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.name).all()
+
+    # Generuj dane dla kodów QR (URL do dashboard każdego gracza)
+    player_data = []
+    for player in players:
+        # URL do dashboard gracza
+        dashboard_url = url_for('player_dashboard', event_id=event_id, player_id=player.id, _external=True)
+        player_data.append({
+            'id': player.id,
+            'name': player.name,
+            'score': player.score,
+            'dashboard_url': dashboard_url
+        })
+
+    return render_template('player_qrcodes.html',
+                         event=event,
+                         players=player_data,
+                         event_id=event_id)
+
+@app.route('/ar-scanner/<int:event_id>')
+def ar_scanner(event_id):
+    """Strona AR Scanner dla graczy"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+    return render_template('ar_scanner.html', event=event)
 
 # ===================================================================
 # --- API Endpoints ---
@@ -1035,17 +1161,20 @@ def send_message():
     event_id = session['host_event_id']
     data = request.json
     message = data.get('message', '').strip()
-    
+
     if not message:
         return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
-    
+
     if len(message) > 500:
         return jsonify({'error': 'Wiadomość może mieć maksymalnie 500 znaków'}), 400
-    
+
+    # Zapisz komunikat w GameState dla dashboard'u graczy
+    set_game_state(event_id, 'host_message', message)
+
     # Wyślij komunikat przez Socket.IO do ekranu gry
     room = f'event_{event_id}'
     socketio.emit('host_message', {'message': message}, room=room)
-    
+
     return jsonify({'message': 'Komunikat wysłany na ekran gry'})
 
 @app.route('/fix-db-columns-v2')
@@ -1125,10 +1254,14 @@ def get_minigames_status():
     tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
     arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'True'
     snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'True'
+    pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False') == 'True'
+    trex_disabled = get_game_state(event_id, 'minigame_trex_disabled', 'False') == 'True'
     return jsonify({
         'tetris_enabled': not tetris_disabled,
         'arkanoid_enabled': not arkanoid_disabled,
-        'snake_enabled': not snake_disabled
+        'snake_enabled': not snake_disabled,
+        'pacman_enabled': not pacman_disabled,
+        'trex_enabled': not trex_disabled
     })
 
 @app.route('/api/host/minigames/toggle', methods=['POST'])
@@ -1159,6 +1292,20 @@ def toggle_minigame():
         return jsonify({
             'message': f'Snake {"aktywowany" if enabled else "deaktywowany"}',
             'snake_enabled': enabled
+        })
+    elif game_type == 'pacman':
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_pacman_disabled', 'False' if enabled else 'True')
+        return jsonify({
+            'message': f'PacMan {"aktywowany" if enabled else "deaktywowany"}',
+            'pacman_enabled': enabled
+        })
+    elif game_type == 'trex':
+        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
+        set_game_state(event_id, 'minigame_trex_disabled', 'False' if enabled else 'True')
+        return jsonify({
+            'message': f'T-Rex {"aktywowany" if enabled else "deaktywowany"}',
+            'trex_enabled': enabled
         })
 
     return jsonify({'error': 'Nieznany typ minigry'}), 400
@@ -1539,11 +1686,13 @@ def scan_qr():
         tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
         arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
         snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False')
+        pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False')
+        trex_disabled = get_game_state(event_id, 'minigame_trex_disabled', 'False')
 
-        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}")
+        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}, PacMan disabled: {pacman_disabled}, T-Rex disabled: {trex_disabled}")
 
         # Jeśli wszystkie minigry są wyłączone
-        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True':
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True' and pacman_disabled == 'True' and trex_disabled == 'True':
             message = 'Wszystkie minigry zostały wyłączone przez organizatora.'
             print(f"All minigames DISABLED - returning error")
             return jsonify({'status': 'info', 'message': message})
@@ -1552,20 +1701,26 @@ def scan_qr():
         tetris_score_key = f'minigame_tetris_score_{player_id}'
         arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
         snake_score_key = f'minigame_snake_score_{player_id}'
+        pacman_score_key = f'minigame_pacman_score_{player_id}'
+        trex_score_key = f'minigame_trex_score_{player_id}'
 
         current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
         current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
         current_snake_score = int(get_game_state(event_id, snake_score_key, '0'))
+        current_pacman_score = int(get_game_state(event_id, pacman_score_key, '0'))
+        current_trex_score = int(get_game_state(event_id, trex_score_key, '0'))
 
-        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20")
+        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20, PacMan: {current_pacman_score}/20, T-Rex: {current_trex_score}/20")
 
         # Sprawdź czy gracz ukończył wszystkie gry
         tetris_completed = current_tetris_score >= 20
         arkanoid_completed = current_arkanoid_score >= 20
         snake_completed = current_snake_score >= 20
+        pacman_completed = current_pacman_score >= 20
+        trex_completed = current_trex_score >= 20
 
         # Jeśli ukończył wszystkie, nie może grać więcej
-        if tetris_completed and arkanoid_completed and snake_completed:
+        if tetris_completed and arkanoid_completed and snake_completed and pacman_completed and trex_completed:
             message = 'Ukończyłeś już wszystkie minigry! Świetna robota!'
             return jsonify({'status': 'info', 'message': message})
 
@@ -1580,6 +1735,12 @@ def scan_qr():
 
         if snake_disabled != 'True' and not snake_completed:
             available_games.append('snake')
+
+        if pacman_disabled != 'True' and not pacman_completed:
+            available_games.append('pacman')
+
+        if trex_disabled != 'True' and not trex_completed:
+            available_games.append('trex')
         
         # Jeśli nie ma dostępnych gier
         if not available_games:
@@ -1605,13 +1766,29 @@ def scan_qr():
                 'current_score': current_arkanoid_score,
                 'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
             })
-        else:  # snake
+        elif selected_game == 'snake':
             print(f"🐍 Starting Snake for player {player_id}")
             return jsonify({
                 'status': 'minigame',
                 'game': 'snake',
                 'current_score': current_snake_score,
                 'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/20 pkt'
+            })
+        elif selected_game == 'pacman':
+            print(f"👻 Starting PacMan for player {player_id}")
+            return jsonify({
+                'status': 'minigame',
+                'game': 'pacman',
+                'current_score': current_pacman_score,
+                'message': f'👻 Minigra PacMan! Twój postęp: {current_pacman_score}/20 pkt'
+            })
+        else:  # trex
+            print(f"🦖 Starting T-Rex for player {player_id}")
+            return jsonify({
+                'status': 'minigame',
+                'game': 'trex',
+                'current_score': current_trex_score,
+                'message': f'🦖 Minigra T-Rex! Twój postęp: {current_trex_score}/20 pkt'
             })
     
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
@@ -1731,6 +1908,60 @@ def process_ai_answer():
         # Punkty za pytania AI - 5 punktów
         player.score += 5
 
+        # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
+        password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
+
+        if password_mode == 'auto':
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
+                    emit_password_update(f'event_{player.event_id}')
+
         db.session.commit()
         emit_leaderboard_update(f'event_{player.event_id}')
 
@@ -1771,31 +2002,57 @@ def process_answer():
         
         # ✅ ZMODYFIKOWANA LOGIKA: Sprawdź tryb odkrywania hasła
         password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
-        
+
         if password_mode == 'auto':
-            # Tryb automatyczny - odkryj losową nieodkrytą literę
-            password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
-            revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
-            
-            # Parsuj odkryte indeksy
-            revealed_indices = set()
-            if revealed_indices_str:
-                revealed_indices = set(map(int, revealed_indices_str.split(',')))
-            
-            # Znajdź nieodkryte indeksy (pomijając spacje)
-            available_indices = [i for i in range(len(password_value)) 
-                               if password_value[i] != ' ' and i not in revealed_indices]
-            
-            if available_indices:
-                import random
-                revealed_index = random.choice(available_indices)
-                revealed_indices.add(revealed_index)
-                
-                # Zapisz zaktualizowane indeksy
-                revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
-                set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
-                
-                emit_password_update(f'event_{player.event_id}')
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
+                    emit_password_update(f'event_{player.event_id}')
         
         db.session.commit()
         emit_leaderboard_update(f'event_{player.event_id}')
@@ -1871,6 +2128,162 @@ def check_vote(photo_id, player_id):
     vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
     return jsonify({'voted': vote is not None})
 
+@app.route('/api/player_dashboard/state', methods=['GET'])
+def get_player_dashboard_state():
+    """Zwraca pełny stan gry dla panelu gracza"""
+    event_id = request.args.get('event_id', type=int)
+    player_id = request.args.get('player_id', type=int)
+
+    if not event_id or not player_id:
+        return jsonify({'error': 'Brak event_id lub player_id'}), 400
+
+    player = db.session.get(Player, player_id)
+    event = db.session.get(Event, event_id)
+
+    if not player or player.event_id != event_id:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    if not event:
+        return jsonify({'error': 'Nie znaleziono eventu'}), 404
+
+    # Pobierz stan gry
+    game_state = get_full_game_state(event_id)
+
+    # Policz aktywnych graczy
+    active_players = Player.query.filter_by(event_id=event_id).count()
+
+    # Policz dostępne punkty (pytania + AI questions)
+    total_questions = Question.query.filter_by(event_id=event_id).count()
+    total_ai_questions = AIQuestion.query.filter_by(event_id=event_id).count()
+
+    # Policz ile pytań gracz już odpowiedział
+    answered_questions = PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).count()
+    answered_ai_questions = AIPlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).count()
+
+    # Oblicz możliwe punkty do zdobycia
+    bonus_multiplier = int(game_state.get('bonus_multiplier', 1))
+    remaining_regular_questions = max(0, total_questions - answered_questions)
+    remaining_ai_questions = max(0, total_ai_questions - answered_ai_questions)
+
+    # Regularne pytania: 10 punktów * bonus, AI pytania: 5 punktów
+    points_available = (remaining_regular_questions * 10 * bonus_multiplier) + (remaining_ai_questions * 5)
+
+    # Oblicz łączne zdobyte punkty (teoretycznie powinny być równe player.score)
+    total_earned = player.score
+
+    # Hasło
+    password_value = game_state.get('game_password', 'SAPEREVENT')
+    revealed_indices_str = game_state.get('revealed_password_indices', '')
+    revealed_indices = set()
+    if revealed_indices_str:
+        revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+    displayed_password = ""
+    for i, char in enumerate(password_value):
+        if char == ' ':
+            displayed_password += '  '
+        elif i in revealed_indices:
+            displayed_password += char
+        else:
+            displayed_password += '_'
+
+    # Czas pozostały
+    time_remaining = 0
+    if game_state.get('game_active') == 'True' and game_state.get('is_timer_running') == 'True':
+        end_time_str = game_state.get('game_end_time')
+        if end_time_str:
+            try:
+                end_time = datetime.fromisoformat(end_time_str)
+                now = datetime.utcnow()
+                time_remaining = max(0, int((end_time - now).total_seconds()))
+            except:
+                time_remaining = 0
+
+    # Komunikat hosta (ostatni wysłany)
+    host_message = game_state.get('host_message', '')
+
+    return jsonify({
+        'game_name': event.name,
+        'player_name': player.name,
+        'player_score': player.score,
+        'active_players': active_players,
+        'total_points_earned': total_earned,
+        'points_available': points_available,
+        'time_speed': int(game_state.get('time_speed', 1)),
+        'point_bonus': int(game_state.get('bonus_multiplier', 1)),
+        'time_remaining': time_remaining,
+        'password_display': displayed_password,
+        'host_message': host_message,
+        'game_active': game_state.get('game_active') == 'True'
+    })
+
+@app.route('/api/player/selfies', methods=['GET'])
+def get_player_selfies():
+    """Zwraca listę selfie dla galerii gracza"""
+    event_id = request.args.get('event_id', type=int)
+
+    if not event_id:
+        return jsonify({'error': 'Brak event_id'}), 400
+
+    photos = FunnyPhoto.query.filter_by(event_id=event_id).order_by(
+        FunnyPhoto.votes.desc(), FunnyPhoto.timestamp.desc()
+    ).all()
+
+    return jsonify({
+        'selfies': [{
+            'id': p.id,
+            'player_name': p.player_name,
+            'image_url': p.image_url,
+            'votes': p.votes,
+            'timestamp': p.timestamp.isoformat()
+        } for p in photos]
+    })
+
+@app.route('/api/player/selfie/vote', methods=['POST'])
+def vote_player_selfie():
+    """Głosowanie na selfie z panelu gracza"""
+    data = request.json
+    photo_id = data.get('photo_id')
+    player_id = data.get('player_id')
+    event_id = data.get('event_id')
+
+    if not photo_id or not player_id or not event_id:
+        return jsonify({'error': 'Brak wymaganych danych'}), 400
+
+    player = db.session.get(Player, player_id)
+    photo = db.session.get(FunnyPhoto, photo_id)
+
+    if not player or not photo:
+        return jsonify({'error': 'Nie znaleziono gracza lub zdjęcia'}), 404
+
+    if player.event_id != event_id or photo.event_id != event_id:
+        return jsonify({'error': 'Nieprawidłowy event'}), 400
+
+    # Sprawdź czy gracz już głosował
+    existing_vote = PhotoVote.query.filter_by(photo_id=photo_id, player_id=player_id).first()
+
+    if existing_vote:
+        return jsonify({'success': False, 'message': 'Już zagłosowałeś na to zdjęcie'}), 400
+
+    # Dodaj głos
+    new_vote = PhotoVote(photo_id=photo_id, player_id=player_id, event_id=event_id)
+    db.session.add(new_vote)
+    photo.votes += 1
+    db.session.commit()
+
+    # Wyemituj aktualizację
+    room = f'event_{event_id}'
+    socketio.emit('photo_vote_update', {
+        'photo_id': photo_id,
+        'votes': photo.votes
+    }, room=room)
+
+    return jsonify({
+        'success': True,
+        'votes': photo.votes,
+        'message': 'Głos oddany!'
+    })
+
 @app.route('/api/player/minigame/complete', methods=['POST'])
 def complete_minigame():
     data = request.json
@@ -1898,6 +2311,16 @@ def complete_minigame():
         if snake_disabled == 'True':
             return jsonify({'error': 'Ta minigra została wyłączona'}), 403
         score_key = f'minigame_snake_score_{player_id}'
+    elif game_type == 'pacman':
+        pacman_disabled = get_game_state(player.event_id, 'minigame_pacman_disabled', 'False')
+        if pacman_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_pacman_score_{player_id}'
+    elif game_type == 'trex':
+        trex_disabled = get_game_state(player.event_id, 'minigame_trex_disabled', 'False')
+        if trex_disabled == 'True':
+            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
+        score_key = f'minigame_trex_score_{player_id}'
     else:
         return jsonify({'error': 'Nieznany typ minigry'}), 400
 
@@ -1908,7 +2331,8 @@ def complete_minigame():
     new_score = current_score + score
     set_game_state(player.event_id, score_key, str(new_score))
 
-    game_name = 'Tetris' if game_type == 'tetris' else ('Arkanoid' if game_type == 'arkanoid' else 'Snake')
+    game_name_map = {'tetris': 'Tetris', 'arkanoid': 'Arkanoid', 'snake': 'Snake', 'pacman': 'PacMan', 'trex': 'T-Rex'}
+    game_name = game_name_map.get(game_type, 'Unknown')
     
     # Sprawdź czy gracz osiągnął 20 punktów
     if new_score >= 20:
@@ -1916,15 +2340,59 @@ def complete_minigame():
         bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
         points = 10 * bonus
         player.score += points
-        
-        password = "SAPEREVENT"
-        available_letters = [l for l in password if l not in player.revealed_letters.upper()]
-        if available_letters:
-            revealed_letter = random.choice(available_letters)
-            player.revealed_letters += revealed_letter
-        else:
-            revealed_letter = None
-        
+
+        # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
+        password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
+
+        if password_mode == 'auto':
+            # Oblicz maksymalną liczbę punktów możliwych do zdobycia
+            total_questions = Question.query.filter_by(event_id=player.event_id).count()
+            total_ai_questions = AIQuestion.query.filter_by(event_id=player.event_id).count()
+            bonus_multiplier = int(get_game_state(player.event_id, 'bonus_multiplier', '1'))
+
+            max_possible_points = (total_questions * 10 * bonus_multiplier) + (total_ai_questions * 5)
+
+            # Pobierz procent odkrywania
+            reveal_percentage = int(get_game_state(player.event_id, 'password_reveal_percentage', '50'))
+
+            # Oblicz próg punktów na jedną literę
+            if max_possible_points > 0 and reveal_percentage > 0:
+                points_per_letter = (max_possible_points * reveal_percentage) / 100
+
+                # Oblicz ile liter gracz powinien mieć odkrytych
+                letters_to_reveal = int(player.score / points_per_letter) if points_per_letter > 0 else 0
+
+                # Pobierz aktualny stan hasła
+                password_value = get_game_state(player.event_id, 'game_password', 'SAPEREVENT')
+                revealed_indices_str = get_game_state(player.event_id, 'revealed_password_indices', '')
+
+                # Parsuj odkryte indeksy
+                revealed_indices = set()
+                if revealed_indices_str:
+                    revealed_indices = set(map(int, revealed_indices_str.split(',')))
+
+                # Znajdź wszystkie indeksy liter (pomijając spacje)
+                all_letter_indices = [i for i in range(len(password_value)) if password_value[i] != ' ']
+
+                # Oblicz ile liter trzeba odkryć
+                current_revealed_count = len([i for i in revealed_indices if i < len(password_value) and password_value[i] != ' '])
+                letters_to_add = min(letters_to_reveal - current_revealed_count, len(all_letter_indices) - current_revealed_count)
+
+                # Odkryj brakujące litery
+                if letters_to_add > 0:
+                    import random
+                    available_indices = [i for i in all_letter_indices if i not in revealed_indices]
+
+                    for _ in range(letters_to_add):
+                        if available_indices:
+                            revealed_index = random.choice(available_indices)
+                            revealed_indices.add(revealed_index)
+                            available_indices.remove(revealed_index)
+
+                    # Zapisz zaktualizowane indeksy
+                    revealed_indices_str = ','.join(map(str, sorted(revealed_indices)))
+                    set_game_state(player.event_id, 'revealed_password_indices', revealed_indices_str)
+
         db.session.commit()
         emit_password_update(f'event_{player.event_id}')
         emit_leaderboard_update(f'event_{player.event_id}')
@@ -1987,15 +2455,37 @@ def set_password_mode():
     event_id = session['host_event_id']
     data = request.json
     mode = data.get('mode', 'auto')
-    
+
     if mode not in ['auto', 'manual']:
         return jsonify({'error': 'Nieprawidłowy tryb'}), 400
-    
+
     set_game_state(event_id, 'password_reveal_mode', mode)
-    
+
     return jsonify({
         'message': f'Tryb odkrywania ustawiony na: {mode}',
         'mode': mode
+    })
+
+@app.route('/api/host/password/reveal_percentage', methods=['POST'])
+@host_required
+def set_password_reveal_percentage():
+    """Ustaw procent punktów wymagany do odkrycia litery"""
+    event_id = session['host_event_id']
+    data = request.json
+    percentage = data.get('percentage', 50)
+
+    try:
+        percentage = int(percentage)
+        if percentage < 1 or percentage > 100:
+            return jsonify({'error': 'Procent musi być w zakresie 1-100'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Nieprawidłowa wartość procentu'}), 400
+
+    set_game_state(event_id, 'password_reveal_percentage', str(percentage))
+
+    return jsonify({
+        'message': f'Procent odkrywania ustawiony na: {percentage}%',
+        'percentage': percentage
     })
 
 @app.route('/api/host/password/reveal_manual', methods=['POST'])
@@ -2043,14 +2533,15 @@ def get_password_state():
     password = get_game_state(event_id, 'game_password', 'SAPEREVENT')
     revealed_indices_str = get_game_state(event_id, 'revealed_password_indices', '')
     mode = get_game_state(event_id, 'password_reveal_mode', 'auto')
-    
+    percentage = int(get_game_state(event_id, 'password_reveal_percentage', '50'))
+
     revealed_indices = []
     if revealed_indices_str:
         try:
             revealed_indices = list(map(int, revealed_indices_str.split(',')))
         except (ValueError, AttributeError):
             revealed_indices = []
-    
+
     displayed_password = ""
     for i, char in enumerate(password):
         if char == ' ':
@@ -2059,12 +2550,13 @@ def get_password_state():
             displayed_password += char
         else:
             displayed_password += '_'
-    
+
     return jsonify({
         'password': password,
         'revealed_letters': revealed_indices_str,
         'displayed_password': displayed_password,
-        'mode': mode
+        'mode': mode,
+        'reveal_percentage': percentage
     })
 
 
@@ -2226,6 +2718,204 @@ def on_join(data):
         join_room(room)
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
         emit_leaderboard_update(room)
+
+# ===================================================================
+# --- AR (Augmented Reality) Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/ar/objects', methods=['GET'])
+@host_required
+def get_ar_objects():
+    """Pobierz listę obiektów AR dla eventu"""
+    event_id = session['host_event_id']
+    objects = ARObject.query.filter_by(event_id=event_id, is_active=True).all()
+
+    result = []
+    for obj in objects:
+        result.append({
+            'id': obj.id,
+            'object_name': obj.object_name,
+            'image_data': obj.image_data,
+            'game_type': obj.game_type,
+            'created_at': obj.created_at.isoformat()
+        })
+
+    return jsonify({'objects': result})
+
+@app.route('/api/host/ar/setup-object', methods=['POST'])
+@host_required
+def setup_ar_object():
+    """Zapisz nowy obiekt AR z obrazem"""
+    if not CV2_AVAILABLE:
+        return jsonify({'error': 'OpenCV nie jest zainstalowany. AR nie jest dostępne.'}), 500
+
+    data = request.json
+    event_id = session['host_event_id']
+
+    object_name = data.get('object_name')
+    image_data = data.get('image_data')
+    game_type = data.get('game_type')
+
+    if not all([object_name, image_data, game_type]):
+        return jsonify({'error': 'Brakuje wymaganych danych'}), 400
+
+    try:
+        # Dekoduj obraz z base64
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+        image = Image.open(io.BytesIO(image_bytes))
+
+        # Konwertuj na OpenCV format
+        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Wyciągnij cechy obrazu (ORB - szybkie i dobre do obiektów)
+        orb = cv2.ORB_create(nfeatures=500)
+        keypoints, descriptors = orb.detectAndCompute(cv_image, None)
+
+        # Zapisz cechy jako JSON
+        features = {
+            'descriptors': descriptors.tolist() if descriptors is not None else [],
+            'shape': cv_image.shape
+        }
+
+        # Zapisz do bazy
+        ar_object = ARObject(
+            event_id=event_id,
+            object_name=object_name,
+            image_data=image_data,
+            image_features=json.dumps(features),
+            game_type=game_type
+        )
+        db.session.add(ar_object)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Obiekt AR zapisany',
+            'object_id': ar_object.id
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Błąd zapisu obiektu AR: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/host/ar/object/<int:object_id>', methods=['DELETE'])
+@host_required
+def delete_ar_object(object_id):
+    """Usuń obiekt AR"""
+    event_id = session['host_event_id']
+    ar_object = ARObject.query.filter_by(id=object_id, event_id=event_id).first()
+
+    if not ar_object:
+        return jsonify({'error': 'Obiekt nie znaleziony'}), 404
+
+    db.session.delete(ar_object)
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Obiekt usunięty'})
+
+@app.route('/api/player/ar/recognize', methods=['POST'])
+def recognize_ar_object():
+    """Rozpoznaj obiekt AR z obrazu przesłanego przez gracza"""
+    if not CV2_AVAILABLE:
+        return jsonify({'recognized': False, 'error': 'OpenCV nie jest zainstalowany'}), 500
+
+    data = request.json
+    image_data = data.get('image_data')
+    event_id = data.get('event_id')
+
+    if not all([image_data, event_id]):
+        return jsonify({'recognized': False, 'error': 'Brakuje danych'}), 400
+
+    try:
+        # Dekoduj obraz
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+        image = Image.open(io.BytesIO(image_bytes))
+        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        # Wyciągnij cechy
+        orb = cv2.ORB_create(nfeatures=500)
+        kp_test, des_test = orb.detectAndCompute(cv_image, None)
+
+        if des_test is None:
+            return jsonify({'recognized': False})
+
+        # Pobierz obiekty AR dla eventu
+        ar_objects = ARObject.query.filter_by(event_id=event_id, is_active=True).all()
+
+        if not ar_objects:
+            return jsonify({'recognized': False, 'error': 'Brak obiektów AR dla tego eventu'})
+
+        # Porównaj z zapisanymi obiektami
+        best_match = None
+        best_score = 0
+
+        for ar_obj in ar_objects:
+            if not ar_obj.image_features:
+                continue
+
+            features = json.loads(ar_obj.image_features)
+            descriptors_list = features.get('descriptors', [])
+
+            if not descriptors_list:
+                continue
+
+            des_ref = np.array(descriptors_list, dtype=np.uint8)
+
+            if len(des_ref) > 0:
+                # Użyj BFMatcher do porównania
+                bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+                matches = bf.match(des_ref, des_test)
+
+                # Oblicz score (więcej dopasowań = lepszy wynik)
+                score = len(matches)
+
+                if score > best_score and score > 15:  # Próg minimum 15 dopasowań
+                    best_score = score
+                    best_match = ar_obj
+
+        if best_match:
+            # Obiekt rozpoznany!
+            response_data = {
+                'recognized': True,
+                'game_type': best_match.game_type,
+                'object_name': best_match.object_name,
+                'confidence': best_score
+            }
+
+            # Jeśli to quiz, pobierz losowe pytanie
+            if best_match.game_type == 'quiz':
+                # Pobierz pytanie, które gracz jeszcze nie widział
+                player_id = data.get('player_id')
+                if player_id:
+                    # Sprawdź, które pytania gracz już widział
+                    answered_ids = [ans.question_id for ans in
+                                  PlayerAnswer.query.filter_by(player_id=player_id, event_id=event_id).all()]
+
+                    # Pobierz pytanie, którego gracz jeszcze nie widział
+                    question = Question.query.filter(
+                        Question.event_id == event_id,
+                        ~Question.id.in_(answered_ids)
+                    ).order_by(db.func.random()).first()
+
+                    if question:
+                        response_data['question'] = {
+                            'id': question.id,
+                            'text': question.text,
+                            'option_a': question.option_a,
+                            'option_b': question.option_b,
+                            'option_c': question.option_c
+                        }
+
+            return jsonify(response_data)
+
+        return jsonify({'recognized': False})
+
+    except Exception as e:
+        print(f"Błąd rozpoznawania AR: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'recognized': False, 'error': str(e)}), 500
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':
