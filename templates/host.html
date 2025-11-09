@@ -692,6 +692,27 @@
         </div>
     </div>
 </div>
+
+<!-- Modal edycji pytań AI -->
+<div class="modal fade" id="editQuestionsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj pytania - <span id="edit-category-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="questions-list-container" style="max-height: 600px; overflow-y: auto;">
+                    <div id="questions-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -2158,6 +2179,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
                                     Generuj pytania
                                 </button>
+                                <button class="btn btn-sm btn-success ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
+                                    Edytuj
+                                </button>
                                 <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
                                     Usuń
                                 </button>
@@ -2239,6 +2263,122 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             btn.disabled = false;
             btn.textContent = 'Generuj pytania';
+        }
+    };
+
+    window.editCategoryQuestions = async function(categoryId, categoryName) {
+        try {
+            // Pobierz pytania dla kategorii
+            const response = await fetch(`/api/host/ai/questions/${categoryId}`);
+
+            if (!response.ok) {
+                throw new Error('Błąd pobierania pytań');
+            }
+
+            const questions = await response.json();
+
+            if (questions.length === 0) {
+                alert('Brak pytań do edycji. Najpierw wygeneruj pytania dla tej kategorii.');
+                return;
+            }
+
+            // Ustaw nazwę kategorii w modalu
+            document.getElementById('edit-category-name').textContent = categoryName;
+
+            // Wyrenderuj pytania
+            const questionsList = document.getElementById('questions-list');
+            questionsList.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'card mb-3';
+                questionCard.innerHTML = `
+                    <div class="card-body">
+                        <h6 class="mb-3">Pytanie ${index + 1}</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Treść pytania:</label>
+                            <textarea class="form-control" id="question-text-${q.id}" rows="3">${q.text}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Odpowiedzi:</label>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">A)</span>
+                                <input type="text" class="form-control" id="answer-a-${q.id}" value="${q.option_a}">
+                                <div class="input-group-text">
+                                    <input class="form-check-input" type="radio" name="correct-${q.id}" value="A" ${q.correct_answer === 'A' ? 'checked' : ''}>
+                                </div>
+                            </div>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">B)</span>
+                                <input type="text" class="form-control" id="answer-b-${q.id}" value="${q.option_b}">
+                                <div class="input-group-text">
+                                    <input class="form-check-input" type="radio" name="correct-${q.id}" value="B" ${q.correct_answer === 'B' ? 'checked' : ''}>
+                                </div>
+                            </div>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">C)</span>
+                                <input type="text" class="form-control" id="answer-c-${q.id}" value="${q.option_c}">
+                                <div class="input-group-text">
+                                    <input class="form-check-input" type="radio" name="correct-${q.id}" value="C" ${q.correct_answer === 'C' ? 'checked' : ''}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button class="btn btn-primary btn-sm" onclick="saveQuestionEdit(${q.id})">
+                                Zapisz zmiany
+                            </button>
+                        </div>
+                        <div class="mt-2 text-muted small">
+                            Statystyki: wyświetlone ${q.times_shown} razy, poprawnie odpowiedziane ${q.times_correct} razy
+                        </div>
+                    </div>
+                `;
+                questionsList.appendChild(questionCard);
+            });
+
+            // Otwórz modal
+            const modal = new bootstrap.Modal(document.getElementById('editQuestionsModal'));
+            modal.show();
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.saveQuestionEdit = async function(questionId) {
+        try {
+            const text = document.getElementById(`question-text-${questionId}`).value;
+            const optionA = document.getElementById(`answer-a-${questionId}`).value;
+            const optionB = document.getElementById(`answer-b-${questionId}`).value;
+            const optionC = document.getElementById(`answer-c-${questionId}`).value;
+            const correctAnswer = document.querySelector(`input[name="correct-${questionId}"]:checked`)?.value;
+
+            if (!text || !optionA || !optionB || !optionC || !correctAnswer) {
+                alert('Wszystkie pola muszą być wypełnione i należy wybrać poprawną odpowiedź');
+                return;
+            }
+
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    option_a: optionA,
+                    option_b: optionB,
+                    option_c: optionC,
+                    correct_answer: correctAnswer
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zapisywania pytania');
+            }
+
+            alert('Pytanie zostało zaktualizowane');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
         }
     };
 

@@ -1368,6 +1368,66 @@ def generate_questions_for_category(category_id):
         'count': generated_count
     })
 
+@app.route('/api/host/ai/questions/<int:category_id>', methods=['GET'])
+@host_required
+def get_host_ai_questions(category_id):
+    """Pobierz wszystkie pytania AI dla kategorii (Host)"""
+    event_id = session['host_event_id']
+    category = AICategory.query.filter_by(id=category_id, event_id=event_id).first()
+
+    if not category:
+        return jsonify({'error': 'Nie znaleziono kategorii'}), 404
+
+    questions = AIQuestion.query.filter_by(category_id=category_id, event_id=event_id).all()
+    return jsonify([{
+        'id': q.id,
+        'text': q.text,
+        'option_a': q.option_a,
+        'option_b': q.option_b,
+        'option_c': q.option_c,
+        'correct_answer': q.correct_answer,
+        'times_shown': q.times_shown,
+        'times_correct': q.times_correct
+    } for q in questions])
+
+@app.route('/api/host/ai/question/<int:question_id>', methods=['PUT'])
+@host_required
+def update_ai_question(question_id):
+    """Aktualizuj pytanie AI (Host)"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    data = request.json
+
+    # Aktualizuj pola pytania
+    if 'text' in data:
+        question.text = data['text']
+    if 'option_a' in data:
+        question.option_a = data['option_a']
+    if 'option_b' in data:
+        question.option_b = data['option_b']
+    if 'option_c' in data:
+        question.option_c = data['option_c']
+    if 'correct_answer' in data:
+        question.correct_answer = data['correct_answer'].upper()
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Pytanie zostało zaktualizowane',
+        'question': {
+            'id': question.id,
+            'text': question.text,
+            'option_a': question.option_a,
+            'option_b': question.option_b,
+            'option_c': question.option_c,
+            'correct_answer': question.correct_answer
+        }
+    })
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():
