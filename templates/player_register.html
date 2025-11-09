@@ -254,6 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const eventId = {{ event_id }};
     let currentLang = localStorage.getItem('player_lang') || 'pl';
 
+    // ✅ Sprawdź parametr return w URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('return'); // np. 'fortune' lub 'ar'
+
     const form = document.getElementById('register-form');
     const nameInput = document.getElementById('player-name');
     const joinBtn = document.getElementById('join-btn');
@@ -338,8 +342,17 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
             localStorage.setItem(`saperPlayerName_${eventId}`, name);
 
-            // Redirect to dashboard
-            window.location.href = `/player_dashboard/${eventId}/${playerId}`;
+            // ✅ Redirect based on return parameter
+            if (returnTo === 'fortune') {
+                // Przekieruj do Wróżki AI
+                window.location.href = `/fortune/${eventId}/${playerId}`;
+            } else if (returnTo === 'ar') {
+                // Przekieruj do AR Scanner
+                window.location.href = `/ar-scanner/${eventId}`;
+            } else {
+                // Domyślnie przekieruj do dashboardu
+                window.location.href = `/player_dashboard/${eventId}/${playerId}`;
+            }
 
         } catch (error) {
             console.error('Registration error:', error);

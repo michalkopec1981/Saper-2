@@ -124,32 +124,67 @@ let scanning = false;
 let scanInterval = null;
 let stream = null;
 
-// Rozpocznij skaner
+// ✅ AUTOMATYCZNE LOGOWANIE - Sprawdź localStorage przy załadowaniu strony
+document.addEventListener('DOMContentLoaded', function() {
+    const savedPlayerId = localStorage.getItem(`saperPlayerId_${EVENT_ID}`);
+    const savedPlayerName = localStorage.getItem(`saperPlayerName_${EVENT_ID}`);
+
+    console.log('🔍 AR Scanner - Checking localStorage');
+    console.log('Event ID:', EVENT_ID);
+    console.log('Saved Player ID:', savedPlayerId);
+    console.log('Saved Player Name:', savedPlayerName);
+
+    if (savedPlayerId && savedPlayerName) {
+        // Gracz jest już zarejestrowany - automatyczne uruchomienie skanera
+        console.log('✅ Player found in localStorage - auto starting scanner');
+        playerId = parseInt(savedPlayerId);
+        playerName = savedPlayerName;
+
+        document.getElementById('player-name-display').textContent = playerName;
+
+        // Ukryj sekcję imienia, pokaż skaner
+        document.getElementById('name-input-section').style.display = 'none';
+        document.getElementById('scanner-section').style.display = 'block';
+
+        // Uruchom kamerę automatycznie
+        startCamera().then(() => {
+            startScanning();
+        }).catch(error => {
+            alert('Nie można uruchomić kamery: ' + error.message);
+        });
+    } else {
+        console.log('❌ Player not found - showing registration form');
+        // Możemy przekierować do rejestracji lub pozwolić wpisać imię
+        // Dla uproszczenia, pokazujemy formularz z imieniem
+    }
+});
+
+// Rozpocznij skaner (gdy gracz wpisuje imię ręcznie)
 document.getElementById('start-scanner-btn').addEventListener('click', async () => {
     const nameInput = document.getElementById('player-name');
-    playerName = nameInput.value.trim();
+    const inputName = nameInput.value.trim();
 
-    if (!playerName) {
+    if (!inputName) {
         alert('Podaj swoje imię!');
         return;
     }
 
-    // Zarejestruj gracza lub pobierz dane istniejącego
+    // Sprawdź czy gracz o tym imieniu już istnieje w localStorage
+    const savedPlayerId = localStorage.getItem(`saperPlayerId_${EVENT_ID}`);
+    const savedPlayerName = localStorage.getItem(`saperPlayerName_${EVENT_ID}`);
+
+    if (savedPlayerId && savedPlayerName === inputName) {
+        // Gracz już istnieje
+        playerId = parseInt(savedPlayerId);
+        playerName = savedPlayerName;
+    } else {
+        // Nowy gracz - przekieruj do rejestracji
+        alert('Nie znaleziono gracza o tym imieniu. Zostaniesz przekierowany do rejestracji.');
+        window.location.href = `/player_register/${EVENT_ID}?return=ar`;
+        return;
+    }
+
     try {
-        // Tutaj możesz dodać API call do zarejestrowania gracza
-        // Na razie użyjemy localStorage
-        const storedPlayerId = localStorage.getItem(`player_${EVENT_ID}_id`);
-        const storedName = localStorage.getItem(`player_${EVENT_ID}_name`);
-
-        if (storedPlayerId && storedName === playerName) {
-            playerId = parseInt(storedPlayerId);
-        } else {
-            // Dla uproszczenia, używamy timestamp jako ID
-            playerId = Date.now();
-            localStorage.setItem(`player_${EVENT_ID}_id`, playerId);
-            localStorage.setItem(`player_${EVENT_ID}_name`, playerName);
-        }
-
         document.getElementById('player-name-display').textContent = playerName;
 
         // Ukryj sekcję imienia, pokaż skaner
