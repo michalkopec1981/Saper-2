@@ -204,23 +204,28 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-input');
-    const playerButtons = document.querySelectorAll('.player-btn');
+    const eventId = {{ event.id }};
 
-    if (searchInput && playerButtons.length > 0) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
+    // ✅ AUTOMATYCZNE LOGOWANIE - Sprawdź localStorage
+    const savedPlayerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+    const savedPlayerName = localStorage.getItem(`saperPlayerName_${eventId}`);
 
-            playerButtons.forEach(btn => {
-                const playerName = btn.getAttribute('data-name');
-                if (playerName.includes(searchTerm)) {
-                    btn.style.display = 'block';
-                } else {
-                    btn.style.display = 'none';
-                }
-            });
-        });
+    console.log('🔮 Fortune Entry - Checking localStorage');
+    console.log('Event ID:', eventId);
+    console.log('Saved Player ID:', savedPlayerId);
+    console.log('Saved Player Name:', savedPlayerName);
+
+    if (savedPlayerId && savedPlayerName) {
+        // Gracz jest już zarejestrowany - automatyczne przekierowanie
+        console.log('✅ Player found in localStorage - auto redirecting to Fortune Teller');
+        window.location.href = `/fortune/${eventId}/${savedPlayerId}`;
+        return; // Zatrzymaj dalsze wykonywanie
     }
+
+    console.log('❌ Player not found - redirecting to registration');
+
+    // Jeśli gracz nie jest zarejestrowany, przekieruj do rejestracji z parametrem return
+    window.location.href = `/player_register/${eventId}?return=fortune`;
 });
 </script>
 {% endblock %}
