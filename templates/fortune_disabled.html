@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Wróżka AI - Nieaktywna{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+    }
+
+    .message-container {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    h1 {
+        color: #7f8c8d;
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+
+    p {
+        color: #666;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+
+    .back-btn {
+        display: inline-block;
+        padding: 15px 30px;
+        background: #7f8c8d;
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .back-btn:hover {
+        background: #6c7a7b;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+    .event-info {
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #ecf0f1;
+    }
+
+    .event-name {
+        color: #34495e;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .player-name {
+        color: #95a5a6;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="message-container">
+    <div class="icon">🔮</div>
+    <h1>Wróżka AI jest nieaktywna</h1>
+    <p>
+        Przepraszamy, ale Wróżka AI została tymczasowo wyłączona przez organizatora gry.
+        Spróbuj ponownie później lub skontaktuj się z prowadzącym.
+    </p>
+
+    <a href="/player_dashboard/{{ event.id }}/{{ player.id }}" class="back-btn">
+        ← Powrót do panelu gracza
+    </a>
+
+    <div class="event-info">
+        <div class="event-name">{{ event.name }}</div>
+        <div class="player-name">{{ player.name }}</div>
+    </div>
+</div>
+{% endblock %}

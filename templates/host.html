@@ -105,6 +105,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
         <li class="nav-item"><button id="minigry-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
@@ -470,6 +471,129 @@
                     </div>
 
                     <div id="custom-categories-list" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="fortune">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">🔮 Wróżka AI - Przepowiednia przyszłości</h5>
+                    <p class="text-muted mb-0 mt-2 small">Gracze wpisują słowa opisujące swoje sny, a AI generuje dla nich przepowiednię.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Przełącznik Aktywna/Nieaktywna -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Status atrakcji</h6>
+                                    <p class="text-muted mb-0 small">Włącz lub wyłącz dostępność Wróżki AI dla graczy</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="fortune-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="fortune-toggle">
+                                        <span id="fortune-status" class="badge bg-secondary">Nieaktywna</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generator kodu QR -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Generator kodu QR</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Wybór koloru -->
+                                <div class="col-md-6">
+                                    <label for="fortune-qr-color" class="form-label">Kolor kodu QR</label>
+                                    <select class="form-select" id="fortune-qr-color">
+                                        <option value="yellow">Żółty</option>
+                                        <option value="orange">Pomarańczowy</option>
+                                        <option value="pink_fortune">Różowy</option>
+                                        <option value="red_fortune">Czerwony</option>
+                                        <option value="purple">Fioletowy</option>
+                                        <option value="green_fortune">Zielony</option>
+                                        <option value="blue">Niebieski</option>
+                                        <option value="black">Czarny</option>
+                                        <option value="brown">Brązowy</option>
+                                        <option value="white_on_black">Biały na czarnym tle</option>
+                                    </select>
+                                </div>
+
+                                <!-- Przyciski -->
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button class="btn btn-success w-100" id="generate-fortune-qr-btn">
+                                        Wygeneruj i Zapisz kod QR
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="btn btn-primary" id="preview-fortune-qr-btn" disabled>
+                                    🔍 Podgląd i druk kodu QR
+                                </button>
+                            </div>
+
+                            <div id="fortune-qr-status" class="mt-3"></div>
+                        </div>
+                    </div>
+
+                    <!-- Konfiguracja -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Konfiguracja</h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- Liczba słów -->
+                            <div class="mb-3">
+                                <label for="fortune-word-count" class="form-label">Liczba słów przepowiedni (10-500)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="fortune-word-count"
+                                           value="300" min="10" max="500">
+                                    <button class="btn btn-primary" id="fortune-word-count-btn">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 300 słów</small>
+                            </div>
+
+                            <!-- Liczba punktów -->
+                            <div class="mb-3">
+                                <label for="fortune-points" class="form-label">Liczba punktów za udział</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="fortune-points"
+                                           value="5" min="1" max="100">
+                                    <button class="btn btn-primary" id="fortune-points-btn">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Liczba słów gracza -->
+                            <div class="mb-3">
+                                <label for="fortune-player-words" class="form-label">Liczba słów gracza</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="fortune-player-words"
+                                           value="2" min="1" max="10">
+                                    <button class="btn btn-primary" id="fortune-player-words-btn">OK</button>
+                                </div>
+                                <small class="text-muted">Gracz będzie musiał wpisać tyle słów opisujących sen. Domyślnie: 2 słowa</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Instrukcja:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Włącz atrakcję przełącznikiem na górze</li>
+                            <li>Wygeneruj kod QR w wybranym kolorze</li>
+                            <li>Gracz skanuje kod i wpisuje słowa opisujące sen</li>
+                            <li>AI generuje przepowiednię na podstawie podanych słów</li>
+                            <li>Gracz otrzymuje punkty za udział w atrakcji</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1683,7 +1807,171 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
-        
+
+    // =====================================================================
+    // WRÓŻKA AI
+    // =====================================================================
+
+    // Ładowanie statusu Wróżki AI
+    async function loadFortuneStatus() {
+        try {
+            const response = await fetch('/api/host/fortune/status');
+            const data = await response.json();
+
+            const toggle = document.getElementById('fortune-toggle');
+            const status = document.getElementById('fortune-status');
+            if (toggle && status) {
+                toggle.checked = data.enabled;
+                status.textContent = data.enabled ? 'Aktywna' : 'Nieaktywna';
+                status.className = data.enabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            // Ustawienia
+            document.getElementById('fortune-word-count').value = data.word_count || 300;
+            document.getElementById('fortune-points').value = data.points || 5;
+            document.getElementById('fortune-player-words').value = data.player_words || 2;
+
+            // Status QR
+            const previewBtn = document.getElementById('preview-fortune-qr-btn');
+            if (data.qr_generated) {
+                previewBtn.disabled = false;
+                previewBtn.setAttribute('data-color', data.qr_color || 'yellow');
+            }
+        } catch (error) {
+            console.error('Error loading fortune status:', error);
+        }
+    }
+
+    // Przełącznik Aktywna/Nieaktywna
+    document.getElementById('fortune-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('fortune-status');
+        try {
+            const response = await fetch('/api/host/fortune/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Generowanie kodu QR
+    document.getElementById('generate-fortune-qr-btn')?.addEventListener('click', async () => {
+        const color = document.getElementById('fortune-qr-color').value;
+        const statusEl = document.getElementById('fortune-qr-status');
+        const previewBtn = document.getElementById('preview-fortune-qr-btn');
+
+        try {
+            statusEl.innerHTML = '<div class="alert alert-info">Generowanie kodu QR...</div>';
+
+            const response = await fetch('/api/host/fortune/generate_qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ color })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            statusEl.innerHTML = '<div class="alert alert-success">✅ Kod QR został wygenerowany!</div>';
+            previewBtn.disabled = false;
+            previewBtn.setAttribute('data-color', color);
+
+            setTimeout(() => statusEl.innerHTML = '', 3000);
+        } catch (error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+        }
+    });
+
+    // Podgląd i druk kodu QR
+    document.getElementById('preview-fortune-qr-btn')?.addEventListener('click', () => {
+        const color = document.getElementById('fortune-qr-color').value;
+        window.open(`/fortune_qr_preview/{{ event.id }}?color=${color}`, '_blank');
+    });
+
+    // Ustawienie liczby słów
+    document.getElementById('fortune-word-count-btn')?.addEventListener('click', async () => {
+        const wordCount = parseInt(document.getElementById('fortune-word-count').value);
+        if (wordCount < 10 || wordCount > 500) {
+            alert('Liczba słów musi być w zakresie 10-500');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/fortune/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word_count: wordCount })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            alert('Liczba słów została zaktualizowana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    // Ustawienie liczby punktów
+    document.getElementById('fortune-points-btn')?.addEventListener('click', async () => {
+        const points = parseInt(document.getElementById('fortune-points').value);
+        if (points < 1 || points > 100) {
+            alert('Liczba punktów musi być w zakresie 1-100');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/fortune/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ points: points })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            alert('Liczba punktów została zaktualizowana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    // Ustawienie liczby słów gracza
+    document.getElementById('fortune-player-words-btn')?.addEventListener('click', async () => {
+        const playerWords = parseInt(document.getElementById('fortune-player-words').value);
+        if (playerWords < 1 || playerWords > 10) {
+            alert('Liczba słów gracza musi być w zakresie 1-10');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/fortune/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player_words: playerWords })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            alert('Liczba słów gracza została zaktualizowana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    // Ładowanie przy otwieraniu zakładki
+    document.querySelector('button[data-bs-target="#fortune"]')?.addEventListener('click', loadFortuneStatus);
+
     // =====================================================================
     // STEROWANIE GRĄ
     // =====================================================================
