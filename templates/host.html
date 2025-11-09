@@ -543,6 +543,26 @@
                         </div>
                     </div>
 
+                    <!-- PAC-MAN -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">👻 PacMan</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zjadaj kropki, unikaj duchów)</p>
+                                    <small class="text-muted">Power pellets = duchy niebieskie | Sterowanie: przyciski ▲ ▼ ◄ ►</small>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="pacman-toggle"
+                                           style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="pacman-toggle">
+                                        <span id="pacman-status" class="badge bg-secondary">Nieaktywny</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
@@ -1503,6 +1523,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     snakeStatus.textContent = data.snake_enabled ? 'Aktywny' : 'Nieaktywny';
                     snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
+
+                // PacMan
+                const pacmanToggle = document.getElementById('pacman-toggle');
+                const pacmanStatus = document.getElementById('pacman-status');
+                if (pacmanToggle && pacmanStatus) {
+                    pacmanToggle.checked = data.pacman_enabled;
+                    pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
+                    pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
             });
     }
     
@@ -1564,6 +1593,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ game_type: 'snake', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('pacman-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('pacman-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'pacman', enabled })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error);
