@@ -719,6 +719,69 @@ def ar_scanner(event_id):
         return "Event nie znaleziony", 404
     return render_template('ar_scanner.html', event=event)
 
+@app.route('/fortune_qr_preview/<int:event_id>')
+def fortune_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Wróżki AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Pobierz kolor z parametrów URL lub z game_state
+    color = request.args.get('color') or get_game_state(event_id, 'fortune_qr_color', 'yellow')
+
+    # URL do strony wejścia do Wróżki AI
+    fortune_url = url_for('fortune_entry', event_id=event_id, _external=True)
+
+    return render_template('fortune_qr_preview.html',
+                         event=event,
+                         fortune_url=fortune_url,
+                         color=color,
+                         event_id=event_id)
+
+@app.route('/fortune_entry/<int:event_id>')
+def fortune_entry(event_id):
+    """Strona wejścia do Wróżki AI - wybór gracza"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy Wróżka AI jest aktywna
+    enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    if not enabled:
+        return render_template('fortune_disabled.html',
+                             event=event,
+                             player=type('obj', (object,), {'name': 'Gość', 'id': 0}))
+
+    # Pobierz wszystkich graczy dla tego eventu
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.name).all()
+
+    return render_template('fortune_entry.html',
+                         event=event,
+                         players=players,
+                         event_id=event_id)
+
+@app.route('/fortune/<int:event_id>/<int:player_id>')
+def fortune_teller(event_id, player_id):
+    """Strona Wróżki AI dla gracza"""
+    event = db.session.get(Event, event_id)
+    player = db.session.get(Player, player_id)
+
+    if not event or not player or player.event_id != event_id:
+        return "Nie znaleziono gracza lub eventu", 404
+
+    # Sprawdź czy Wróżka AI jest aktywna
+    enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    if not enabled:
+        return render_template('fortune_disabled.html', event=event, player=player)
+
+    # Pobierz ustawienia
+    player_words = int(get_game_state(event_id, 'fortune_player_words', '2'))
+
+    return render_template('fortune_teller.html',
+                         event=event,
+                         player=player,
+                         player_words=player_words)
+
 # ===================================================================
 # --- API Endpoints ---
 # ===================================================================
@@ -1309,6 +1372,80 @@ def toggle_minigame():
         })
 
     return jsonify({'error': 'Nieznany typ minigry'}), 400
+
+# --- API: HOST Fortune Teller (Wróżka AI) ---
+@app.route('/api/host/fortune/status', methods=['GET'])
+@host_required
+def get_fortune_status():
+    event_id = session['host_event_id']
+    enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    word_count = int(get_game_state(event_id, 'fortune_word_count', '300'))
+    points = int(get_game_state(event_id, 'fortune_points', '5'))
+    player_words = int(get_game_state(event_id, 'fortune_player_words', '2'))
+    qr_color = get_game_state(event_id, 'fortune_qr_color', '')
+
+    return jsonify({
+        'enabled': enabled,
+        'word_count': word_count,
+        'points': points,
+        'player_words': player_words,
+        'qr_generated': bool(qr_color),
+        'qr_color': qr_color
+    })
+
+@app.route('/api/host/fortune/toggle', methods=['POST'])
+@host_required
+def toggle_fortune():
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'fortune_enabled', 'True' if enabled else 'False')
+    return jsonify({
+        'message': f'Wróżka AI {"aktywowana" if enabled else "deaktywowana"}',
+        'enabled': enabled
+    })
+
+@app.route('/api/host/fortune/generate_qr', methods=['POST'])
+@host_required
+def generate_fortune_qr():
+    event_id = session['host_event_id']
+    data = request.json
+    color = data.get('color', 'yellow')
+
+    # Zapisujemy informację o kolorze QR
+    set_game_state(event_id, 'fortune_qr_color', color)
+
+    return jsonify({
+        'message': 'Kod QR został wygenerowany',
+        'color': color
+    })
+
+@app.route('/api/host/fortune/settings', methods=['POST'])
+@host_required
+def update_fortune_settings():
+    event_id = session['host_event_id']
+    data = request.json
+
+    if 'word_count' in data:
+        word_count = int(data['word_count'])
+        if word_count < 10 or word_count > 500:
+            return jsonify({'error': 'Liczba słów musi być w zakresie 10-500'}), 400
+        set_game_state(event_id, 'fortune_word_count', str(word_count))
+
+    if 'points' in data:
+        points = int(data['points'])
+        if points < 1 or points > 100:
+            return jsonify({'error': 'Liczba punktów musi być w zakresie 1-100'}), 400
+        set_game_state(event_id, 'fortune_points', str(points))
+
+    if 'player_words' in data:
+        player_words = int(data['player_words'])
+        if player_words < 1 or player_words > 10:
+            return jsonify({'error': 'Liczba słów gracza musi być w zakresie 1-10'}), 400
+        set_game_state(event_id, 'fortune_player_words', str(player_words))
+
+    return jsonify({'message': 'Ustawienia zostały zaktualizowane'})
 
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
@@ -2417,6 +2554,104 @@ def complete_minigame():
             f'{game_type}_score': new_score,
             'message': f'Postęp w {game_name}: {new_score}/20 pkt. Zeskanuj kod ponownie, aby kontynuować!'
         })
+
+# --- API: PLAYER Fortune Teller (Wróżka AI) ---
+@app.route('/api/player/fortune/generate', methods=['POST'])
+def generate_fortune():
+    """Generuje przepowiednię AI dla gracza na podstawie jego słów"""
+    data = request.json
+    player_id = data.get('player_id')
+    words = data.get('words', [])
+
+    player = db.session.get(Player, player_id)
+    if not player:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    # Sprawdź czy Wróżka AI jest aktywna
+    enabled = get_game_state(player.event_id, 'fortune_enabled', 'False') == 'True'
+    if not enabled:
+        return jsonify({'error': 'Wróżka AI jest nieaktywna'}), 403
+
+    # Sprawdź czy gracz już otrzymał przepowiednię (jednorazowe)
+    fortune_received_key = f'fortune_received_{player_id}'
+    if get_game_state(player.event_id, fortune_received_key, 'False') == 'True':
+        return jsonify({'error': 'Już otrzymałeś przepowiednię!'}), 403
+
+    # Walidacja słów
+    player_words_count = int(get_game_state(player.event_id, 'fortune_player_words', '2'))
+    if len(words) != player_words_count:
+        return jsonify({'error': f'Musisz podać dokładnie {player_words_count} słowa'}), 400
+
+    for word in words:
+        if not word or len(word.strip()) == 0:
+            return jsonify({'error': 'Wszystkie słowa muszą być wypełnione'}), 400
+
+    # Pobierz ustawienia
+    word_count = int(get_game_state(player.event_id, 'fortune_word_count', '300'))
+    points = int(get_game_state(player.event_id, 'fortune_points', '5'))
+
+    # Generowanie przepowiedni przy użyciu Claude API
+    if not ANTHROPIC_AVAILABLE:
+        return jsonify({'error': 'API AI nie jest dostępne'}), 500
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
+    if not api_key:
+        return jsonify({'error': 'Brak klucza API dla Claude'}), 500
+
+    try:
+        # Przygotuj prompt dla AI
+        words_text = ', '.join([f'"{w}"' for w in words])
+        prompt = f"""Jesteś wróżką, która przewiduje przyszłość na podstawie snów.
+Gracz podał następujące słowa opisujące jego ostatnie sny: {words_text}.
+
+Na podstawie tych słów wygeneruj kreatywną, zabawną i pozytywną przepowiednię dla gracza.
+Przepowiednia powinna być sensowna, składna i odnosi się bezpośrednio do podanych słów.
+Niech będzie to coś ciepłego, optymistycznego, ale z nutką humoru.
+
+Długość przepowiedni: około {word_count} słów.
+
+Zacznij od "🔮 Wróżba dla Ciebie:" i napisz przepowiednię w drugiej osobie (używając "Ty", "Twoja", "Twój" itp.).
+Zakończ przepowiednię pozytywnym akcentem."""
+
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=2000,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
+        )
+
+        fortune_text = message.content[0].text.strip()
+
+        # Przyznaj punkty
+        bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
+        points_to_award = points * bonus
+        player.score += points_to_award
+
+        # Oznacz że gracz otrzymał przepowiednię
+        set_game_state(player.event_id, fortune_received_key, 'True')
+
+        # Zapisz przepowiednię (opcjonalnie, do historii)
+        fortune_history_key = f'fortune_text_{player_id}'
+        set_game_state(player.event_id, fortune_history_key, fortune_text)
+
+        db.session.commit()
+        emit_leaderboard_update(f'event_{player.event_id}')
+
+        return jsonify({
+            'success': True,
+            'fortune': fortune_text,
+            'points_earned': points_to_award,
+            'total_score': player.score
+        })
+
+    except Exception as e:
+        print(f"Error generating fortune: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Błąd podczas generowania przepowiedni: {str(e)}'}), 500
 
 # --- API: PASSWORD MANAGEMENT ---
 @app.route('/api/host/password/set', methods=['POST'])
