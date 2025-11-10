@@ -205,29 +205,34 @@ with app.app_context():
         db.create_all()
 
         # Migracja: Dodaj brakujące kolumny do tabeli ar_object jeśli nie istnieją
-        inspector = db.inspect(db.engine)
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
         if 'ar_object' in inspector.get_table_names():
             existing_columns = [col['name'] for col in inspector.get_columns('ar_object')]
 
             # Dodaj kolumnę sensitivity jeśli nie istnieje
             if 'sensitivity' not in existing_columns:
-                with db.engine.connect() as conn:
-                    if db.engine.url.drivername.startswith('postgresql'):
-                        conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN sensitivity INTEGER DEFAULT 50'))
-                    else:  # SQLite
-                        conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN sensitivity INTEGER DEFAULT 50'))
-                    conn.commit()
-                print("Added 'sensitivity' column to ar_object table.")
+                try:
+                    with db.engine.begin() as conn:
+                        if db.engine.url.drivername.startswith('postgresql'):
+                            conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN sensitivity INTEGER DEFAULT 50'))
+                        else:  # SQLite
+                            conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN sensitivity INTEGER DEFAULT 50'))
+                    print("Added 'sensitivity' column to ar_object table.")
+                except Exception as e:
+                    print(f"Error adding sensitivity column: {e}")
 
             # Dodaj kolumnę scan_interval jeśli nie istnieje
             if 'scan_interval' not in existing_columns:
-                with db.engine.connect() as conn:
-                    if db.engine.url.drivername.startswith('postgresql'):
-                        conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN scan_interval REAL DEFAULT 2.0'))
-                    else:  # SQLite
-                        conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN scan_interval REAL DEFAULT 2.0'))
-                    conn.commit()
-                print("Added 'scan_interval' column to ar_object table.")
+                try:
+                    with db.engine.begin() as conn:
+                        if db.engine.url.drivername.startswith('postgresql'):
+                            conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN scan_interval DOUBLE PRECISION DEFAULT 2.0'))
+                        else:  # SQLite
+                            conn.execute(db.text('ALTER TABLE ar_object ADD COLUMN scan_interval REAL DEFAULT 2.0'))
+                    print("Added 'scan_interval' column to ar_object table.")
+                except Exception as e:
+                    print(f"Error adding scan_interval column: {e}")
 
         if not Admin.query.first():
             admin = Admin(login='admin')
