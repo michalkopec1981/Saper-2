@@ -781,7 +781,7 @@ def qr_preview(event_id, qr_type):
     qr_codes = []
 
     if qr_type == 'questions':
-        # Pobierz wszystkie kody QR dla pytań
+        # Pobierz lub utwórz stałe kody QR dla pytań (czarne)
         categories = ['easy_general', 'hard_general', 'easy_company', 'hard_company']
         category_names = {
             'easy_general': 'Łatwe Ogólne',
@@ -796,13 +796,22 @@ def qr_preview(event_id, qr_type):
                 code_identifier=f'question_{cat}'
             ).first()
 
-            if qr_code:
-                qr_codes.append({
-                    'name': category_names.get(cat, cat),
-                    'url': url_for('player_view', event_id=event_id, qr_code=qr_code.code_identifier, _external=True),
-                    'color': qr_code.color,
-                    'identifier': qr_code.code_identifier
-                })
+            # Jeśli nie istnieje, utwórz stały czarny kod QR
+            if not qr_code:
+                qr_code = QRCode(
+                    code_identifier=f'question_{cat}',
+                    color='black',
+                    event_id=event_id
+                )
+                db.session.add(qr_code)
+                db.session.commit()
+
+            qr_codes.append({
+                'name': category_names.get(cat, cat),
+                'url': url_for('player_view', event_id=event_id, qr_code=qr_code.code_identifier, _external=True),
+                'color': qr_code.color,
+                'identifier': qr_code.code_identifier
+            })
 
     elif qr_type == 'ai':
         # Pobierz wszystkie kody QR dla AI
@@ -1680,48 +1689,6 @@ def update_question_points():
 
     db.session.commit()
     return jsonify({'message': 'Punkty zaktualizowane', 'category': category, 'points': points})
-
-@app.route('/api/host/question-qr', methods=['POST'])
-@host_required
-def generate_question_qr():
-    """Wygeneruj kod QR dla danej kategorii pytań"""
-    event_id = session['host_event_id']
-    data = request.json
-    category = data.get('category')  # np. 'easy_general', 'hard_company'
-    color = data.get('color', 'black')
-
-    if not category:
-        return jsonify({'error': 'Brakuje kategorii'}), 400
-
-    # Sprawdź czy kolor nie jest już użyty
-    existing_qr = QRCode.query.filter_by(event_id=event_id, color=color).first()
-    if existing_qr and existing_qr.code_identifier != f'question_{category}':
-        return jsonify({'error': f'Kolor {color} jest już używany przez inny kod QR'}), 400
-
-    # Usuń stary kod QR dla tej kategorii jeśli istnieje
-    old_qr = QRCode.query.filter_by(event_id=event_id, code_identifier=f'question_{category}').first()
-    if old_qr:
-        db.session.delete(old_qr)
-
-    # Utwórz nowy kod QR
-    new_qr = QRCode(
-        code_identifier=f'question_{category}',
-        color=color,
-        event_id=event_id
-    )
-    db.session.add(new_qr)
-
-    # Zapisz także punkty dla tej kategorii w GameState
-    key = f'question_qr_{category}'
-    set_game_state(event_id, key, color)
-
-    db.session.commit()
-    return jsonify({
-        'message': 'QR wygenerowany',
-        'category': category,
-        'color': color,
-        'qr_id': new_qr.id
-    })
 
 @app.route('/api/host/questions/status', methods=['POST'])
 @host_required
