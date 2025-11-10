@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     else if (gameName === 'pacman') {
         document.getElementById('pacman-start-btn').onclick = () => {
-            gameInstance = new PacmanGame('pacman-canvas', playerId, eventId, currentScore);
+            gameInstance = new PacManGame('pacman-canvas', playerId, eventId, currentScore);
             gameInstance.start();
 
             document.getElementById('pacman-start-section').style.display = 'none';
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     else if (gameName === 'trex') {
         document.getElementById('trex-start-btn').onclick = () => {
-            gameInstance = new TrexGame('trex-canvas', playerId, eventId, currentScore);
+            gameInstance = new TRexGame('trex-canvas', playerId, eventId, currentScore);
             gameInstance.start();
 
             document.getElementById('trex-start-section').style.display = 'none';
