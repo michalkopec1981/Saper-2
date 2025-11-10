@@ -793,13 +793,76 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for editing AI questions -->
+<div class="modal fade" id="aiQuestionsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edycja pytań AI - <span id="ai-category-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-questions-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for editing single AI question -->
+<div class="modal fade" id="editAIQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj pytanie AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-question-id">
+                <div class="mb-3">
+                    <label class="form-label">Treść pytania:</label>
+                    <textarea class="form-control" id="edit-question-text" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Odpowiedzi:</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">A)</span>
+                        <input type="text" class="form-control" id="edit-answer-a">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="A" id="edit-correct-a">
+                        </div>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">B)</span>
+                        <input type="text" class="form-control" id="edit-answer-b">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="B" id="edit-correct-b">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">C)</span>
+                        <input type="text" class="form-control" id="edit-answer-c">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="C" id="edit-correct-c">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="save-ai-question-btn">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
-<!-- QRCode.js library for generating QR codes -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // Translations
     const translations = {
@@ -2455,6 +2518,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
                                     Generuj pytania
                                 </button>
+                                <button class="btn btn-sm btn-info ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
+                                    Edytuj
+                                </button>
                                 <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
                                     Usuń
                                 </button>
@@ -2536,6 +2602,168 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             btn.disabled = false;
             btn.textContent = 'Generuj pytania';
+        }
+    };
+
+    // Edycja pytań AI
+    window.editCategoryQuestions = async function(categoryId, categoryName) {
+        try {
+            const response = await fetch(`/api/host/ai/questions/${categoryId}`);
+            const questions = await response.json();
+
+            if (!response.ok) {
+                throw new Error(questions.error || 'Błąd pobierania pytań');
+            }
+
+            // Ustaw nazwę kategorii w modalu
+            document.getElementById('ai-category-name').textContent = categoryName;
+
+            // Renderuj listę pytań
+            const questionsList = document.getElementById('ai-questions-list');
+            if (questions.length === 0) {
+                questionsList.innerHTML = '<p class="text-muted">Brak pytań w tej kategorii. Użyj przycisku "Generuj pytania" aby dodać pytania.</p>';
+            } else {
+                questionsList.innerHTML = questions.map((q, index) => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">Pytanie ${index + 1}</h6>
+                                <div>
+                                    <span class="badge bg-${q.source === 'generated' ? 'success' : 'warning'}">${q.source === 'generated' ? 'Wygenerowane' : 'Edytowane'}</span>
+                                    <span class="badge bg-info ms-1">Wyświetlone: ${q.times_shown}</span>
+                                    <span class="badge bg-primary ms-1">Poprawne: ${q.times_correct}</span>
+                                </div>
+                            </div>
+                            <p class="mb-2"><strong>Treść:</strong> ${q.text}</p>
+                            <p class="mb-1"><strong>Odpowiedzi:</strong></p>
+                            <ul class="mb-2">
+                                <li>A) ${q.option_a} ${q.correct_answer === 'A' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                                <li>B) ${q.option_b} ${q.correct_answer === 'B' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                                <li>C) ${q.option_c} ${q.correct_answer === 'C' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                            </ul>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="openEditQuestionModal(${q.id}, ${categoryId})">
+                                    Edytuj
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteAIQuestion(${q.id}, ${categoryId}, '${categoryName}')">
+                                    Usuń
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Pokaż modal
+            const modal = new bootstrap.Modal(document.getElementById('aiQuestionsModal'));
+            modal.show();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.openEditQuestionModal = async function(questionId, categoryId) {
+        try {
+            const response = await fetch(`/api/host/ai/questions/${categoryId}`);
+            const questions = await response.json();
+
+            if (!response.ok) {
+                throw new Error('Błąd pobierania pytania');
+            }
+
+            const question = questions.find(q => q.id === questionId);
+            if (!question) {
+                throw new Error('Nie znaleziono pytania');
+            }
+
+            // Wypełnij formularz edycji
+            document.getElementById('edit-question-id').value = question.id;
+            document.getElementById('edit-question-text').value = question.text;
+            document.getElementById('edit-answer-a').value = question.option_a;
+            document.getElementById('edit-answer-b').value = question.option_b;
+            document.getElementById('edit-answer-c').value = question.option_c;
+
+            // Ustaw poprawną odpowiedź
+            document.getElementById(`edit-correct-${question.correct_answer.toLowerCase()}`).checked = true;
+
+            // Zapisz categoryId w przycisku zapisu
+            document.getElementById('save-ai-question-btn').setAttribute('data-category-id', categoryId);
+
+            // Pokaż modal edycji
+            const modal = new bootstrap.Modal(document.getElementById('editAIQuestionModal'));
+            modal.show();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    document.getElementById('save-ai-question-btn')?.addEventListener('click', async () => {
+        const questionId = document.getElementById('edit-question-id').value;
+        const categoryId = document.getElementById('save-ai-question-btn').getAttribute('data-category-id');
+        const text = document.getElementById('edit-question-text').value.trim();
+        const optionA = document.getElementById('edit-answer-a').value.trim();
+        const optionB = document.getElementById('edit-answer-b').value.trim();
+        const optionC = document.getElementById('edit-answer-c').value.trim();
+        const correctAnswer = document.querySelector('input[name="edit-correct-answer"]:checked')?.value;
+
+        if (!text || !optionA || !optionB || !optionC || !correctAnswer) {
+            alert('Wypełnij wszystkie pola i wybierz poprawną odpowiedź');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    option_a: optionA,
+                    option_b: optionB,
+                    option_c: optionC,
+                    correct_answer: correctAnswer
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd aktualizacji pytania');
+            }
+
+            // Zamknij modal edycji
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editAIQuestionModal'));
+            editModal.hide();
+
+            // Odśwież listę pytań
+            const categoryName = document.getElementById('ai-category-name').textContent;
+            await editCategoryQuestions(categoryId, categoryName);
+
+            alert('Pytanie zostało zaktualizowane');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    window.deleteAIQuestion = async function(questionId, categoryId, categoryName) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd usuwania pytania');
+            }
+
+            // Odśwież listę pytań
+            await editCategoryQuestions(categoryId, categoryName);
+
+            alert('Pytanie zostało usunięte');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
         }
     };
 

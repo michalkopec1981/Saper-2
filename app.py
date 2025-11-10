@@ -1515,6 +1515,56 @@ def generate_questions_for_category(category_id):
         'count': generated_count
     })
 
+@app.route('/api/host/ai/questions/<int:category_id>', methods=['GET'])
+@host_required
+def get_host_ai_questions(category_id):
+    """Pobierz wszystkie pytania AI dla kategorii (Host)"""
+    event_id = session['host_event_id']
+    category = AICategory.query.filter_by(id=category_id, event_id=event_id).first()
+
+    if not category:
+        return jsonify({'error': 'Nie znaleziono kategorii'}), 404
+
+    questions = AIQuestion.query.filter_by(category_id=category_id, event_id=event_id).all()
+    return jsonify([{
+        'id': q.id,
+        'text': q.text,
+        'option_a': q.option_a,
+        'option_b': q.option_b,
+        'option_c': q.option_c,
+        'correct_answer': q.correct_answer,
+        'source': q.source,
+        'times_shown': q.times_shown,
+        'times_correct': q.times_correct
+    } for q in questions])
+
+@app.route('/api/host/ai/question/<int:question_id>', methods=['PUT', 'DELETE'])
+@host_required
+def update_or_delete_host_ai_question(question_id):
+    """Edytuj lub usuń pytanie AI (Host)"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    if request.method == 'PUT':
+        data = request.json
+        question.text = data.get('text', question.text)
+        question.option_a = data.get('option_a', question.option_a)
+        question.option_b = data.get('option_b', question.option_b)
+        question.option_c = data.get('option_c', question.option_c)
+        question.correct_answer = data.get('correct_answer', question.correct_answer)
+        question.source = 'edited'
+        db.session.commit()
+
+        return jsonify({'message': 'Pytanie zaktualizowane'})
+
+    if request.method == 'DELETE':
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie usunięte'})
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():
