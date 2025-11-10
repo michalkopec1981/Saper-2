@@ -771,6 +771,83 @@ def ar_scanner(event_id):
         return "Event nie znaleziony", 404
     return render_template('ar_scanner.html', event=event)
 
+@app.route('/qr_preview/<int:event_id>/<qr_type>')
+def qr_preview(event_id, qr_type):
+    """Uniwersalny podgląd i druk kodów QR (questions, ai, minigames)"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    qr_codes = []
+    player_url = url_for('player_dashboard', event_id=event_id, _external=True)
+
+    if qr_type == 'questions':
+        # Pobierz wszystkie kody QR dla pytań
+        categories = ['easy_general', 'hard_general', 'easy_company', 'hard_company']
+        category_names = {
+            'easy_general': 'Łatwe Ogólne',
+            'hard_general': 'Trudne Ogólne',
+            'easy_company': 'Łatwe Firmowe',
+            'hard_company': 'Trudne Firmowe'
+        }
+
+        for cat in categories:
+            qr_code = QRCode.query.filter_by(
+                event_id=event_id,
+                code_identifier=f'question_{cat}'
+            ).first()
+
+            if qr_code:
+                qr_codes.append({
+                    'name': category_names.get(cat, cat),
+                    'url': f"{player_url}?qr={qr_code.code_identifier}",
+                    'color': qr_code.color,
+                    'identifier': qr_code.code_identifier
+                })
+
+    elif qr_type == 'ai':
+        # Pobierz wszystkie kody QR dla AI
+        difficulties = ['easy', 'hard']
+        difficulty_names = {
+            'easy': 'Łatwe AI',
+            'hard': 'Trudne AI'
+        }
+
+        for diff in difficulties:
+            qr_code = QRCode.query.filter_by(
+                event_id=event_id,
+                code_identifier=f'ai_{diff}'
+            ).first()
+
+            if qr_code:
+                qr_codes.append({
+                    'name': difficulty_names.get(diff, diff),
+                    'url': f"{player_url}?qr={qr_code.code_identifier}",
+                    'color': qr_code.color,
+                    'identifier': qr_code.code_identifier
+                })
+
+    elif qr_type == 'minigames':
+        # Pobierz kod QR dla minigier
+        qr_code = QRCode.query.filter_by(
+            event_id=event_id,
+            code_identifier='minigame_random'
+        ).first()
+
+        if qr_code:
+            qr_codes.append({
+                'name': 'Losowa Minigra',
+                'url': f"{player_url}?qr={qr_code.code_identifier}",
+                'color': qr_code.color,
+                'identifier': qr_code.code_identifier
+            })
+
+    return render_template('qr_preview.html',
+                         event=event,
+                         qr_codes=qr_codes,
+                         qr_type=qr_type,
+                         event_id=event_id)
+
 @app.route('/fortune_qr_preview/<int:event_id>')
 def fortune_qr_preview(event_id):
     """Podgląd i druk kodu QR dla Wróżki AI"""
@@ -1563,17 +1640,35 @@ def generate_question_qr():
     if not category:
         return jsonify({'error': 'Brakuje kategorii'}), 400
 
-    # Zapisz informację o wygenerowanym QR (możesz użyć GameState lub osobnej tabeli)
+    # Sprawdź czy kolor nie jest już użyty
+    existing_qr = QRCode.query.filter_by(event_id=event_id, color=color).first()
+    if existing_qr and existing_qr.code_identifier != f'question_{category}':
+        return jsonify({'error': f'Kolor {color} jest już używany przez inny kod QR'}), 400
+
+    # Usuń stary kod QR dla tej kategorii jeśli istnieje
+    old_qr = QRCode.query.filter_by(event_id=event_id, code_identifier=f'question_{category}').first()
+    if old_qr:
+        db.session.delete(old_qr)
+
+    # Utwórz nowy kod QR
+    new_qr = QRCode(
+        code_identifier=f'question_{category}',
+        color=color,
+        event_id=event_id
+    )
+    db.session.add(new_qr)
+
+    # Zapisz także punkty dla tej kategorii w GameState
     key = f'question_qr_{category}'
-    state = GameState.query.filter_by(event_id=event_id, key=key).first()
-    if state:
-        state.value = color
-    else:
-        state = GameState(event_id=event_id, key=key, value=color)
-        db.session.add(state)
+    set_game_state(event_id, key, color)
 
     db.session.commit()
-    return jsonify({'message': 'QR wygenerowany', 'category': category, 'color': color})
+    return jsonify({
+        'message': 'QR wygenerowany',
+        'category': category,
+        'color': color,
+        'qr_id': new_qr.id
+    })
 
 @app.route('/api/host/questions/status', methods=['POST'])
 @host_required
@@ -1825,16 +1920,35 @@ def generate_ai_qr():
     if not difficulty:
         return jsonify({'error': 'Brakuje poziomu trudności'}), 400
 
+    # Sprawdź czy kolor nie jest już użyty
+    existing_qr = QRCode.query.filter_by(event_id=event_id, color=color).first()
+    if existing_qr and existing_qr.code_identifier != f'ai_{difficulty}':
+        return jsonify({'error': f'Kolor {color} jest już używany przez inny kod QR'}), 400
+
+    # Usuń stary kod QR dla tego poziomu jeśli istnieje
+    old_qr = QRCode.query.filter_by(event_id=event_id, code_identifier=f'ai_{difficulty}').first()
+    if old_qr:
+        db.session.delete(old_qr)
+
+    # Utwórz nowy kod QR
+    new_qr = QRCode(
+        code_identifier=f'ai_{difficulty}',
+        color=color,
+        event_id=event_id
+    )
+    db.session.add(new_qr)
+
+    # Zapisz także w GameState
     key = f'ai_qr_{difficulty}'
-    state = GameState.query.filter_by(event_id=event_id, key=key).first()
-    if state:
-        state.value = color
-    else:
-        state = GameState(event_id=event_id, key=key, value=color)
-        db.session.add(state)
+    set_game_state(event_id, key, color)
 
     db.session.commit()
-    return jsonify({'message': 'QR AI wygenerowany', 'difficulty': difficulty, 'color': color})
+    return jsonify({
+        'message': 'QR AI wygenerowany',
+        'difficulty': difficulty,
+        'color': color,
+        'qr_id': new_qr.id
+    })
 
 @app.route('/api/host/ai/status', methods=['POST'])
 @host_required
@@ -2145,10 +2259,126 @@ def scan_qr():
         print(f"ERROR: Game not active!")
         return jsonify({'message': 'Gra nie jest aktywna.'}), 403
 
-    print(f"QR Code color check: {qr_code.color}")
+    print(f"QR Code color check: {qr_code.color}, identifier: {qr_code.code_identifier}")
 
-    # BIAŁE I ŻÓŁTE KODY (wielorazowe - quizy)
-    if qr_code.color in ['white', 'yellow']:
+    # KODY PYTAŃ (question_easy_general, question_hard_general, question_easy_company, question_hard_company)
+    if qr_code.code_identifier and qr_code.code_identifier.startswith('question_'):
+        category = qr_code.code_identifier.replace('question_', '')  # np. 'easy_general'
+
+        # Sprawdź cooldown (5 minut)
+        last_scan = PlayerScan.query.filter_by(
+            player_id=player_id,
+            color_category=qr_code.color
+        ).order_by(PlayerScan.scan_time.desc()).first()
+
+        if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
+            wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
+            return jsonify({
+                'status': 'wait',
+                'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'
+            }), 429
+
+        # Zapisz skan
+        db.session.add(PlayerScan(
+            player_id=player_id,
+            qrcode_id=qr_code.id,
+            event_id=event_id,
+            color_category=qr_code.color
+        ))
+        db.session.commit()
+
+        # Wyświetl pytanie z danej kategorii
+        answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
+
+        # Mapowanie kategorii
+        difficulty, question_type = category.split('_')  # np. 'easy', 'general'
+
+        question = Question.query.filter(
+            Question.id.notin_(answered_ids),
+            Question.event_id == event_id,
+            Question.difficulty == difficulty,
+            Question.category == question_type
+        ).order_by(db.func.random()).first()
+
+        if not question:
+            return jsonify({
+                'status': 'info',
+                'message': f'Odpowiedziałeś na wszystkie pytania z kategorii {category}!'
+            })
+
+        return jsonify({
+            'status': 'question',
+            'question': {
+                'id': question.id,
+                'text': question.text,
+                'option_a': question.option_a,
+                'option_b': question.option_b,
+                'option_c': question.option_c
+            }
+        })
+
+    # KODY AI (ai_easy, ai_hard)
+    elif qr_code.code_identifier and qr_code.code_identifier.startswith('ai_'):
+        difficulty = qr_code.code_identifier.replace('ai_', '')  # 'easy' lub 'hard'
+
+        # Sprawdź cooldown (5 minut)
+        last_scan = PlayerScan.query.filter_by(
+            player_id=player_id,
+            color_category=qr_code.color
+        ).order_by(PlayerScan.scan_time.desc()).first()
+
+        if last_scan and datetime.utcnow() < last_scan.scan_time + timedelta(minutes=5):
+            wait_time = (last_scan.scan_time + timedelta(minutes=5) - datetime.utcnow()).seconds
+            return jsonify({
+                'status': 'wait',
+                'message': f'Odczekaj jeszcze {wait_time // 60}m {wait_time % 60}s.'
+            }), 429
+
+        # Zapisz skan
+        db.session.add(PlayerScan(
+            player_id=player_id,
+            qrcode_id=qr_code.id,
+            event_id=event_id,
+            color_category=qr_code.color
+        ))
+        db.session.commit()
+
+        # Pobierz aktywne kategorie AI dla danego poziomu trudności
+        active_ai_categories = AICategory.query.filter_by(
+            event_id=event_id,
+            is_enabled=True,
+            difficulty_level=difficulty
+        ).all()
+
+        if not active_ai_categories:
+            return jsonify({
+                'status': 'info',
+                'message': f'Brak dostępnych kategorii AI dla poziomu {difficulty}'
+            })
+
+        # Jeśli jest tylko jedna kategoria, od razu pokaż wybór
+        if len(active_ai_categories) == 1:
+            return jsonify({
+                'status': 'ai_categories',
+                'categories': [{
+                    'id': active_ai_categories[0].id,
+                    'name': active_ai_categories[0].name,
+                    'difficulty_level': active_ai_categories[0].difficulty_level
+                }]
+            })
+
+        # Jeśli jest więcej, pokaż wszystkie
+        return jsonify({
+            'status': 'ai_categories',
+            'categories': [{
+                'id': cat.id,
+                'name': cat.name,
+                'difficulty_level': cat.difficulty_level
+            } for cat in active_ai_categories]
+        })
+
+    # BIAŁE I ŻÓŁTE KODY (wielorazowe - quizy) - LEGACY
+    elif qr_code.color in ['white', 'yellow']:
         last_scan = PlayerScan.query.filter_by(
             player_id=player_id,
             color_category=qr_code.color

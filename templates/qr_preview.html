@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}Kody QR - {{ event.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .preview-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .event-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin: 30px 0;
+    }
+
+    .qr-item {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-item-label {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+    }
+
+    .qr-container > div {
+        display: inline-block;
+        border: 3px solid #667eea;
+        border-radius: 10px;
+        padding: 15px;
+        background: white;
+    }
+
+    .url-display {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        word-break: break-all;
+        font-family: 'Courier New', monospace;
+        font-size: 0.75rem;
+        color: #666;
+        margin-top: 10px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+
+    .btn-custom {
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+        color: white;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-back {
+        background: #6c757d;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+    }
+
+    .no-codes-message {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 1.2rem;
+    }
+
+    @media print {
+        body {
+            background: white;
+        }
+
+        .action-buttons {
+            display: none;
+        }
+
+        .preview-card {
+            box-shadow: none;
+            border: 2px solid #333;
+        }
+
+        .qr-grid {
+            page-break-inside: avoid;
+        }
+
+        .qr-item {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .qr-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .preview-card {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <div class="preview-card">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="event-name">{{ event.name }}</h1>
+            <p class="subtitle">
+                {% if qr_type == 'questions' %}
+                    Kody QR - Pytania
+                {% elif qr_type == 'ai' %}
+                    Kody QR - AI
+                {% elif qr_type == 'minigames' %}
+                    Kod QR - Minigry
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- QR Codes Grid -->
+        {% if qr_codes %}
+        <div class="qr-grid">
+            {% for qr in qr_codes %}
+            <div class="qr-item">
+                <div class="qr-item-label">{{ qr.name }}</div>
+                <div class="qr-container">
+                    <div id="qr-{{ qr.identifier }}"></div>
+                </div>
+                <div class="url-display">{{ qr.url }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-codes-message">
+            ⚠️ Brak wygenerowanych kodów QR. Wygeneruj kody w panelu hosta.
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button onclick="window.print()" class="btn-custom btn-print">
+                🖨️ Drukuj kody QR
+            </button>
+            <button onclick="window.location.href='/host/{{ event_id }}'" class="btn-custom btn-back">
+                ← Powrót do panelu hosta
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- QR Code Generation Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const qrCodes = {{ qr_codes | tojson }};
+
+    // Mapowanie kolorów
+    const colorMap = {
+        'yellow': '#FFD700',
+        'orange': '#FF8C00',
+        'pink': '#FF69B4',
+        'red': '#DC143C',
+        'purple': '#8B008B',
+        'green': '#228B22',
+        'blue': '#1E90FF',
+        'black': '#000000',
+        'brown': '#8B4513',
+        'white_on_black': '#FFFFFF'
+    };
+
+    qrCodes.forEach(qr => {
+        const containerId = `qr-${qr.identifier}`;
+        const container = document.getElementById(containerId);
+
+        if (container) {
+            const qrColor = colorMap[qr.color] || '#667eea';
+            const bgColor = qr.color === 'white_on_black' ? '#000000' : '#FFFFFF';
+            const fgColor = qr.color === 'white_on_black' ? '#FFFFFF' : qrColor;
+
+            try {
+                new QRCode(container, {
+                    text: qr.url,
+                    width: 200,
+                    height: 200,
+                    colorDark: fgColor,
+                    colorLight: bgColor,
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (error) {
+                console.error(`Error generating QR code for ${qr.identifier}:`, error);
+                container.innerHTML = '<div style="color: red;">Błąd generowania QR</div>';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -317,31 +317,6 @@
                 </div>
             </div>
 
-            <!-- Zarządzanie Kodami QR -->
-            <div class="card mx-auto">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
-                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
-                        <a href="/player_qrcodes/{{ event.id }}" target="_blank" class="btn btn-success">
-                            📱 Kody QR dla Graczy (Dashboard)
-                        </a>
-                    </div>
-                    <div id="qrcodes-status" class="mt-3"></div>
-                </div>
-            </div>
         </div>
         {% endif %}
 
@@ -567,6 +542,13 @@
                         </div>
                     </div>
                     <div id="questions-qr-status" class="mt-3"></div>
+
+                    <!-- Przycisk Podgląd i Druk -->
+                    <div class="mt-3">
+                        <button class="btn btn-primary" id="preview-questions-qr-btn">
+                            🔍 Podgląd i Druk Kodów QR
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -670,6 +652,13 @@
                         </div>
                     </div>
                     <div id="ai-qr-status" class="mt-3"></div>
+
+                    <!-- Przycisk Podgląd i Druk -->
+                    <div class="mt-3">
+                        <button class="btn btn-primary" id="preview-ai-qr-btn">
+                            🔍 Podgląd i Druk Kodów QR
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2174,6 +2163,16 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
             e.target.checked = !isActive; // Przywróć poprzedni stan
         }
+    });
+
+    // Podgląd i druk kodów QR dla Pytań
+    document.getElementById('preview-questions-qr-btn')?.addEventListener('click', () => {
+        window.open(`/qr_preview/{{ event.id }}/questions`, '_blank');
+    });
+
+    // Podgląd i druk kodów QR dla AI
+    document.getElementById('preview-ai-qr-btn')?.addEventListener('click', () => {
+        window.open(`/qr_preview/{{ event.id }}/ai`, '_blank');
     });
 
     // =====================================================================
@@ -3713,22 +3712,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function previewMinigameQR() {
-        // Najpierw sprawdź czy kod QR dla minigry istnieje
-        try {
-            const response = await fetch('/api/host/minigame-qr-preview');
-            if (response.ok) {
-                const data = await response.json();
-                if (data.qr_id) {
-                    window.open(`/api/host/qr/${data.qr_id}/preview`, '_blank');
-                } else {
-                    alert('Najpierw wygeneruj kod QR dla Minigry!');
-                }
-            } else {
-                alert('Nie znaleziono kodu QR dla Minigry. Najpierw go wygeneruj!');
-            }
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
+        // Otwórz podgląd kodów QR dla minigier
+        window.open(`/qr_preview/{{ event.id }}/minigames`, '_blank');
     }
 
     // ============ AR FUNKCJE ============
