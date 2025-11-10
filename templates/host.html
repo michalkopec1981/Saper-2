@@ -428,6 +428,148 @@
         </div>
         
         <div class="tab-pane fade" id="questions">
+            <!-- Status atrakcji -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Status atrakcji</h6>
+                            <p class="text-muted mb-0 small">Włącz lub wyłącz dostępność Pytań dla graczy</p>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="questions-toggle"
+                                   style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="questions-toggle">
+                                <span id="questions-status" class="badge bg-secondary">Nieaktywna</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pola punktowe -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Konfiguracja punktów</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="points-easy-general" class="form-label">Liczba punktów za łatwe pytania ogólne</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-easy-general" value="3" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateQuestionPoints('easy_general')">OK</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="points-hard-general" class="form-label">Liczba punktów za trudne pytania ogólne</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-hard-general" value="5" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateQuestionPoints('hard_general')">OK</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="points-easy-company" class="form-label">Liczba punktów za łatwe pytania firmowe</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-easy-company" value="4" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateQuestionPoints('easy_company')">OK</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="points-hard-company" class="form-label">Liczba punktów za trudne pytania firmowe</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-hard-company" value="6" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateQuestionPoints('hard_company')">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generator QR -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Generator kodów QR</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Łatwe pytania ogólne</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-easy-general">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateQuestionQR('easy_general')">Generuj</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Trudne pytania ogólne</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-hard-general">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateQuestionQR('hard_general')">Generuj</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Łatwe pytania firmowe</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-easy-company">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateQuestionQR('easy_company')">Generuj</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Trudne pytania firmowe</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-hard-company">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateQuestionQR('hard_company')">Generuj</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="questions-qr-status" class="mt-3"></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
@@ -1779,6 +1921,70 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', loadQuestions);
+
+    // Funkcje dla nowych elementów w zakładce Pytania
+    async function updateQuestionPoints(category) {
+        const inputId = `points-${category.replace('_', '-')}`;
+        const points = document.getElementById(inputId).value;
+
+        try {
+            const response = await fetch('/api/host/question-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, points: parseInt(points) })
+            });
+
+            if (!response.ok) throw new Error('Błąd zapisywania punktów');
+            alert(`Punkty dla ${category} zaktualizowane: ${points}`);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    async function generateQuestionQR(category) {
+        const colorSelect = document.getElementById(`qr-color-${category.replace('_', '-')}`);
+        const color = colorSelect.value;
+
+        try {
+            const response = await fetch('/api/host/question-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, color })
+            });
+
+            if (!response.ok) throw new Error('Błąd generowania QR');
+
+            const result = await response.json();
+            document.getElementById('questions-qr-status').innerHTML =
+                `<div class="alert alert-success">Kod QR dla ${category} wygenerowany w kolorze ${color}!</div>`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Toggle statusu atrakcji Pytania
+    const questionsToggle = document.getElementById('questions-toggle');
+    const questionsStatus = document.getElementById('questions-status');
+
+    questionsToggle?.addEventListener('change', async (e) => {
+        const isActive = e.target.checked;
+
+        try {
+            const response = await fetch('/api/host/questions/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: isActive })
+            });
+
+            if (!response.ok) throw new Error('Błąd zmiany statusu');
+
+            questionsStatus.textContent = isActive ? 'Aktywna' : 'Nieaktywna';
+            questionsStatus.className = `badge bg-${isActive ? 'success' : 'secondary'}`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !isActive; // Przywróć poprzedni stan
+        }
+    });
 
     // =====================================================================
     // MINIGRY
