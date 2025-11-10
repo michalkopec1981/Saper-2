@@ -103,12 +103,30 @@
             <p>Zdobądź 20 punktów!</p>
             <canvas id="snake-canvas" width="300" height="300" style="border: 2px solid #333; background: #000;"></canvas>
             <div class="mt-3">
-                <button class="btn btn-primary btn-lg" onclick="moveSnake('up')">▲</button><br>
-                <button class="btn btn-primary btn-lg me-2" onclick="moveSnake('left')">◄</button>
-                <button class="btn btn-primary btn-lg" onclick="moveSnake('right')">►</button><br>
-                <button class="btn btn-primary btn-lg mt-2" onclick="moveSnake('down')">▼</button>
+                <button id="snake-up-btn" class="btn btn-primary btn-lg">▲</button><br>
+                <button id="snake-left-btn" class="btn btn-primary btn-lg me-2">◄</button>
+                <button id="snake-right-btn" class="btn btn-primary btn-lg">►</button><br>
+                <button id="snake-down-btn" class="btn btn-primary btn-lg mt-2">▼</button>
             </div>
             <p class="mt-3"><strong>Wynik:</strong> <span id="snake-score">0</span> / 20</p>
+            <button id="snake-exit-btn" class="btn btn-secondary mt-3">Wyjdź z gry</button>
+        </div>
+    </div>
+
+    <!-- Sekcja gry Tetris -->
+    <div id="tetris-game-section" style="display: none;">
+        <div class="text-center">
+            <h3>🎮 Tetris</h3>
+            <p>Zdobądź 20 punktów!</p>
+            <canvas id="tetris-canvas" width="300" height="600" style="border: 2px solid #333; background: #000;"></canvas>
+            <div class="mt-3">
+                <button id="tetris-rotate-btn" class="btn btn-primary btn-lg">🔄 Obróć</button><br>
+                <button id="tetris-left-btn" class="btn btn-primary btn-lg me-2 mt-2">◄</button>
+                <button id="tetris-down-btn" class="btn btn-primary btn-lg me-2 mt-2">▼</button>
+                <button id="tetris-right-btn" class="btn btn-primary btn-lg mt-2">►</button>
+            </div>
+            <p class="mt-3"><strong>Wynik:</strong> <span id="tetris-score">0</span> / 20</p>
+            <button id="tetris-exit-btn" class="btn btn-secondary mt-3">Wyjdź z gry</button>
         </div>
     </div>
 
@@ -116,6 +134,8 @@
     <div id="message-section" style="display: none;" class="alert mt-3"></div>
 </div>
 
+<script src="{{ url_for('static', filename='snake.js') }}"></script>
+<script src="{{ url_for('static', filename='tetris.js') }}"></script>
 <script>
 const EVENT_ID = {{ event.id }};
 let playerId = null;
@@ -312,7 +332,7 @@ function objectRecognized(result) {
         } else if (result.game_type === 'snake') {
             showSnakeGame();
         } else if (result.game_type === 'tetris') {
-            showMessage('Tetris nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
+            showTetrisGame();
         } else if (result.game_type === 'arkanoid') {
             showMessage('Arkanoid nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
         }
@@ -356,10 +376,43 @@ async function submitAnswer(questionId, answer) {
     }, 3000);
 }
 
+let currentSnakeGame = null;
+let currentTetrisGame = null;
+
 function showSnakeGame() {
     document.getElementById('snake-game-section').style.display = 'block';
-    // Tutaj dodaj logikę gry Snake
-    showMessage('Gra Snake - steruj strzałkami!', 'info');
+
+    // Utwórz i uruchom grę Snake
+    currentSnakeGame = new SnakeGame('snake-canvas', playerId, EVENT_ID, 0);
+    currentSnakeGame.start();
+
+    // Obsługa przycisku wyjścia
+    document.getElementById('snake-exit-btn').onclick = () => {
+        if (currentSnakeGame) {
+            currentSnakeGame.gameRunning = false;
+            currentSnakeGame = null;
+        }
+        document.getElementById('snake-game-section').style.display = 'none';
+        resetScanner();
+    };
+}
+
+function showTetrisGame() {
+    document.getElementById('tetris-game-section').style.display = 'block';
+
+    // Utwórz i uruchom grę Tetris
+    currentTetrisGame = new TetrisGame('tetris-canvas', playerId, EVENT_ID, 0);
+    currentTetrisGame.start();
+
+    // Obsługa przycisku wyjścia
+    document.getElementById('tetris-exit-btn').onclick = () => {
+        if (currentTetrisGame) {
+            currentTetrisGame.gameRunning = false;
+            currentTetrisGame = null;
+        }
+        document.getElementById('tetris-game-section').style.display = 'none';
+        resetScanner();
+    };
 }
 
 function showMessage(text, type = 'info') {
@@ -376,7 +429,18 @@ function showMessage(text, type = 'info') {
 function resetScanner() {
     document.getElementById('quiz-section').style.display = 'none';
     document.getElementById('snake-game-section').style.display = 'none';
+    document.getElementById('tetris-game-section').style.display = 'none';
     document.getElementById('scanner-section').style.display = 'block';
+
+    // Zatrzymaj aktywne gry jeśli istnieją
+    if (currentSnakeGame) {
+        currentSnakeGame.gameRunning = false;
+        currentSnakeGame = null;
+    }
+    if (currentTetrisGame) {
+        currentTetrisGame.gameRunning = false;
+        currentTetrisGame = null;
+    }
 
     startCamera().then(() => {
         startScanning();
