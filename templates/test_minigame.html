@@ -335,13 +335,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     else if (gameName === 'pacman') {
         document.getElementById('pacman-start-btn').onclick = () => {
-            gameInstance = new PacManGame('pacman-canvas', playerId, eventId, currentScore);
-            gameInstance.start();
+            try {
+                console.log('Creating PacManGame instance...');
+                gameInstance = new PacManGame('pacman-canvas', playerId, eventId, currentScore);
+                console.log('PacManGame instance created successfully');
 
-            document.getElementById('pacman-start-section').style.display = 'none';
-            document.getElementById('pacman-left-controls').style.display = 'block';
-            document.getElementById('pacman-right-controls').style.display = 'block';
-            document.getElementById('pacman-exit-btn').style.display = 'block';
+                console.log('Starting PacMan game...');
+                gameInstance.start();
+                console.log('PacMan game started');
+
+                document.getElementById('pacman-start-section').style.display = 'none';
+                document.getElementById('pacman-left-controls').style.display = 'block';
+                document.getElementById('pacman-right-controls').style.display = 'block';
+                document.getElementById('pacman-exit-btn').style.display = 'block';
+            } catch (error) {
+                console.error('Error starting PacMan game:', error);
+                alert('Błąd uruchamiania gry PacMan: ' + error.message);
+            }
         };
 
         document.getElementById('pacman-back-btn').onclick = () => {

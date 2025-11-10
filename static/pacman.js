@@ -7,7 +7,6 @@ class PacManGame {
 
         // Wymiary
         this.gridSize = 19; // 19x19 grid
-        this.calculateCanvasSize();
 
         // Ustaw początkowy wynik z serwera
         this.score = currentScore;
@@ -66,6 +65,9 @@ class PacManGame {
             [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         ];
+
+        // Oblicz rozmiar canvas (MUSI być po zdefiniowaniu maze)
+        this.calculateCanvasSize();
 
         // Policz kropki
         this.countDots();
