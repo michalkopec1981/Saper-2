@@ -779,7 +779,6 @@ def qr_preview(event_id, qr_type):
         return "Nie znaleziono eventu", 404
 
     qr_codes = []
-    player_url = url_for('player_dashboard', event_id=event_id, _external=True)
 
     if qr_type == 'questions':
         # Pobierz wszystkie kody QR dla pytań
@@ -800,7 +799,7 @@ def qr_preview(event_id, qr_type):
             if qr_code:
                 qr_codes.append({
                     'name': category_names.get(cat, cat),
-                    'url': f"{player_url}?qr={qr_code.code_identifier}",
+                    'url': url_for('player_view', event_id=event_id, qr_code=qr_code.code_identifier, _external=True),
                     'color': qr_code.color,
                     'identifier': qr_code.code_identifier
                 })
@@ -822,7 +821,7 @@ def qr_preview(event_id, qr_type):
             if qr_code:
                 qr_codes.append({
                     'name': difficulty_names.get(diff, diff),
-                    'url': f"{player_url}?qr={qr_code.code_identifier}",
+                    'url': url_for('player_view', event_id=event_id, qr_code=qr_code.code_identifier, _external=True),
                     'color': qr_code.color,
                     'identifier': qr_code.code_identifier
                 })
@@ -846,7 +845,7 @@ def qr_preview(event_id, qr_type):
 
         qr_codes.append({
             'name': 'Minigry',
-            'url': f"{player_url}?qr={qr_code.code_identifier}",
+            'url': url_for('player_view', event_id=event_id, qr_code=qr_code.code_identifier, _external=True),
             'color': qr_code.color,
             'identifier': qr_code.code_identifier
         })
