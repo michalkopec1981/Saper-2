@@ -582,10 +582,27 @@
         </div>
 
         <div class="tab-pane fade" id="ai">
+            <!-- Status atrakcji AI -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Status atrakcji</h6>
+                            <p class="text-muted mb-0 small">Włącz lub wyłącz dostępność Pytań AI dla graczy</p>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="ai-toggle" style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="ai-toggle">
+                                <span id="ai-status" class="badge bg-secondary">Nieaktywna</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
-                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
+                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu kodu QR otrzymują pytania z wybranej kategorii.</p>
                 </div>
                 <div class="card-body">
                     <h6 class="mb-3">Predefiniowane kategorie:</h6>
@@ -603,8 +620,7 @@
                             <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
                             <select class="form-select" id="custom-category-difficulty">
                                 <option value="easy">Łatwy</option>
-                                <option value="medium">Średni</option>
-                                <option value="advanced">Zaawansowany</option>
+                                <option value="hard">Trudny</option>
                             </select>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
