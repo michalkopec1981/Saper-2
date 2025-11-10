@@ -828,21 +828,28 @@ def qr_preview(event_id, qr_type):
                 })
 
     elif qr_type == 'minigames':
-        # Pobierz wszystkie zielone kody QR dla minigier
-        green_qr_codes = QRCode.query.filter_by(
+        # Sprawdź czy istnieje stały kod QR dla minigier
+        qr_code = QRCode.query.filter_by(
             event_id=event_id,
-            color='green'
-        ).order_by(QRCode.code_identifier).all()
+            code_identifier='minigames'
+        ).first()
 
-        for qr_code in green_qr_codes:
-            # Wyciągnij numer z identyfikatora (np. "zielony1" -> "1")
-            number = qr_code.code_identifier.replace('zielony', '')
-            qr_codes.append({
-                'name': f'Minigra #{number}' if number else 'Minigra',
-                'url': f"{player_url}?qr={qr_code.code_identifier}",
-                'color': qr_code.color,
-                'identifier': qr_code.code_identifier
-            })
+        # Jeśli nie istnieje, utwórz go
+        if not qr_code:
+            qr_code = QRCode(
+                code_identifier='minigames',
+                color='black',
+                event_id=event_id
+            )
+            db.session.add(qr_code)
+            db.session.commit()
+
+        qr_codes.append({
+            'name': 'Minigry',
+            'url': f"{player_url}?qr={qr_code.code_identifier}",
+            'color': qr_code.color,
+            'identifier': qr_code.code_identifier
+        })
 
     return render_template('qr_preview.html',
                          event=event,
@@ -1546,47 +1553,6 @@ def toggle_minigame():
         })
 
     return jsonify({'error': 'Nieznany typ minigry'}), 400
-
-@app.route('/api/host/minigames/qrcodes/count', methods=['GET'])
-@host_required
-def get_minigames_qr_count():
-    """Pobiera liczbę zielonych kodów QR dla minigier"""
-    event_id = session['host_event_id']
-    count = QRCode.query.filter_by(event_id=event_id, color='green').count()
-    return jsonify({'count': count})
-
-@app.route('/api/host/minigames/qrcodes/generate', methods=['POST'])
-@host_required
-def generate_minigames_qr():
-    """Generuje zielone kody QR dla minigier"""
-    event_id = session['host_event_id']
-
-    # Sprawdź czy gra jest aktywna
-    if get_game_state(event_id, 'game_active', 'False') == 'True':
-        return jsonify({'error': 'Nie można zmieniać kodów podczas aktywnej gry.'}), 403
-
-    data = request.json
-    count = int(data.get('count', 0))
-
-    if count < 0 or count > 50:
-        return jsonify({'error': 'Liczba kodów musi być między 0 a 50'}), 400
-
-    # Usuń istniejące zielone kody QR
-    QRCode.query.filter_by(event_id=event_id, color='green').delete()
-
-    # Dodaj nowe zielone kody QR
-    for i in range(1, count + 1):
-        db.session.add(QRCode(
-            code_identifier=f"zielony{i}",
-            color='green',
-            event_id=event_id
-        ))
-
-    db.session.commit()
-    return jsonify({
-        'message': f'Wygenerowano {count} {"kod" if count == 1 else "kodów"} QR dla minigier.',
-        'count': count
-    })
 
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
