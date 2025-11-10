@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% block title %}🔮 Wróżka AI - {{ event.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+    }
+
+    .fortune-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+        font-size: 2.5rem;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .player-name {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .score-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        display: inline-block;
+    }
+
+    .instructions {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+
+    .instructions h3 {
+        color: #667eea;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .instructions p {
+        margin: 5px 0;
+        color: #555;
+    }
+
+    .words-input-section {
+        margin-bottom: 30px;
+    }
+
+    .word-input-group {
+        margin-bottom: 20px;
+    }
+
+    .word-input-group label {
+        display: block;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+    }
+
+    .word-input-group input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+
+    .word-input-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 18px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .submit-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .fortune-result {
+        background: linear-gradient(135deg, #fff5e6 0%, #ffe6f0 100%);
+        border: 3px solid #667eea;
+        border-radius: 15px;
+        padding: 30px;
+        margin-top: 30px;
+        display: none;
+    }
+
+    .fortune-result.show {
+        display: block;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fortune-text {
+        font-size: 1.15rem;
+        line-height: 1.8;
+        color: #333;
+        white-space: pre-wrap;
+        margin-bottom: 20px;
+    }
+
+    .points-earned {
+        text-align: center;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        display: none;
+    }
+
+    .loading.show {
+        display: block;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .back-btn {
+        display: block;
+        text-align: center;
+        margin-top: 20px;
+        color: white;
+        text-decoration: none;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fortune-container">
+    <div class="card">
+        <div class="header">
+            <h1>🔮 Wróżka AI</h1>
+            <p class="player-name">{{ player.name }}</p>
+            <span class="score-badge" id="score-display">Punkty: {{ player.score }}</span>
+        </div>
+
+        <div class="instructions">
+            <h3>✨ Jak to działa?</h3>
+            <p>🌙 Wpisz słowa opisujące twoje ostatnie sny lub myśli</p>
+            <p>🔮 Wróżka AI przygotuje dla Ciebie przepowiednię przyszłości</p>
+            <p>⭐ Otrzymasz punkty za udział w tej atrakcji!</p>
+        </div>
+
+        <div id="error-message"></div>
+
+        <form id="fortune-form">
+            <div class="words-input-section">
+                {% for i in range(player_words) %}
+                <div class="word-input-group">
+                    <label for="word-{{ i }}">{{ ['Pierwsze', 'Drugie', 'Trzecie', 'Czwarte', 'Piąte', 'Szóste', 'Siódme', 'Ósme', 'Dziewiąte', 'Dziesiąte'][i] }} słowo:</label>
+                    <input type="text" id="word-{{ i }}" name="word-{{ i }}" required
+                           placeholder="np. {{ ['latanie', 'ocean', 'gwiazdy', 'podróż', 'sukces', 'szczęście', 'miłość', 'przygoda', 'dom', 'familia'][i] }}">
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">
+                ✨ Przepowiadaj przyszłość ✨
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Wróżka AI analizuje twoje sny i tworzy przepowiednię...</p>
+            <p style="color: #999; font-size: 0.9rem;">To może potrwać kilka sekund</p>
+        </div>
+
+        <div class="fortune-result" id="fortune-result">
+            <div class="fortune-text" id="fortune-text"></div>
+            <div class="points-earned" id="points-earned"></div>
+        </div>
+    </div>
+
+    <a href="/player_dashboard/{{ event.id }}/{{ player.id }}" class="back-btn">
+        ← Powrót do panelu gracza
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('fortune-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loading = document.getElementById('loading');
+    const fortuneResult = document.getElementById('fortune-result');
+    const errorMessage = document.getElementById('error-message');
+    const scoreDisplay = document.getElementById('score-display');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Zbierz słowa
+        const words = [];
+        const wordInputs = form.querySelectorAll('input[type="text"]');
+        wordInputs.forEach(input => {
+            words.push(input.value.trim());
+        });
+
+        // Walidacja
+        if (words.some(w => !w)) {
+            showError('Wszystkie pola muszą być wypełnione!');
+            return;
+        }
+
+        // Ukryj błędy
+        errorMessage.innerHTML = '';
+
+        // Pokaż loading
+        submitBtn.disabled = true;
+        loading.classList.add('show');
+        fortuneResult.classList.remove('show');
+
+        try {
+            const response = await fetch('/api/player/fortune/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    player_id: {{ player.id }},
+                    words: words
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd generowania przepowiedni');
+            }
+
+            // Ukryj loading
+            loading.classList.remove('show');
+
+            // Pokaż wynik
+            document.getElementById('fortune-text').textContent = result.fortune;
+            document.getElementById('points-earned').textContent =
+                `🎉 Zdobyłeś ${result.points_earned} punktów! Łącznie: ${result.total_score}`;
+
+            fortuneResult.classList.add('show');
+            scoreDisplay.textContent = `Punkty: ${result.total_score}`;
+
+            // Wyłącz formularz
+            submitBtn.textContent = '✅ Przepowiednia otrzymana';
+            submitBtn.disabled = true;
+
+        } catch (error) {
+            loading.classList.remove('show');
+            submitBtn.disabled = false;
+            showError(error.message);
+        }
+    });
+
+    function showError(message) {
+        errorMessage.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+        errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+});
+</script>
+{% endblock %}
