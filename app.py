@@ -828,15 +828,17 @@ def qr_preview(event_id, qr_type):
                 })
 
     elif qr_type == 'minigames':
-        # Pobierz kod QR dla minigier
-        qr_code = QRCode.query.filter_by(
+        # Pobierz wszystkie zielone kody QR dla minigier
+        green_qr_codes = QRCode.query.filter_by(
             event_id=event_id,
-            code_identifier='minigame_random'
-        ).first()
+            color='green'
+        ).order_by(QRCode.code_identifier).all()
 
-        if qr_code:
+        for qr_code in green_qr_codes:
+            # Wyciągnij numer z identyfikatora (np. "zielony1" -> "1")
+            number = qr_code.code_identifier.replace('zielony', '')
             qr_codes.append({
-                'name': 'Losowa Minigra',
+                'name': f'Minigra #{number}' if number else 'Minigra',
                 'url': f"{player_url}?qr={qr_code.code_identifier}",
                 'color': qr_code.color,
                 'identifier': qr_code.code_identifier

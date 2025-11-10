@@ -873,7 +873,7 @@
                                 <button id="generate-minigames-qr" class="btn btn-success">
                                     ✅ Wygeneruj i Zapisz Kod QR
                                 </button>
-                                <a href="#" id="preview-minigames-qr-link" target="_blank" class="btn btn-secondary">
+                                <a href="{{ url_for('qr_preview', event_id=event.id, qr_type='minigames') }}" target="_blank" class="btn btn-secondary">
                                     🔍 Podgląd i Druk Kodu QR
                                 </a>
                             </div>
@@ -3718,9 +3718,6 @@ document.addEventListener('DOMContentLoaded', function () {
             statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
         }
     });
-
-    // Link do podglądu kodów QR minigier
-    document.getElementById('preview-minigames-qr-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
 
     // ============ AR FUNKCJE ============
 
