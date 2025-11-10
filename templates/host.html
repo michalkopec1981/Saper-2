@@ -723,44 +723,18 @@
                     </div>
 
                     <!-- Generator kodu QR -->
-                    <div class="card mb-4">
+                    <div class="card mb-4 bg-light">
                         <div class="card-header">
-                            <h6 class="mb-0">Generator kodu QR</h6>
+                            <h6 class="mb-0">🔮 Kod QR dla Wróżki AI</h6>
                         </div>
                         <div class="card-body">
-                            <div class="row g-3">
-                                <!-- Wybór koloru -->
-                                <div class="col-md-6">
-                                    <label for="fortune-qr-color" class="form-label">Kolor kodu QR</label>
-                                    <select class="form-select" id="fortune-qr-color">
-                                        <option value="yellow">Żółty</option>
-                                        <option value="orange">Pomarańczowy</option>
-                                        <option value="pink_fortune">Różowy</option>
-                                        <option value="red_fortune">Czerwony</option>
-                                        <option value="purple">Fioletowy</option>
-                                        <option value="green_fortune">Zielony</option>
-                                        <option value="blue">Niebieski</option>
-                                        <option value="black">Czarny</option>
-                                        <option value="brown">Brązowy</option>
-                                        <option value="white_on_black">Biały na czarnym tle</option>
-                                    </select>
-                                </div>
+                            <p class="text-muted small mb-3">Stały kod QR, który po zeskanowaniu przez gracza uruchamia Wróżkę AI - przepowiednię przyszłości na podstawie snów.</p>
 
-                                <!-- Przyciski -->
-                                <div class="col-md-6 d-flex align-items-end">
-                                    <button class="btn btn-success w-100" id="generate-fortune-qr-btn">
-                                        Wygeneruj i Zapisz kod QR
-                                    </button>
-                                </div>
+                            <div class="d-grid">
+                                <a href="{{ url_for('fortune_qr_preview', event_id=event.id) }}" target="_blank" class="btn btn-primary">
+                                    🔍 Podgląd i Druk Kodu QR
+                                </a>
                             </div>
-
-                            <div class="mt-3">
-                                <button class="btn btn-primary" id="preview-fortune-qr-btn" disabled>
-                                    🔍 Podgląd i druk kodu QR
-                                </button>
-                            </div>
-
-                            <div id="fortune-qr-status" class="mt-3"></div>
                         </div>
                     </div>
 
@@ -2325,13 +2299,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('fortune-word-count').value = data.word_count || 300;
             document.getElementById('fortune-points').value = data.points || 5;
             document.getElementById('fortune-player-words').value = data.player_words || 2;
-
-            // Status QR
-            const previewBtn = document.getElementById('preview-fortune-qr-btn');
-            if (data.qr_generated) {
-                previewBtn.disabled = false;
-                previewBtn.setAttribute('data-color', data.qr_color || 'yellow');
-            }
         } catch (error) {
             console.error('Error loading fortune status:', error);
         }
@@ -2356,40 +2323,6 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
             e.target.checked = !enabled;
         }
-    });
-
-    // Generowanie kodu QR
-    document.getElementById('generate-fortune-qr-btn')?.addEventListener('click', async () => {
-        const color = document.getElementById('fortune-qr-color').value;
-        const statusEl = document.getElementById('fortune-qr-status');
-        const previewBtn = document.getElementById('preview-fortune-qr-btn');
-
-        try {
-            statusEl.innerHTML = '<div class="alert alert-info">Generowanie kodu QR...</div>';
-
-            const response = await fetch('/api/host/fortune/generate_qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ color })
-            });
-
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-
-            statusEl.innerHTML = '<div class="alert alert-success">✅ Kod QR został wygenerowany!</div>';
-            previewBtn.disabled = false;
-            previewBtn.setAttribute('data-color', color);
-
-            setTimeout(() => statusEl.innerHTML = '', 3000);
-        } catch (error) {
-            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
-        }
-    });
-
-    // Podgląd i druk kodu QR
-    document.getElementById('preview-fortune-qr-btn')?.addEventListener('click', () => {
-        const color = document.getElementById('fortune-qr-color').value;
-        window.open(`/fortune_qr_preview/{{ event.id }}?color=${color}`, '_blank');
     });
 
     // Ustawienie liczby słów

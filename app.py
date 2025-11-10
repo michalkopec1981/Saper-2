@@ -863,16 +863,29 @@ def fortune_qr_preview(event_id):
     if not event:
         return "Nie znaleziono eventu", 404
 
-    # Pobierz kolor z parametrów URL lub z game_state
-    color = request.args.get('color') or get_game_state(event_id, 'fortune_qr_color', 'yellow')
+    # Sprawdź czy istnieje stały kod QR dla Wróżki AI
+    qr_code = QRCode.query.filter_by(
+        event_id=event_id,
+        code_identifier='fortune'
+    ).first()
 
-    # URL do strony wejścia do Wróżki AI
-    fortune_url = url_for('fortune_entry', event_id=event_id, _external=True)
+    # Jeśli nie istnieje, utwórz go
+    if not qr_code:
+        qr_code = QRCode(
+            code_identifier='fortune',
+            color='black',
+            event_id=event_id
+        )
+        db.session.add(qr_code)
+        db.session.commit()
+
+    # URL do strony wejścia przez player_view z kodem QR
+    fortune_url = url_for('player_view', event_id=event_id, qr_code='fortune', _external=True)
 
     return render_template('fortune_qr_preview.html',
                          event=event,
                          fortune_url=fortune_url,
-                         color=color,
+                         color='black',
                          event_id=event_id)
 
 @app.route('/fortune_entry/<int:event_id>')
@@ -1985,15 +1998,12 @@ def get_fortune_status():
     word_count = int(get_game_state(event_id, 'fortune_word_count', '300'))
     points = int(get_game_state(event_id, 'fortune_points', '5'))
     player_words = int(get_game_state(event_id, 'fortune_player_words', '2'))
-    qr_color = get_game_state(event_id, 'fortune_qr_color', '')
 
     return jsonify({
         'enabled': enabled,
         'word_count': word_count,
         'points': points,
-        'player_words': player_words,
-        'qr_generated': bool(qr_color),
-        'qr_color': qr_color
+        'player_words': player_words
     })
 
 @app.route('/api/host/fortune/toggle', methods=['POST'])
@@ -2007,21 +2017,6 @@ def toggle_fortune():
     return jsonify({
         'message': f'Wróżka AI {"aktywowana" if enabled else "deaktywowana"}',
         'enabled': enabled
-    })
-
-@app.route('/api/host/fortune/generate_qr', methods=['POST'])
-@host_required
-def generate_fortune_qr():
-    event_id = session['host_event_id']
-    data = request.json
-    color = data.get('color', 'yellow')
-
-    # Zapisujemy informację o kolorze QR
-    set_game_state(event_id, 'fortune_qr_color', color)
-
-    return jsonify({
-        'message': 'Kod QR został wygenerowany',
-        'color': color
     })
 
 @app.route('/api/host/fortune/settings', methods=['POST'])
