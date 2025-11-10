@@ -987,32 +987,18 @@
             </div>
 
             <!-- Generator QR Foto -->
-            <div class="card mb-4">
+            <div class="card mb-4 bg-light">
                 <div class="card-header">
-                    <h6 class="mb-0">Generator kodu QR</h6>
+                    <h6 class="mb-0">📸 Kod QR dla Śmiesznych Selfie</h6>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Kolor kodu QR</label>
-                            <select class="form-select" id="qr-color-foto">
-                                <option value="yellow">Żółty</option>
-                                <option value="orange">Pomarańczowy</option>
-                                <option value="pink">Różowy</option>
-                                <option value="red">Czerwony</option>
-                                <option value="purple">Fioletowy</option>
-                                <option value="green">Zielony</option>
-                                <option value="blue">Niebieski</option>
-                                <option value="black" selected>Czarny</option>
-                                <option value="brown">Brązowy</option>
-                                <option value="white_on_black">Biały na czarnym</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button class="btn btn-success w-100" onclick="generateFotoQR()">Wygeneruj i Zapisz kod QR</button>
-                        </div>
+                    <p class="text-muted small mb-3">Stały kod QR, który po zeskanowaniu przez gracza uruchamia funkcję "Śmieszne Selfie".</p>
+
+                    <div class="d-grid">
+                        <a href="{{ url_for('foto_qr_preview', event_id=event.id) }}" target="_blank" class="btn btn-primary">
+                            🔍 Podgląd i Druk Kodu QR
+                        </a>
                     </div>
-                    <div id="foto-qr-status" class="mt-3"></div>
                 </div>
             </div>
 
@@ -3542,25 +3528,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function generateFotoQR() {
-        const colorSelect = document.getElementById('qr-color-foto');
-        const color = colorSelect.value;
-
-        try {
-            const response = await fetch('/api/host/foto-qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ color })
-            });
-
-            if (!response.ok) throw new Error('Błąd generowania QR Foto');
-
-            document.getElementById('foto-qr-status').innerHTML =
-                `<div class="alert alert-success">Kod QR Foto wygenerowany w kolorze ${color}!</div>`;
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    }
 
     // Toggle statusu Foto
     const fotoToggle = document.getElementById('foto-toggle');

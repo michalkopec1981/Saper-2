@@ -888,6 +888,38 @@ def fortune_qr_preview(event_id):
                          color='black',
                          event_id=event_id)
 
+@app.route('/foto_qr_preview/<int:event_id>')
+def foto_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Śmiesznych Selfie"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Sprawdź czy istnieje stały kod QR dla Foto
+    qr_code = QRCode.query.filter_by(
+        event_id=event_id,
+        code_identifier='foto'
+    ).first()
+
+    # Jeśli nie istnieje, utwórz go
+    if not qr_code:
+        qr_code = QRCode(
+            code_identifier='foto',
+            color='black',
+            event_id=event_id
+        )
+        db.session.add(qr_code)
+        db.session.commit()
+
+    # URL do strony wejścia przez player_view z kodem QR
+    foto_url = url_for('player_view', event_id=event_id, qr_code='foto', _external=True)
+
+    return render_template('foto_qr_preview.html',
+                         event=event,
+                         foto_url=foto_url,
+                         color='black',
+                         event_id=event_id)
+
 @app.route('/fortune_entry/<int:event_id>')
 def fortune_entry(event_id):
     """Strona wejścia do Wróżki AI - wybór gracza"""
@@ -2068,25 +2100,6 @@ def update_foto_points():
     db.session.commit()
     return jsonify({'message': 'Punkty Foto zaktualizowane', 'type': point_type, 'points': points})
 
-@app.route('/api/host/foto-qr', methods=['POST'])
-@host_required
-def generate_foto_qr():
-    """Wygeneruj kod QR dla Foto"""
-    event_id = session['host_event_id']
-    data = request.json
-    color = data.get('color', 'black')
-
-    key = 'foto_qr_color'
-    state = GameState.query.filter_by(event_id=event_id, key=key).first()
-    if state:
-        state.value = color
-    else:
-        state = GameState(event_id=event_id, key=key, value=color)
-        db.session.add(state)
-
-    db.session.commit()
-    return jsonify({'message': 'QR Foto wygenerowany', 'color': color})
-
 @app.route('/api/host/foto/status', methods=['POST'])
 @host_required
 def update_foto_status():
@@ -2254,8 +2267,8 @@ def scan_qr():
         print(f"ERROR: QR code not found!")
         return jsonify({'message': 'Nieprawidłowy kod QR.'}), 404
 
-    # Sprawdź czy gra jest aktywna (WYJĄTEK dla minigames i fortune - działają niezależnie)
-    if qr_code.code_identifier not in ['minigames', 'fortune']:
+    # Sprawdź czy gra jest aktywna (WYJĄTEK dla minigames, fortune i foto - działają niezależnie)
+    if qr_code.code_identifier not in ['minigames', 'fortune', 'foto']:
         game_active = get_game_state(event_id, 'game_active', 'False')
         print(f"Game active: {game_active}")
 
@@ -2556,7 +2569,26 @@ def scan_qr():
                 'completion_points': completion_points,
                 'message': f'🦖 Minigra T-Rex! Twój postęp: {current_trex_score}/{completion_points} pkt'
             })
-    
+
+    # 📸 KOD FOTO - ŚMIESZNE SELFIE
+    elif qr_code.code_identifier == 'foto':
+        print(f"=== FOTO CODE - SELFIE CHALLENGE ===")
+
+        # Sprawdź czy Foto jest aktywne
+        foto_active = get_game_state(event_id, 'foto_active', 'false')
+        if foto_active != 'true':
+            return jsonify({
+                'status': 'info',
+                'message': 'Funkcja "Śmieszne Selfie" jest obecnie nieaktywna.'
+            })
+
+        # Zwróć status photo_challenge, który uruchomi aparat
+        print(f"📸 Starting photo challenge for player {player_id}")
+        return jsonify({
+            'status': 'photo_challenge',
+            'message': '📸 Zrób śmieszne selfie i zdobądź punkty!'
+        })
+
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
     else:
         if qr_code.claimed_by_player_id:
