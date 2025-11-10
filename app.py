@@ -1337,8 +1337,35 @@ def fix_db_columns_v2():
 @app.route('/api/host/players', methods=['GET'])
 @host_required
 def get_players():
-    players = Player.query.filter_by(event_id=session['host_event_id']).order_by(Player.score.desc()).all()
-    return jsonify([{'id': p.id, 'name': p.name, 'score': p.score, 'warnings': p.warnings} for p in players])
+    event_id = session['host_event_id']
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.score.desc()).all()
+
+    # Oblicz całkowitą pulę dostępnych punktów
+    # Pytania (easy + hard dla company i general)
+    questions_count = Question.query.filter_by(event_id=event_id).count()
+    # Zakładam średnio 5 punktów za pytanie (można dostosować)
+    total_points_available = questions_count * 5
+
+    # Dodaj punkty z innych atrakcji jeśli aktywne
+    # Fortune, AI, Foto, Minigry, AR - zakładam po 50 punktów z każdej
+    total_points_available += 250  # 5 x 50
+
+    # Jeśli brak pytań, użyj minimum 100 punktów jako bazę
+    if total_points_available == 0:
+        total_points_available = 100
+
+    result = []
+    for p in players:
+        completion_percentage = min(100, int((p.score / total_points_available) * 100)) if total_points_available > 0 else 0
+        result.append({
+            'id': p.id,
+            'name': p.name,
+            'score': p.score,
+            'warnings': p.warnings,
+            'completion_percentage': completion_percentage
+        })
+
+    return jsonify(result)
 
 @app.route('/api/host/player/<int:player_id>/warn', methods=['POST'])
 @host_required
@@ -1360,6 +1387,31 @@ def delete_player(player_id):
         emit_leaderboard_update(f'event_{session["host_event_id"]}')
         return jsonify({'message': 'Gracz usunięty'})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+@app.route('/api/host/player/<int:player_id>/message', methods=['POST'])
+@host_required
+def send_message_to_player(player_id):
+    player = db.session.get(Player, player_id)
+    if not player or player.event_id != session['host_event_id']:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    data = request.json
+    message = data.get('message', '').strip()
+
+    if not message:
+        return jsonify({'error': 'Wiadomość nie może być pusta'}), 400
+
+    if len(message) > 120:
+        return jsonify({'error': 'Wiadomość może mieć maksymalnie 120 znaków'}), 400
+
+    # Wyślij wiadomość przez Socket.IO do gracza
+    socketio.emit('host_message', {
+        'message': message,
+        'player_id': player_id,
+        'player_name': player.name
+    }, room=f'player_{player_id}')
+
+    return jsonify({'message': 'Wiadomość wysłana'})
 
 # --- API: HOST Minigames ---
 @app.route('/api/host/minigames/status', methods=['GET'])

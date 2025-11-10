@@ -1476,13 +1476,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     list.innerHTML = `<p class="text-muted">Brak graczy</p>`;
                     return;
                 }
-                
+
                 list.innerHTML = `
                     <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>${translations[currentLanguage].player_count.replace(':', '')}</th>
                                 <th>Punkty</th>
+                                <th>% ukończenia</th>
                                 <th>${translations[currentLanguage].warnings}</th>
                                 <th>Akcje</th>
                             </tr>
@@ -1492,8 +1493,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <tr>
                                     <td>${p.name}</td>
                                     <td>${p.score}</td>
+                                    <td>${p.completion_percentage}%</td>
                                     <td>${p.warnings}</td>
                                     <td>
+                                        <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">Wyślij wiadomość</button>
                                         <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
                                         <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
                                     </td>
@@ -1502,8 +1505,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         </tbody>
                     </table>
                 `;
-                
+
                 // Attach event listeners
+                document.querySelectorAll('.send-message-btn').forEach(btn => {
+                    btn.addEventListener('click', () => showSendMessagePopup(parseInt(btn.dataset.id), btn.dataset.name));
+                });
                 document.querySelectorAll('.warn-player-btn').forEach(btn => {
                     btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
                 });
@@ -1525,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     async function deletePlayer(id) {
         if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
-        
+
         try {
             const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Błąd usuwania gracza');
@@ -1534,7 +1540,41 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
         }
     }
-    
+
+    function showSendMessagePopup(playerId, playerName) {
+        const message = prompt(`Wyślij wiadomość do gracza ${playerName}:\n(maksymalnie 120 znaków)`);
+
+        if (message === null) return; // Cancel
+
+        if (message.trim().length === 0) {
+            alert('Wiadomość nie może być pusta!');
+            return;
+        }
+
+        if (message.length > 120) {
+            alert('Wiadomość może mieć maksymalnie 120 znaków!');
+            return;
+        }
+
+        sendMessageToPlayer(playerId, message);
+    }
+
+    async function sendMessageToPlayer(playerId, message) {
+        try {
+            const response = await fetch(`/api/host/player/${playerId}/message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+
+            if (!response.ok) throw new Error('Błąd wysyłania wiadomości');
+
+            alert('Wiadomość wysłana!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
     document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
     
     // =====================================================================
