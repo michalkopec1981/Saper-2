@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Test: {{ game_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .game-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .btn-test {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-test:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .instructions {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card text-center">
+        {% if game_name == 'tetris' %}
+            <div class="game-icon">🎮</div>
+            <h2 class="mb-3">Tetris</h2>
+        {% elif game_name == 'arkanoid' %}
+            <div class="game-icon">🏓</div>
+            <h2 class="mb-3">Arkanoid</h2>
+        {% elif game_name == 'snake' %}
+            <div class="game-icon">🐍</div>
+            <h2 class="mb-3">Snake</h2>
+        {% elif game_name == 'pacman' %}
+            <div class="game-icon">👻</div>
+            <h2 class="mb-3">PacMan</h2>
+        {% elif game_name == 'trex' %}
+            <div class="game-icon">🦖</div>
+            <h2 class="mb-3">T-Rex</h2>
+        {% endif %}
+
+        <div class="instructions">
+            <h5>📱 Tryb testowy</h5>
+            <p class="mb-2">Aby przetestować grę na swoim smartfonie:</p>
+            <ol class="text-start mb-2">
+                <li>Wygeneruj zielony kod QR w zakładce <strong>Kody QR</strong></li>
+                <li>Zarejestruj się jako gracz testowy</li>
+                <li>Zeskanuj zielony kod QR</li>
+                <li>Gra uruchomi się automatycznie</li>
+            </ol>
+            <small class="text-muted">Zielone kody QR aktywują minigry.</small>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button class="btn btn-test" onclick="window.open('/player_register/{{ event.id }}', '_blank', 'width=400,height=700')">
+                🎮 Otwórz jako gracz testowy
+            </button>
+            <button class="btn btn-outline-secondary" onclick="window.parent.postMessage('close', '*')">
+                Zamknij
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
