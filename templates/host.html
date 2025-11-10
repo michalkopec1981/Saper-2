@@ -599,6 +599,80 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Pola punktowe AI -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Konfiguracja punktów</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="points-ai-easy" class="form-label">Liczba punktów za łatwe pytania</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-ai-easy" value="3" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateAIPoints('easy')">OK</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="points-ai-hard" class="form-label">Liczba punktów za trudne pytania</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-ai-hard" value="5" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateAIPoints('hard')">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generator QR AI -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Generator kodów QR</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Łatwe pytania AI</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-ai-easy">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateAIQR('easy')">Generuj</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Trudne pytania AI</label>
+                            <div class="input-group">
+                                <select class="form-select" id="qr-color-ai-hard">
+                                    <option value="yellow">Żółty</option>
+                                    <option value="orange">Pomarańczowy</option>
+                                    <option value="pink">Różowy</option>
+                                    <option value="red">Czerwony</option>
+                                    <option value="purple">Fioletowy</option>
+                                    <option value="green">Zielony</option>
+                                    <option value="blue">Niebieski</option>
+                                    <option value="black" selected>Czarny</option>
+                                    <option value="brown">Brązowy</option>
+                                    <option value="white_on_black">Biały na czarnym</option>
+                                </select>
+                                <button class="btn btn-success" onclick="generateAIQR('hard')">Generuj</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="ai-qr-status" class="mt-3"></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
@@ -886,6 +960,79 @@
         </div>
 
         <div class="tab-pane fade" id="photo">
+            <!-- Status atrakcji Foto -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Status atrakcji</h6>
+                            <p class="text-muted mb-0 small">Włącz lub wyłącz dostępność Foto dla graczy</p>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="foto-toggle" style="width: 3em; height: 1.5em;">
+                            <label class="form-check-label ms-2" for="foto-toggle">
+                                <span id="foto-status" class="badge bg-secondary">Nieaktywna</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pola punktowe Foto -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Konfiguracja punktów</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="points-foto-selfie" class="form-label">Liczba punktów za zrobienie Selfie</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-foto-selfie" value="5" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateFotoPoints('selfie')">OK</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="points-foto-vote" class="form-label">Liczba punktów za ocenę Selfie</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="points-foto-vote" value="2" min="1" max="100">
+                                <button class="btn btn-primary" onclick="updateFotoPoints('vote')">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generator QR Foto -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Generator kodu QR</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Kolor kodu QR</label>
+                            <select class="form-select" id="qr-color-foto">
+                                <option value="yellow">Żółty</option>
+                                <option value="orange">Pomarańczowy</option>
+                                <option value="pink">Różowy</option>
+                                <option value="red">Czerwony</option>
+                                <option value="purple">Fioletowy</option>
+                                <option value="green">Zielony</option>
+                                <option value="blue">Niebieski</option>
+                                <option value="black" selected>Czarny</option>
+                                <option value="brown">Brązowy</option>
+                                <option value="white_on_black">Biały na czarnym</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button class="btn btn-success w-100" onclick="generateFotoQR()">Wygeneruj i Zapisz kod QR</button>
+                        </div>
+                    </div>
+                    <div id="foto-qr-status" class="mt-3"></div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
                 <div class="card-body">
@@ -3387,6 +3534,136 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
+
+    // =====================================================================
+    // FUNKCJE DLA AI - PUNKTY I QR
+    // =====================================================================
+    async function updateAIPoints(difficulty) {
+        const inputId = `points-ai-${difficulty}`;
+        const points = document.getElementById(inputId).value;
+
+        try {
+            const response = await fetch('/api/host/ai-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ difficulty, points: parseInt(points) })
+            });
+
+            if (!response.ok) throw new Error('Błąd zapisywania punktów AI');
+            alert(`Punkty AI (${difficulty}) zaktualizowane: ${points}`);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    async function generateAIQR(difficulty) {
+        const colorSelect = document.getElementById(`qr-color-ai-${difficulty}`);
+        const color = colorSelect.value;
+
+        try {
+            const response = await fetch('/api/host/ai-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ difficulty, color })
+            });
+
+            if (!response.ok) throw new Error('Błąd generowania QR AI');
+
+            document.getElementById('ai-qr-status').innerHTML =
+                `<div class="alert alert-success">Kod QR AI (${difficulty}) wygenerowany w kolorze ${color}!</div>`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Toggle statusu AI
+    const aiToggle = document.getElementById('ai-toggle');
+    const aiStatus = document.getElementById('ai-status');
+
+    aiToggle?.addEventListener('change', async (e) => {
+        const isActive = e.target.checked;
+
+        try {
+            const response = await fetch('/api/host/ai/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: isActive })
+            });
+
+            if (!response.ok) throw new Error('Błąd zmiany statusu AI');
+
+            aiStatus.textContent = isActive ? 'Aktywna' : 'Nieaktywna';
+            aiStatus.className = `badge bg-${isActive ? 'success' : 'secondary'}`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !isActive;
+        }
+    });
+
+    // =====================================================================
+    // FUNKCJE DLA FOTO - PUNKTY I QR
+    // =====================================================================
+    async function updateFotoPoints(type) {
+        const inputId = `points-foto-${type}`;
+        const points = document.getElementById(inputId).value;
+
+        try {
+            const response = await fetch('/api/host/foto-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, points: parseInt(points) })
+            });
+
+            if (!response.ok) throw new Error('Błąd zapisywania punktów Foto');
+            alert(`Punkty Foto (${type}) zaktualizowane: ${points}`);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    async function generateFotoQR() {
+        const colorSelect = document.getElementById('qr-color-foto');
+        const color = colorSelect.value;
+
+        try {
+            const response = await fetch('/api/host/foto-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ color })
+            });
+
+            if (!response.ok) throw new Error('Błąd generowania QR Foto');
+
+            document.getElementById('foto-qr-status').innerHTML =
+                `<div class="alert alert-success">Kod QR Foto wygenerowany w kolorze ${color}!</div>`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Toggle statusu Foto
+    const fotoToggle = document.getElementById('foto-toggle');
+    const fotoStatus = document.getElementById('foto-status');
+
+    fotoToggle?.addEventListener('change', async (e) => {
+        const isActive = e.target.checked;
+
+        try {
+            const response = await fetch('/api/host/foto/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: isActive })
+            });
+
+            if (!response.ok) throw new Error('Błąd zmiany statusu Foto');
+
+            fotoStatus.textContent = isActive ? 'Aktywna' : 'Nieaktywna';
+            fotoStatus.className = `badge bg-${isActive ? 'success' : 'secondary'}`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !isActive;
+        }
+    });
 
     // ============ AR FUNKCJE ============
 
