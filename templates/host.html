@@ -1077,11 +1077,6 @@
                         <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">Światowe</button>
                     </div>
                 </div>
-                
-                <div class="mb-3">
-                    <label class="form-label" data-translate="letter_reveal">Litera do odsłonięcia:</label>
-                    <input type="text" class="form-control" id="modal-letter" maxlength="1" value="X">
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Anuluj</button>
@@ -1834,7 +1829,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('modal-answer-a').value = '';
         document.getElementById('modal-answer-b').value = '';
         document.getElementById('modal-answer-c').value = '';
-        document.getElementById('modal-letter').value = 'X';
         document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
         document.getElementById('correct-a').checked = true;
         document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
@@ -1853,19 +1847,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const correctAnswer = document.querySelector('input[name="correct-answer"]:checked')?.value;
         const difficulty = document.querySelector('#difficulty-buttons .btn.active')?.dataset.difficulty || 'easy';
         const category = document.querySelector('#category-buttons .btn.active')?.dataset.category || 'company';
-        const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
-        
+
         if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
             alert('Wypełnij wszystkie pola!');
             return;
         }
-        
+
         const payload = {
             text,
             answers: [answerA, answerB, answerC],
             correctAnswer,
             difficulty,
-            letterToReveal: letter,
+            letterToReveal: 'X',  // Domyślna wartość, pole usunięte z UI
             category: category
         };
         
@@ -1907,8 +1900,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('modal-answer-a').value = question.answers[0];
             document.getElementById('modal-answer-b').value = question.answers[1];
             document.getElementById('modal-answer-c').value = question.answers[2];
-            document.getElementById('modal-letter').value = question.letterToReveal;
-            
+
             document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
             
             document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));

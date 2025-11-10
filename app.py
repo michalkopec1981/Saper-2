@@ -1536,6 +1536,73 @@ def manage_question(question_id):
         db.session.commit()
         return jsonify({'message': 'Pytanie usunięte'})
 
+@app.route('/api/host/question-points', methods=['POST'])
+@host_required
+def update_question_points():
+    """Zapisz liczbę punktów za pytania danej kategorii"""
+    event_id = session['host_event_id']
+    data = request.json
+    category = data.get('category')  # np. 'easy_general', 'hard_company'
+    points = data.get('points')
+
+    if not category or points is None:
+        return jsonify({'error': 'Brakuje danych'}), 400
+
+    # Zapisz w GameState
+    key = f'question_points_{category}'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = str(points)
+    else:
+        state = GameState(event_id=event_id, key=key, value=str(points))
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Punkty zaktualizowane', 'category': category, 'points': points})
+
+@app.route('/api/host/question-qr', methods=['POST'])
+@host_required
+def generate_question_qr():
+    """Wygeneruj kod QR dla danej kategorii pytań"""
+    event_id = session['host_event_id']
+    data = request.json
+    category = data.get('category')  # np. 'easy_general', 'hard_company'
+    color = data.get('color', 'black')
+
+    if not category:
+        return jsonify({'error': 'Brakuje kategorii'}), 400
+
+    # Zapisz informację o wygenerowanym QR (możesz użyć GameState lub osobnej tabeli)
+    key = f'question_qr_{category}'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = color
+    else:
+        state = GameState(event_id=event_id, key=key, value=color)
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'QR wygenerowany', 'category': category, 'color': color})
+
+@app.route('/api/host/questions/status', methods=['POST'])
+@host_required
+def update_questions_status():
+    """Zmień status aktywności atrakcji Pytania"""
+    event_id = session['host_event_id']
+    data = request.json
+    is_active = data.get('active', False)
+
+    key = 'questions_active'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = 'true' if is_active else 'false'
+    else:
+        state = GameState(event_id=event_id, key=key, value='true' if is_active else 'false')
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Status zaktualizowany', 'active': is_active})
+
 @app.route('/api/host/qrcodes/counts', methods=['GET'])
 @host_required
 def get_host_qr_counts():
@@ -1732,6 +1799,71 @@ def update_or_delete_host_ai_question(question_id):
         db.session.commit()
         return jsonify({'message': 'Pytanie usunięte'})
 
+@app.route('/api/host/ai-points', methods=['POST'])
+@host_required
+def update_ai_points():
+    """Zapisz liczbę punktów za pytania AI"""
+    event_id = session['host_event_id']
+    data = request.json
+    difficulty = data.get('difficulty')  # 'easy' lub 'hard'
+    points = data.get('points')
+
+    if not difficulty or points is None:
+        return jsonify({'error': 'Brakuje danych'}), 400
+
+    key = f'ai_points_{difficulty}'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = str(points)
+    else:
+        state = GameState(event_id=event_id, key=key, value=str(points))
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Punkty AI zaktualizowane', 'difficulty': difficulty, 'points': points})
+
+@app.route('/api/host/ai-qr', methods=['POST'])
+@host_required
+def generate_ai_qr():
+    """Wygeneruj kod QR dla AI pytań"""
+    event_id = session['host_event_id']
+    data = request.json
+    difficulty = data.get('difficulty')
+    color = data.get('color', 'black')
+
+    if not difficulty:
+        return jsonify({'error': 'Brakuje poziomu trudności'}), 400
+
+    key = f'ai_qr_{difficulty}'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = color
+    else:
+        state = GameState(event_id=event_id, key=key, value=color)
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'QR AI wygenerowany', 'difficulty': difficulty, 'color': color})
+
+@app.route('/api/host/ai/status', methods=['POST'])
+@host_required
+def update_ai_status():
+    """Zmień status aktywności atrakcji AI"""
+    event_id = session['host_event_id']
+    data = request.json
+    is_active = data.get('active', False)
+
+    key = 'ai_active'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = 'true' if is_active else 'false'
+    else:
+        state = GameState(event_id=event_id, key=key, value='true' if is_active else 'false')
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Status AI zaktualizowany', 'active': is_active})
+
 @app.route('/api/host/fortune/status', methods=['GET'])
 @host_required
 def get_fortune_status():
@@ -1804,6 +1936,67 @@ def update_fortune_settings():
         set_game_state(event_id, 'fortune_player_words', str(player_words))
 
     return jsonify({'message': 'Ustawienia zostały zaktualizowane'})
+
+@app.route('/api/host/foto-points', methods=['POST'])
+@host_required
+def update_foto_points():
+    """Zapisz liczbę punktów za Foto"""
+    event_id = session['host_event_id']
+    data = request.json
+    point_type = data.get('type')  # 'selfie' lub 'vote'
+    points = data.get('points')
+
+    if not point_type or points is None:
+        return jsonify({'error': 'Brakuje danych'}), 400
+
+    key = f'foto_points_{point_type}'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = str(points)
+    else:
+        state = GameState(event_id=event_id, key=key, value=str(points))
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Punkty Foto zaktualizowane', 'type': point_type, 'points': points})
+
+@app.route('/api/host/foto-qr', methods=['POST'])
+@host_required
+def generate_foto_qr():
+    """Wygeneruj kod QR dla Foto"""
+    event_id = session['host_event_id']
+    data = request.json
+    color = data.get('color', 'black')
+
+    key = 'foto_qr_color'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = color
+    else:
+        state = GameState(event_id=event_id, key=key, value=color)
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'QR Foto wygenerowany', 'color': color})
+
+@app.route('/api/host/foto/status', methods=['POST'])
+@host_required
+def update_foto_status():
+    """Zmień status aktywności atrakcji Foto"""
+    event_id = session['host_event_id']
+    data = request.json
+    is_active = data.get('active', False)
+
+    key = 'foto_active'
+    state = GameState.query.filter_by(event_id=event_id, key=key).first()
+    if state:
+        state.value = 'true' if is_active else 'false'
+    else:
+        state = GameState(event_id=event_id, key=key, value='true' if is_active else 'false')
+        db.session.add(state)
+
+    db.session.commit()
+    return jsonify({'message': 'Status Foto zaktualizowany', 'active': is_active})
 
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
