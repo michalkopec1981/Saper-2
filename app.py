@@ -2253,14 +2253,17 @@ def scan_qr():
     if not qr_code:
         print(f"ERROR: QR code not found!")
         return jsonify({'message': 'Nieprawidłowy kod QR.'}), 404
-    
-    # Sprawdź czy gra jest aktywna
-    game_active = get_game_state(event_id, 'game_active', 'False')
-    print(f"Game active: {game_active}")
-    
-    if game_active != 'True':
-        print(f"ERROR: Game not active!")
-        return jsonify({'message': 'Gra nie jest aktywna.'}), 403
+
+    # Sprawdź czy gra jest aktywna (WYJĄTEK dla minigames i fortune - działają niezależnie)
+    if qr_code.code_identifier not in ['minigames', 'fortune']:
+        game_active = get_game_state(event_id, 'game_active', 'False')
+        print(f"Game active: {game_active}")
+
+        if game_active != 'True':
+            print(f"ERROR: Game not active!")
+            return jsonify({'message': 'Gra nie jest aktywna.'}), 403
+    else:
+        print(f"Kod {qr_code.code_identifier} nie wymaga aktywnej gry")
 
     print(f"QR Code color check: {qr_code.color}, identifier: {qr_code.code_identifier}")
 
@@ -2449,7 +2452,7 @@ def scan_qr():
         })
     
     # 🎮 ZIELONY KOD lub KOD MINIGRY - MINIGRY
-    elif qr_code.color == 'green' or qr_code.code_identifier == 'minigame_random':
+    elif qr_code.color == 'green' or qr_code.code_identifier in ['minigame_random', 'minigames']:
         print(f"=== GREEN/MINIGAME CODE - MINIGAME MODE ===")
 
         # Pobierz konfigurację punktów
