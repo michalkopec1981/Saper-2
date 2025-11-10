@@ -835,10 +835,68 @@
                 <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR. 
-                        Każda minigra wymaga zdobycia 20 punktów, aby otrzymać nagrodę.
+                        <strong>Informacja:</strong> Minigry aktywowane przez kod QR.
+                        Po zeskanowaniu uruchamia się losowo wybrana minigra.
                     </div>
-                    
+
+                    <!-- Pola punktowe Minigry -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Konfiguracja punktów</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="points-minigame-participation" class="form-label">Liczba punktów za udział w grze</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="points-minigame-participation" value="0" min="0" max="100">
+                                        <button class="btn btn-primary" onclick="updateMinigamePoints('participation')">OK</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="points-minigame-completion" class="form-label">Liczba punktów do ukończenia gry</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="points-minigame-completion" value="20" min="1" max="100">
+                                        <button class="btn btn-primary" onclick="updateMinigamePoints('completion')">OK</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generator QR Minigry -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Generator kodu QR</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-12">
+                                    <label for="qr-color-minigame" class="form-label">Wybierz kolor QR (losowa minigra)</label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="qr-color-minigame">
+                                            <option value="yellow">Żółty</option>
+                                            <option value="orange">Pomarańczowy</option>
+                                            <option value="pink">Różowy</option>
+                                            <option value="red">Czerwony</option>
+                                            <option value="purple">Fioletowy</option>
+                                            <option value="green">Zielony</option>
+                                            <option value="blue">Niebieski</option>
+                                            <option value="black" selected>Czarny</option>
+                                            <option value="brown">Brązowy</option>
+                                            <option value="white_on_black">Biały na czarnym</option>
+                                        </select>
+                                        <button class="btn btn-success" onclick="generateMinigameQR()">Wygeneruj i Zapisz kod QR</button>
+                                        <button class="btn btn-info" onclick="previewMinigameQR()">Podgląd i druk kodu QR</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="minigame-qr-status" class="mt-3"></div>
+                        </div>
+                    </div>
+
+                    <h5 class="mb-3 mt-4">Zarządzanie poszczególnymi minigrami</h5>
+
                     <!-- TETRIS -->
                     <div class="card mb-3">
                         <div class="card-body">
@@ -901,29 +959,6 @@
                                                style="width: 3em; height: 1.5em;">
                                         <label class="form-check-label ms-2" for="snake-toggle">
                                             <span id="snake-status" class="badge bg-secondary">Nieaktywny</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PAC-MAN -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">👻 PacMan</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (zjadaj kropki, unikaj duchów)</p>
-                                    <small class="text-muted">Power pellets = duchy niebieskie | Sterowanie: przyciski ▲ ▼ ◄ ►</small>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="testMinigame('pacman')">Test</button>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" id="pacman-toggle"
-                                               style="width: 3em; height: 1.5em;">
-                                        <label class="form-check-label ms-2" for="pacman-toggle">
-                                            <span id="pacman-status" class="badge bg-secondary">Nieaktywny</span>
                                         </label>
                                     </div>
                                 </div>
@@ -2175,15 +2210,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
                 }
 
-                // PacMan
-                const pacmanToggle = document.getElementById('pacman-toggle');
-                const pacmanStatus = document.getElementById('pacman-status');
-                if (pacmanToggle && pacmanStatus) {
-                    pacmanToggle.checked = data.pacman_enabled;
-                    pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
-                    pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-
                 // T-Rex
                 const trexToggle = document.getElementById('trex-toggle');
                 const trexStatus = document.getElementById('trex-status');
@@ -2267,28 +2293,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.getElementById('pacman-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('pacman-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'pacman', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
 
     document.getElementById('trex-toggle')?.addEventListener('change', async (e) => {
         const enabled = e.target.checked;
@@ -3665,6 +3669,68 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // =====================================================================
+    // FUNKCJE DLA MINIGRY - PUNKTY I QR
+    // =====================================================================
+    async function updateMinigamePoints(type) {
+        const inputId = `points-minigame-${type}`;
+        const points = document.getElementById(inputId).value;
+
+        try {
+            const response = await fetch('/api/host/minigame-points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, points: parseInt(points) })
+            });
+
+            if (!response.ok) throw new Error('Błąd zapisywania punktów Minigry');
+            alert(`Punkty Minigry (${type}) zaktualizowane: ${points}`);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    async function generateMinigameQR() {
+        const colorSelect = document.getElementById('qr-color-minigame');
+        const color = colorSelect.value;
+
+        try {
+            const response = await fetch('/api/host/minigame-qr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ color })
+            });
+
+            if (!response.ok) throw new Error('Błąd generowania QR Minigry');
+
+            const data = await response.json();
+            document.getElementById('minigame-qr-status').innerHTML =
+                `<div class="alert alert-success">Kod QR Minigry wygenerowany w kolorze ${color}!<br>
+                <a href="/api/host/qr/${data.qr_id}/preview" target="_blank" class="btn btn-sm btn-info mt-2">Podgląd i druk</a></div>`;
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    async function previewMinigameQR() {
+        // Najpierw sprawdź czy kod QR dla minigry istnieje
+        try {
+            const response = await fetch('/api/host/minigame-qr-preview');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.qr_id) {
+                    window.open(`/api/host/qr/${data.qr_id}/preview`, '_blank');
+                } else {
+                    alert('Najpierw wygeneruj kod QR dla Minigry!');
+                }
+            } else {
+                alert('Nie znaleziono kodu QR dla Minigry. Najpierw go wygeneruj!');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
     // ============ AR FUNKCJE ============
 
     let arObjectsCounter = 0;
@@ -3927,7 +3993,6 @@ document.addEventListener('DOMContentLoaded', function () {
             'tetris': 'Tetris',
             'arkanoid': 'Arkanoid',
             'snake': 'Snake',
-            'pacman': 'PacMan',
             'trex': 'T-Rex'
         };
 

@@ -201,60 +201,6 @@
     </div>
 </div>
 
-<!-- 👻 PacMan game view -->
-<div id="pacman-game-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000000; z-index: 1000;">
-    <div class="d-flex flex-column" style="height: 100vh;">
-        <!-- Nagłówek (8%) -->
-        <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
-            <h5 class="mb-0" style="font-size: 1.1rem;">👻 PAC-MAN</h5>
-            <div class="d-flex justify-content-between align-items-center px-3">
-                <span id="pacman-player-name" style="font-size: 0.85rem;"></span>
-                <strong style="font-size: 0.9rem;">Punkty: <span id="pacman-score">0</span> / 20</strong>
-            </div>
-        </div>
-
-        <!-- Obszar gry z przyciskami po bokach (84%) -->
-        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
-            <!-- Sekcja Start/Back (na środku, przed rozpoczęciem gry) - BIAŁE TŁO -->
-            <div id="pacman-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                <h4 class="mb-3" style="color: #333;">👻 PacMan Challenge</h4>
-                <p class="mb-4" style="color: #666;">Zjadaj kropki, unikaj duchów i zdobądź 20 punktów!</p>
-                <div class="mb-3" style="color: #666; font-size: 0.9rem;">
-                    <div>⚡ Power pellet - duchy stają się niebieskie!</div>
-                    <div>👻 Zjedz ducha = 200 pkt bonusu</div>
-                    <div>Sterowanie: przyciski po bokach lub strzałki</div>
-                </div>
-                <button id="pacman-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START GRY</button>
-                <br>
-                <button id="pacman-back-btn" class="btn btn-outline-secondary">← Wróć do gry</button>
-            </div>
-
-            <!-- Przyciski po lewej stronie (65px) -->
-            <div id="pacman-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
-                <div class="d-flex flex-column gap-2">
-                    <button id="pacman-up-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▲</button>
-                    <button id="pacman-left-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
-                </div>
-            </div>
-
-            <!-- Plansza gry (środek) -->
-            <canvas id="pacman-canvas" style="border: 3px solid #0000FF; background-color: #000000; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 4px); z-index: 1;"></canvas>
-
-            <!-- Przyciski po prawej stronie (65px) -->
-            <div id="pacman-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
-                <div class="d-flex flex-column gap-2">
-                    <button id="pacman-down-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▼</button>
-                    <button id="pacman-right-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Przycisk wyjścia (8%) -->
-        <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
-            <button id="pacman-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">WYJDŹ Z GRY</button>
-        </div>
-    </div>
-</div>
 
 <!-- 🦖 T-Rex game view -->
 <div id="trex-game-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f7f7f7; z-index: 1000;">
@@ -307,7 +253,6 @@
 <script src="{{ url_for('static', filename='tetris.js') }}"></script>
 <script src="{{ url_for('static', filename='arkanoid.js') }}"></script>
 <script src="{{ url_for('static', filename='snake.js') }}"></script>
-<script src="{{ url_for('static', filename='pacman.js') }}"></script>
 <script src="{{ url_for('static', filename='trex.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -532,8 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     startArkanoidGame(currentScore);
                 } else if (data.game === 'snake') {
                     startSnakeGame(currentScore);
-                } else if (data.game === 'pacman') {
-                    startPacManGame(currentScore);
                 } else if (data.game === 'trex') {
                     startTRexGame(currentScore);
                 }
@@ -904,75 +847,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    function startPacManGame(currentScore = 0) {
-        // Ukryj główny widok
-        document.getElementById('main-view').style.display = 'none';
-
-        // Pokaż widok PacMan (full screen)
-        const pacmanView = document.getElementById('pacman-game-view');
-        pacmanView.style.display = 'block';
-
-        // Ustaw nazwę gracza i wynik
-        document.getElementById('pacman-player-name').textContent = playerName;
-        document.getElementById('pacman-score').textContent = currentScore;
-
-        let pacmanGame;
-
-        // Przycisk Start
-        document.getElementById('pacman-start-btn').onclick = () => {
-            pacmanGame = new PacManGame('pacman-canvas', playerId, eventId, currentScore);
-            pacmanGame.start();
-
-            // Ukryj sekcję startu, pokaż kontrolki po bokach i przycisk wyjścia
-            document.getElementById('pacman-start-section').style.display = 'none';
-            document.getElementById('pacman-left-controls').style.display = 'block';
-            document.getElementById('pacman-right-controls').style.display = 'block';
-            document.getElementById('pacman-exit-btn').style.display = 'block';
-        };
-
-        // Przycisk Wróć (na ekranie startowym)
-        document.getElementById('pacman-back-btn').onclick = () => {
-            if (pacmanGame) {
-                pacmanGame.gameRunning = false;
-            }
-
-            // Ukryj PacMan
-            pacmanView.style.display = 'none';
-
-            // Pokaż główny widok
-            document.getElementById('main-view').style.display = 'block';
-
-            // Reset widoku startowego PacMan
-            document.getElementById('pacman-start-section').style.display = 'block';
-            document.getElementById('pacman-left-controls').style.display = 'none';
-            document.getElementById('pacman-right-controls').style.display = 'none';
-            document.getElementById('pacman-exit-btn').style.display = 'none';
-            document.getElementById('pacman-start-btn').style.display = 'inline-block';
-        };
-
-        // Przycisk Wyjdź z gry (podczas gry)
-        document.getElementById('pacman-exit-btn').onclick = () => {
-            if (confirm('Czy na pewno chcesz wyjść z gry? Postęp zostanie zapisany.')) {
-                if (pacmanGame) {
-                    pacmanGame.gameRunning = false;
-                }
-
-                // Ukryj PacMan
-                pacmanView.style.display = 'none';
-
-                // Pokaż główny widok
-                document.getElementById('main-view').style.display = 'block';
-
-                // Reset widoku startowego PacMan
-                document.getElementById('pacman-start-section').style.display = 'block';
-                document.getElementById('pacman-left-controls').style.display = 'none';
-                document.getElementById('pacman-right-controls').style.display = 'none';
-                document.getElementById('pacman-exit-btn').style.display = 'none';
-                document.getElementById('pacman-start-btn').style.display = 'inline-block';
-                document.getElementById('pacman-start-btn').textContent = 'KONTYNUUJ GRĘ';
-            }
-        };
-    }
 
     function startTRexGame(currentScore = 0) {
         // Ukryj główny widok

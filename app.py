@@ -676,7 +676,7 @@ def test_minigame(game_name, event_id):
         return "Nie znaleziono eventu", 404
 
     # Validate game name
-    valid_games = ['tetris', 'arkanoid', 'snake', 'pacman', 'trex']
+    valid_games = ['tetris', 'arkanoid', 'snake', 'trex']
     if game_name not in valid_games:
         return "Nieprawidłowa nazwa gry", 404
 
@@ -1421,13 +1421,11 @@ def get_minigames_status():
     tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'True'
     arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'True'
     snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'True'
-    pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False') == 'True'
     trex_disabled = get_game_state(event_id, 'minigame_trex_disabled', 'False') == 'True'
     return jsonify({
         'tetris_enabled': not tetris_disabled,
         'arkanoid_enabled': not arkanoid_disabled,
         'snake_enabled': not snake_disabled,
-        'pacman_enabled': not pacman_disabled,
         'trex_enabled': not trex_disabled
     })
 
@@ -1459,13 +1457,6 @@ def toggle_minigame():
         return jsonify({
             'message': f'Snake {"aktywowany" if enabled else "deaktywowany"}',
             'snake_enabled': enabled
-        })
-    elif game_type == 'pacman':
-        # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
-        set_game_state(event_id, 'minigame_pacman_disabled', 'False' if enabled else 'True')
-        return jsonify({
-            'message': f'PacMan {"aktywowany" if enabled else "deaktywowany"}',
-            'pacman_enabled': enabled
         })
     elif game_type == 'trex':
         # Zapisujemy czy gra jest WYŁĄCZONA (odwrotna logika - domyślnie włączona)
@@ -1998,6 +1989,69 @@ def update_foto_status():
     db.session.commit()
     return jsonify({'message': 'Status Foto zaktualizowany', 'active': is_active})
 
+# --- API: HOST Minigame Configuration ---
+@app.route('/api/host/minigame-points', methods=['POST'])
+@host_required
+def update_minigame_points():
+    """Zapisz liczbę punktów za Minigry"""
+    event_id = session['host_event_id']
+    data = request.json
+    point_type = data.get('type')  # 'participation' lub 'completion'
+    points = data.get('points')
+
+    if not point_type or points is None:
+        return jsonify({'error': 'Brakuje danych'}), 400
+
+    key = f'minigame_points_{point_type}'
+    set_game_state(event_id, key, str(points))
+
+    return jsonify({'message': 'Punkty Minigry zaktualizowane', 'type': point_type, 'points': points})
+
+@app.route('/api/host/minigame-qr', methods=['POST'])
+@host_required
+def generate_minigame_qr():
+    """Wygeneruj kod QR dla losowej Minigry"""
+    event_id = session['host_event_id']
+    data = request.json
+    color = data.get('color', 'black')
+
+    # Sprawdź czy kolor nie jest już użyty
+    existing_qr = QRCode.query.filter_by(event_id=event_id, color=color).first()
+    if existing_qr:
+        return jsonify({'error': f'Kolor {color} jest już używany przez inny kod QR'}), 400
+
+    # Usuń stary kod QR minigry jeśli istnieje
+    old_minigame_qr = QRCode.query.filter_by(event_id=event_id, code_identifier='minigame_random').first()
+    if old_minigame_qr:
+        db.session.delete(old_minigame_qr)
+
+    # Utwórz nowy kod QR dla losowej minigry
+    new_qr = QRCode(
+        code_identifier='minigame_random',
+        color=color,
+        event_id=event_id
+    )
+    db.session.add(new_qr)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'QR Minigry wygenerowany',
+        'color': color,
+        'qr_id': new_qr.id
+    })
+
+@app.route('/api/host/minigame-qr-preview', methods=['GET'])
+@host_required
+def preview_minigame_qr():
+    """Zwróć ID kodu QR dla Minigry do podglądu"""
+    event_id = session['host_event_id']
+
+    minigame_qr = QRCode.query.filter_by(event_id=event_id, code_identifier='minigame_random').first()
+    if minigame_qr:
+        return jsonify({'qr_id': minigame_qr.id})
+    else:
+        return jsonify({'qr_id': None}), 404
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():
@@ -2161,21 +2215,24 @@ def scan_qr():
             }
         })
     
-    # 🎮 ZIELONY KOD - MINIGRY (Tetris lub Arkanoid)
-    elif qr_code.color == 'green':
-        print(f"=== GREEN CODE - MINIGAME MODE ===")
-        
+    # 🎮 ZIELONY KOD lub KOD MINIGRY - MINIGRY
+    elif qr_code.color == 'green' or qr_code.code_identifier == 'minigame_random':
+        print(f"=== GREEN/MINIGAME CODE - MINIGAME MODE ===")
+
+        # Pobierz konfigurację punktów
+        completion_points = int(get_game_state(event_id, 'minigame_points_completion', '20'))
+        participation_points = int(get_game_state(event_id, 'minigame_points_participation', '0'))
+
         # Sprawdź czy minigry są aktywne
         tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
         arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
         snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False')
-        pacman_disabled = get_game_state(event_id, 'minigame_pacman_disabled', 'False')
         trex_disabled = get_game_state(event_id, 'minigame_trex_disabled', 'False')
 
-        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}, PacMan disabled: {pacman_disabled}, T-Rex disabled: {trex_disabled}")
+        print(f"Tetris disabled: {tetris_disabled}, Arkanoid disabled: {arkanoid_disabled}, Snake disabled: {snake_disabled}, T-Rex disabled: {trex_disabled}")
 
         # Jeśli wszystkie minigry są wyłączone
-        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True' and pacman_disabled == 'True' and trex_disabled == 'True':
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True' and trex_disabled == 'True':
             message = 'Wszystkie minigry zostały wyłączone przez organizatora.'
             print(f"All minigames DISABLED - returning error")
             return jsonify({'status': 'info', 'message': message})
@@ -2184,26 +2241,23 @@ def scan_qr():
         tetris_score_key = f'minigame_tetris_score_{player_id}'
         arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
         snake_score_key = f'minigame_snake_score_{player_id}'
-        pacman_score_key = f'minigame_pacman_score_{player_id}'
         trex_score_key = f'minigame_trex_score_{player_id}'
 
         current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
         current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
         current_snake_score = int(get_game_state(event_id, snake_score_key, '0'))
-        current_pacman_score = int(get_game_state(event_id, pacman_score_key, '0'))
         current_trex_score = int(get_game_state(event_id, trex_score_key, '0'))
 
-        print(f"Player {player_id} - Tetris: {current_tetris_score}/20, Arkanoid: {current_arkanoid_score}/20, Snake: {current_snake_score}/20, PacMan: {current_pacman_score}/20, T-Rex: {current_trex_score}/20")
+        print(f"Player {player_id} - Tetris: {current_tetris_score}/{completion_points}, Arkanoid: {current_arkanoid_score}/{completion_points}, Snake: {current_snake_score}/{completion_points}, T-Rex: {current_trex_score}/{completion_points}")
 
         # Sprawdź czy gracz ukończył wszystkie gry
-        tetris_completed = current_tetris_score >= 20
-        arkanoid_completed = current_arkanoid_score >= 20
-        snake_completed = current_snake_score >= 20
-        pacman_completed = current_pacman_score >= 20
-        trex_completed = current_trex_score >= 20
+        tetris_completed = current_tetris_score >= completion_points
+        arkanoid_completed = current_arkanoid_score >= completion_points
+        snake_completed = current_snake_score >= completion_points
+        trex_completed = current_trex_score >= completion_points
 
         # Jeśli ukończył wszystkie, nie może grać więcej
-        if tetris_completed and arkanoid_completed and snake_completed and pacman_completed and trex_completed:
+        if tetris_completed and arkanoid_completed and snake_completed and trex_completed:
             message = 'Ukończyłeś już wszystkie minigry! Świetna robota!'
             return jsonify({'status': 'info', 'message': message})
 
@@ -2218,9 +2272,6 @@ def scan_qr():
 
         if snake_disabled != 'True' and not snake_completed:
             available_games.append('snake')
-
-        if pacman_disabled != 'True' and not pacman_completed:
-            available_games.append('pacman')
 
         if trex_disabled != 'True' and not trex_completed:
             available_games.append('trex')
@@ -2239,7 +2290,8 @@ def scan_qr():
                 'status': 'minigame',
                 'game': 'tetris',
                 'current_score': current_tetris_score,
-                'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
+                'completion_points': completion_points,
+                'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/{completion_points} pkt'
             })
         elif selected_game == 'arkanoid':
             print(f"🏓 Starting Arkanoid for player {player_id}")
@@ -2247,7 +2299,8 @@ def scan_qr():
                 'status': 'minigame',
                 'game': 'arkanoid',
                 'current_score': current_arkanoid_score,
-                'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
+                'completion_points': completion_points,
+                'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/{completion_points} pkt'
             })
         elif selected_game == 'snake':
             print(f"🐍 Starting Snake for player {player_id}")
@@ -2255,15 +2308,8 @@ def scan_qr():
                 'status': 'minigame',
                 'game': 'snake',
                 'current_score': current_snake_score,
-                'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/20 pkt'
-            })
-        elif selected_game == 'pacman':
-            print(f"👻 Starting PacMan for player {player_id}")
-            return jsonify({
-                'status': 'minigame',
-                'game': 'pacman',
-                'current_score': current_pacman_score,
-                'message': f'👻 Minigra PacMan! Twój postęp: {current_pacman_score}/20 pkt'
+                'completion_points': completion_points,
+                'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/{completion_points} pkt'
             })
         else:  # trex
             print(f"🦖 Starting T-Rex for player {player_id}")
@@ -2271,7 +2317,8 @@ def scan_qr():
                 'status': 'minigame',
                 'game': 'trex',
                 'current_score': current_trex_score,
-                'message': f'🦖 Minigra T-Rex! Twój postęp: {current_trex_score}/20 pkt'
+                'completion_points': completion_points,
+                'message': f'🦖 Minigra T-Rex! Twój postęp: {current_trex_score}/{completion_points} pkt'
             })
     
     # JEDNORAZOWE KODY (czerwone, pułapki, różowe)
@@ -2891,11 +2938,6 @@ def complete_minigame():
         if snake_disabled == 'True':
             return jsonify({'error': 'Ta minigra została wyłączona'}), 403
         score_key = f'minigame_snake_score_{player_id}'
-    elif game_type == 'pacman':
-        pacman_disabled = get_game_state(player.event_id, 'minigame_pacman_disabled', 'False')
-        if pacman_disabled == 'True':
-            return jsonify({'error': 'Ta minigra została wyłączona'}), 403
-        score_key = f'minigame_pacman_score_{player_id}'
     elif game_type == 'trex':
         trex_disabled = get_game_state(player.event_id, 'minigame_trex_disabled', 'False')
         if trex_disabled == 'True':
@@ -2904,18 +2946,31 @@ def complete_minigame():
     else:
         return jsonify({'error': 'Nieznany typ minigry'}), 400
 
+    # Pobierz konfigurację punktów
+    completion_points = int(get_game_state(player.event_id, 'minigame_points_completion', '20'))
+    participation_points = int(get_game_state(player.event_id, 'minigame_points_participation', '0'))
+
     # Pobierz aktualny wynik gracza w tej minigrze
     current_score = int(get_game_state(player.event_id, score_key, '0'))
+
+    # Sprawdź czy to pierwsze punkty w tej grze (dla punktów za udział)
+    is_first_participation = (current_score == 0 and score > 0)
 
     # Dodaj zdobyte punkty do sumy
     new_score = current_score + score
     set_game_state(player.event_id, score_key, str(new_score))
 
-    game_name_map = {'tetris': 'Tetris', 'arkanoid': 'Arkanoid', 'snake': 'Snake', 'pacman': 'PacMan', 'trex': 'T-Rex'}
+    game_name_map = {'tetris': 'Tetris', 'arkanoid': 'Arkanoid', 'snake': 'Snake', 'trex': 'T-Rex'}
     game_name = game_name_map.get(game_type, 'Unknown')
-    
-    # Sprawdź czy gracz osiągnął 20 punktów
-    if new_score >= 20:
+
+    # Przyznaj punkty za udział (jeśli to pierwsze punkty w tej grze)
+    if is_first_participation and participation_points > 0:
+        player.score += participation_points
+        db.session.commit()
+        print(f"Player {player_id} otrzymał {participation_points} punktów za udział w {game_name}")
+
+    # Sprawdź czy gracz osiągnął completion_points
+    if new_score >= completion_points:
         # Gracz ukończył wyzwanie - przyznaj nagrody
         bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
         points = 10 * bonus
