@@ -54,16 +54,9 @@
         background-color: #f8f9fa;
     }
 
-    /* Style dla zakładek z grami (Pytania, AI, Wróżka AI, Minigry, Foto) */
+    /* Style dla zakładek z grami (Pytania, AI, Wróżka AI, Minigry, Foto) - pogrubiona czcionka */
     .game-tab {
-        background-color: #ffc107 !important;
-        color: #000 !important;
-        border-color: #ffc107 !important;
-    }
-    .game-tab:hover {
-        background-color: #ffb300 !important;
-        color: #000 !important;
-        border-color: #ffb300 !important;
+        font-weight: bold !important;
     }
 
     /* Aktywna zakładka - czerwona */
@@ -73,24 +66,26 @@
         border-color: #dc3545 !important;
     }
 
-    /* Style dla przycisków szybkiej nawigacji związanych z grami */
-    .quick-tab-btn[data-tab="questions"],
-    .quick-tab-btn[data-tab="ai"],
-    .quick-tab-btn[data-tab="fortune"],
-    .quick-tab-btn[data-tab="minigames"],
-    .quick-tab-btn[data-tab="photo"] {
-        background-color: #ffc107 !important;
-        border-color: #ffc107 !important;
-        color: #000 !important;
+    /* Zawsze widoczny scrollbar dla wszystkich zakładek */
+    .tab-content {
+        overflow-y: scroll !important;
+        min-height: 500px;
     }
-    .quick-tab-btn[data-tab="questions"]:hover,
-    .quick-tab-btn[data-tab="ai"]:hover,
-    .quick-tab-btn[data-tab="fortune"]:hover,
-    .quick-tab-btn[data-tab="minigames"]:hover,
-    .quick-tab-btn[data-tab="photo"]:hover {
-        background-color: #ffb300 !important;
-        border-color: #ffb300 !important;
-        color: #000 !important;
+
+    /* Style dla scrollbara w Chromium/WebKit */
+    .tab-content::-webkit-scrollbar {
+        width: 12px;
+    }
+    .tab-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .tab-content::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    .tab-content::-webkit-scrollbar-thumb:hover {
+        background: #555;
     }
 </style>
 {% endblock %}
