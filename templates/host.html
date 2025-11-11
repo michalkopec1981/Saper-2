@@ -69,7 +69,12 @@
     /* Zawsze widoczny scrollbar dla wszystkich zakładek */
     .tab-content {
         overflow-y: scroll !important;
-        min-height: 500px;
+        min-height: 800px; /* Zwiększona wysokość kontenera */
+    }
+
+    /* Każda zakładka ma minimalną wysokość wymuszającą scrollbar */
+    .tab-pane {
+        min-height: 1500px !important; /* Wszystkie zakładki mają taką samą długość */
     }
 
     /* Style dla scrollbara w Chromium/WebKit */
