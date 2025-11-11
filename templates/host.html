@@ -54,28 +54,43 @@
         background-color: #f8f9fa;
     }
 
-    /* Styl dla zakładki Minigry */
-    #minigry-tab {
-        background-color: #dc3545 !important;
-        color: white !important;
+    /* Style dla zakładek z grami (Pytania, AI, Wróżka AI, Minigry, Foto) */
+    .game-tab {
+        background-color: #ffc107 !important;
+        color: #000 !important;
+        border-color: #ffc107 !important;
     }
-    #minigry-tab:hover {
-        background-color: #bb2d3b !important;
-        color: white !important;
-    }
-    #minigry-tab.active {
-        background-color: #b02a37 !important;
-        color: white !important;
+    .game-tab:hover {
+        background-color: #ffb300 !important;
+        color: #000 !important;
+        border-color: #ffb300 !important;
     }
 
-    /* Styl dla przycisku szybkiej nawigacji Minigry */
-    .quick-tab-btn[data-tab="minigames"] {
+    /* Aktywna zakładka - czerwona */
+    .nav-link.active {
         background-color: #dc3545 !important;
+        color: white !important;
         border-color: #dc3545 !important;
     }
-    .quick-tab-btn[data-tab="minigames"]:hover {
-        background-color: #bb2d3b !important;
-        border-color: #bb2d3b !important;
+
+    /* Style dla przycisków szybkiej nawigacji związanych z grami */
+    .quick-tab-btn[data-tab="questions"],
+    .quick-tab-btn[data-tab="ai"],
+    .quick-tab-btn[data-tab="fortune"],
+    .quick-tab-btn[data-tab="minigames"],
+    .quick-tab-btn[data-tab="photo"] {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #000 !important;
+    }
+    .quick-tab-btn[data-tab="questions"]:hover,
+    .quick-tab-btn[data-tab="ai"]:hover,
+    .quick-tab-btn[data-tab="fortune"]:hover,
+    .quick-tab-btn[data-tab="minigames"]:hover,
+    .quick-tab-btn[data-tab="photo"]:hover {
+        background-color: #ffb300 !important;
+        border-color: #ffb300 !important;
+        color: #000 !important;
     }
 </style>
 {% endblock %}
@@ -98,20 +113,20 @@
 
     <ul class="nav nav-tabs mb-4" id="hostTabs">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
         {% if is_superhost %}
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
         {% endif %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
-        <li class="nav-item"><button id="minigry-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
+        <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
     </ul>
 
     <div class="tab-content">
