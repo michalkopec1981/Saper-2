@@ -3160,7 +3160,7 @@ def fortune_player(event_id):
     # Pobierz ustawienia
     player_words = int(get_game_state(event_id, 'fortune_player_words', '2'))
 
-    # Pobierz playerId z localStorage lub session
+    # Pobierz playerId z localStorage lub pokaż formularz rejestracji
     return render_template_string('''
     <!DOCTYPE html>
     <html>
@@ -3179,15 +3179,21 @@ def fortune_player(event_id):
         <div class="container">
             <div class="fortune-box">
                 <h2 class="text-center mb-4">🔮 Wróżka AI</h2>
-                <p class="text-center text-muted">Wpisz {{ player_words }} słów opisujących Twoje ostatnie sny</p>
 
-                <div id="player-select" style="display: none;">
-                    <label class="form-label">Wybierz swoje imię:</label>
-                    <select class="form-select mb-3" id="player-dropdown"></select>
-                    <button class="btn btn-primary w-100" onclick="selectPlayer()">Dalej</button>
+                <!-- Formularz rejestracji/logowania -->
+                <div id="login-section" style="display: none;">
+                    <p class="text-center text-muted mb-3">Witaj! Najpierw podaj swoje imię, aby móc korzystać z Wróżki AI</p>
+                    <div class="mb-3">
+                        <label class="form-label">Twoje imię lub nazwa drużyny:</label>
+                        <input type="text" class="form-control" id="player-name-input" placeholder="Wpisz swoje imię..." maxlength="50">
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="registerPlayer()">Dalej</button>
                 </div>
 
+                <!-- Formularz Wróżki -->
                 <div id="fortune-form" style="display: none;">
+                    <p class="text-center text-muted mb-3">Witaj <strong id="player-name-display"></strong>! Wpisz {{ player_words }} słów opisujących Twoje ostatnie sny</p>
+
                     {% for i in range(player_words) %}
                     <div class="word-input">
                         <label class="form-label">Słowo {{ i + 1 }}:</label>
@@ -3217,43 +3223,65 @@ def fortune_player(event_id):
             let playerId = null;
             let playerName = '';
 
-            // Sprawdź localStorage
-            document.addEventListener('DOMContentLoaded', async () => {
+            // Sprawdź localStorage przy załadowaniu strony
+            document.addEventListener('DOMContentLoaded', () => {
                 playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
                 playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
 
                 if (playerId && playerName) {
-                    // Gracz zalogowany
+                    // Gracz już zalogowany - pokaż formularz Wróżki
+                    console.log('Player already registered:', playerName, playerId);
+                    document.getElementById('player-name-display').textContent = playerName;
                     document.getElementById('fortune-form').style.display = 'block';
                 } else {
-                    // Pobierz listę graczy
-                    try {
-                        const response = await fetch(`/api/event/${eventId}/players`);
-                        const data = await response.json();
-                        const dropdown = document.getElementById('player-dropdown');
-                        data.players.forEach(p => {
-                            const option = document.createElement('option');
-                            option.value = p.id;
-                            option.textContent = p.name;
-                            dropdown.appendChild(option);
-                        });
-                        document.getElementById('player-select').style.display = 'block';
-                    } catch (error) {
-                        alert('Błąd pobierania graczy');
-                    }
+                    // Nowy gracz - pokaż formularz logowania
+                    console.log('New player - showing login form');
+                    document.getElementById('login-section').style.display = 'block';
                 }
             });
 
-            function selectPlayer() {
-                const dropdown = document.getElementById('player-dropdown');
-                playerId = dropdown.value;
-                playerName = dropdown.options[dropdown.selectedIndex].text;
+            // Rejestracja gracza
+            async function registerPlayer() {
+                const nameInput = document.getElementById('player-name-input');
+                const name = nameInput.value.trim();
 
-                localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
-                localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+                if (!name) {
+                    alert('Proszę podać imię lub nazwę drużyny.');
+                    return;
+                }
 
-                document.getElementById('player-select').style.display = 'none';
-                document.getElementById('fortune-form').style.display = 'block';
+                try {
+                    const response = await fetch('/api/player/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, event_id: eventId })
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json();
+                        alert(data.error || 'Błąd rejestracji');
+                        return;
+                    }
+
+                    const data = await response.json();
+                    playerId = data.id;
+                    playerName = data.name;
+
+                    // Zapisz w localStorage
+                    localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+                    localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+
+                    console.log('Player registered successfully:', playerName, playerId);
+
+                    // Ukryj formularz logowania, pokaż formularz Wróżki
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('player-name-display').textContent = playerName;
+                    document.getElementById('fortune-form').style.display = 'block';
+
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    alert('Błąd połączenia z serwerem: ' + error.message);
+                }
             }
 
             async function predictFuture() {
