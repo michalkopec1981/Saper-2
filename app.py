@@ -24,6 +24,14 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     print("⚠️  anthropic package not installed. AI question generation will be limited.")
 
+# Import dla OpenAI API (Wróżka AI)
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("⚠️  openai package not installed. Fortune Teller AI will not work.")
+
 # Import dla rozpoznawania obrazów AR
 try:
     import cv2
@@ -2982,6 +2990,380 @@ def recognize_ar_object():
         import traceback
         traceback.print_exc()
         return jsonify({'recognized': False, 'error': str(e)}), 500
+
+# ===================================================================
+# --- Fortune Teller AI Endpoints ---
+# ===================================================================
+
+@app.route('/fortune_qr/<int:event_id>')
+@host_required
+def fortune_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Wróżki AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Generuj kod QR dla fortune
+    fortune_url = url_for('fortune_player', event_id=event_id, _external=True)
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Wróżka AI - Kod QR</title>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+        <style>
+            body {{ font-family: Arial; text-align: center; padding: 50px; }}
+            #qrcode {{ margin: 20px auto; }}
+            .info {{ margin: 20px; font-size: 18px; }}
+            @media print {{
+                button {{ display: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>🔮 Wróżka AI</h1>
+        <div class="info">Zeskanuj kod QR aby poznać swoją przyszłość!</div>
+        <div id="qrcode"></div>
+        <div class="info">Event: {event.name}</div>
+        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; margin-top: 20px;">🖨️ Drukuj</button>
+        <script>
+            new QRCode(document.getElementById("qrcode"), {{
+                text: "{fortune_url}",
+                width: 300,
+                height: 300
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/fortune/<int:event_id>')
+def fortune_player(event_id):
+    """Widok Wróżki AI dla gracza"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy włączona
+    enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <title>Wróżka AI</title>
+        </head>
+        <body>
+            <div class="container mt-5 text-center">
+                <h2>🔮 Wróżka AI</h2>
+                <div class="alert alert-warning mt-4">
+                    Wróżka AI jest obecnie nieaktywna.
+                </div>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Pobierz ustawienia
+    player_words = int(get_game_state(event_id, 'fortune_player_words', '2'))
+
+    # Pobierz playerId z localStorage lub session
+    return render_template_string('''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <title>Wróżka AI</title>
+        <style>
+            body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+            .fortune-box { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-top: 50px; }
+            .word-input { margin-bottom: 15px; }
+            .prediction { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px; white-space: pre-wrap; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="fortune-box">
+                <h2 class="text-center mb-4">🔮 Wróżka AI</h2>
+                <p class="text-center text-muted">Wpisz {{ player_words }} słów opisujących Twoje ostatnie sny</p>
+
+                <div id="player-select" style="display: none;">
+                    <label class="form-label">Wybierz swoje imię:</label>
+                    <select class="form-select mb-3" id="player-dropdown"></select>
+                    <button class="btn btn-primary w-100" onclick="selectPlayer()">Dalej</button>
+                </div>
+
+                <div id="fortune-form" style="display: none;">
+                    {% for i in range(player_words) %}
+                    <div class="word-input">
+                        <label class="form-label">Słowo {{ i + 1 }}:</label>
+                        <input type="text" class="form-control" id="word{{ i }}" placeholder="np. rower, góry, ocean..." maxlength="50">
+                    </div>
+                    {% endfor %}
+
+                    <button class="btn btn-success w-100 mt-3" id="predict-btn" onclick="predictFuture()">
+                        ✨ Przepowiadaj przyszłość
+                    </button>
+
+                    <div id="loading" style="display: none; text-align: center; margin-top: 20px;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ładowanie...</span>
+                        </div>
+                        <p class="mt-2">Wróżka wpatruje się w kryształową kulę...</p>
+                    </div>
+
+                    <div id="prediction" class="prediction" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const eventId = {{ event_id }};
+            const playerWords = {{ player_words }};
+            let playerId = null;
+            let playerName = '';
+
+            // Sprawdź localStorage
+            document.addEventListener('DOMContentLoaded', async () => {
+                playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+                playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
+
+                if (playerId && playerName) {
+                    // Gracz zalogowany
+                    document.getElementById('fortune-form').style.display = 'block';
+                } else {
+                    // Pobierz listę graczy
+                    try {
+                        const response = await fetch(`/api/event/${eventId}/players`);
+                        const data = await response.json();
+                        const dropdown = document.getElementById('player-dropdown');
+                        data.players.forEach(p => {
+                            const option = document.createElement('option');
+                            option.value = p.id;
+                            option.textContent = p.name;
+                            dropdown.appendChild(option);
+                        });
+                        document.getElementById('player-select').style.display = 'block';
+                    } catch (error) {
+                        alert('Błąd pobierania graczy');
+                    }
+                }
+            });
+
+            function selectPlayer() {
+                const dropdown = document.getElementById('player-dropdown');
+                playerId = dropdown.value;
+                playerName = dropdown.options[dropdown.selectedIndex].text;
+
+                localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+                localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+
+                document.getElementById('player-select').style.display = 'none';
+                document.getElementById('fortune-form').style.display = 'block';
+            }
+
+            async function predictFuture() {
+                // Zbierz słowa
+                const words = [];
+                for (let i = 0; i < playerWords; i++) {
+                    const word = document.getElementById(`word${i}`).value.trim();
+                    if (!word) {
+                        alert(`Proszę wpisać słowo ${i + 1}`);
+                        return;
+                    }
+                    words.push(word);
+                }
+
+                // Wyślij do API
+                document.getElementById('predict-btn').disabled = true;
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('prediction').style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/fortune/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event_id: eventId,
+                            player_id: playerId,
+                            words: words
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('prediction').innerHTML = `
+                            <h4>✨ Twoja Przepowiednia</h4>
+                            <p>${data.prediction}</p>
+                            <div class="alert alert-success mt-3">
+                                🎉 Otrzymałeś ${data.points} punktów!
+                            </div>
+                        `;
+                        document.getElementById('prediction').style.display = 'block';
+                    } else {
+                        alert('Błąd: ' + data.error);
+                    }
+                } catch (error) {
+                    alert('Błąd: ' + error.message);
+                } finally {
+                    document.getElementById('predict-btn').disabled = false;
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }
+        </script>
+    </body>
+    </html>
+    ''', player_words=player_words, event_id=event_id)
+
+@app.route('/api/host/fortune/toggle', methods=['POST'])
+@host_required
+def toggle_fortune():
+    """Przełącz aktywność Wróżki AI"""
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'fortune_enabled', 'True' if enabled else 'False')
+
+    return jsonify({
+        'message': f'Wróżka AI {"aktywowana" if enabled else "deaktywowana"}',
+        'enabled': enabled
+    })
+
+@app.route('/api/host/fortune/word-count', methods=['PUT'])
+@host_required
+def update_fortune_word_count():
+    """Aktualizuj liczbę słów AI"""
+    event_id = session['host_event_id']
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 10 or value > 500:
+        return jsonify({'error': 'Wartość musi być w zakresie 10-500'}), 400
+
+    set_game_state(event_id, 'fortune_word_count', str(value))
+    return jsonify({'message': f'Liczba słów AI zaktualizowana do {value}'})
+
+@app.route('/api/host/fortune/points', methods=['PUT'])
+@host_required
+def update_fortune_points():
+    """Aktualizuj punkty za udział"""
+    event_id = session['host_event_id']
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
+
+    set_game_state(event_id, 'fortune_points', str(value))
+    return jsonify({'message': f'Punkty za udział zaktualizowane do {value}'})
+
+@app.route('/api/host/fortune/player-words', methods=['PUT'])
+@host_required
+def update_fortune_player_words():
+    """Aktualizuj liczbę słów gracza"""
+    event_id = session['host_event_id']
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 10:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-10'}), 400
+
+    set_game_state(event_id, 'fortune_player_words', str(value))
+    return jsonify({'message': f'Liczba słów gracza zaktualizowana do {value}'})
+
+@app.route('/api/fortune/predict', methods=['POST'])
+def fortune_predict():
+    """Generuj przepowiednię AI"""
+    data = request.json
+    event_id = data.get('event_id')
+    player_id = data.get('player_id')
+    words = data.get('words', [])
+
+    if not event_id or not player_id or not words:
+        return jsonify({'error': 'Brak wymaganych danych'}), 400
+
+    player = db.session.get(Player, player_id)
+    if not player or player.event_id != event_id:
+        return jsonify({'error': 'Gracz nie znaleziony'}), 404
+
+    # Pobierz ustawienia
+    word_count = int(get_game_state(event_id, 'fortune_word_count', '300'))
+    points = int(get_game_state(event_id, 'fortune_points', '5'))
+
+    # Sprawdź czy gracz już użył Wróżki
+    already_used_key = f'fortune_used_{player_id}'
+    if get_game_state(event_id, already_used_key, 'False') == 'True':
+        return jsonify({'error': 'Już skorzystałeś z Wróżki AI'}), 403
+
+    # Użyj API AI (tak jak w generowaniu pytań)
+    api_key = get_game_state(event_id, 'openai_api_key', '')
+    if not api_key:
+        return jsonify({'error': 'Brak klucza API'}), 500
+
+    # Przygotuj prompt
+    words_str = ', '.join(words)
+    prompt = f'''Jesteś wróżką na imprezie firmowej. Gracz opisał swoje sny używając słów: {words_str}
+
+Napisz zabawną, kreatywną i pozytywną przepowiednię przyszłości dla tego gracza (około {word_count} słów).
+Przepowiednia powinna:
+- Nawiązywać do podanych słów w ciekawy sposób
+- Być zabawna ale nie obraźliwa
+- Być pozytywna i motywująca
+- Zawierać konkretne "przewidywania"
+- Być napisana w stylu wróżki/jasnowidza
+
+Przykład dla słów "rower, góry":
+"Piękny Sen! Moim zdaniem wkrótce wejdziesz w sporty ekstremalne i cały świat zobaczy jak zjeżdżasz na rowerze z Rysów i to z wierzchołka po stronie polskiej. Prosto do Czarnego Stawu!"'''
+
+    try:
+        openai.api_key = api_key
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Jesteś zabawną wróżką na imprezie firmowej."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=word_count * 2,
+            temperature=0.8
+        )
+
+        prediction = response.choices[0].message.content.strip()
+
+        # Dodaj punkty
+        player.score += points
+
+        # Oznacz że gracz użył Wróżki
+        set_game_state(event_id, already_used_key, 'True')
+
+        db.session.commit()
+
+        # Emit leaderboard update
+        room = f'event_{event_id}'
+        socketio.emit('leaderboard_update', get_leaderboard_data(event_id), room=room)
+
+        return jsonify({
+            'prediction': prediction,
+            'points': points
+        })
+
+    except Exception as e:
+        print(f"Błąd generowania przepowiedni: {e}")
+        return jsonify({'error': 'Błąd generowania przepowiedni'}), 500
+
+@app.route('/api/event/<int:event_id>/players', methods=['GET'])
+def get_event_players(event_id):
+    """Pobierz listę graczy dla eventu"""
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.name).all()
+    return jsonify({
+        'players': [{'id': p.id, 'name': p.name, 'score': p.score} for p in players]
+    })
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':

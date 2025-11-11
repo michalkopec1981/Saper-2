@@ -109,6 +109,7 @@
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
     </ul>
@@ -621,6 +622,51 @@
             </div>
         </div>
 
+        <div class="tab-pane fade" id="fortune">
+            <h4 data-translate="fortune_title">Wróżka AI</h4>
+
+            <!-- Przełącznik Aktywna/Nieaktywna -->
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="fortune-enabled" style="width: 3em; height: 1.5em;">
+                <label class="form-check-label ms-2" for="fortune-enabled">
+                    <span id="fortune-status" class="badge bg-secondary">Nieaktywna</span>
+                </label>
+            </div>
+
+            <!-- Przycisk Podgląd i druk kodu QR -->
+            <button id="fortune-qr-btn" class="btn btn-primary mb-3">📱 Podgląd i druk kodu QR</button>
+
+            <!-- Liczba słów AI -->
+            <div class="mb-3">
+                <label class="form-label"><strong>Liczba słów (AI):</strong></label>
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="number" class="form-control" id="fortune-word-count" value="300" min="10" max="500">
+                    <button class="btn btn-primary" onclick="updateFortuneSetting('word_count')">OK</button>
+                </div>
+                <small class="text-muted">Zakres: 10-500 (domyślnie: 300)</small>
+            </div>
+
+            <!-- Punkty za udział -->
+            <div class="mb-3">
+                <label class="form-label"><strong>Liczba punktów za udział:</strong></label>
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="number" class="form-control" id="fortune-points" value="5" min="1" max="100">
+                    <button class="btn btn-primary" onclick="updateFortuneSetting('points')">OK</button>
+                </div>
+                <small class="text-muted">Domyślnie: 5 punktów</small>
+            </div>
+
+            <!-- Liczba słów gracza -->
+            <div class="mb-3">
+                <label class="form-label"><strong>Liczba słów gracza:</strong></label>
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="number" class="form-control" id="fortune-player-words" value="2" min="1" max="10">
+                    <button class="btn btn-primary" onclick="updateFortuneSetting('player_words')">OK</button>
+                </div>
+                <small class="text-muted">Ile słów gracz musi wpisać (domyślnie: 2)</small>
+            </div>
+        </div>
+
         <div class="tab-pane fade" id="timing">
             <fieldset id="timing-settings" disabled>
                 <div class="card mb-4">
@@ -1001,6 +1047,8 @@
         tab_password: 'Hasło',
         tab_photo: 'Foto',
         tab_ar: 'AR',
+        tab_fortune: 'Wróżka AI',
+        fortune_title: 'Wróżka AI - Przepowiednia Przyszłości',
         tab_display: 'Wyświetlacz',
         tab_language: 'Język',
         qr_management: 'Zarządzanie Kodami QR',
@@ -1096,6 +1144,8 @@
         tab_password: 'Password',
         tab_photo: 'Photo',
         tab_ar: 'AR',
+        tab_fortune: 'Fortune Teller AI',
+        fortune_title: 'Fortune Teller AI - Future Prediction',
         tab_display: 'Display',
         tab_language: 'Language',
         qr_management: 'QR Codes Management',
@@ -1191,6 +1241,8 @@
         tab_password: 'Passwort',
         tab_photo: 'Foto',
         tab_ar: 'AR',
+        tab_fortune: 'Wahrsagerin AI',
+        fortune_title: 'Wahrsagerin AI - Zukunftsvorhersage',
         tab_display: 'Anzeige',
         tab_language: 'Sprache',
         qr_management: 'QR-Code-Verwaltung',
@@ -3231,6 +3283,77 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('trex-test-exit-btn').style.display = 'none';
         }
     });
+
+    // Wróżka AI - przełącznik
+    document.getElementById('fortune-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('fortune-status');
+        try {
+            const response = await fetch('/api/host/fortune/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            alert(result.message);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Podgląd QR
+    document.getElementById('fortune-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/fortune_qr/${eventId}`, '_blank');
+    });
+
+    // Aktualizacja ustawień
+    window.updateFortuneSetting = async function(setting) {
+        let value, endpoint;
+
+        if (setting === 'word_count') {
+            value = parseInt(document.getElementById('fortune-word-count').value);
+            if (value < 10 || value > 500) {
+                alert('Liczba słów musi być w zakresie 10-500');
+                return;
+            }
+            endpoint = '/api/host/fortune/word-count';
+        } else if (setting === 'points') {
+            value = parseInt(document.getElementById('fortune-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = '/api/host/fortune/points';
+        } else if (setting === 'player_words') {
+            value = parseInt(document.getElementById('fortune-player-words').value);
+            if (value < 1 || value > 10) {
+                alert('Liczba słów gracza musi być w zakresie 1-10');
+                return;
+            }
+            endpoint = '/api/host/fortune/player-words';
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
 
 });
 </script>
