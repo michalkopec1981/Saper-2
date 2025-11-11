@@ -927,6 +927,31 @@ document.addEventListener('DOMContentLoaded', function() {
         showMessage(data.message, 'success');
     });
 
+    // Odbieranie wiadomości od hosta
+    socket.on('host_message', (data) => {
+        // Sprawdź czy wiadomość jest skierowana do tego gracza
+        if (data.player_id === parseInt(playerId)) {
+            // Wyświetl wiadomość jako alert z większym textboxem
+            const messageHtml = `
+                <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 10px; max-width: 400px; margin: 20px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #856404; margin-bottom: 15px;">📬 Wiadomość od Organizatora</h4>
+                    <p style="color: #333; font-size: 1.1rem; line-height: 1.5; margin: 0;">${data.message}</p>
+                </div>
+            `;
+
+            // Użyj messageSection do wyświetlenia wiadomości
+            messageSection.innerHTML = messageHtml;
+            messageSection.className = 'alert alert-warning';
+            messageSection.style.display = 'block';
+            quizSection.style.display = 'none';
+
+            // Auto-ukryj po 10 sekundach
+            setTimeout(() => {
+                messageSection.style.display = 'none';
+            }, 10000);
+        }
+    });
+
     // Reset player data button
     document.getElementById('reset-player-btn')?.addEventListener('click', () => {
         if (confirm('Czy na pewno chcesz wyczyścić swoje dane i zarejestrować się ponownie?')) {

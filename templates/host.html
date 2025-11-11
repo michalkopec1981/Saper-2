@@ -786,6 +786,33 @@
     </div>
 </div>
 
+<!-- Modal: Wyślij wiadomość do gracza -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1" aria-labelledby="sendMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendMessageModalLabel">
+                    <span id="message-modal-title"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="player-message-input" class="form-label" id="message-content-label"></label>
+                    <textarea class="form-control" id="player-message-input" rows="3" maxlength="120"></textarea>
+                    <small class="text-muted"><span id="message-char-count">0</span> / 120 znaków</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="send-message-to-player-btn">
+                    <span data-translate="send">Wyślij</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 🎮 WIDOKI TESTOWE MINIGIER -->
 
 <!-- Tetris Test View -->
@@ -1043,6 +1070,10 @@
         back_to_admin: 'Powrót do panelu Admina',
         warn: 'Ostrzeż',
         warnings: 'Ostrzeżenia',
+        send_player_message: 'Wyślij wiadomość',
+        message_to_player: 'Wiadomość do gracza',
+        message_content: 'Treść wiadomości (max 120 znaków):',
+        send: 'Wyślij',
         question_category: 'Kategoria pytania:',
         category_company: 'Firmowe',
         category_world: 'Światowe',
@@ -1134,6 +1165,10 @@
         back_to_admin: 'Back to Admin panel',
         warn: 'Warn',
         warnings: 'Warnings',
+        send_player_message: 'Send message',
+        message_to_player: 'Message to player',
+        message_content: 'Message content (max 120 characters):',
+        send: 'Send',
         question_category: 'Question category:',
         category_company: 'Company',
         category_world: 'World',
@@ -1426,6 +1461,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <td>${p.score}</td>
                                     <td>${p.warnings}</td>
                                     <td>
+                                        <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
                                         <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
                                         <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
                                     </td>
@@ -1436,6 +1472,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
                 
                 // Attach event listeners
+                document.querySelectorAll('.send-message-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        openMessageModal(parseInt(btn.dataset.id), btn.dataset.name);
+                    });
+                });
                 document.querySelectorAll('.warn-player-btn').forEach(btn => {
                     btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
                 });
@@ -1466,9 +1507,74 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
         }
     }
-    
+
+    // =====================================================================
+    // WYSYŁANIE WIADOMOŚCI DO GRACZA
+    // =====================================================================
+    let currentMessagePlayerId = null;
+
+    function openMessageModal(playerId, playerName) {
+        currentMessagePlayerId = playerId;
+
+        // Ustaw tytuł modala
+        document.getElementById('message-modal-title').textContent =
+            translations[currentLanguage].message_to_player + ': ' + playerName;
+
+        // Ustaw label pola tekstowego
+        document.getElementById('message-content-label').textContent =
+            translations[currentLanguage].message_content;
+
+        // Wyczyść pole tekstowe
+        const messageInput = document.getElementById('player-message-input');
+        messageInput.value = '';
+        document.getElementById('message-char-count').textContent = '0';
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('sendMessageModal'));
+        modal.show();
+    }
+
+    // Licznik znaków w textarea
+    document.getElementById('player-message-input')?.addEventListener('input', (e) => {
+        const length = e.target.value.length;
+        document.getElementById('message-char-count').textContent = length;
+    });
+
+    // Obsługa przycisku wyślij w modalu
+    document.getElementById('send-message-to-player-btn')?.addEventListener('click', async () => {
+        const message = document.getElementById('player-message-input').value.trim();
+
+        if (!message) {
+            alert('Proszę wpisać wiadomość');
+            return;
+        }
+
+        if (message.length > 120) {
+            alert('Wiadomość może mieć maksymalnie 120 znaków');
+            return;
+        }
+
+        try {
+            // Wyślij wiadomość przez Socket.IO
+            socket.emit('host_message_to_player', {
+                player_id: currentMessagePlayerId,
+                message: message,
+                event_id: eventId
+            });
+
+            // Zamknij modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('sendMessageModal'));
+            modal.hide();
+
+            // Pokaż komunikat
+            alert('Wiadomość wysłana do gracza');
+        } catch (error) {
+            alert('Błąd wysyłania wiadomości: ' + error.message);
+        }
+    });
+
     document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
-    
+
     // =====================================================================
     // JĘZYK I TRANSLACJA
     // =====================================================================

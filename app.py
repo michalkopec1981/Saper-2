@@ -2692,6 +2692,31 @@ def on_join(data):
         emit('game_state_update', get_full_game_state(event_id), room=request.sid)
         emit_leaderboard_update(room)
 
+@socketio.on('host_message_to_player')
+def handle_host_message_to_player(data):
+    """Host wysyła wiadomość do konkretnego gracza"""
+    player_id = data.get('player_id')
+    message = data.get('message')
+    event_id = data.get('event_id')
+
+    if not player_id or not message or not event_id:
+        return
+
+    # Walidacja długości wiadomości
+    if len(message) > 120:
+        return
+
+    # Wyślij wiadomość do konkretnego gracza przez Socket.IO
+    # Używamy room dla eventu i emitujemy do wszystkich w roomie
+    # Po stronie klienta (player.html) musi sprawdzić czy wiadomość jest dla niego
+    room = f'event_{event_id}'
+    socketio.emit('host_message', {
+        'player_id': player_id,
+        'message': message
+    }, room=room)
+
+    print(f"Host wysłał wiadomość do gracza {player_id}: {message}")
+
 # ===================================================================
 # --- AR (Augmented Reality) Endpoints ---
 # ===================================================================
