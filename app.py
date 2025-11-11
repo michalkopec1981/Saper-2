@@ -16,21 +16,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-# Import dla Claude API
+# Import dla Claude API (używany do generowania pytań AI i Wróżki AI)
 try:
     import anthropic
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
-    print("⚠️  anthropic package not installed. AI question generation will be limited.")
-
-# Import dla OpenAI API (Wróżka AI)
-try:
-    import openai
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-    print("⚠️  openai package not installed. Fortune Teller AI will not work.")
+    print("⚠️  anthropic package not installed. AI features (question generation, Fortune Teller) will not work.")
 
 # Import dla rozpoznawania obrazów AR
 try:
@@ -3399,10 +3391,13 @@ def fortune_predict():
     if get_game_state(event_id, already_used_key, 'False') == 'True':
         return jsonify({'error': 'Już skorzystałeś z Wróżki AI'}), 403
 
-    # Użyj API AI (tak jak w generowaniu pytań)
-    api_key = get_game_state(event_id, 'openai_api_key', '')
+    # Użyj Claude API (tak samo jak w generowaniu pytań)
+    if not ANTHROPIC_AVAILABLE:
+        return jsonify({'error': 'AI nie jest dostępne. Skontaktuj się z organizatorem.'}), 500
+
+    api_key = os.environ.get('ANTHROPIC_API_KEY')
     if not api_key:
-        return jsonify({'error': 'Brak klucza API'}), 500
+        return jsonify({'error': 'Brak klucza API. Skontaktuj się z organizatorem.'}), 500
 
     # Przygotuj prompt
     words_str = ', '.join(words)
@@ -3417,22 +3412,28 @@ Przepowiednia powinna:
 - Być napisana w stylu wróżki/jasnowidza
 
 Przykład dla słów "rower, góry":
-"Piękny Sen! Moim zdaniem wkrótce wejdziesz w sporty ekstremalne i cały świat zobaczy jak zjeżdżasz na rowerze z Rysów i to z wierzchołka po stronie polskiej. Prosto do Czarnego Stawu!"'''
+"Piękny Sen! Moim zdaniem wkrótce wejdziesz w sporty ekstremalne i cały świat zobaczy jak zjeżdżasz na rowerze z Rysów i to z wierzchołka po stronie polskiej. Prosto do Czarnego Stawu!"
+
+Napisz TYLKO przepowiednię, bez żadnych dodatkowych komentarzy czy wyjaśnień.'''
 
     try:
-        openai.api_key = api_key
+        print(f"🔮 Generating fortune prediction for player {player_id} with words: {words_str}")
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Jesteś zabawną wróżką na imprezie firmowej."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=word_count * 2,
-            temperature=0.8
+        client = anthropic.Anthropic(api_key=api_key)
+
+        message = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=word_count * 3,
+            temperature=0.9,
+            messages=[{
+                "role": "user",
+                "content": prompt
+            }]
         )
 
-        prediction = response.choices[0].message.content.strip()
+        prediction = message.content[0].text.strip()
+
+        print(f"✅ Successfully generated fortune prediction (length: {len(prediction)} chars)")
 
         # Dodaj punkty
         player.score += points
@@ -3452,8 +3453,11 @@ Przykład dla słów "rower, góry":
         })
 
     except Exception as e:
-        print(f"Błąd generowania przepowiedni: {e}")
-        return jsonify({'error': 'Błąd generowania przepowiedni'}), 500
+        error_msg = str(e)
+        print(f"❌ Error generating fortune prediction: {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Błąd generowania przepowiedni. Spróbuj ponownie.'}), 500
 
 @app.route('/api/event/<int:event_id>/players', methods=['GET'])
 def get_event_players(event_id):
