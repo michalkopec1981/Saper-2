@@ -446,16 +446,11 @@
                     <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
                 </div>
                 <div class="card-body">
-                    <h6 class="mb-3">Predefiniowane kategorie:</h6>
-                    <div id="ai-categories-list" class="mb-4"></div>
-
-                    <hr>
-
-                    <h6 class="mb-3">Dodaj własną kategorię:</h6>
-                    <div class="row g-3">
+                    <h6 class="mb-3">Dodaj kategorię:</h6>
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
-                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
+                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Film, Geografia, Medycyna">
                         </div>
                         <div class="col-md-4">
                             <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
@@ -470,7 +465,10 @@
                         </div>
                     </div>
 
-                    <div id="custom-categories-list" class="mt-4"></div>
+                    <hr>
+
+                    <h6 class="mb-3">Twoje kategorie:</h6>
+                    <div id="ai-categories-list"></div>
                 </div>
             </div>
         </div>
@@ -2774,11 +2772,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch('/api/host/ai/categories');
             const categories = await response.json();
 
-            const predefinedList = document.getElementById('ai-categories-list');
-            const customList = document.getElementById('custom-categories-list');
+            const categoriesList = document.getElementById('ai-categories-list');
+            categoriesList.innerHTML = '';
 
-            predefinedList.innerHTML = '';
-            customList.innerHTML = '';
+            if (categories.length === 0) {
+                categoriesList.innerHTML = '<p class="text-muted">Brak kategorii. Dodaj swoją pierwszą kategorię powyżej.</p>';
+                return;
+            }
 
             categories.forEach(cat => {
                 const categoryItem = document.createElement('div');
@@ -2802,31 +2802,21 @@ document.addEventListener('DOMContentLoaded', function () {
                                        onchange="toggleAICategory(${cat.id}, this.checked)">
                                 <label class="form-check-label">Aktywna</label>
                             </div>
-                            ${cat.is_custom ? `
-                                <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
-                                    Generuj pytania
-                                </button>
-                                <button class="btn btn-sm btn-info ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
-                                    Edytuj
-                                </button>
-                                <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
-                                    Usuń
-                                </button>
-                            ` : ''}
+                            <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
+                                Generuj pytania
+                            </button>
+                            <button class="btn btn-sm btn-info ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
+                                Edytuj
+                            </button>
+                            <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
+                                Usuń
+                            </button>
                         </div>
                     </div>
                 `;
 
-                if (cat.is_custom) {
-                    customList.appendChild(categoryItem);
-                } else {
-                    predefinedList.appendChild(categoryItem);
-                }
+                categoriesList.appendChild(categoryItem);
             });
-
-            if (customList.children.length === 0) {
-                customList.innerHTML = '<p class="text-muted">Brak własnych kategorii.</p>';
-            }
         } catch (error) {
             console.error('Error loading AI categories:', error);
         }

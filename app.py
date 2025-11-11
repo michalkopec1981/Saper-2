@@ -828,8 +828,7 @@ def reset_event(event_id):
         AICategory.query.filter_by(event_id=event_id).delete()
         db.session.commit()
 
-        # Reinicjalizuj domyślne kategorie AI
-        init_default_ai_categories(event_id)
+        # Po resecie nie ma kategorii AI - użytkownik może dodać własne
 
         room = f'event_{event_id}'
         emit_leaderboard_update(room)
