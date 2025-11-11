@@ -1516,6 +1516,76 @@ def generate_questions_for_category(category_id):
         'count': generated_count
     })
 
+@app.route('/api/host/ai-questions', methods=['GET'])
+@host_required
+def get_ai_questions():
+    """Pobierz listę pytań AI dla eventu"""
+    event_id = session['host_event_id']
+    questions = AIQuestion.query.filter_by(event_id=event_id).order_by(AIQuestion.id.desc()).all()
+
+    return jsonify({
+        'questions': [{
+            'id': q.id,
+            'text': q.text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'correct_answer': q.correct_answer,
+            'source': q.source,
+            'times_shown': q.times_shown,
+            'times_correct': q.times_correct
+        } for q in questions]
+    })
+
+@app.route('/api/host/ai-question/<int:question_id>', methods=['PUT'])
+@host_required
+def update_ai_question(question_id):
+    """Aktualizuj pytanie AI"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Pytanie nie znalezione'}), 404
+
+    data = request.json
+
+    # Aktualizuj pola
+    question.text = data.get('text', question.text)
+    question.option_a = data.get('option_a', question.option_a)
+    question.option_b = data.get('option_b', question.option_b)
+    question.option_c = data.get('option_c', question.option_c)
+    question.correct_answer = data.get('correct_answer', question.correct_answer)
+    question.source = 'edited'  # Oznacz pytanie jako edytowane
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Pytanie zaktualizowane',
+        'question': {
+            'id': question.id,
+            'text': question.text,
+            'option_a': question.option_a,
+            'option_b': question.option_b,
+            'option_c': question.option_c,
+            'correct_answer': question.correct_answer
+        }
+    })
+
+@app.route('/api/host/ai-question/<int:question_id>', methods=['DELETE'])
+@host_required
+def delete_ai_question(question_id):
+    """Usuń pytanie AI"""
+    event_id = session['host_event_id']
+    question = AIQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Pytanie nie znalezione'}), 404
+
+    db.session.delete(question)
+    db.session.commit()
+
+    return jsonify({'message': 'Pytanie usunięte'})
+
 @app.route('/api/host/qrcodes/generate', methods=['POST'])
 @host_required
 def host_generate_qr_codes():

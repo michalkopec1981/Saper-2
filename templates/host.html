@@ -442,8 +442,13 @@
         <div class="tab-pane fade" id="ai">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
-                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
+                            <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
+                        </div>
+                        <button id="edit-ai-questions-btn" class="btn btn-secondary">✏️ Edytuj pytania AI</button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <h6 class="mb-3">Predefiniowane kategorie:</h6>
@@ -854,6 +859,26 @@
                 <button type="button" class="btn btn-primary" id="send-message-to-player-btn">
                     <span data-translate="send">Wyślij</span>
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edytuj pytania AI -->
+<div class="modal fade" id="editAIQuestionsModal" tabindex="-1" aria-labelledby="editAIQuestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAIQuestionsModalLabel">✏️ Edytuj pytania AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-questions-list" class="mb-3">
+                    <!-- Lista pytań zostanie wczytana tutaj -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
             </div>
         </div>
     </div>
@@ -3347,6 +3372,146 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             if (response.ok) {
                 alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // =====================================================================
+    // EDYCJA PYTAŃ AI
+    // =====================================================================
+
+    document.getElementById('edit-ai-questions-btn')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/host/ai-questions');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd pobierania pytań');
+            }
+
+            const questionsList = document.getElementById('ai-questions-list');
+
+            if (!data.questions || data.questions.length === 0) {
+                questionsList.innerHTML = '<div class="alert alert-info">Brak wygenerowanych pytań AI. Najpierw wygeneruj pytania.</div>';
+            } else {
+                let html = '<div class="accordion" id="aiQuestionsAccordion">';
+
+                data.questions.forEach((q, index) => {
+                    html += `
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading${q.id}">
+                                <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${q.id}" aria-expanded="${index === 0 ? 'true' : 'false'}">
+                                    Pytanie ${index + 1}: ${q.text.substring(0, 80)}${q.text.length > 80 ? '...' : ''}
+                                </button>
+                            </h2>
+                            <div id="collapse${q.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#aiQuestionsAccordion">
+                                <div class="accordion-body">
+                                    <form onsubmit="updateAIQuestion(event, ${q.id})">
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Treść pytania:</strong></label>
+                                            <textarea class="form-control" id="question-text-${q.id}" rows="3" required>${q.text}</textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Odpowiedź A:</strong></label>
+                                            <input type="text" class="form-control" id="option-a-${q.id}" value="${q.option_a}" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Odpowiedź B:</strong></label>
+                                            <input type="text" class="form-control" id="option-b-${q.id}" value="${q.option_b}" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Odpowiedź C:</strong></label>
+                                            <input type="text" class="form-control" id="option-c-${q.id}" value="${q.option_c}" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Poprawna odpowiedź:</strong></label>
+                                            <select class="form-select" id="correct-answer-${q.id}" required>
+                                                <option value="A" ${q.correct_answer === 'A' ? 'selected' : ''}>A</option>
+                                                <option value="B" ${q.correct_answer === 'B' ? 'selected' : ''}>B</option>
+                                                <option value="C" ${q.correct_answer === 'C' ? 'selected' : ''}>C</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">💾 Zapisz zmiany</button>
+                                            <button type="button" class="btn btn-danger" onclick="deleteAIQuestion(${q.id})">🗑️ Usuń</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                questionsList.innerHTML = html;
+            }
+
+            // Otwórz modal
+            const modal = new bootstrap.Modal(document.getElementById('editAIQuestionsModal'));
+            modal.show();
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    window.updateAIQuestion = async function(event, questionId) {
+        event.preventDefault();
+
+        const questionData = {
+            text: document.getElementById(`question-text-${questionId}`).value,
+            option_a: document.getElementById(`option-a-${questionId}`).value,
+            option_b: document.getElementById(`option-b-${questionId}`).value,
+            option_c: document.getElementById(`option-c-${questionId}`).value,
+            correct_answer: document.getElementById(`correct-answer-${questionId}`).value
+        };
+
+        try {
+            const response = await fetch(`/api/host/ai-question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(questionData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Pytanie zaktualizowane pomyślnie!');
+                // Odśwież listę
+                document.getElementById('edit-ai-questions-btn').click();
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.deleteAIQuestion = async function(questionId) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ai-question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Pytanie usunięte pomyślnie!');
+                // Odśwież listę
+                document.getElementById('edit-ai-questions-btn').click();
             } else {
                 alert('Błąd: ' + data.error);
             }
