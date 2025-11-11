@@ -3511,7 +3511,7 @@ Napisz TYLKO przepowiednię, bez żadnych dodatkowych komentarzy czy wyjaśnień
 
         # Emit leaderboard update
         room = f'event_{event_id}'
-        socketio.emit('leaderboard_update', get_leaderboard_data(event_id), room=room)
+        emit_leaderboard_update(room)
 
         return jsonify({
             'prediction': prediction,
