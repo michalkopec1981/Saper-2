@@ -3223,16 +3223,54 @@ def fortune_player(event_id):
             let playerId = null;
             let playerName = '';
 
+            // Funkcja do weryfikacji czy gracz nadal istnieje w bazie
+            async function verifyPlayer() {
+                try {
+                    // Sprawdź czy gracz nadal istnieje przez próbę pobrania danych
+                    const response = await fetch('/api/event/' + eventId + '/players');
+                    const data = await response.json();
+
+                    // Sprawdź czy nasz gracz jest na liście
+                    const playerExists = data.players.some(p => p.id == playerId);
+
+                    if (!playerExists) {
+                        console.log('Player no longer exists in database - clearing localStorage');
+                        // Gracz został usunięty (np. po resecie gry)
+                        localStorage.removeItem(`saperPlayerId_${eventId}`);
+                        localStorage.removeItem(`saperPlayerName_${eventId}`);
+                        playerId = null;
+                        playerName = '';
+
+                        alert('Twoje dane wygasły po resecie gry. Zaloguj się ponownie.');
+                        document.getElementById('fortune-form').style.display = 'none';
+                        document.getElementById('login-section').style.display = 'block';
+                        return false;
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error('Error verifying player:', error);
+                    return true; // W razie błędu pozwól kontynuować
+                }
+            }
+
             // Sprawdź localStorage przy załadowaniu strony
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', async () => {
                 playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
                 playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
 
                 if (playerId && playerName) {
-                    // Gracz już zalogowany - pokaż formularz Wróżki
-                    console.log('Player already registered:', playerName, playerId);
-                    document.getElementById('player-name-display').textContent = playerName;
-                    document.getElementById('fortune-form').style.display = 'block';
+                    // Gracz w localStorage - sprawdź czy nadal istnieje w bazie
+                    console.log('Player found in localStorage:', playerName, playerId);
+                    const isValid = await verifyPlayer();
+
+                    if (isValid) {
+                        // Gracz istnieje - pokaż formularz Wróżki
+                        console.log('Player verified successfully');
+                        document.getElementById('player-name-display').textContent = playerName;
+                        document.getElementById('fortune-form').style.display = 'block';
+                    }
+                    // Jeśli nie istnieje, verifyPlayer() już pokazał formularz logowania
                 } else {
                     // Nowy gracz - pokaż formularz logowania
                     console.log('New player - showing login form');
