@@ -3061,27 +3061,75 @@ def fortune_qr_preview(event_id):
     <html>
     <head>
         <title>Wróżka AI - Kod QR</title>
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
-            body {{ font-family: Arial; text-align: center; padding: 50px; }}
-            #qrcode {{ margin: 20px auto; }}
-            .info {{ margin: 20px; font-size: 18px; }}
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #7b2cbf;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #7b2cbf;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #5a1f8f;
+            }}
             @media print {{
+                body {{ background: white; }}
                 button {{ display: none; }}
+                .container {{ box-shadow: none; }}
             }}
         </style>
     </head>
     <body>
-        <h1>🔮 Wróżka AI</h1>
-        <div class="info">Zeskanuj kod QR aby poznać swoją przyszłość!</div>
-        <div id="qrcode"></div>
-        <div class="info">Event: {event.name}</div>
-        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; margin-top: 20px;">🖨️ Drukuj</button>
+        <div class="container">
+            <h1>🔮 Wróżka AI</h1>
+            <div class="info">Zeskanuj kod QR aby poznać swoją przyszłość!</div>
+            <div id="qrcode"></div>
+            <div class="info"><strong>Event:</strong> {event.name}</div>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+        </div>
         <script>
-            new QRCode(document.getElementById("qrcode"), {{
+            // Generuj kod QR
+            var qrcode = new QRCode(document.getElementById("qrcode"), {{
                 text: "{fortune_url}",
                 width: 300,
-                height: 300
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
             }});
         </script>
     </body>
