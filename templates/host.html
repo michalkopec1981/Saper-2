@@ -434,6 +434,22 @@
                     <button class="btn btn-primary" id="add-question-btn" data-translate="add_question">Dodaj pytanie</button>
                 </div>
                 <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="questions-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="questions-enabled">
+                                    <span id="questions-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <div id="questions-list"></div>
                 </div>
             </div>
@@ -446,6 +462,22 @@
                     <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
                 </div>
                 <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ai-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="ai-enabled">
+                                    <span id="ai-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań AI</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <h6 class="mb-3">Dodaj kategorię:</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
@@ -477,8 +509,24 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
                 <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="minigames-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="minigames-enabled">
+                                    <span id="minigames-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować zielonych kodów QR do minigier</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <div class="alert alert-info">
-                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR. 
+                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR.
                         Każda minigra wymaga zdobycia 20 punktów, aby otrzymać nagrodę.
                     </div>
                     
@@ -583,6 +631,22 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
                 <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="photo-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="photo-enabled">
+                                    <span id="photo-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli robić i przesyłać zdjęć</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
                     <p data-translate="photo_description">Tutaj będą widoczne zdjęcia przesłane przez graczy.</p>
                     <div class="alert alert-secondary text-center">
                         <p class="mb-0">Wkrótce - galeria zdjęć z głosowaniem</p>
@@ -3529,6 +3593,90 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('fortune-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
         window.open(`/fortune_qr/${eventId}`, '_blank');
+    });
+
+    // ===================================================
+    // PRZEŁĄCZNIKI STAN GRY
+    // ===================================================
+
+    // Pytania - przełącznik
+    document.getElementById('questions-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('questions-status');
+        try {
+            const response = await fetch('/api/host/questions/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // AI - przełącznik
+    document.getElementById('ai-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('ai-status');
+        try {
+            const response = await fetch('/api/host/ai/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Minigry - przełącznik
+    document.getElementById('minigames-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('minigames-status');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Foto - przełącznik
+    document.getElementById('photo-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('photo-status');
+        try {
+            const response = await fetch('/api/host/photo/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
     });
 
     // Aktualizacja ustawień

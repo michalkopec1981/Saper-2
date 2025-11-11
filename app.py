@@ -3390,6 +3390,66 @@ def toggle_fortune():
         'enabled': enabled
     })
 
+@app.route('/api/host/questions/toggle', methods=['POST'])
+@host_required
+def toggle_questions():
+    """Przełącz aktywność pytań"""
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'questions_enabled', 'True' if enabled else 'False')
+
+    return jsonify({
+        'message': f'Pytania {"aktywowane" if enabled else "deaktywowane"}',
+        'enabled': enabled
+    })
+
+@app.route('/api/host/ai/toggle', methods=['POST'])
+@host_required
+def toggle_ai():
+    """Przełącz aktywność pytań AI"""
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'ai_enabled', 'True' if enabled else 'False')
+
+    return jsonify({
+        'message': f'Pytania AI {"aktywowane" if enabled else "deaktywowane"}',
+        'enabled': enabled
+    })
+
+@app.route('/api/host/minigames/toggle', methods=['POST'])
+@host_required
+def toggle_minigames():
+    """Przełącz aktywność wszystkich minigier"""
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'minigames_enabled', 'True' if enabled else 'False')
+
+    return jsonify({
+        'message': f'Minigry {"aktywowane" if enabled else "deaktywowane"}',
+        'enabled': enabled
+    })
+
+@app.route('/api/host/photo/toggle', methods=['POST'])
+@host_required
+def toggle_photo():
+    """Przełącz aktywność galerii zdjęć"""
+    event_id = session['host_event_id']
+    data = request.json
+    enabled = data.get('enabled', False)
+
+    set_game_state(event_id, 'photo_enabled', 'True' if enabled else 'False')
+
+    return jsonify({
+        'message': f'Galeria zdjęć {"aktywowana" if enabled else "deaktywowana"}',
+        'enabled': enabled
+    })
+
 @app.route('/api/host/fortune/word-count', methods=['PUT'])
 @host_required
 def update_fortune_word_count():
