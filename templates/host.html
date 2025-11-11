@@ -2653,14 +2653,17 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
-        console.log('🎮 Starting game with', minutes, 'minutes');
-        
-        if (isNaN(minutes) || minutes < 1) {
-            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
-            return;
+        // ✅ Pobierz z obu możliwych źródeł lub użyj wartości domyślnej
+        let minutes = parseInt(document.getElementById('game-duration-input')?.value);
+        if (!minutes || isNaN(minutes)) {
+            minutes = parseInt(document.getElementById('game-duration-input-2')?.value);
         }
-        
+        if (!minutes || isNaN(minutes)) {
+            minutes = 60; // Domyślna wartość
+        }
+
+        console.log('🎮 Starting game with', minutes, 'minutes');
+
         if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
             return;
         }
