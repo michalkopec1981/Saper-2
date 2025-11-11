@@ -2879,6 +2879,29 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <img src="${obj.image_data}" style="width: 100%; max-height: 200px; object-fit: contain;">
                                 </div>
                                 <p class="mb-2"><strong>Gra:</strong> ${obj.game_type}</p>
+
+                                <!-- Czułość -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Czułość:</strong></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="sensitivity-${obj.id}"
+                                               value="${obj.sensitivity || 50}" min="5" max="500" step="5">
+                                        <button class="btn btn-primary" onclick="updateARSensitivity(${obj.id})">OK</button>
+                                    </div>
+                                    <small class="text-muted">Zakres: 5-500 (domyślnie: 50)</small>
+                                </div>
+
+                                <!-- Interwał skanowania -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Interwał skanowania:</strong></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="interval-${obj.id}"
+                                               value="${obj.scan_interval || 2}" min="1" max="10" step="1">
+                                        <button class="btn btn-primary" onclick="updateARInterval(${obj.id})">OK</button>
+                                    </div>
+                                    <small class="text-muted">Zakres: 1-10 sekund (domyślnie: 2)</small>
+                                </div>
+
                                 <button class="btn btn-danger w-100" onclick="deleteARObject(${obj.id})">
                                     🗑️ Usuń
                                 </button>
@@ -2906,6 +2929,64 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelector('button[data-bs-target="#ar"]').click();
             } else {
                 alert('Błąd usuwania obiektu');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateARSensitivity = async function(objectId) {
+        const inputElement = document.getElementById(`sensitivity-${objectId}`);
+        const sensitivity = parseInt(inputElement.value);
+
+        // Walidacja
+        if (isNaN(sensitivity) || sensitivity < 5 || sensitivity > 500) {
+            alert('Czułość musi być w zakresie 5-500');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}/sensitivity`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sensitivity })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + (data.error || 'Nie udało się zaktualizować czułości'));
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateARInterval = async function(objectId) {
+        const inputElement = document.getElementById(`interval-${objectId}`);
+        const scan_interval = parseInt(inputElement.value);
+
+        // Walidacja
+        if (isNaN(scan_interval) || scan_interval < 1 || scan_interval > 10) {
+            alert('Interwał skanowania musi być w zakresie 1-10 sekund');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}/interval`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scan_interval })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + (data.error || 'Nie udało się zaktualizować interwału'));
             }
         } catch (error) {
             alert('Błąd: ' + error.message);

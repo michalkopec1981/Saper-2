@@ -195,6 +195,8 @@ class ARObject(db.Model):
     image_features = db.Column(db.Text, nullable=True)  # JSON z cechami obrazu dla rozpoznawania
     game_type = db.Column(db.String(50), nullable=False)  # 'snake', 'quiz', 'tetris', 'arkanoid'
     is_active = db.Column(db.Boolean, default=True)
+    sensitivity = db.Column(db.Integer, default=50)  # Czułość wykrywania (5-500)
+    scan_interval = db.Column(db.Integer, default=2)  # Interwał skanowania w sekundach (1-10)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Inicjalizacja bazy danych przy starcie aplikacji
@@ -2708,6 +2710,8 @@ def get_ar_objects():
             'object_name': obj.object_name,
             'image_data': obj.image_data,
             'game_type': obj.game_type,
+            'sensitivity': obj.sensitivity if obj.sensitivity is not None else 50,
+            'scan_interval': obj.scan_interval if obj.scan_interval is not None else 2,
             'created_at': obj.created_at.isoformat()
         })
 
@@ -2784,6 +2788,72 @@ def delete_ar_object(object_id):
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Obiekt usunięty'})
+
+@app.route('/api/host/ar/object/<int:object_id>/sensitivity', methods=['PUT'])
+@host_required
+def update_ar_sensitivity(object_id):
+    """Zaktualizuj czułość wykrywania obiektu AR"""
+    event_id = session['host_event_id']
+    ar_object = ARObject.query.filter_by(id=object_id, event_id=event_id).first()
+
+    if not ar_object:
+        return jsonify({'error': 'Obiekt nie znaleziony'}), 404
+
+    data = request.json
+    sensitivity = data.get('sensitivity')
+
+    if sensitivity is None:
+        return jsonify({'error': 'Brak wartości czułości'}), 400
+
+    # Walidacja zakresu
+    try:
+        sensitivity = int(sensitivity)
+        if sensitivity < 5 or sensitivity > 500:
+            return jsonify({'error': 'Czułość musi być w zakresie 5-500'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Nieprawidłowa wartość czułości'}), 400
+
+    ar_object.sensitivity = sensitivity
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': f'Czułość zaktualizowana do {sensitivity}',
+        'sensitivity': sensitivity
+    })
+
+@app.route('/api/host/ar/object/<int:object_id>/interval', methods=['PUT'])
+@host_required
+def update_ar_interval(object_id):
+    """Zaktualizuj interwał skanowania obiektu AR"""
+    event_id = session['host_event_id']
+    ar_object = ARObject.query.filter_by(id=object_id, event_id=event_id).first()
+
+    if not ar_object:
+        return jsonify({'error': 'Obiekt nie znaleziony'}), 404
+
+    data = request.json
+    scan_interval = data.get('scan_interval')
+
+    if scan_interval is None:
+        return jsonify({'error': 'Brak wartości interwału'}), 400
+
+    # Walidacja zakresu
+    try:
+        scan_interval = int(scan_interval)
+        if scan_interval < 1 or scan_interval > 10:
+            return jsonify({'error': 'Interwał musi być w zakresie 1-10 sekund'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Nieprawidłowa wartość interwału'}), 400
+
+    ar_object.scan_interval = scan_interval
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': f'Interwał skanowania zaktualizowany do {scan_interval}s',
+        'scan_interval': scan_interval
+    })
 
 @app.route('/api/player/ar/recognize', methods=['POST'])
 def recognize_ar_object():
