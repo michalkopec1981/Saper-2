@@ -8,7 +8,7 @@ load_dotenv()
 import os
 import random
 import json
-from flask import Flask, render_template, request, jsonify, url_for, session, redirect
+from flask import Flask, render_template, render_template_string, request, jsonify, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime, timedelta
