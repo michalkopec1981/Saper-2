@@ -709,7 +709,13 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
-                            <button id="fortune-qr-btn" class="btn btn-primary">📱 Podgląd i druk kodu QR</button>
+                            <button id="fortune-qr-btn" class="btn btn-primary mb-3">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="fortune-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR</button>
+                                <button id="fortune-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
                         </div>
                     </div>
 
@@ -3620,6 +3626,49 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('fortune-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
         window.open(`/fortune_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR
+    document.getElementById('fortune-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('fortune-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('fortune-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/fortune/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR
+    document.getElementById('fortune-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/fortune_qr/${eventId}?backup=true`, '_blank');
     });
 
     // ===================================================

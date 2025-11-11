@@ -8,6 +8,7 @@ load_dotenv()
 import os
 import random
 import json
+import uuid
 from flask import Flask, render_template, render_template_string, request, jsonify, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit, join_room
@@ -3044,8 +3045,19 @@ def fortune_qr_preview(event_id):
     if not event:
         return "Event nie znaleziony", 404
 
+    # Sprawdź czy to zapasowy kod QR
+    is_backup = request.args.get('backup', 'false').lower() == 'true'
+
     # Generuj kod QR dla fortune
-    fortune_url = url_for('fortune_player', event_id=event_id, _external=True)
+    if is_backup:
+        backup_uuid = get_game_state(event_id, 'fortune_backup_qr_uuid', None)
+        if not backup_uuid:
+            return "Zapasowy kod QR nie został jeszcze wygenerowany", 404
+        fortune_url = url_for('fortune_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
+        title = "🔮 Wróżka AI - Zapasowy Kod"
+    else:
+        fortune_url = url_for('fortune_player', event_id=event_id, _external=True)
+        title = "🔮 Wróżka AI"
 
     return f'''
     <!DOCTYPE html>
@@ -3106,7 +3118,7 @@ def fortune_qr_preview(event_id):
     </head>
     <body>
         <div class="container">
-            <h1>🔮 Wróżka AI</h1>
+            <h1>{title}</h1>
             <div class="info">Zeskanuj kod QR aby poznać swoją przyszłość!</div>
             <div id="qrcode"></div>
             <div class="info"><strong>Event:</strong> {event.name}</div>
@@ -3491,6 +3503,74 @@ def update_fortune_player_words():
 
     set_game_state(event_id, 'fortune_player_words', str(value))
     return jsonify({'message': f'Liczba słów gracza zaktualizowana do {value}'})
+
+@app.route('/api/host/fortune/generate_backup_qr/<int:event_id>', methods=['POST'])
+@host_required
+def generate_fortune_backup_qr(event_id):
+    """Generuj zapasowy kod QR dla Wróżki AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Event nie znaleziony'}), 404
+
+    # Generuj nowy UUID dla zapasowego kodu QR
+    backup_uuid = str(uuid.uuid4())
+    set_game_state(event_id, 'fortune_backup_qr_uuid', backup_uuid)
+
+    return jsonify({
+        'message': 'Zapasowy kod QR został wygenerowany',
+        'backup_uuid': backup_uuid
+    })
+
+@app.route('/fortune_backup/<int:event_id>/<backup_uuid>')
+def fortune_player_backup(event_id, backup_uuid):
+    """Widok Wróżki AI dla gracza - zapasowy kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy UUID się zgadza
+    stored_uuid = get_game_state(event_id, 'fortune_backup_qr_uuid', None)
+    if not stored_uuid or stored_uuid != backup_uuid:
+        return "Nieprawidłowy kod QR", 403
+
+    # Sprawdź czy włączona
+    enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Wróżka AI</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .message {
+                    background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    max-width: 400px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>🔮 Wróżka AI</h1>
+            <div class="message">
+                <h2>⏸️ Chwilowo niedostępna</h2>
+                <p>Wróżka AI jest obecnie wyłączona przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do tego samego widoku co fortune_player
+    return redirect(url_for('fortune_player', event_id=event_id))
 
 @app.route('/api/fortune/predict', methods=['POST'])
 def fortune_predict():
