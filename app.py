@@ -1303,6 +1303,86 @@ def toggle_minigame():
 
     return jsonify({'error': 'Nieznany typ minigry'}), 400
 
+@app.route('/api/host/minigames/settings', methods=['GET', 'POST'])
+@host_required
+def minigames_settings():
+    event_id = session['host_event_id']
+
+    if request.method == 'GET':
+        # Pobieranie ustawień
+        completion_points = int(get_game_state(event_id, 'minigame_completion_points', '10'))
+        target_points = int(get_game_state(event_id, 'minigame_target_points', '20'))
+        player_choice = get_game_state(event_id, 'minigame_player_choice', 'False') == 'True'
+
+        return jsonify({
+            'completion_points': completion_points,
+            'target_points': target_points,
+            'player_choice': player_choice
+        })
+
+    elif request.method == 'POST':
+        # Zapisywanie ustawień
+        data = request.json
+        setting_type = data.get('setting_type')
+        value = data.get('value')
+
+        if setting_type == 'completion_points':
+            set_game_state(event_id, 'minigame_completion_points', str(value))
+            return jsonify({
+                'message': f'Liczba punktów za przejście gry ustawiona na {value}',
+                'completion_points': value
+            })
+
+        elif setting_type == 'target_points':
+            set_game_state(event_id, 'minigame_target_points', str(value))
+            return jsonify({
+                'message': f'Liczba punktów do zdobycia w grze ustawiona na {value}',
+                'target_points': value
+            })
+
+        elif setting_type == 'player_choice':
+            set_game_state(event_id, 'minigame_player_choice', 'True' if value else 'False')
+            return jsonify({
+                'message': f'Wybór gry {"włączony" if value else "wyłączony"}',
+                'player_choice': value
+            })
+
+        return jsonify({'error': 'Nieznany typ ustawienia'}), 400
+
+@app.route('/api/player/minigames/available', methods=['GET'])
+def get_available_minigames():
+    """Endpoint dla gracza do pobrania dostępnych minigrów"""
+    event_id = request.args.get('event_id', type=int)
+    if not event_id:
+        return jsonify({'error': 'Brak event_id'}), 400
+
+    # Pobierz ustawienia
+    player_choice = get_game_state(event_id, 'minigame_player_choice', 'False') == 'True'
+    target_points = int(get_game_state(event_id, 'minigame_target_points', '20'))
+    completion_points = int(get_game_state(event_id, 'minigame_completion_points', '10'))
+
+    # Sprawdź które gry są aktywne
+    available_games = []
+
+    if get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'False':
+        available_games.append({'id': 'tetris', 'name': '🎮 Tetris', 'description': 'Ułóż linie'})
+
+    if get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'False':
+        available_games.append({'id': 'arkanoid', 'name': '🏓 Arkanoid', 'description': 'Zbij cegły'})
+
+    if get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'False':
+        available_games.append({'id': 'snake', 'name': '🐍 Snake', 'description': 'Zbieraj jedzenie'})
+
+    if get_game_state(event_id, 'minigame_trex_disabled', 'False') == 'False':
+        available_games.append({'id': 'trex', 'name': '🦖 T-Rex', 'description': 'Unikaj przeszkód'})
+
+    return jsonify({
+        'player_choice': player_choice,
+        'target_points': target_points,
+        'completion_points': completion_points,
+        'available_games': available_games
+    })
+
 @app.route('/api/host/questions', methods=['GET', 'POST'])
 @host_required
 def host_questions():
@@ -2421,12 +2501,16 @@ def complete_minigame():
 
     game_name_map = {'tetris': 'Tetris', 'arkanoid': 'Arkanoid', 'snake': 'Snake', 'trex': 'T-Rex'}
     game_name = game_name_map.get(game_type, 'Unknown')
-    
-    # Sprawdź czy gracz osiągnął 20 punktów
-    if new_score >= 20:
+
+    # Pobierz ustawienia punktów z konfiguracji
+    target_points = int(get_game_state(player.event_id, 'minigame_target_points', '20'))
+    completion_points = int(get_game_state(player.event_id, 'minigame_completion_points', '10'))
+
+    # Sprawdź czy gracz osiągnął wymaganą liczbę punktów
+    if new_score >= target_points:
         # Gracz ukończył wyzwanie - przyznaj nagrody
         bonus = int(get_game_state(player.event_id, 'bonus_multiplier', 1))
-        points = 10 * bonus
+        points = completion_points * bonus
         player.score += points
 
         # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
@@ -4534,8 +4618,14 @@ def minigames_player(event_id):
         </html>
         ''')
 
+    # Pobierz ustawienia punktów
+    target_points = int(get_game_state(event_id, 'minigame_target_points', '20'))
+    completion_points = int(get_game_state(event_id, 'minigame_completion_points', '10'))
+    player_choice = get_game_state(event_id, 'minigame_player_choice', 'False') == 'True'
+
     # Przekieruj do widoku player - gracz musi być zalogowany
-    # Kod QR dla minigry uruchomi losową aktywowaną grę
+    game_mode_text = "wybierz grę" if player_choice else "zagraj w losową minigrę"
+
     return render_template_string('''
     <!DOCTYPE html>
     <html>
@@ -4577,12 +4667,21 @@ def minigames_player(event_id):
             .btn:hover {
                 transform: scale(1.05);
             }
+            .info-box {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 15px;
+                padding: 20px;
+                margin-bottom: 20px;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>🎮 Minigry!</h1>
-            <p>Zagraj w losową minigrę i zdobądź 20 punktów!</p>
+            <div class="info-box">
+                <p style="margin: 0;">{{ game_mode_text|title }} i zdobądź {{ target_points }} punktów!</p>
+                <p style="margin: 10px 0 0 0; font-size: 1rem;">Nagroda: {{ completion_points }} punktów</p>
+            </div>
             <p style="font-size: 1rem;">
                 Aby zagrać, musisz być zarejestrowany w grze.
             </p>
@@ -4592,7 +4691,7 @@ def minigames_player(event_id):
         </div>
     </body>
     </html>
-    ''', event_id=event_id)
+    ''', event_id=event_id, target_points=target_points, completion_points=completion_points, game_mode_text=game_mode_text)
 
 # ===================================================================
 # --- AI QR Code Endpoints ---

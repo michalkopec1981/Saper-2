@@ -732,11 +732,50 @@
                         </div>
                     </div>
 
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za przejście gry -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za przejście gry:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="minigame-completion-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateMinigameSetting('completion_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty do zdobycia w grze -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów do zdobycia w grze:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="minigame-target-points" value="20" min="1" max="200">
+                                    <button class="btn btn-primary" onclick="updateMinigameSetting('target_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 20 punktów (pod tę wartość gry są zoptymalizowane)</small>
+                            </div>
+
+                            <!-- Przełącznik wyboru gry -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Wybór gry:</strong></label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="minigame-player-choice" style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="minigame-player-choice">
+                                        <span id="minigame-choice-status" class="badge bg-secondary">Losowa kolejność</span>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Gdy włączone, gracz po zeskanowaniu kodu QR będzie mógł wybrać grę. Gdy wyłączone, gry uruchamiają się w losowej kolejności.</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr>
 
-                    <div class="alert alert-info">
+                    <div class="alert alert-info" id="minigames-info-alert">
                         <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR.
-                        Każda minigra wymaga zdobycia 20 punktów, aby otrzymać nagrodę.
+                        Każda minigra wymaga zdobycia <span id="minigame-target-display">20</span> punktów, aby otrzymać nagrodę <span id="minigame-completion-display">10</span> punktów.
                     </div>
                     
                     <!-- TETRIS -->
@@ -2401,7 +2440,119 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
-        
+
+    // Funkcja do aktualizacji ustawień minigrów
+    async function updateMinigameSetting(settingType) {
+        const infoEl = document.getElementById('minigames-info');
+        let value, settingName;
+
+        if (settingType === 'completion_points') {
+            value = document.getElementById('minigame-completion-points').value;
+            settingName = 'Liczba punktów za przejście gry';
+        } else if (settingType === 'target_points') {
+            value = document.getElementById('minigame-target-points').value;
+            settingName = 'Liczba punktów do zdobycia w grze';
+        }
+
+        try {
+            const response = await fetch('/api/host/minigames/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ setting_type: settingType, value: parseInt(value) })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            // Aktualizuj wyświetlanie w alercie informacyjnym
+            if (settingType === 'completion_points') {
+                const completionDisplay = document.getElementById('minigame-completion-display');
+                if (completionDisplay) completionDisplay.textContent = value;
+            } else if (settingType === 'target_points') {
+                const targetDisplay = document.getElementById('minigame-target-display');
+                if (targetDisplay) targetDisplay.textContent = value;
+            }
+
+            infoEl.textContent = `${settingName} zaktualizowane: ${value}`;
+            infoEl.className = 'alert alert-success mt-3';
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Event listener dla przełącznika wyboru gry
+    document.getElementById('minigame-player-choice')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('minigame-choice-status');
+        const infoEl = document.getElementById('minigames-info');
+
+        try {
+            const response = await fetch('/api/host/minigames/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ setting_type: 'player_choice', value: enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            statusEl.textContent = enabled ? 'Wybór gracza' : 'Losowa kolejność';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+
+            infoEl.textContent = enabled
+                ? 'Gracze będą mogli wybrać grę po zeskanowaniu kodu QR'
+                : 'Gry będą uruchamiane w losowej kolejności';
+            infoEl.className = 'alert alert-success mt-3';
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Ładowanie ustawień minigrów przy starcie
+    function loadMinigamesSettings() {
+        fetch('/api/host/minigames/settings')
+            .then(res => res.json())
+            .then(data => {
+                // Ustawienie punktów za przejście
+                const completionPointsInput = document.getElementById('minigame-completion-points');
+                if (completionPointsInput && data.completion_points !== undefined) {
+                    completionPointsInput.value = data.completion_points;
+                }
+
+                // Ustawienie punktów do zdobycia
+                const targetPointsInput = document.getElementById('minigame-target-points');
+                if (targetPointsInput && data.target_points !== undefined) {
+                    targetPointsInput.value = data.target_points;
+                }
+
+                // Ustawienie przełącznika wyboru gry
+                const playerChoiceToggle = document.getElementById('minigame-player-choice');
+                const playerChoiceStatus = document.getElementById('minigame-choice-status');
+                if (playerChoiceToggle && playerChoiceStatus && data.player_choice !== undefined) {
+                    playerChoiceToggle.checked = data.player_choice;
+                    playerChoiceStatus.textContent = data.player_choice ? 'Wybór gracza' : 'Losowa kolejność';
+                    playerChoiceStatus.className = data.player_choice ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // Aktualizuj wyświetlanie wartości w alercie informacyjnym
+                const targetDisplay = document.getElementById('minigame-target-display');
+                const completionDisplay = document.getElementById('minigame-completion-display');
+                if (targetDisplay && data.target_points !== undefined) {
+                    targetDisplay.textContent = data.target_points;
+                }
+                if (completionDisplay && data.completion_points !== undefined) {
+                    completionDisplay.textContent = data.completion_points;
+                }
+            })
+            .catch(error => console.error('Błąd ładowania ustawień minigrów:', error));
+    }
+
+    // Wywołaj ładowanie ustawień gdy zakładka Minigry jest otwierana
+    document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesSettings);
+
     // =====================================================================
     // STEROWANIE GRĄ
     // =====================================================================
