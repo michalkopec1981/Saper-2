@@ -1933,8 +1933,23 @@ def process_ai_answer():
         # Zwiększ licznik poprawnych odpowiedzi
         question.times_correct += 1
 
-        # Punkty za pytania AI - 5 punktów
-        player.score += 5
+        # Pobierz kategorię pytania i jej poziom trudności
+        category = db.session.get(AICategory, question.category_id)
+        if category:
+            difficulty = category.difficulty_level
+            # Pobierz punkty w zależności od poziomu trudności
+            if difficulty == 'easy':
+                points = int(get_game_state(player.event_id, 'ai_easy_points', '5'))
+            elif difficulty == 'medium':
+                points = int(get_game_state(player.event_id, 'ai_medium_points', '10'))
+            elif difficulty == 'advanced':
+                points = int(get_game_state(player.event_id, 'ai_hard_points', '15'))
+            else:
+                points = 5  # Domyślna wartość dla nieznanych poziomów trudności
+        else:
+            points = 5  # Domyślna wartość jeśli kategoria nie istnieje
+
+        player.score += points
 
         # ✅ LOGIKA ODKRYWANIA HASŁA: Sprawdź tryb odkrywania hasła
         password_mode = get_game_state(player.event_id, 'password_reveal_mode', 'auto')
@@ -3730,6 +3745,49 @@ def update_questions_hard_points(event_id):
 
     set_game_state(event_id, 'questions_hard_points', str(value))
     return jsonify({'message': f'Punkty za trudne pytanie zaktualizowane do {value}'})
+
+# ===================================================================
+# --- AI Points Settings Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/ai/easy-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_ai_easy_points(event_id):
+    """Aktualizuj punkty za łatwe pytanie AI"""
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
+
+    set_game_state(event_id, 'ai_easy_points', str(value))
+    return jsonify({'message': f'Punkty za łatwe pytanie AI zaktualizowane do {value}'})
+
+@app.route('/api/host/ai/medium-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_ai_medium_points(event_id):
+    """Aktualizuj punkty za średnie pytanie AI"""
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
+
+    set_game_state(event_id, 'ai_medium_points', str(value))
+    return jsonify({'message': f'Punkty za średnie pytanie AI zaktualizowane do {value}'})
+
+@app.route('/api/host/ai/hard-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_ai_hard_points(event_id):
+    """Aktualizuj punkty za trudne pytanie AI"""
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
+
+    set_game_state(event_id, 'ai_hard_points', str(value))
+    return jsonify({'message': f'Punkty za trudne pytanie AI zaktualizowane do {value}'})
 
 @app.route('/api/host/fortune/generate_backup_qr/<int:event_id>', methods=['POST'])
 @host_required

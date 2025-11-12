@@ -556,6 +556,43 @@
                         </div>
                     </div>
 
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za łatwe pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na łatwe pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-easy-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('easy_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Punkty za średnie pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na średnie pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-medium-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('medium_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty za trudne pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na trudne pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-hard-points" value="15" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('hard_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 15 punktów</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr>
 
                     <h6 class="mb-3">Dodaj kategorię:</h6>
@@ -4145,6 +4182,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             endpoint = `/api/host/questions/hard-points/${eventId}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do aktualizacji ustawień AI
+    window.updateAISetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('ai-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/easy-points/${eventId}`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('ai-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/medium-points/${eventId}`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('ai-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/hard-points/${eventId}`;
         }
 
         try {
