@@ -1221,11 +1221,111 @@ def fix_db_columns_v2():
         return f"Błąd: {str(e)}"
 
 # --- API: HOST Players & Questions ---
+def calculate_max_possible_points(event_id):
+    """Oblicza maksymalną możliwą liczbę punktów z aktywnych zakładek"""
+    # Sprawdź czy gra jest aktywna
+    game_active = get_game_state(event_id, 'game_active', 'False') == 'True'
+    if not game_active:
+        return 0
+
+    total_max_points = 0
+    bonus_multiplier = int(get_game_state(event_id, 'bonus_multiplier', '1'))
+
+    # 1. Pytania (Questions) - jeśli aktywne
+    questions_enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+    if questions_enabled:
+        # Policz pytania według trudności
+        easy_questions = Question.query.filter_by(event_id=event_id, difficulty='easy').count()
+        medium_questions = Question.query.filter_by(event_id=event_id, difficulty='medium').count()
+        hard_questions = Question.query.filter_by(event_id=event_id, difficulty='hard').count()
+
+        # Punkty za pytania
+        easy_points = int(get_game_state(event_id, 'questions_easy_points', '5'))
+        medium_points = int(get_game_state(event_id, 'questions_medium_points', '10'))
+        hard_points = int(get_game_state(event_id, 'questions_hard_points', '15'))
+
+        total_max_points += (easy_questions * easy_points * bonus_multiplier)
+        total_max_points += (medium_questions * medium_points * bonus_multiplier)
+        total_max_points += (hard_questions * hard_points * bonus_multiplier)
+
+    # 2. AI - jeśli aktywne
+    ai_enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
+    if ai_enabled:
+        # Policz pytania AI według trudności
+        easy_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='easy').count()
+        medium_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='medium').count()
+        hard_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='hard').count()
+
+        # Punkty za AI
+        ai_easy_points = int(get_game_state(event_id, 'ai_easy_points', '5'))
+        ai_medium_points = int(get_game_state(event_id, 'ai_medium_points', '10'))
+        ai_hard_points = int(get_game_state(event_id, 'ai_hard_points', '15'))
+
+        total_max_points += (easy_ai * ai_easy_points)
+        total_max_points += (medium_ai * ai_medium_points)
+        total_max_points += (hard_ai * ai_hard_points)
+
+    # 3. Wróżka AI (Fortune) - jeśli aktywne
+    fortune_enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
+    if fortune_enabled:
+        fortune_points = int(get_game_state(event_id, 'fortune_points', '5'))
+        # Zakładam że każdy gracz może użyć wróżki tylko raz
+        # Więc maksymalne punkty to fortune_points na gracza
+        # Ale nie wiemy ile graczy jest, więc liczymy dla jednego gracza
+        total_max_points += fortune_points
+
+    # 4. Minigry - jeśli aktywne
+    minigames_enabled = get_game_state(event_id, 'minigames_enabled', 'True') == 'True'
+    if minigames_enabled:
+        completion_points = int(get_game_state(event_id, 'minigame_completion_points', '10'))
+
+        # Policz aktywne minigry
+        active_minigames = 0
+        if get_game_state(event_id, 'minigame_tetris_disabled', 'False') == 'False':
+            active_minigames += 1
+        if get_game_state(event_id, 'minigame_arkanoid_disabled', 'False') == 'False':
+            active_minigames += 1
+        if get_game_state(event_id, 'minigame_snake_disabled', 'False') == 'False':
+            active_minigames += 1
+        if get_game_state(event_id, 'minigame_trex_disabled', 'False') == 'False':
+            active_minigames += 1
+
+        total_max_points += (active_minigames * completion_points * bonus_multiplier)
+
+    # 5. Foto - jeśli aktywne (nie uwzględniamy polubień)
+    photo_enabled = get_game_state(event_id, 'photo_enabled', 'True') == 'True'
+    if photo_enabled:
+        selfie_points = int(get_game_state(event_id, 'photo_selfie_points', '10'))
+        # Zakładamy że gracz może zrobić jedno zdjęcie
+        total_max_points += selfie_points
+
+    return total_max_points
+
 @app.route('/api/host/players', methods=['GET'])
 @host_required
 def get_players():
-    players = Player.query.filter_by(event_id=session['host_event_id']).order_by(Player.score.desc()).all()
-    return jsonify([{'id': p.id, 'name': p.name, 'score': p.score, 'warnings': p.warnings} for p in players])
+    event_id = session['host_event_id']
+    players = Player.query.filter_by(event_id=event_id).order_by(Player.score.desc()).all()
+
+    # Oblicz maksymalne możliwe punkty
+    max_points = calculate_max_possible_points(event_id)
+
+    # Dodaj % ukończenia dla każdego gracza
+    players_data = []
+    for p in players:
+        completion_percentage = None
+        if max_points > 0:
+            completion_percentage = round((p.score / max_points) * 100, 1)
+
+        players_data.append({
+            'id': p.id,
+            'name': p.name,
+            'score': p.score,
+            'warnings': p.warnings,
+            'completion_percentage': completion_percentage
+        })
+
+    return jsonify(players_data)
 
 @app.route('/api/host/player/<int:player_id>/warn', methods=['POST'])
 @host_required

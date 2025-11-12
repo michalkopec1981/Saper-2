@@ -1997,6 +1997,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <tr>
                                 <th>${translations[currentLanguage].player_count.replace(':', '')}</th>
                                 <th>Punkty</th>
+                                <th>% ukończenia</th>
                                 <th>${translations[currentLanguage].warnings}</th>
                                 <th>Akcje</th>
                             </tr>
@@ -2006,6 +2007,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <tr>
                                     <td>${p.name}</td>
                                     <td>${p.score}</td>
+                                    <td>${p.completion_percentage !== undefined ? p.completion_percentage + '%' : '-'}</td>
                                     <td>${p.warnings}</td>
                                     <td>
                                         <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
