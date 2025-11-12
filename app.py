@@ -1237,16 +1237,47 @@ def warn_player(player_id):
         return jsonify({'warnings': player.warnings})
     return jsonify({'error': 'Nie znaleziono gracza'}), 404
 
-@app.route('/api/host/player/<int:player_id>', methods=['DELETE'])
+@app.route('/api/host/player/<int:player_id>', methods=['DELETE', 'PUT'])
 @host_required
-def delete_player(player_id):
+def manage_player(player_id):
     player = db.session.get(Player, player_id)
-    if player and player.event_id == session['host_event_id']:
+
+    if not player or player.event_id != session['host_event_id']:
+        return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    if request.method == 'DELETE':
         db.session.delete(player)
         db.session.commit()
         emit_leaderboard_update(f'event_{session["host_event_id"]}')
         return jsonify({'message': 'Gracz usunięty'})
-    return jsonify({'error': 'Nie znaleziono gracza'}), 404
+
+    elif request.method == 'PUT':
+        data = request.json
+        new_name = data.get('name', '').strip()
+        new_score = data.get('score')
+
+        if not new_name:
+            return jsonify({'error': 'Nazwa gracza nie może być pusta'}), 400
+
+        if new_score is None or not isinstance(new_score, int) or new_score < 0:
+            return jsonify({'error': 'Nieprawidłowa liczba punktów'}), 400
+
+        # Aktualizuj dane gracza
+        player.name = new_name
+        player.score = new_score
+        db.session.commit()
+
+        # Wyślij aktualizację rankingu
+        emit_leaderboard_update(f'event_{session["host_event_id"]}')
+
+        return jsonify({
+            'message': 'Gracz zaktualizowany',
+            'player': {
+                'id': player.id,
+                'name': player.name,
+                'score': player.score
+            }
+        })
 
 # --- API: HOST Minigames ---
 @app.route('/api/host/minigames/status', methods=['GET'])

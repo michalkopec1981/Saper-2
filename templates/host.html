@@ -1260,6 +1260,32 @@
     </div>
 </div>
 
+<!-- Modal: Edycja gracza -->
+<div class="modal fade" id="editPlayerModal" tabindex="-1" aria-labelledby="editPlayerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPlayerModalLabel">Edycja gracza</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="edit-player-name" class="form-label">Nazwa gracza:</label>
+                    <input type="text" class="form-control" id="edit-player-name" maxlength="80">
+                </div>
+                <div class="mb-3">
+                    <label for="edit-player-score" class="form-label">Punkty:</label>
+                    <input type="number" class="form-control" id="edit-player-score" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="save-player-edit-btn">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Edycja pytań AI dla kategorii -->
 <div class="modal fade" id="aiQuestionsModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
@@ -1984,6 +2010,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <td>
                                         <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
                                         <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
+                                        <button class="btn btn-sm btn-primary edit-player-btn" data-id="${p.id}" data-name="${p.name}" data-score="${p.score}">Edycja</button>
                                         <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
                                     </td>
                                 </tr>
@@ -2000,6 +2027,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 document.querySelectorAll('.warn-player-btn').forEach(btn => {
                     btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.edit-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        openEditPlayerModal(parseInt(btn.dataset.id), btn.dataset.name, parseInt(btn.dataset.score));
+                    });
                 });
                 document.querySelectorAll('.delete-player-btn').forEach(btn => {
                     btn.addEventListener('click', () => deletePlayer(parseInt(btn.dataset.id)));
@@ -2019,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     async function deletePlayer(id) {
         if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
-        
+
         try {
             const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Błąd usuwania gracza');
@@ -2028,6 +2060,66 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
         }
     }
+
+    // =====================================================================
+    // EDYCJA GRACZA
+    // =====================================================================
+    let currentEditPlayerId = null;
+
+    function openEditPlayerModal(playerId, playerName, playerScore) {
+        currentEditPlayerId = playerId;
+
+        // Ustaw wartości w polach formularza
+        document.getElementById('edit-player-name').value = playerName;
+        document.getElementById('edit-player-score').value = playerScore;
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('editPlayerModal'));
+        modal.show();
+    }
+
+    // Obsługa przycisku OK w modalu edycji
+    document.getElementById('save-player-edit-btn')?.addEventListener('click', async () => {
+        const newName = document.getElementById('edit-player-name').value.trim();
+        const newScore = parseInt(document.getElementById('edit-player-score').value);
+
+        if (!newName) {
+            alert('Proszę podać nazwę gracza');
+            return;
+        }
+
+        if (isNaN(newScore) || newScore < 0) {
+            alert('Proszę podać prawidłową liczbę punktów');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/player/${currentEditPlayerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newName,
+                    score: newScore
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Błąd aktualizacji gracza');
+            }
+
+            // Zamknij modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editPlayerModal'));
+            modal.hide();
+
+            // Odśwież listę graczy
+            loadPlayers();
+
+            alert('Gracz został zaktualizowany');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
 
     // =====================================================================
     // WYSYŁANIE WIADOMOŚCI DO GRACZA
