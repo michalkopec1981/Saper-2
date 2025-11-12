@@ -482,7 +482,9 @@
                             <!-- Kody QR dla średnich pytań -->
                             <div class="mb-3">
                                 <h6 class="text-warning mb-2">Średnie pytania:</h6>
-                                <div class="d-flex gap-2">
+                                <button id="questions-medium-qr-btn" class="btn btn-primary mb-2">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
                                     <button id="questions-medium-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
                                     <button id="questions-medium-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
                                 </div>
@@ -491,7 +493,9 @@
                             <!-- Kody QR dla trudnych pytań -->
                             <div class="mb-3">
                                 <h6 class="text-danger mb-2">Trudne pytania:</h6>
-                                <div class="d-flex gap-2">
+                                <button id="questions-hard-qr-btn" class="btn btn-primary mb-2">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
                                     <button id="questions-hard-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
                                     <button id="questions-hard-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
                                 </div>
@@ -3893,6 +3897,12 @@ document.addEventListener('DOMContentLoaded', function () {
         window.open(`/questions_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
     });
 
+    // Podgląd głównego QR dla średnich Pytań
+    document.getElementById('questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+    });
+
     // Generuj zapasowy kod QR dla średnich Pytań
     document.getElementById('questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
         const eventId = {{ event.id }};
@@ -3934,6 +3944,12 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('questions-medium-backup-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
         window.open(`/questions_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych Pytań
+    document.getElementById('questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
     });
 
     // Generuj zapasowy kod QR dla trudnych Pytań
