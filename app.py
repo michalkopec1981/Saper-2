@@ -1678,7 +1678,19 @@ def scan_qr():
         # BIAŁY KOD - wybór między pytaniami ręcznymi i AI
         if qr_code.color == 'white':
             # Sprawdź czy są dostępne pytania AI
-            active_ai_categories = AICategory.query.filter_by(event_id=event_id, is_enabled=True).all()
+            # Sprawdź czy w sesji jest zapisany poziom trudności dla AI (z kodów QR hosta)
+            ai_difficulty_filter = session.get('ai_difficulty', None)
+
+            # Filtruj kategorie AI według poziomu trudności jeśli jest zapisany
+            query = AICategory.query.filter_by(event_id=event_id, is_enabled=True)
+
+            if ai_difficulty_filter and ai_difficulty_filter in ['easy', 'medium', 'hard']:
+                # Mapowanie poziomów trudności (hard -> advanced dla AI)
+                difficulty_map = {'easy': 'easy', 'medium': 'medium', 'hard': 'advanced'}
+                mapped_difficulty = difficulty_map[ai_difficulty_filter]
+                query = query.filter_by(difficulty_level=mapped_difficulty)
+
+            active_ai_categories = query.all()
 
             # Jeśli są aktywne kategorie AI, pokaż wybór kategorii
             if active_ai_categories:
@@ -4521,16 +4533,27 @@ def ai_qr_preview(event_id):
     # Sprawdź czy to zapasowy kod QR
     is_backup = request.args.get('backup', 'false').lower() == 'true'
 
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
+    difficulty_labels = {
+        'easy': 'Łatwe',
+        'medium': 'Średnie',
+        'hard': 'Trudne'
+    }
+
     # Generuj kod QR dla AI
     if is_backup:
-        backup_uuid = get_game_state(event_id, 'ai_backup_qr_uuid', None)
+        backup_uuid = get_game_state(event_id, f'ai_backup_qr_{difficulty}_uuid', None)
         if not backup_uuid:
-            return "Zapasowy kod QR nie został jeszcze wygenerowany", 404
+            return f"Zapasowy kod QR dla {difficulty_labels[difficulty].lower()} pytań AI nie został jeszcze wygenerowany", 404
         ai_url = url_for('ai_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
-        title = "🤖 AI - Zapasowy Kod"
+        title = f"🤖 AI - {difficulty_labels[difficulty]} - Zapasowy Kod"
     else:
-        ai_url = url_for('ai_player', event_id=event_id, _external=True)
-        title = "🤖 AI"
+        ai_url = url_for('ai_player', event_id=event_id, difficulty=difficulty, _external=True)
+        title = f"🤖 AI - {difficulty_labels[difficulty]}"
 
     return f'''
     <!DOCTYPE html>
@@ -4619,12 +4642,23 @@ def generate_ai_backup_qr(event_id):
     if not event:
         return jsonify({'error': 'Event nie znaleziony'}), 404
 
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
     # Generuj nowy UUID dla zapasowego kodu QR
     backup_uuid = str(uuid.uuid4())
-    set_game_state(event_id, 'ai_backup_qr_uuid', backup_uuid)
+    set_game_state(event_id, f'ai_backup_qr_{difficulty}_uuid', backup_uuid)
+
+    difficulty_labels = {
+        'easy': 'łatwych pytań AI',
+        'medium': 'średnich pytań AI',
+        'hard': 'trudnych pytań AI'
+    }
 
     return jsonify({
-        'message': 'Zapasowy kod QR został wygenerowany',
+        'message': f'Zapasowy kod QR dla {difficulty_labels[difficulty]} został wygenerowany',
         'backup_uuid': backup_uuid
     })
 
@@ -4635,9 +4669,15 @@ def ai_player_backup(event_id, backup_uuid):
     if not event:
         return "Event nie znaleziony", 404
 
-    # Sprawdź czy UUID się zgadza
-    stored_uuid = get_game_state(event_id, 'ai_backup_qr_uuid', None)
-    if not stored_uuid or stored_uuid != backup_uuid:
+    # Sprawdź który poziom trudności ma ten UUID
+    difficulty = None
+    for diff in ['easy', 'medium', 'hard']:
+        stored_uuid = get_game_state(event_id, f'ai_backup_qr_{diff}_uuid', None)
+        if stored_uuid and stored_uuid == backup_uuid:
+            difficulty = diff
+            break
+
+    if not difficulty:
         return "Nieprawidłowy kod QR", 403
 
     # Sprawdź czy włączona
@@ -4677,8 +4717,8 @@ def ai_player_backup(event_id, backup_uuid):
         </html>
         ''')
 
-    # Przekieruj do tego samego widoku co ai_player
-    return redirect(url_for('ai_player', event_id=event_id))
+    # Przekieruj do widoku AI z odpowiednim poziomem trudności
+    return redirect(url_for('ai_player', event_id=event_id, difficulty=difficulty))
 
 @app.route('/ai/<int:event_id>')
 def ai_player(event_id):
@@ -4686,6 +4726,14 @@ def ai_player(event_id):
     event = db.session.get(Event, event_id)
     if not event:
         return "Event nie znaleziony", 404
+
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
+    # Zapisz difficulty w sesji
+    session['ai_difficulty'] = difficulty
 
     # Sprawdź czy włączona
     enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'

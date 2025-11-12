@@ -574,13 +574,41 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
-                            <button id="ai-qr-btn" class="btn btn-primary mb-3">📱 Podgląd i druk kodu QR</button>
 
-                            <div class="d-flex gap-2 mt-3">
-                                <button id="ai-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR</button>
-                                <button id="ai-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            <!-- Kody QR dla łatwych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">Łatwe pytania:</h6>
+                                <button id="ai-qr-btn" class="btn btn-primary mb-2">📱 Podgląd i druk kodu QR dla łatwych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR dla łatwych pytań</button>
+                                    <button id="ai-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR dla łatwych pytań</button>
+                                </div>
                             </div>
-                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
+
+                            <!-- Kody QR dla średnich pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-warning mb-2">Średnie pytania:</h6>
+                                <button id="ai-medium-qr-btn" class="btn btn-primary mb-2">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-medium-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
+                                    <button id="ai-medium-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla trudnych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-danger mb-2">Trudne pytania:</h6>
+                                <button id="ai-hard-qr-btn" class="btn btn-primary mb-2">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-hard-generate-backup-qr-btn" class="btn btn-success">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
+                                    <button id="ai-hard-backup-qr-btn" class="btn btn-secondary" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">Zapasowe kody QR mogą być użyte jako alternatywa dla głównego kodu</small>
                         </div>
                     </div>
 
@@ -4108,10 +4136,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Podgląd QR AI
     document.getElementById('ai-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
-        window.open(`/ai_qr/${eventId}`, '_blank');
+        window.open(`/ai_qr/${eventId}?difficulty=easy`, '_blank');
     });
 
-    // Generuj zapasowy kod QR dla AI
+    // Generuj zapasowy kod QR dla łatwych AI
     document.getElementById('ai-generate-backup-qr-btn')?.addEventListener('click', async () => {
         const eventId = {{ event.id }};
         const generateBtn = document.getElementById('ai-generate-backup-qr-btn');
@@ -4121,7 +4149,7 @@ document.addEventListener('DOMContentLoaded', function () {
         generateBtn.textContent = '⏳ Generowanie...';
 
         try {
-            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}`, {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=easy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -4136,22 +4164,120 @@ document.addEventListener('DOMContentLoaded', function () {
 
             generateBtn.textContent = '✅ Wygenerowano';
             setTimeout(() => {
-                generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
                 generateBtn.disabled = false;
             }, 2000);
 
-            alert('Zapasowy kod QR został wygenerowany pomyślnie!');
+            alert('Zapasowy kod QR dla łatwych pytań AI został wygenerowany pomyślnie!');
         } catch (error) {
             alert('Błąd: ' + error.message);
-            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
             generateBtn.disabled = false;
         }
     });
 
-    // Podgląd zapasowego QR AI
+    // Podgląd zapasowego QR dla łatwych AI
     document.getElementById('ai-backup-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
-        window.open(`/ai_qr/${eventId}?backup=true`, '_blank');
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich AI
+    document.getElementById('ai-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=medium`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla średnich AI
+    document.getElementById('ai-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich AI
+    document.getElementById('ai-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych AI
+    document.getElementById('ai-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=hard`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla trudnych AI
+    document.getElementById('ai-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych AI
+    document.getElementById('ai-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
     });
 
     // ===================================================
