@@ -1698,11 +1698,21 @@ def scan_qr():
 
         # Pokaż pytania ręczne (dla żółtego lub białego bez kategorii AI)
         answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
-        question = Question.query.filter(
+
+        # Sprawdź czy w sesji jest zapisany poziom trudności (z kodów QR hosta)
+        difficulty_filter = session.get('questions_difficulty', None)
+
+        # Filtruj pytania według poziomu trudności jeśli jest zapisany
+        query = Question.query.filter(
             Question.id.notin_(answered_ids),
             Question.event_id == event_id,
             Question.category == quiz_category
-        ).order_by(db.func.random()).first()
+        )
+
+        if difficulty_filter and difficulty_filter in ['easy', 'medium', 'hard']:
+            query = query.filter(Question.difficulty == difficulty_filter)
+
+        question = query.order_by(db.func.random()).first()
 
         if not question:
             return jsonify({
@@ -3073,16 +3083,27 @@ def questions_qr_preview(event_id):
     # Sprawdź czy to zapasowy kod QR
     is_backup = request.args.get('backup', 'false').lower() == 'true'
 
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
+    difficulty_labels = {
+        'easy': 'Łatwe',
+        'medium': 'Średnie',
+        'hard': 'Trudne'
+    }
+
     # Generuj kod QR dla pytań
     if is_backup:
-        backup_uuid = get_game_state(event_id, 'questions_backup_qr_uuid', None)
+        backup_uuid = get_game_state(event_id, f'questions_backup_qr_{difficulty}_uuid', None)
         if not backup_uuid:
-            return "Zapasowy kod QR nie został jeszcze wygenerowany", 404
+            return f"Zapasowy kod QR dla {difficulty_labels[difficulty].lower()} pytań nie został jeszcze wygenerowany", 404
         questions_url = url_for('questions_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
-        title = "❓ Pytania - Zapasowy Kod"
+        title = f"❓ Pytania - {difficulty_labels[difficulty]} - Zapasowy Kod"
     else:
-        questions_url = url_for('player_register', event_id=event_id, _external=True)
-        title = "❓ Pytania"
+        questions_url = url_for('questions_player', event_id=event_id, difficulty=difficulty, _external=True)
+        title = f"❓ Pytania - {difficulty_labels[difficulty]}"
 
     return f'''
     <!DOCTYPE html>
@@ -3172,12 +3193,23 @@ def generate_questions_backup_qr(event_id):
     if not event:
         return jsonify({'error': 'Event nie znaleziony'}), 404
 
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
     # Generuj nowy UUID dla zapasowego kodu QR
     backup_uuid = str(uuid.uuid4())
-    set_game_state(event_id, 'questions_backup_qr_uuid', backup_uuid)
+    set_game_state(event_id, f'questions_backup_qr_{difficulty}_uuid', backup_uuid)
+
+    difficulty_labels = {
+        'easy': 'łatwych pytań',
+        'medium': 'średnich pytań',
+        'hard': 'trudnych pytań'
+    }
 
     return jsonify({
-        'message': 'Zapasowy kod QR został wygenerowany',
+        'message': f'Zapasowy kod QR dla {difficulty_labels[difficulty]} został wygenerowany',
         'backup_uuid': backup_uuid
     })
 
@@ -3188,9 +3220,15 @@ def questions_player_backup(event_id, backup_uuid):
     if not event:
         return "Event nie znaleziony", 404
 
-    # Sprawdź czy UUID się zgadza
-    stored_uuid = get_game_state(event_id, 'questions_backup_qr_uuid', None)
-    if not stored_uuid or stored_uuid != backup_uuid:
+    # Sprawdź który poziom trudności ma ten UUID
+    difficulty = None
+    for diff in ['easy', 'medium', 'hard']:
+        stored_uuid = get_game_state(event_id, f'questions_backup_qr_{diff}_uuid', None)
+        if stored_uuid and stored_uuid == backup_uuid:
+            difficulty = diff
+            break
+
+    if not difficulty:
         return "Nieprawidłowy kod QR", 403
 
     # Sprawdź czy włączona
@@ -3229,7 +3267,61 @@ def questions_player_backup(event_id, backup_uuid):
         </html>
         ''')
 
-    # Przekieruj do rejestracji gracza
+    # Przekieruj do widoku pytań z odpowiednim poziomem trudności
+    return redirect(url_for('questions_player', event_id=event_id, difficulty=difficulty))
+
+@app.route('/questions/<int:event_id>')
+def questions_player(event_id):
+    """Widok Pytań dla gracza z filtrowaniem po poziomie trudności"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
+    # Zapisz difficulty w sesji
+    session['questions_difficulty'] = difficulty
+
+    # Sprawdź czy pytania są włączone
+    enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Pytania</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .message {
+                    background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    max-width: 400px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>❓ Pytania</h1>
+            <div class="message">
+                <h2>⏸️ Chwilowo niedostępne</h2>
+                <p>Pytania są obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do rejestracji gracza z zapisanym difficulty w sesji
     return redirect(url_for('player_register', event_id=event_id))
 
 # ===================================================================
