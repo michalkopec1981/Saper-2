@@ -2340,10 +2340,28 @@ def vote_player_selfie():
     if existing_vote:
         return jsonify({'success': False, 'message': 'Już zagłosowałeś na to zdjęcie'}), 400
 
+    # Sprawdź maksymalną liczbę polubień
+    max_likes = int(get_game_state(event_id, 'photo_max_likes', '10'))
+    player_votes_count = PhotoVote.query.filter_by(player_id=player_id, event_id=event_id).count()
+
+    if player_votes_count >= max_likes:
+        return jsonify({'success': False, 'message': f'Możesz polubić maksymalnie {max_likes} zdjęć'}), 400
+
     # Dodaj głos
     new_vote = PhotoVote(photo_id=photo_id, player_id=player_id, event_id=event_id)
     db.session.add(new_vote)
     photo.votes += 1
+
+    # Przyznaj punkty graczowi który polubił
+    like_given_points = int(get_game_state(event_id, 'photo_like_given_points', '2'))
+    player.score += like_given_points
+
+    # Przyznaj punkty właścicielowi zdjęcia
+    photo_owner = db.session.get(Player, photo.player_id)
+    if photo_owner:
+        like_received_points = int(get_game_state(event_id, 'photo_like_received_points', '5'))
+        photo_owner.score += like_received_points
+
     db.session.commit()
 
     # Wyemituj aktualizację
@@ -3892,6 +3910,62 @@ def update_ai_hard_points(event_id):
 
     set_game_state(event_id, 'ai_hard_points', str(value))
     return jsonify({'message': f'Punkty za trudne pytanie AI zaktualizowane do {value}'})
+
+# ===================================================================
+# --- Photo Points Settings Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/photo/selfie-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_photo_selfie_points(event_id):
+    """Aktualizuj punkty za wykonane zdjęcie selfie"""
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 1000:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-1000'}), 400
+
+    set_game_state(event_id, 'photo_selfie_points', str(value))
+    return jsonify({'message': f'Punkty za zdjęcie selfie zaktualizowane do {value}'})
+
+@app.route('/api/host/photo/like-given-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_photo_like_given_points(event_id):
+    """Aktualizuj punkty za polubienie czyjegoś zdjęcia"""
+    data = request.json
+    value = data.get('value')
+
+    if value is None or value < 0 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 0-100'}), 400
+
+    set_game_state(event_id, 'photo_like_given_points', str(value))
+    return jsonify({'message': f'Punkty za polubienie zdjęcia zaktualizowane do {value}'})
+
+@app.route('/api/host/photo/like-received-points/<int:event_id>', methods=['PUT'])
+@host_required
+def update_photo_like_received_points(event_id):
+    """Aktualizuj punkty za uzyskanie polubienia"""
+    data = request.json
+    value = data.get('value')
+
+    if value is None or value < 0 or value > 100:
+        return jsonify({'error': 'Wartość musi być w zakresie 0-100'}), 400
+
+    set_game_state(event_id, 'photo_like_received_points', str(value))
+    return jsonify({'message': f'Punkty za uzyskanie polubienia zaktualizowane do {value}'})
+
+@app.route('/api/host/photo/max-likes/<int:event_id>', methods=['PUT'])
+@host_required
+def update_photo_max_likes(event_id):
+    """Aktualizuj maksymalną liczbę zdjęć do polubienia"""
+    data = request.json
+    value = data.get('value')
+
+    if not value or value < 1 or value > 1000:
+        return jsonify({'error': 'Wartość musi być w zakresie 1-1000'}), 400
+
+    set_game_state(event_id, 'photo_max_likes', str(value))
+    return jsonify({'message': f'Maksymalna liczba polubionych zdjęć zaktualizowana do {value}'})
 
 @app.route('/api/host/fortune/generate_backup_qr/<int:event_id>', methods=['POST'])
 @host_required
