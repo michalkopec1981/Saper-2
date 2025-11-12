@@ -1808,6 +1808,79 @@ def register_player():
     emit_leaderboard_update(f'event_{event_id}')
     return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
 
+@app.route('/api/player/upload_photo', methods=['POST'])
+def upload_photo():
+    """Upload selfie photo from player"""
+    try:
+        # Get form data
+        player_id = request.form.get('player_id')
+        event_id = request.form.get('event_id')
+        photo_file = request.files.get('photo')
+
+        if not player_id or not event_id or not photo_file:
+            return jsonify({'error': 'Brak wymaganych danych'}), 400
+
+        player_id = int(player_id)
+        event_id = int(event_id)
+
+        # Verify player exists
+        player = db.session.get(Player, player_id)
+        if not player or player.event_id != event_id:
+            return jsonify({'error': 'Nieprawidłowy gracz'}), 404
+
+        # Generate unique filename
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = f"{event_id}_{player_id}_{timestamp}.jpg"
+        filepath = os.path.join('static', 'photos', filename)
+
+        # Save file
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        photo_file.save(filepath)
+
+        # Create database record
+        image_url = f"/static/photos/{filename}"
+        new_photo = FunnyPhoto(
+            player_id=player_id,
+            player_name=player.name,
+            image_url=image_url,
+            event_id=event_id
+        )
+        db.session.add(new_photo)
+
+        # Award points
+        bonus_multiplier = int(get_game_state(event_id, 'bonus_multiplier', '1'))
+        selfie_points = int(get_game_state(event_id, 'photo_selfie_points', '10'))
+        points_awarded = selfie_points * bonus_multiplier
+
+        player.score += points_awarded
+        db.session.commit()
+
+        # Emit updates
+        emit_leaderboard_update(f'event_{event_id}')
+
+        # Notify via SocketIO about new photo
+        socketio.emit('new_photo', {
+            'photo': {
+                'id': new_photo.id,
+                'player_name': player.name,
+                'image_url': image_url,
+                'votes': 0,
+                'timestamp': new_photo.timestamp.isoformat()
+            }
+        }, room=f'event_{event_id}')
+
+        return jsonify({
+            'success': True,
+            'points': points_awarded,
+            'photo_id': new_photo.id,
+            'message': f'Zdjęcie zapisane! Otrzymujesz {points_awarded} punktów!'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error uploading photo: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/player/scan_qr', methods=['POST'])
 def scan_qr():
     data = request.json
@@ -4470,66 +4543,10 @@ def photo_player(event_id):
         </html>
         ''')
 
-    # Przekieruj do widoku player z różowym kodem QR (pink)
-    # Użytkownik musi być zalogowany, więc przekierujemy do player_register
-    # Tam automatycznie zostanie uruchomione wyzwanie fotograficzne
-    return render_template_string('''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Foto - Wyzwanie Fotograficzne</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                background: linear-gradient(135deg, #e91e63, #f06292);
-                color: white;
-            }
-            .container {
-                text-align: center;
-                padding: 40px;
-                max-width: 500px;
-            }
-            h1 { font-size: 3rem; margin-bottom: 20px; }
-            p { font-size: 1.2rem; margin-bottom: 30px; }
-            .btn {
-                display: inline-block;
-                padding: 15px 40px;
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #e91e63;
-                background: white;
-                border: none;
-                border-radius: 30px;
-                text-decoration: none;
-                cursor: pointer;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-                transition: transform 0.2s;
-            }
-            .btn:hover {
-                transform: scale(1.05);
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>📸 Wyzwanie Fotograficzne!</h1>
-            <p>Zrób śmieszne selfie i zdobądź 15 punktów!</p>
-            <p style="font-size: 1rem;">
-                Aby wziąć udział w wyzwaniu, musisz być zarejestrowany w grze.
-            </p>
-            <a href="{{ url_for('player_register', event_id=event_id, qr_code='photo_' + event_id|string) }}" class="btn">
-                🎮 Rozpocznij Wyzwanie
-            </a>
-        </div>
-    </body>
-    </html>
-    ''', event_id=event_id)
+    # Renderuj dedykowany template do selfie
+    return render_template('photo_selfie.html',
+                         event_id=event_id,
+                         event_name=event.name)
 
 # ===================================================================
 # --- Minigames QR Code Endpoints ---

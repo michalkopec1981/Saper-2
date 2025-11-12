@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% block title %}Wyzwanie Fotograficzne - {{ event_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #e91e63, #f06292);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        color: #e91e63;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .form-label {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #e91e63, #f06292);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(233, 30, 99, 0.4);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    #camera-view {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 20px;
+    }
+
+    #camera {
+        width: 100%;
+        border-radius: 15px;
+        background: #000;
+    }
+
+    #canvas {
+        display: none;
+    }
+
+    .camera-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    #preview-container {
+        margin-top: 20px;
+    }
+
+    #preview-image {
+        width: 100%;
+        max-width: 500px;
+        border-radius: 15px;
+        margin-bottom: 15px;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .success-message {
+        background: #4caf50;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .error-message {
+        background: #f44336;
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #e91e63;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Registration Form (for new players) -->
+    <div id="registration-card" class="card">
+        <h1>📸 Wyzwanie Fotograficzne</h1>
+        <p class="subtitle">Zrób śmieszne selfie i zdobądź punkty!</p>
+
+        <div class="form-group">
+            <label for="player-name" class="form-label">Podaj swoje imię:</label>
+            <input
+                type="text"
+                id="player-name"
+                class="form-control"
+                placeholder="Twoje imię..."
+                maxlength="80"
+                autocomplete="off"
+            >
+        </div>
+
+        <button class="btn btn-primary" id="start-btn">OK - Rozpocznij</button>
+
+        <div id="error-msg" class="error-message hidden"></div>
+    </div>
+
+    <!-- Camera View (for taking selfie) -->
+    <div id="camera-card" class="card hidden">
+        <h1>📸 Zrób Selfie!</h1>
+        <p class="subtitle">Uśmiechnij się!</p>
+
+        <div id="camera-view">
+            <video id="camera" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="camera-controls">
+            <button class="btn btn-primary" id="capture-btn">📷 Zrób Zdjęcie</button>
+        </div>
+
+        <div id="preview-container" class="hidden">
+            <img id="preview-image" src="" alt="Preview">
+            <div class="camera-controls">
+                <button class="btn btn-primary" id="retake-btn">🔄 Zrób Ponownie</button>
+                <button class="btn btn-primary" id="upload-btn">✅ Wyślij Zdjęcie</button>
+            </div>
+        </div>
+
+        <div id="upload-loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Wysyłanie zdjęcia...</p>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="success-card" class="card hidden">
+        <h1>🎉 Sukces!</h1>
+        <div class="success-message">
+            <h2 id="points-message"></h2>
+            <p>Twoje zdjęcie zostało zapisane!</p>
+            <p>Inni gracze mogą je teraz zobaczyć i polubić.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const eventId = {{ event_id }};
+    let stream = null;
+    let currentPlayerId = null;
+    let currentPlayerName = null;
+
+    // Check if player is already logged in
+    window.addEventListener('DOMContentLoaded', function() {
+        const storedPlayerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+        const storedPlayerName = localStorage.getItem(`saperPlayerName_${eventId}`);
+
+        if (storedPlayerId && storedPlayerName) {
+            // Player already logged in, go directly to camera
+            currentPlayerId = storedPlayerId;
+            currentPlayerName = storedPlayerName;
+            showCamera();
+        } else {
+            // Show registration form
+            document.getElementById('registration-card').classList.remove('hidden');
+        }
+    });
+
+    // Handle registration
+    document.getElementById('start-btn').addEventListener('click', async function() {
+        const name = document.getElementById('player-name').value.trim();
+
+        if (!name) {
+            showError('Proszę podać imię');
+            return;
+        }
+
+        // Register player
+        try {
+            const response = await fetch('/api/player/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    event_id: eventId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd rejestracji');
+            }
+
+            // Save player info
+            currentPlayerId = data.id;
+            currentPlayerName = name;
+            localStorage.setItem(`saperPlayerId_${eventId}`, currentPlayerId);
+            localStorage.setItem(`saperPlayerName_${eventId}`, name);
+
+            // Show camera
+            document.getElementById('registration-card').classList.add('hidden');
+            showCamera();
+
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    function showError(message) {
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('hidden');
+        setTimeout(() => {
+            errorMsg.classList.add('hidden');
+        }, 3000);
+    }
+
+    async function showCamera() {
+        document.getElementById('camera-card').classList.remove('hidden');
+
+        // Start camera
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: false
+            });
+            document.getElementById('camera').srcObject = stream;
+        } catch (error) {
+            showError('Nie można uruchomić kamery: ' + error.message);
+        }
+    }
+
+    // Capture photo
+    document.getElementById('capture-btn').addEventListener('click', function() {
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Get image data
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+        // Show preview
+        document.getElementById('preview-image').src = imageData;
+        document.getElementById('camera').classList.add('hidden');
+        document.getElementById('capture-btn').classList.add('hidden');
+        document.getElementById('preview-container').classList.remove('hidden');
+    });
+
+    // Retake photo
+    document.getElementById('retake-btn').addEventListener('click', function() {
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('camera').classList.remove('hidden');
+        document.getElementById('capture-btn').classList.remove('hidden');
+    });
+
+    // Upload photo
+    document.getElementById('upload-btn').addEventListener('click', async function() {
+        const canvas = document.getElementById('canvas');
+
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('upload-loading').classList.remove('hidden');
+
+        try {
+            // Convert canvas to blob
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('photo', blob, 'selfie.jpg');
+            formData.append('player_id', currentPlayerId);
+            formData.append('event_id', eventId);
+
+            // Upload photo
+            const response = await fetch('/api/player/upload_photo', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd uploadu');
+            }
+
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+
+            // Show success
+            document.getElementById('camera-card').classList.add('hidden');
+            document.getElementById('success-card').classList.remove('hidden');
+            document.getElementById('points-message').textContent =
+                `Zdobyłeś ${data.points} punktów!`;
+
+        } catch (error) {
+            document.getElementById('upload-loading').classList.add('hidden');
+            document.getElementById('preview-container').classList.remove('hidden');
+            showError(error.message);
+        }
+    });
+</script>
+{% endblock %}
