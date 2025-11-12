@@ -3056,7 +3056,7 @@ def questions_qr_preview(event_id):
         questions_url = url_for('questions_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
         title = "❓ Pytania - Zapasowy Kod"
     else:
-        questions_url = url_for('player_dashboard', event_id=event_id, _external=True)
+        questions_url = url_for('player_register', event_id=event_id, _external=True)
         title = "❓ Pytania"
 
     return f'''
@@ -3204,8 +3204,8 @@ def questions_player_backup(event_id, backup_uuid):
         </html>
         ''')
 
-    # Przekieruj do dashboardu gracza
-    return redirect(url_for('player_dashboard', event_id=event_id))
+    # Przekieruj do rejestracji gracza
+    return redirect(url_for('player_register', event_id=event_id))
 
 # ===================================================================
 # --- Fortune Teller AI Endpoints ---
