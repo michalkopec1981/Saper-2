@@ -1811,31 +1811,48 @@ def register_player():
 @app.route('/api/player/upload_photo', methods=['POST'])
 def upload_photo():
     """Upload selfie photo from player"""
+    print("=" * 60)
+    print("📸 PHOTO UPLOAD REQUEST RECEIVED")
+    print("=" * 60)
     try:
         # Get form data
         player_id = request.form.get('player_id')
         event_id = request.form.get('event_id')
         photo_file = request.files.get('photo')
 
+        print(f"📋 Form data: player_id={player_id}, event_id={event_id}")
+        print(f"📁 Photo file: {photo_file}")
+        print(f"📁 Photo filename: {photo_file.filename if photo_file else 'None'}")
+
         if not player_id or not event_id or not photo_file:
+            print("❌ Missing required data")
             return jsonify({'error': 'Brak wymaganych danych'}), 400
 
         player_id = int(player_id)
         event_id = int(event_id)
+        print(f"✅ Parsed IDs: player_id={player_id}, event_id={event_id}")
 
         # Verify player exists
         player = db.session.get(Player, player_id)
         if not player or player.event_id != event_id:
+            print(f"❌ Player not found or event mismatch")
             return jsonify({'error': 'Nieprawidłowy gracz'}), 404
+
+        print(f"✅ Player verified: {player.name}")
 
         # Generate unique filename
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
         filename = f"{event_id}_{player_id}_{timestamp}.jpg"
         filepath = os.path.join('static', 'photos', filename)
 
+        print(f"📝 Filename: {filename}")
+        print(f"📂 Filepath: {filepath}")
+
         # Save file
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         photo_file.save(filepath)
+
+        print(f"💾 File saved to disk")
 
         # Create database record
         image_url = f"/static/photos/{filename}"
@@ -1847,16 +1864,24 @@ def upload_photo():
         )
         db.session.add(new_photo)
 
+        print(f"📊 Database record created")
+
         # Award points
         bonus_multiplier = int(get_game_state(event_id, 'bonus_multiplier', '1'))
         selfie_points = int(get_game_state(event_id, 'photo_selfie_points', '10'))
         points_awarded = selfie_points * bonus_multiplier
 
+        print(f"🎯 Points calculation: {selfie_points} × {bonus_multiplier} = {points_awarded}")
+
         player.score += points_awarded
         db.session.commit()
 
+        print(f"✅ Database committed, player score updated")
+
         # Emit updates
         emit_leaderboard_update(f'event_{event_id}')
+
+        print(f"📡 Leaderboard update emitted")
 
         # Notify via SocketIO about new photo
         socketio.emit('new_photo', {
@@ -1869,6 +1894,10 @@ def upload_photo():
             }
         }, room=f'event_{event_id}')
 
+        print(f"📡 New photo notification emitted")
+        print(f"🎉 Upload successful!")
+        print("=" * 60)
+
         return jsonify({
             'success': True,
             'points': points_awarded,
@@ -1878,7 +1907,12 @@ def upload_photo():
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error uploading photo: {e}")
+        print(f"❌ Error uploading photo: {e}")
+        print(f"❌ Error type: {type(e)}")
+        import traceback
+        print(f"❌ Traceback:")
+        traceback.print_exc()
+        print("=" * 60)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/player/scan_qr', methods=['POST'])
@@ -2436,15 +2470,39 @@ def get_photos(event_id):
         'timestamp': p.timestamp.isoformat()
     } for p in photos])
 
+@app.route('/api/host/photo/settings/<int:event_id>', methods=['GET'])
+def get_photo_settings(event_id):
+    """Pobierz ustawienia foto dla danego eventu"""
+    try:
+        settings = {
+            'selfie_points': int(get_game_state(event_id, 'photo_selfie_points', '30')),
+            'like_given_points': int(get_game_state(event_id, 'photo_like_given_points', '2')),
+            'like_received_points': int(get_game_state(event_id, 'photo_like_received_points', '5')),
+            'max_likes': int(get_game_state(event_id, 'photo_max_likes', '10'))
+        }
+        return jsonify(settings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/player/<int:player_id>/votes', methods=['GET'])
+def get_player_votes(player_id):
+    """Pobierz listę ID zdjęć, które gracz polubił"""
+    try:
+        votes = PhotoVote.query.filter_by(player_id=player_id).all()
+        photo_ids = [vote.photo_id for vote in votes]
+        return jsonify(photo_ids)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/photo/<int:photo_id>/vote', methods=['POST'])
 def vote_photo(photo_id):
     """Zagłosuj na zdjęcie (lub cofnij głos)"""
     data = request.json
     player_id = data.get('player_id')
-    
+
     if not player_id:
         return jsonify({'error': 'Brak ID gracza'}), 400
-    
+
     player = db.session.get(Player, player_id)
     photo = db.session.get(FunnyPhoto, photo_id)
     

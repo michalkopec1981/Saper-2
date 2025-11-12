@@ -279,31 +279,36 @@ document.addEventListener('DOMContentLoaded', function () {
     // 📸 Obsługa nowych zdjęć w czasie rzeczywistym
     socket.on('new_photo', (data) => {
         console.log('📸 Nowe zdjęcie otrzymane:', data);
-        
+
+        // Backend wysyła dane w formacie: { photo: { image_url, player_name, ... } }
+        const photo = data.photo || data;
+        const imageUrl = photo.image_url || data.url;
+        const playerName = photo.player_name || data.player;
+
         // Usuń placeholder jeśli istnieje
         const placeholder = photoCarouselInner.querySelector('.text-center');
         if (placeholder) {
             photoCarouselInner.innerHTML = '';
         }
-        
+
         // Usuń klasę 'active' ze wszystkich elementów
         photoCarouselInner.querySelectorAll('.carousel-item').forEach(item => {
             item.classList.remove('active');
         });
-        
+
         // Dodaj nowe zdjęcie na początek (będzie aktywne)
         const newItem = document.createElement('div');
         newItem.className = 'carousel-item active';
         newItem.innerHTML = `
-            <img src="${data.url}" class="d-block w-100" alt="Zdjęcie gracza ${data.player}">
+            <img src="${imageUrl}" class="d-block w-100" alt="Zdjęcie gracza ${playerName}">
             <div class="carousel-caption">
-                <h5>👤 ${data.player}</h5>
+                <h5>👤 ${playerName}</h5>
             </div>
         `;
-        
+
         // Wstaw na początek
         photoCarouselInner.insertBefore(newItem, photoCarouselInner.firstChild);
-        
+
         // Jeśli jest więcej niż 10 zdjęć, usuń najstarsze
         const allItems = photoCarouselInner.querySelectorAll('.carousel-item');
         if (allItems.length > 10) {

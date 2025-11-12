@@ -956,9 +956,15 @@
 
                     <hr>
 
-                    <p data-translate="photo_description">Tutaj będą widoczne zdjęcia przesłane przez graczy.</p>
-                    <div class="alert alert-secondary text-center">
-                        <p class="mb-0">Wkrótce - galeria zdjęć z głosowaniem</p>
+                    <h6>Galeria zdjęć graczy</h6>
+                    <p data-translate="photo_description" class="text-muted">Poniżej zdjęcia przesłane przez graczy, posortowane według liczby polubień.</p>
+
+                    <div id="host-photo-gallery" class="row g-3 mt-3">
+                        <!-- Zdjęcia będą tutaj ładowane dynamicznie -->
+                    </div>
+
+                    <div id="no-photos-message" class="alert alert-info text-center mt-3" style="display: none;">
+                        <p class="mb-0">Brak zdjęć. Gracze mogą przesyłać zdjęcia skanując kod QR powyżej.</p>
                     </div>
                 </div>
             </div>
@@ -4961,6 +4967,56 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
         }
     };
+
+    // Funkcja do ładowania galerii zdjęć w panelu hosta
+    window.loadHostPhotoGallery = async function() {
+        const eventId = {{ event.id }};
+        try {
+            const response = await fetch(`/api/photos/${eventId}`);
+            const photos = await response.json();
+
+            const gallery = document.getElementById('host-photo-gallery');
+            const noPhotosMsg = document.getElementById('no-photos-message');
+
+            if (photos.length === 0) {
+                gallery.innerHTML = '';
+                noPhotosMsg.style.display = 'block';
+                return;
+            }
+
+            noPhotosMsg.style.display = 'none';
+            gallery.innerHTML = photos.map(photo => `
+                <div class="col-md-4 col-sm-6">
+                    <div class="card">
+                        <img src="${photo.image_url}" class="card-img-top" alt="Photo by ${photo.player_name}" style="height: 250px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">${photo.player_name}</h6>
+                            <p class="card-text">
+                                <span class="badge bg-primary">❤️ ${photo.votes} polubień</span>
+                            </p>
+                            <small class="text-muted">${new Date(photo.timestamp).toLocaleString('pl-PL')}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Błąd ładowania galerii:', error);
+        }
+    };
+
+    // Ładuj galerię przy otwieraniu zakładki Foto
+    document.querySelector('button[data-bs-target="#photo"]').addEventListener('click', function() {
+        setTimeout(() => loadHostPhotoGallery(), 100);
+    });
+
+    // Nasłuchuj na nowe zdjęcia przez Socket.IO
+    socket.on('new_photo', function(data) {
+        console.log('New photo received:', data);
+        // Przeładuj galerię jeśli jest otwarta zakładka Foto
+        if (document.getElementById('photo').classList.contains('active')) {
+            loadHostPhotoGallery();
+        }
+    });
 
 });
 </script>
