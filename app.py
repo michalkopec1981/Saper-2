@@ -3115,13 +3115,14 @@ def questions_qr_preview(event_id):
 
     # Pobierz poziom trudności
     difficulty = request.args.get('difficulty', 'easy')
-    if difficulty not in ['easy', 'medium', 'hard']:
+    if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
     difficulty_labels = {
         'easy': 'Łatwe',
         'medium': 'Średnie',
-        'hard': 'Trudne'
+        'hard': 'Trudne',
+        'mixed': 'Mieszane'
     }
 
     # Generuj kod QR dla pytań
@@ -3225,7 +3226,7 @@ def generate_questions_backup_qr(event_id):
 
     # Pobierz poziom trudności
     difficulty = request.args.get('difficulty', 'easy')
-    if difficulty not in ['easy', 'medium', 'hard']:
+    if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
     # Generuj nowy UUID dla zapasowego kodu QR
@@ -3235,7 +3236,8 @@ def generate_questions_backup_qr(event_id):
     difficulty_labels = {
         'easy': 'łatwych pytań',
         'medium': 'średnich pytań',
-        'hard': 'trudnych pytań'
+        'hard': 'trudnych pytań',
+        'mixed': 'mieszanych pytań'
     }
 
     return jsonify({
@@ -3252,7 +3254,7 @@ def questions_player_backup(event_id, backup_uuid):
 
     # Sprawdź który poziom trudności ma ten UUID
     difficulty = None
-    for diff in ['easy', 'medium', 'hard']:
+    for diff in ['easy', 'medium', 'hard', 'mixed']:
         stored_uuid = get_game_state(event_id, f'questions_backup_qr_{diff}_uuid', None)
         if stored_uuid and stored_uuid == backup_uuid:
             difficulty = diff
@@ -3309,7 +3311,7 @@ def questions_player(event_id):
 
     # Pobierz poziom trudności
     difficulty = request.args.get('difficulty', 'easy')
-    if difficulty not in ['easy', 'medium', 'hard']:
+    if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
     # Zapisz difficulty w sesji
