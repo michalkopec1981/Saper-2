@@ -1306,10 +1306,14 @@
                         <div class="btn-group w-100" role="group" id="display-screens-controls">
                             <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="1" data-translate="one_screen">1 Ekran</button>
                             <button type="button" class="btn btn-outline-primary active-modifier" data-control="display_screens" data-value="2" data-translate="two_screens">2 Ekrany</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="3" data-translate="three_screens">3 Ekrany</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="4" data-translate="four_screens">4 Ekrany</button>
                         </div>
                         <small class="text-muted d-block mt-2">
-                            <strong>1 ekran:</strong> Bomba, hasło, ranking i zdjęcia na jednym ekranie<br>
-                            <strong>2 ekrany:</strong> Ekran 1 - Bomba i hasło | Ekran 2 - Ranking, zdjęcia i kod QR dla graczy
+                            <strong>1 ekran:</strong> Tytuł eventu, Nazwa firmy Bomba, Hasło<br>
+                            <strong>2 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta<br>
+                            <strong>3 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta | Ekran 3 - Zabawne Selfie w karuzeli<br>
+                            <strong>4 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta | Ekran 3 - Zabawne Selfie w karuzeli | Ekran 4 - Kod gracza i przedmioty AR do znalezienia
                         </small>
                     </div>
 
@@ -1746,6 +1750,8 @@
         display_screens: 'Liczba ekranów zewnętrznych:',
         one_screen: '1 Ekran',
         two_screens: '2 Ekrany',
+        three_screens: '3 Ekrany',
+        four_screens: '4 Ekrany',
         language_tab: 'Ustawienia języka',
         game_info: 'Informacje o grze',
         player_count: 'Liczba graczy:',
@@ -1844,6 +1850,8 @@
         display_screens: 'Number of external screens:',
         one_screen: '1 Screen',
         two_screens: '2 Screens',
+        three_screens: '3 Screens',
+        four_screens: '4 Screens',
         language_tab: 'Language settings',
         game_info: 'Game information',
         player_count: 'Number of players:',
@@ -1942,6 +1950,8 @@
         display_screens: 'Anzahl externer Bildschirme:',
         one_screen: '1 Bildschirm',
         two_screens: '2 Bildschirme',
+        three_screens: '3 Bildschirme',
+        four_screens: '4 Bildschirme',
         language_tab: 'Spracheinstellungen',
         game_info: 'Spielinformationen',
         player_count: 'Anzahl der Spieler:',
@@ -2104,17 +2114,25 @@ document.addEventListener('DOMContentLoaded', function () {
         const btn = e.target.closest('button[data-value]');
         if (btn) {
             const screensCount = btn.dataset.value;
-            
+
             // Update active state
             document.querySelectorAll('#display-screens-controls button').forEach(b => b.classList.remove('active-modifier'));
             btn.classList.add('active-modifier');
-            
+
             // Update status message
             const statusDiv = document.getElementById('display-status');
             if (statusDiv) {
-                statusDiv.innerHTML = `Aktualnie uruchomione: <strong>${screensCount} ${screensCount === '1' ? 'ekran' : 'ekrany'}</strong>`;
+                let screenText;
+                if (screensCount === '1') {
+                    screenText = 'ekran';
+                } else if (screensCount === '2' || screensCount === '3' || screensCount === '4') {
+                    screenText = 'ekrany';
+                } else {
+                    screenText = 'ekranów';
+                }
+                statusDiv.innerHTML = `Aktualnie uruchomione: <strong>${screensCount} ${screenText}</strong>`;
             }
-            
+
             // Możesz tutaj dodać zapisywanie ustawień do GameState jeśli potrzebne
             console.log('Liczba ekranów ustawiona na:', screensCount);
         }
