@@ -127,6 +127,8 @@
         <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
         <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
         <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#voting" data-translate="tab_voting">Głosowanie</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#live" data-translate="tab_live">Na żywo</button></li>
     </ul>
 
     <div class="tab-content">
@@ -965,6 +967,96 @@
 
                     <div id="no-photos-message" class="alert alert-info text-center mt-3" style="display: none;">
                         <p class="mb-0">Brak zdjęć. Gracze mogą przesyłać zdjęcia skanując kod QR powyżej.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="voting">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="voting_tab">Głosowanie</h5></div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="voting-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="voting-enabled">
+                                    <span id="voting-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli głosować</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+                            <p class="text-muted">Tutaj będzie kod QR dla głosowania</p>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia</h6>
+                            <p class="text-muted">Tutaj będą ustawienia głosowania</p>
+                        </div>
+                    </div>
+
+                    <!-- Pytania i odpowiedzi -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Pytania i odpowiedzi</h6>
+                            <p class="text-muted">Tutaj będą pytania i odpowiedzi dla głosowania</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="live">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="live_tab">Na żywo</h5></div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="live-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="live-enabled">
+                                    <span id="live-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, funkcja na żywo będzie nieaktywna</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+                            <p class="text-muted">Tutaj będzie kod QR dla funkcji na żywo</p>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia</h6>
+                            <p class="text-muted">Tutaj będą ustawienia funkcji na żywo</p>
+                        </div>
+                    </div>
+
+                    <!-- Pytania i odpowiedzi -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Pytania i odpowiedzi</h6>
+                            <p class="text-muted">Tutaj będą pytania i odpowiedzi dla funkcji na żywo</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4780,6 +4872,26 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Błąd: ' + error.message);
             e.target.checked = !enabled;
         }
+    });
+
+    // Głosowanie - przełącznik
+    document.getElementById('voting-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('voting-status');
+        statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+        statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        // TODO: Dodać endpoint API dla głosowania
+        console.log('Voting enabled:', enabled);
+    });
+
+    // Na żywo - przełącznik
+    document.getElementById('live-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('live-status');
+        statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+        statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        // TODO: Dodać endpoint API dla funkcji na żywo
+        console.log('Live enabled:', enabled);
     });
 
     // Aktualizacja ustawień
