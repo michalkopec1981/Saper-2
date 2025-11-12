@@ -1010,7 +1010,100 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Pytania i odpowiedzi</h6>
-                            <p class="text-muted">Tutaj będą pytania i odpowiedzi dla głosowania</p>
+
+                            <!-- Przycisk dodaj propozycję -->
+                            <button class="btn btn-success mb-3" id="voting-add-question-btn">
+                                <i class="bi bi-plus-circle"></i> Dodaj propozycję
+                            </button>
+
+                            <!-- Formularz dodawania pytania (ukryty domyślnie) -->
+                            <div id="voting-question-form" class="border rounded p-3 mb-3" style="display: none; background: white;">
+                                <h6 class="mb-3">Nowe pytanie/propozycja</h6>
+
+                                <!-- Pole pytania -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Pytanie/Propozycja:</strong></label>
+                                    <input type="text" class="form-control" id="voting-question-text" placeholder="Wpisz pytanie lub propozycję...">
+                                </div>
+
+                                <!-- Pola odpowiedzi -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Odpowiedzi/Wybory:</strong></label>
+                                    <div id="voting-answers-container">
+                                        <div class="input-group mb-2 voting-answer-item">
+                                            <span class="input-group-text">1</span>
+                                            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 1">
+                                            <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+                                        </div>
+                                        <div class="input-group mb-2 voting-answer-item">
+                                            <span class="input-group-text">2</span>
+                                            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 2">
+                                            <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" id="voting-add-answer-btn">
+                                        + Dodaj nowe pole
+                                    </button>
+                                </div>
+
+                                <!-- Typ wyboru -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Typ wyboru:</strong></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-choice-type" id="voting-single-choice" value="single" checked>
+                                            <label class="form-check-label" for="voting-single-choice">Tylko jeden wybór</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-choice-type" id="voting-multiple-choice" value="multiple">
+                                            <label class="form-check-label" for="voting-multiple-choice">Wielokrotny wybór</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Czas -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Czas na głosowanie:</strong></label>
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <input type="number" class="form-control" id="voting-time-value" value="60" min="10" max="3600">
+                                        <select class="form-select" id="voting-time-unit" style="max-width: 120px;">
+                                            <option value="seconds">Sekundy</option>
+                                            <option value="minutes">Minuty</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Wynik -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Wynik:</strong></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-result-type" id="voting-result-auto" value="auto" checked>
+                                            <label class="form-check-label" for="voting-result-auto">Od razu (Auto)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-result-type" id="voting-result-manual" value="manual">
+                                            <label class="form-check-label" for="voting-result-manual">Na życzenie (Manual)</label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Auto: wyniki widoczne od razu po upływie czasu. Manual: wyniki widoczne po aktywacji przez hosta.</small>
+                                </div>
+
+                                <!-- Przyciski -->
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" id="voting-submit-question-btn">
+                                        <i class="bi bi-check-circle"></i> Zatwierdź
+                                    </button>
+                                    <button class="btn btn-secondary" id="voting-cancel-question-btn">
+                                        Anuluj
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Lista pytań -->
+                            <div id="voting-questions-list">
+                                <!-- Tutaj będą wyświetlane dodane pytania -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4883,6 +4976,329 @@ document.addEventListener('DOMContentLoaded', function () {
         // TODO: Dodać endpoint API dla głosowania
         console.log('Voting enabled:', enabled);
     });
+
+    // Głosowanie - zarządzanie pytaniami
+    let votingQuestions = [];
+    let votingEditingIndex = null;
+
+    // Pokazywanie formularza
+    document.getElementById('voting-add-question-btn')?.addEventListener('click', function() {
+        document.getElementById('voting-question-form').style.display = 'block';
+        document.getElementById('voting-add-question-btn').style.display = 'none';
+        votingEditingIndex = null;
+        votingResetForm();
+    });
+
+    // Anulowanie formularza
+    document.getElementById('voting-cancel-question-btn')?.addEventListener('click', function() {
+        document.getElementById('voting-question-form').style.display = 'none';
+        document.getElementById('voting-add-question-btn').style.display = 'block';
+        votingResetForm();
+    });
+
+    // Dodawanie nowego pola odpowiedzi
+    document.getElementById('voting-add-answer-btn')?.addEventListener('click', function() {
+        const container = document.getElementById('voting-answers-container');
+        const currentCount = container.querySelectorAll('.voting-answer-item').length;
+
+        if (currentCount >= 100) {
+            alert('Maksymalna liczba odpowiedzi to 100');
+            return;
+        }
+
+        const newIndex = currentCount + 1;
+        const newAnswerItem = document.createElement('div');
+        newAnswerItem.className = 'input-group mb-2 voting-answer-item';
+        newAnswerItem.innerHTML = `
+            <span class="input-group-text">${newIndex}</span>
+            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź ${newIndex}">
+            <button class="btn btn-danger voting-remove-answer-btn" type="button">×</button>
+        `;
+
+        container.appendChild(newAnswerItem);
+
+        // Pokaż przyciski usuwania jeśli jest więcej niż 2 odpowiedzi
+        votingUpdateRemoveButtons();
+
+        // Dodaj event listener do nowego przycisku usuwania
+        newAnswerItem.querySelector('.voting-remove-answer-btn').addEventListener('click', function() {
+            newAnswerItem.remove();
+            votingUpdateAnswerNumbers();
+            votingUpdateRemoveButtons();
+        });
+    });
+
+    // Funkcja aktualizująca numerację odpowiedzi
+    function votingUpdateAnswerNumbers() {
+        const container = document.getElementById('voting-answers-container');
+        const items = container.querySelectorAll('.voting-answer-item');
+        items.forEach((item, index) => {
+            item.querySelector('.input-group-text').textContent = index + 1;
+            item.querySelector('.voting-answer-input').placeholder = `Odpowiedź ${index + 1}`;
+        });
+    }
+
+    // Funkcja pokazująca/ukrywająca przyciski usuwania
+    function votingUpdateRemoveButtons() {
+        const container = document.getElementById('voting-answers-container');
+        const items = container.querySelectorAll('.voting-answer-item');
+        const showButtons = items.length > 2;
+
+        items.forEach(item => {
+            const removeBtn = item.querySelector('.voting-remove-answer-btn');
+            removeBtn.style.display = showButtons ? 'block' : 'none';
+        });
+    }
+
+    // Dodaj event listenery do początkowych przycisków usuwania
+    document.querySelectorAll('.voting-remove-answer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const item = btn.closest('.voting-answer-item');
+            item.remove();
+            votingUpdateAnswerNumbers();
+            votingUpdateRemoveButtons();
+        });
+    });
+
+    // Zatwierdzanie pytania
+    document.getElementById('voting-submit-question-btn')?.addEventListener('click', function() {
+        const questionText = document.getElementById('voting-question-text').value.trim();
+
+        if (!questionText) {
+            alert('Proszę wpisać pytanie');
+            return;
+        }
+
+        // Pobierz odpowiedzi
+        const answerInputs = document.querySelectorAll('.voting-answer-input');
+        const answers = [];
+        answerInputs.forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                answers.push(value);
+            }
+        });
+
+        if (answers.length < 2) {
+            alert('Proszę dodać przynajmniej 2 odpowiedzi');
+            return;
+        }
+
+        // Pobierz typ wyboru
+        const choiceType = document.querySelector('input[name="voting-choice-type"]:checked').value;
+
+        // Pobierz czas
+        const timeValue = parseInt(document.getElementById('voting-time-value').value);
+        const timeUnit = document.getElementById('voting-time-unit').value;
+
+        // Pobierz typ wyniku
+        const resultType = document.querySelector('input[name="voting-result-type"]:checked').value;
+
+        // Utwórz obiekt pytania
+        const question = {
+            id: votingEditingIndex !== null ? votingQuestions[votingEditingIndex].id : Date.now(),
+            question: questionText,
+            answers: answers,
+            choiceType: choiceType,
+            timeValue: timeValue,
+            timeUnit: timeUnit,
+            resultType: resultType,
+            status: 'inactive' // inactive, active, finished
+        };
+
+        // Dodaj lub zaktualizuj pytanie
+        if (votingEditingIndex !== null) {
+            votingQuestions[votingEditingIndex] = question;
+            votingEditingIndex = null;
+        } else {
+            votingQuestions.push(question);
+        }
+
+        // Wyświetl pytania
+        votingDisplayQuestions();
+
+        // Ukryj formularz
+        document.getElementById('voting-question-form').style.display = 'none';
+        document.getElementById('voting-add-question-btn').style.display = 'block';
+        votingResetForm();
+    });
+
+    // Funkcja resetująca formularz
+    function votingResetForm() {
+        document.getElementById('voting-question-text').value = '';
+
+        // Resetuj odpowiedzi do 2
+        const container = document.getElementById('voting-answers-container');
+        container.innerHTML = `
+            <div class="input-group mb-2 voting-answer-item">
+                <span class="input-group-text">1</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 1">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+            </div>
+            <div class="input-group mb-2 voting-answer-item">
+                <span class="input-group-text">2</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 2">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+            </div>
+        `;
+
+        // Dodaj event listenery do przycisków usuwania
+        container.querySelectorAll('.voting-remove-answer-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = btn.closest('.voting-answer-item');
+                item.remove();
+                votingUpdateAnswerNumbers();
+                votingUpdateRemoveButtons();
+            });
+        });
+
+        // Resetuj opcje
+        document.getElementById('voting-single-choice').checked = true;
+        document.getElementById('voting-time-value').value = 60;
+        document.getElementById('voting-time-unit').value = 'seconds';
+        document.getElementById('voting-result-auto').checked = true;
+    }
+
+    // Funkcja wyświetlająca pytania
+    function votingDisplayQuestions() {
+        const listContainer = document.getElementById('voting-questions-list');
+
+        if (votingQuestions.length === 0) {
+            listContainer.innerHTML = '<p class="text-muted">Brak dodanych pytań. Kliknij "Dodaj propozycję" aby utworzyć pierwsze pytanie.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = votingQuestions.map((q, index) => {
+            const timeDisplay = q.timeUnit === 'minutes' ? `${q.timeValue} min` : `${q.timeValue} sek`;
+            const choiceDisplay = q.choiceType === 'single' ? 'Jeden wybór' : 'Wielokrotny';
+            const resultDisplay = q.resultType === 'auto' ? 'Auto' : 'Manual';
+
+            return `
+                <div class="card mb-3" style="background: white;">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3"><strong>Pytanie ${index + 1}:</strong> ${q.question}</h6>
+
+                        <div class="mb-2">
+                            <strong>Odpowiedzi:</strong>
+                            <ol class="mb-2">
+                                ${q.answers.map(a => `<li>${a}</li>`).join('')}
+                            </ol>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="badge bg-info me-2">${choiceDisplay}</span>
+                            <span class="badge bg-secondary me-2">Czas: ${timeDisplay}</span>
+                            <span class="badge bg-primary me-2">Wynik: ${resultDisplay}</span>
+                            <span class="badge ${q.status === 'active' ? 'bg-success' : q.status === 'finished' ? 'bg-dark' : 'bg-warning'}">${
+                                q.status === 'active' ? 'Aktywne' : q.status === 'finished' ? 'Zakończone' : 'Nieaktywne'
+                            }</span>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-success" onclick="votingStartQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Start
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="votingStopQuestion(${index})" ${q.status !== 'active' ? 'disabled' : ''}>
+                                Stop
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="votingResetQuestion(${index})">
+                                Reset
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="votingEditQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Edytuj
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="votingDeleteQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Usuń
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Funkcje kontrolne dla pytań
+    window.votingStartQuestion = function(index) {
+        votingQuestions[index].status = 'active';
+        votingDisplayQuestions();
+        console.log('Started question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingStopQuestion = function(index) {
+        votingQuestions[index].status = 'finished';
+        votingDisplayQuestions();
+        console.log('Stopped question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingResetQuestion = function(index) {
+        votingQuestions[index].status = 'inactive';
+        votingDisplayQuestions();
+        console.log('Reset question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingEditQuestion = function(index) {
+        const question = votingQuestions[index];
+        votingEditingIndex = index;
+
+        // Wypełnij formularz danymi pytania
+        document.getElementById('voting-question-text').value = question.question;
+
+        // Wypełnij odpowiedzi
+        const container = document.getElementById('voting-answers-container');
+        container.innerHTML = '';
+
+        question.answers.forEach((answer, i) => {
+            const answerItem = document.createElement('div');
+            answerItem.className = 'input-group mb-2 voting-answer-item';
+            answerItem.innerHTML = `
+                <span class="input-group-text">${i + 1}</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź ${i + 1}" value="${answer}">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" ${question.answers.length <= 2 ? 'style="display: none;"' : ''}>×</button>
+            `;
+            container.appendChild(answerItem);
+
+            answerItem.querySelector('.voting-remove-answer-btn').addEventListener('click', function() {
+                answerItem.remove();
+                votingUpdateAnswerNumbers();
+                votingUpdateRemoveButtons();
+            });
+        });
+
+        // Wypełnij opcje
+        if (question.choiceType === 'single') {
+            document.getElementById('voting-single-choice').checked = true;
+        } else {
+            document.getElementById('voting-multiple-choice').checked = true;
+        }
+
+        document.getElementById('voting-time-value').value = question.timeValue;
+        document.getElementById('voting-time-unit').value = question.timeUnit;
+
+        if (question.resultType === 'auto') {
+            document.getElementById('voting-result-auto').checked = true;
+        } else {
+            document.getElementById('voting-result-manual').checked = true;
+        }
+
+        // Pokaż formularz
+        document.getElementById('voting-question-form').style.display = 'block';
+        document.getElementById('voting-add-question-btn').style.display = 'none';
+    };
+
+    window.votingDeleteQuestion = function(index) {
+        if (confirm('Czy na pewno chcesz usunąć to pytanie?')) {
+            votingQuestions.splice(index, 1);
+            votingDisplayQuestions();
+            console.log('Deleted question at index:', index);
+            // TODO: Wysłać do API
+        }
+    };
+
+    // Inicjalizacja wyświetlania pytań
+    votingDisplayQuestions();
 
     // Na żywo - przełącznik
     document.getElementById('live-enabled')?.addEventListener('change', async (e) => {
