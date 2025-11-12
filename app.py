@@ -4303,6 +4303,284 @@ def minigames_player(event_id):
     </html>
     ''', event_id=event_id)
 
+# ===================================================================
+# --- AI QR Code Endpoints ---
+# ===================================================================
+
+@app.route('/ai_qr/<int:event_id>')
+@host_required
+def ai_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy to zapasowy kod QR
+    is_backup = request.args.get('backup', 'false').lower() == 'true'
+
+    # Generuj kod QR dla AI
+    if is_backup:
+        backup_uuid = get_game_state(event_id, 'ai_backup_qr_uuid', None)
+        if not backup_uuid:
+            return "Zapasowy kod QR nie został jeszcze wygenerowany", 404
+        ai_url = url_for('ai_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
+        title = "🤖 AI - Zapasowy Kod"
+    else:
+        ai_url = url_for('ai_player', event_id=event_id, _external=True)
+        title = "🤖 AI"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>AI - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #6c757d;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #6c757d;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #5a6268;
+            }}
+            @media print {{
+                body {{ background: white; }}
+                button {{ display: none; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <p class="info">🤖 Pytania AI</p>
+            <div id="qrcode"></div>
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                Zeskanuj kod QR, aby odpowiedzieć na pytania AI<br>
+                i zdobyć 5 punktów za poprawną odpowiedź!
+            </p>
+            <button onclick="window.print()">🖨️ Drukuj kod QR</button>
+        </div>
+        <script>
+            new QRCode(document.getElementById("qrcode"), {{
+                text: "{ai_url}",
+                width: 300,
+                height: 300
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/api/host/ai/generate_backup_qr/<int:event_id>', methods=['POST'])
+@host_required
+def generate_ai_backup_qr(event_id):
+    """Generuj zapasowy kod QR dla AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Event nie znaleziony'}), 404
+
+    # Generuj nowy UUID dla zapasowego kodu QR
+    backup_uuid = str(uuid.uuid4())
+    set_game_state(event_id, 'ai_backup_qr_uuid', backup_uuid)
+
+    return jsonify({
+        'message': 'Zapasowy kod QR został wygenerowany',
+        'backup_uuid': backup_uuid
+    })
+
+@app.route('/ai_backup/<int:event_id>/<backup_uuid>')
+def ai_player_backup(event_id, backup_uuid):
+    """Widok AI dla gracza - zapasowy kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy UUID się zgadza
+    stored_uuid = get_game_state(event_id, 'ai_backup_qr_uuid', None)
+    if not stored_uuid or stored_uuid != backup_uuid:
+        return "Nieprawidłowy kod QR", 403
+
+    # Sprawdź czy włączona
+    enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>AI</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #6c757d, #adb5bd);
+                    color: white;
+                }
+                .container {
+                    text-align: center;
+                    padding: 40px;
+                }
+                h1 { font-size: 3rem; margin-bottom: 20px; }
+                p { font-size: 1.2rem; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🤖 AI</h1>
+                <p>Pytania AI są obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do tego samego widoku co ai_player
+    return redirect(url_for('ai_player', event_id=event_id))
+
+@app.route('/ai/<int:event_id>')
+def ai_player(event_id):
+    """Widok AI dla gracza - główny kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy włączona
+    enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>AI</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #6c757d, #adb5bd);
+                    color: white;
+                }
+                .container {
+                    text-align: center;
+                    padding: 40px;
+                }
+                h1 { font-size: 3rem; margin-bottom: 20px; }
+                p { font-size: 1.2rem; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🤖 AI</h1>
+                <p>Pytania AI są obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do widoku player - gracz musi być zalogowany
+    # Kod QR dla AI uruchomi quiz z pytaniami z kategorii AI
+    return render_template_string('''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>AI - Quiz!</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #6c757d, #adb5bd);
+                color: white;
+            }
+            .container {
+                text-align: center;
+                padding: 40px;
+                max-width: 500px;
+            }
+            h1 { font-size: 3rem; margin-bottom: 20px; }
+            p { font-size: 1.2rem; margin-bottom: 30px; }
+            .btn {
+                display: inline-block;
+                padding: 15px 40px;
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #6c757d;
+                background: white;
+                border: none;
+                border-radius: 30px;
+                text-decoration: none;
+                cursor: pointer;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+                transition: transform 0.2s;
+            }
+            .btn:hover {
+                transform: scale(1.05);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🤖 Quiz AI!</h1>
+            <p>Odpowiedz na pytania z wybranej kategorii i zdobądź 5 punktów!</p>
+            <p style="font-size: 1rem;">
+                Aby zagrać, musisz być zarejestrowany w grze.
+            </p>
+            <a href="{{ url_for('player_register', event_id=event_id, qr_code='ai_' + event_id|string) }}" class="btn">
+                🤖 Rozpocznij Quiz
+            </a>
+        </div>
+    </body>
+    </html>
+    ''', event_id=event_id)
+
 @app.route('/api/fortune/predict', methods=['POST'])
 def fortune_predict():
     """Generuj przepowiednię AI"""
