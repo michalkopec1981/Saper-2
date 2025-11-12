@@ -3034,6 +3034,180 @@ def recognize_ar_object():
         return jsonify({'recognized': False, 'error': str(e)}), 500
 
 # ===================================================================
+# --- Questions QR Code Endpoints ---
+# ===================================================================
+
+@app.route('/questions_qr/<int:event_id>')
+@host_required
+def questions_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Pytań"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy to zapasowy kod QR
+    is_backup = request.args.get('backup', 'false').lower() == 'true'
+
+    # Generuj kod QR dla pytań
+    if is_backup:
+        backup_uuid = get_game_state(event_id, 'questions_backup_qr_uuid', None)
+        if not backup_uuid:
+            return "Zapasowy kod QR nie został jeszcze wygenerowany", 404
+        questions_url = url_for('questions_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
+        title = "❓ Pytania - Zapasowy Kod"
+    else:
+        questions_url = url_for('player_dashboard', event_id=event_id, _external=True)
+        title = "❓ Pytania"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pytania - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #0d6efd;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #0d6efd;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #0a58ca;
+            }}
+            @media print {{
+                body {{ background: white; }}
+                button {{ display: none; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <div class="info">Zeskanuj kod QR aby uzyskać dostęp do pytań!</div>
+            <div id="qrcode"></div>
+            <div class="info"><strong>Event:</strong> {event.name}</div>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+        </div>
+        <script>
+            // Generuj kod QR
+            var qrcode = new QRCode(document.getElementById("qrcode"), {{
+                text: "{questions_url}",
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/api/host/questions/generate_backup_qr/<int:event_id>', methods=['POST'])
+@host_required
+def generate_questions_backup_qr(event_id):
+    """Generuj zapasowy kod QR dla Pytań"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Event nie znaleziony'}), 404
+
+    # Generuj nowy UUID dla zapasowego kodu QR
+    backup_uuid = str(uuid.uuid4())
+    set_game_state(event_id, 'questions_backup_qr_uuid', backup_uuid)
+
+    return jsonify({
+        'message': 'Zapasowy kod QR został wygenerowany',
+        'backup_uuid': backup_uuid
+    })
+
+@app.route('/questions_backup/<int:event_id>/<backup_uuid>')
+def questions_player_backup(event_id, backup_uuid):
+    """Widok Pytań dla gracza - zapasowy kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy UUID się zgadza
+    stored_uuid = get_game_state(event_id, 'questions_backup_qr_uuid', None)
+    if not stored_uuid or stored_uuid != backup_uuid:
+        return "Nieprawidłowy kod QR", 403
+
+    # Sprawdź czy włączona
+    enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Pytania</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .message {
+                    background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    max-width: 400px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>❓ Pytania</h1>
+            <div class="message">
+                <h2>⏸️ Chwilowo niedostępne</h2>
+                <p>Pytania są obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do dashboardu gracza
+    return redirect(url_for('player_dashboard', event_id=event_id))
+
+# ===================================================================
 # --- Fortune Teller AI Endpoints ---
 # ===================================================================
 
