@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Dostęp do Pytań - {{ event.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .access-container {
+        max-width: 600px;
+        margin: 20px;
+    }
+
+    .access-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    .success-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+    }
+
+    .title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #4facfe;
+        margin-bottom: 15px;
+    }
+
+    .subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .info-box {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+
+    .info-box h3 {
+        color: #4facfe;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+
+    .info-box p {
+        color: #555;
+        margin: 5px 0;
+    }
+
+    .qr-code-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-family: 'Courier New', monospace;
+        color: #666;
+    }
+
+    .btn-continue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 15px 40px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 20px;
+        width: 100%;
+    }
+
+    .btn-continue:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    @media (max-width: 600px) {
+        .access-card {
+            padding: 30px 20px;
+        }
+
+        .title {
+            font-size: 1.5rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="access-container">
+    <div class="access-card">
+        <div class="success-icon">✅</div>
+        <h1 class="title">Kod QR zeskanowany pomyślnie!</h1>
+        <p class="subtitle">Masz dostęp do pytań</p>
+
+        <div class="qr-code-info">
+            Kod QR: {{ qr_code.code_identifier }}
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Informacja:</h3>
+            <p><strong>Event:</strong> {{ event.name }}</p>
+            <p><strong>Typ dostępu:</strong> Pytania{% if qr_code.is_backup %} (Zapasowy kod){% endif %}</p>
+            <p>Pomyślnie zeskanowałeś kod QR dający dostęp do pytań w tym evencie.</p>
+        </div>
+
+        <button onclick="window.location.href='/player_register/{{ event.id }}'" class="btn-continue">
+            🎮 Przejdź do rejestracji
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}

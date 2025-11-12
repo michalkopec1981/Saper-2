@@ -197,6 +197,15 @@ class ARObject(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class QuestionQRCode(db.Model):
+    """Model dla kodów QR związanych z zakładką Pytania"""
+    __tablename__ = 'question_qr_code'
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    code_identifier = db.Column(db.String(50), nullable=False, unique=True)
+    is_backup = db.Column(db.Boolean, default=False)  # False = główny, True = zapasowy
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
@@ -2916,6 +2925,111 @@ def recognize_ar_object():
         import traceback
         traceback.print_exc()
         return jsonify({'recognized': False, 'error': str(e)}), 500
+
+# =====================================================================
+# QUESTION QR CODES - Kody QR dla zakładki Pytania
+# =====================================================================
+
+def get_or_create_main_questions_qr(event_id):
+    """Pobierz lub stwórz główny kod QR dla pytań"""
+    qr_code = QuestionQRCode.query.filter_by(event_id=event_id, is_backup=False).first()
+    if not qr_code:
+        # Generuj unikalny kod
+        import secrets
+        code_identifier = f"QST-{event_id}-{secrets.token_hex(4).upper()}"
+        qr_code = QuestionQRCode(
+            event_id=event_id,
+            code_identifier=code_identifier,
+            is_backup=False
+        )
+        db.session.add(qr_code)
+        db.session.commit()
+    return qr_code
+
+@app.route('/questions_qr_preview/<int:event_id>')
+def questions_qr_preview(event_id):
+    """Podgląd i druk głównego kodu QR dla pytań"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Pobierz lub stwórz główny kod QR
+    qr_code = get_or_create_main_questions_qr(event_id)
+
+    # URL do skanowania przez gracza
+    scan_url = url_for('player_scan_questions_qr', event_id=event_id, qr_code=qr_code.code_identifier, _external=True)
+
+    return render_template('questions_qr_preview.html',
+                         event=event,
+                         qr_code=qr_code,
+                         scan_url=scan_url,
+                         is_backup=False)
+
+@app.route('/questions_backup_qr_preview/<int:event_id>')
+def questions_backup_qr_preview(event_id):
+    """Podgląd i druk zapasowego kodu QR dla pytań"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Pobierz zapasowy kod QR (jeśli istnieje)
+    qr_code = QuestionQRCode.query.filter_by(event_id=event_id, is_backup=True).first()
+    if not qr_code:
+        return "Najpierw wygeneruj zapasowy kod QR", 404
+
+    # URL do skanowania przez gracza
+    scan_url = url_for('player_scan_questions_qr', event_id=event_id, qr_code=qr_code.code_identifier, _external=True)
+
+    return render_template('questions_qr_preview.html',
+                         event=event,
+                         qr_code=qr_code,
+                         scan_url=scan_url,
+                         is_backup=True)
+
+@app.route('/api/host/questions/backup-qr/generate', methods=['POST'])
+def generate_backup_questions_qr():
+    """Generuj zapasowy kod QR dla pytań"""
+    event_id = session.get('host_event_id')
+    if not event_id:
+        return jsonify({'message': 'Brak autoryzacji'}), 401
+
+    try:
+        # Sprawdź czy zapasowy kod już istnieje
+        existing = QuestionQRCode.query.filter_by(event_id=event_id, is_backup=True).first()
+        if existing:
+            return jsonify({'message': 'Zapasowy kod QR już istnieje'}), 200
+
+        # Generuj nowy zapasowy kod
+        import secrets
+        code_identifier = f"QST-BACKUP-{event_id}-{secrets.token_hex(4).upper()}"
+        qr_code = QuestionQRCode(
+            event_id=event_id,
+            code_identifier=code_identifier,
+            is_backup=True
+        )
+        db.session.add(qr_code)
+        db.session.commit()
+
+        return jsonify({'message': 'Zapasowy kod QR został wygenerowany pomyślnie!', 'code': code_identifier}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Błąd generowania kodu: {str(e)}'}), 500
+
+@app.route('/player/questions/<int:event_id>/<qr_code>')
+def player_scan_questions_qr(event_id, qr_code):
+    """Endpoint dla gracza po zeskanowaniu kodu QR pytań"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # Weryfikuj kod QR
+    qr = QuestionQRCode.query.filter_by(event_id=event_id, code_identifier=qr_code).first()
+    if not qr:
+        return "Nieprawidłowy kod QR", 404
+
+    # Przekieruj gracza do panelu pytań
+    # Tutaj możesz dostosować logikę - np. przekierowanie do specjalnej strony z pytaniami
+    return render_template('player_questions_access.html', event=event, qr_code=qr)
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':

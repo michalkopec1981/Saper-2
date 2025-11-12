@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% block title %}Kod QR Pytania - {{ event.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .preview-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .preview-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    .header {
+        margin-bottom: 30px;
+    }
+
+    .event-name {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #4facfe;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .qr-type-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+
+    .badge-main {
+        background: #28a745;
+        color: white;
+    }
+
+    .badge-backup {
+        background: #ffc107;
+        color: #333;
+    }
+
+    .qr-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 30px;
+        margin: 30px 0;
+    }
+
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .qr-container #questions-qr {
+        display: inline-block;
+        border: 5px solid #4facfe;
+        border-radius: 15px;
+        padding: 20px;
+        background: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-container canvas,
+    .qr-container img {
+        display: block;
+    }
+
+    .qr-label {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .qr-instructions {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+
+    .qr-instructions h3 {
+        color: #4facfe;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+    }
+
+    .qr-instructions ol {
+        margin: 0;
+        padding-left: 25px;
+    }
+
+    .qr-instructions li {
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    .url-display {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        word-break: break-all;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 15px;
+    }
+
+    .code-identifier {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #4facfe;
+        margin-top: 15px;
+        padding: 10px;
+        background: #f0f8ff;
+        border-radius: 8px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+
+    .btn-custom {
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-download {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-download:hover {
+        background: #218838;
+        transform: translateY(-2px);
+    }
+
+    .btn-back {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+    }
+
+    @media print {
+        body {
+            background: white;
+        }
+
+        .action-buttons,
+        .btn-back,
+        .qr-instructions {
+            display: none;
+        }
+
+        .preview-card {
+            box-shadow: none;
+            border: 2px solid #333;
+        }
+
+        .qr-section {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .preview-card {
+            padding: 20px;
+        }
+
+        .event-name {
+            font-size: 1.5rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-custom {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <div class="preview-card">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="event-name">{{ event.name }}</h1>
+            <p class="subtitle">Kod QR - Dostęp do Pytań</p>
+            {% if is_backup %}
+            <span class="qr-type-badge badge-backup">⚡ KOD ZAPASOWY</span>
+            {% else %}
+            <span class="qr-type-badge badge-main">✓ KOD GŁÓWNY</span>
+            {% endif %}
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-section">
+            <div class="qr-label">📱 Zeskanuj, aby uzyskać dostęp do pytań</div>
+            <div class="qr-container">
+                <div id="questions-qr"></div>
+            </div>
+            <div class="code-identifier">Kod: {{ qr_code.code_identifier }}</div>
+            <div class="url-display">{{ scan_url }}</div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="qr-instructions">
+            <h3>📋 Instrukcja:</h3>
+            <ol>
+                <li>Gracze skanują ten kod QR swoim smartfonem</li>
+                <li>Otrzymują dostęp do pytań z zakładki "Pytania"</li>
+                <li>{% if is_backup %}Ten kod zapasowy działa identycznie jak główny kod{% else %}To jest główny kod QR dla pytań{% endif %}</li>
+                <li>Wydrukuj i umieść kod w widocznym miejscu</li>
+            </ol>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button onclick="window.print()" class="btn-custom btn-print">
+                🖨️ Drukuj kod QR
+            </button>
+            <button onclick="downloadQR()" class="btn-custom btn-download">
+                💾 Pobierz jako PNG
+            </button>
+            <button onclick="window.location.href='/host/{{ event.id }}'" class="btn-custom btn-back">
+                ← Powrót do panelu hosta
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<!-- QR Code Generation Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scanUrl = "{{ scan_url }}";
+
+    // Generate QR code
+    const qrContainer = document.getElementById('questions-qr');
+
+    try {
+        // Clear any existing content
+        qrContainer.innerHTML = '';
+
+        // Create QR code
+        new QRCode(qrContainer, {
+            text: scanUrl,
+            width: 300,
+            height: 300,
+            colorDark: '#4facfe',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        console.log('QR code generated successfully for:', scanUrl);
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        qrContainer.innerHTML = '<div style="color: red; padding: 20px;">Błąd generowania kodu QR. Odśwież stronę.</div>';
+    }
+});
+
+function downloadQR() {
+    const qrContainer = document.getElementById('questions-qr');
+    const canvas = qrContainer.querySelector('canvas');
+
+    if (!canvas) {
+        alert('Kod QR nie został jeszcze wygenerowany. Proszę czekać.');
+        return;
+    }
+
+    const url = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = 'questions_qr_code{% if is_backup %}_backup{% endif %}.png';
+    link.href = url;
+    link.click();
+}
+</script>
+{% endblock %}
