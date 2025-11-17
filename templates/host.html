@@ -3253,9 +3253,9 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
         document.getElementById('correct-a').checked = true;
         document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]').classList.add('active');
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
         document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#category-buttons .btn[data-category="company"]').classList.add('active');
+        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
         document.querySelector('.modal-title').textContent = translations[currentLanguage].question_modal_title;
         questionModal.show();
     });
@@ -3425,23 +3425,26 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    document.getElementById('r2-add-question-btn')?.addEventListener('click', () => {
-        currentEditingQuestionIdR2 = null;
-        currentEditingQuestionRound = 2;
-        document.getElementById('modal-question-text').value = '';
-        document.getElementById('modal-answer-a').value = '';
-        document.getElementById('modal-answer-b').value = '';
-        document.getElementById('modal-answer-c').value = '';
-        document.getElementById('modal-letter').value = 'X';
-        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
-        document.getElementById('correct-a').checked = true;
-        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
-        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
-        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 2';
-        questionModal.show();
-    });
+    const r2AddBtn = document.getElementById('r2-add-question-btn');
+    if (r2AddBtn) {
+        r2AddBtn.addEventListener('click', () => {
+            currentEditingQuestionIdR2 = null;
+            currentEditingQuestionRound = 2;
+            document.getElementById('modal-question-text').value = '';
+            document.getElementById('modal-answer-a').value = '';
+            document.getElementById('modal-answer-b').value = '';
+            document.getElementById('modal-answer-c').value = '';
+            document.getElementById('modal-letter').value = 'X';
+            document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+            document.getElementById('correct-a').checked = true;
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+            document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 2';
+            questionModal.show();
+        });
+    }
 
     async function editQuestionR2(id) {
         try {
@@ -3537,23 +3540,26 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    document.getElementById('r3-add-question-btn')?.addEventListener('click', () => {
-        currentEditingQuestionIdR3 = null;
-        currentEditingQuestionRound = 3;
-        document.getElementById('modal-question-text').value = '';
-        document.getElementById('modal-answer-a').value = '';
-        document.getElementById('modal-answer-b').value = '';
-        document.getElementById('modal-answer-c').value = '';
-        document.getElementById('modal-letter').value = 'X';
-        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
-        document.getElementById('correct-a').checked = true;
-        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
-        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
-        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 3';
-        questionModal.show();
-    });
+    const r3AddBtn = document.getElementById('r3-add-question-btn');
+    if (r3AddBtn) {
+        r3AddBtn.addEventListener('click', () => {
+            currentEditingQuestionIdR3 = null;
+            currentEditingQuestionRound = 3;
+            document.getElementById('modal-question-text').value = '';
+            document.getElementById('modal-answer-a').value = '';
+            document.getElementById('modal-answer-b').value = '';
+            document.getElementById('modal-answer-c').value = '';
+            document.getElementById('modal-letter').value = 'X';
+            document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+            document.getElementById('correct-a').checked = true;
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+            document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 3';
+            questionModal.show();
+        });
+    }
 
     async function editQuestionR3(id) {
         try {
