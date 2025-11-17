@@ -117,6 +117,7 @@ class Question(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     category = db.Column(db.String(50), nullable=False, default='company')
     difficulty = db.Column(db.String(20), nullable=False, default='easy')
+    round = db.Column(db.Integer, nullable=False, default=1)
     times_shown = db.Column(db.Integer, default=0)
     times_correct = db.Column(db.Integer, default=0)
 
@@ -1526,28 +1527,36 @@ def host_questions():
     event_id = session['host_event_id']
     if request.method == 'POST':
         data = request.json
+        round_num = data.get('round', 1)
         new_q = Question(
             text=data['text'],
-            option_a=data['answers'][0], 
-            option_b=data['answers'][1], 
+            option_a=data['answers'][0],
+            option_b=data['answers'][1],
             option_c=data['answers'][2],
-            correct_answer=data['correctAnswer'], 
+            correct_answer=data['correctAnswer'],
             letter_to_reveal=data.get('letterToReveal', 'X').upper(),
-            category=data.get('category', 'company'), 
+            category=data.get('category', 'company'),
             difficulty=data.get('difficulty', 'easy'),
+            round=round_num,
             event_id=event_id
         )
         db.session.add(new_q)
         db.session.commit()
         return jsonify({'id': new_q.id})
-    
-    questions = Question.query.filter_by(event_id=event_id).all()
+
+    # GET: filter by round if provided
+    round_num = request.args.get('round', type=int)
+    if round_num:
+        questions = Question.query.filter_by(event_id=event_id, round=round_num).all()
+    else:
+        questions = Question.query.filter_by(event_id=event_id, round=1).all()
+
     return jsonify([{
-        'id': q.id, 
-        'text': q.text, 
-        'answers': [q.option_a, q.option_b, q.option_c], 
-        'correctAnswer': q.correct_answer, 
-        'letterToReveal': q.letter_to_reveal, 
+        'id': q.id,
+        'text': q.text,
+        'answers': [q.option_a, q.option_b, q.option_c],
+        'correctAnswer': q.correct_answer,
+        'letterToReveal': q.letter_to_reveal,
         'category': q.category,
         'difficulty': q.difficulty,
         'times_shown': q.times_shown,
@@ -1571,6 +1580,7 @@ def manage_question(question_id):
         q.letter_to_reveal = data.get('letterToReveal', q.letter_to_reveal).upper()
         q.category = data.get('category', q.category)
         q.difficulty = data.get('difficulty', q.difficulty)
+        q.round = data.get('round', q.round)
         db.session.commit()
         return jsonify({'message': 'Pytanie zaktualizowane'})
     
