@@ -1895,7 +1895,10 @@
 
         <div class="tab-pane fade" id="live">
             <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="live_tab">Na żywo</h5></div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="live_tab">Na żywo</h5>
+                    <p class="text-muted mb-0 mt-2 small">Spontaniczna rozgrywka prowadzona przez konferansjera ze sceny. Gracze odpowiadają na pytania w czasie rzeczywistym.</p>
+                </div>
                 <div class="card-body">
                     <!-- Stan gry - przełącznik -->
                     <div class="card mb-3 bg-light">
@@ -1914,8 +1917,14 @@
                     <!-- Kod QR -->
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
-                            <h6 class="mb-3">Kod QR</h6>
-                            <p class="text-muted">Tutaj będzie kod QR dla funkcji na żywo</p>
+                            <h6 class="mb-3">Kod QR dla graczy</h6>
+                            <p class="text-muted">Wyświetl ten kod QR na ekranie, aby gracze mogli dołączyć do trybu live.</p>
+                            <div class="text-center mb-3">
+                                <div id="live-qr-code"></div>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="openLiveQRPreview()">
+                                📱 Podgląd i druk kodu QR
+                            </button>
                         </div>
                     </div>
 
@@ -1923,15 +1932,88 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Ustawienia</h6>
-                            <p class="text-muted">Tutaj będą ustawienia funkcji na żywo</p>
+                            <div class="mb-3">
+                                <label for="live-button-count" class="form-label">Liczba przycisków odpowiedzi</label>
+                                <select class="form-select" id="live-button-count">
+                                    <option value="2">2 (A, B)</option>
+                                    <option value="3" selected>3 (A, B, C)</option>
+                                    <option value="4">4 (A, B, C, D)</option>
+                                </select>
+                                <small class="text-muted">Wybierz ile przycisków odpowiedzi zobaczą gracze</small>
+                            </div>
+                            <button class="btn btn-success" onclick="saveLiveSettings()">Zapisz ustawienia</button>
                         </div>
                     </div>
 
-                    <!-- Pytania i odpowiedzi -->
+                    <!-- Nowe pytanie -->
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
-                            <h6 class="mb-3">Pytania i odpowiedzi</h6>
-                            <p class="text-muted">Tutaj będą pytania i odpowiedzi dla funkcji na żywo</p>
+                            <h6 class="mb-3">Dodaj nowe pytanie</h6>
+                            <div class="mb-3">
+                                <label for="live-new-question-text" class="form-label">Treść pytania (opcjonalnie)</label>
+                                <textarea class="form-control" id="live-new-question-text" rows="2" placeholder="Możesz zostawić puste jeśli czytasz pytanie ze sceny"></textarea>
+                                <small class="text-muted">Jeśli wypełnisz, gracze zobaczą pytanie w swoich telefonach</small>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="live-new-option-a" class="form-label">Odpowiedź A</label>
+                                    <input type="text" class="form-control" id="live-new-option-a" placeholder="Opcjonalnie">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="live-new-option-b" class="form-label">Odpowiedź B</label>
+                                    <input type="text" class="form-control" id="live-new-option-b" placeholder="Opcjonalnie">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="live-new-option-c" class="form-label">Odpowiedź C</label>
+                                    <input type="text" class="form-control" id="live-new-option-c" placeholder="Opcjonalnie">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="live-new-option-d" class="form-label">Odpowiedź D</label>
+                                    <input type="text" class="form-control" id="live-new-option-d" placeholder="Opcjonalnie">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="live-new-time-limit" class="form-label">Limit czasu (sekundy)</label>
+                                <input type="number" class="form-control" id="live-new-time-limit" value="30" min="5" max="180">
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="createLiveQuestion()">
+                                ➕ Dodaj pytanie
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista pytań -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Pytania</h6>
+                            <div id="live-questions-list">
+                                <p class="text-muted text-center">Brak pytań. Dodaj nowe pytanie powyżej.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aktywne pytanie -->
+                    <div class="card mb-3 bg-warning" id="live-active-question-card" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="mb-3">⚡ Aktywne pytanie</h6>
+                            <div id="live-active-question-content">
+                                <p class="mb-2"><strong id="live-active-q-text"></strong></p>
+                                <div id="live-active-timer" class="mb-3">
+                                    <h4 class="text-danger">Czas: <span id="live-timer-display">30</span>s</h4>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Odpowiedzi graczy: <span id="live-answers-count">0</span></strong>
+                                </div>
+                                <h6 class="mb-2">Ujawnij poprawną odpowiedź:</h6>
+                                <div class="btn-group w-100" role="group">
+                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('A')">A</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('B')">B</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('C')">C</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('D')">D</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -6764,6 +6846,304 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem('darkMode', enabled ? 'true' : 'false');
         });
     }
+
+    // ========================================
+    // LIVE MODE FUNCTIONS
+    // ========================================
+
+    let liveSession = null;
+    let liveTimerInterval = null;
+    let activeQuestionId = null;
+
+    // Load Live Mode session on page load
+    async function loadLiveSession() {
+        try {
+            const response = await fetch('/api/host/live/session');
+            const data = await response.json();
+            liveSession = data;
+
+            // Update UI
+            const enabledCheckbox = document.getElementById('live-enabled');
+            const statusBadge = document.getElementById('live-status');
+            const buttonCountSelect = document.getElementById('live-button-count');
+
+            if (enabledCheckbox) {
+                enabledCheckbox.checked = data.is_enabled;
+                statusBadge.textContent = data.is_enabled ? 'Aktywna' : 'Nieaktywna';
+                statusBadge.className = data.is_enabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            if (buttonCountSelect) {
+                buttonCountSelect.value = data.button_count;
+            }
+
+            // Generate QR code
+            if (data.qr_code) {
+                const qrContainer = document.getElementById('live-qr-code');
+                if (qrContainer) {
+                    qrContainer.innerHTML = '';
+                    const liveUrl = `${window.location.origin}/live/{{ event.id }}/${data.qr_code}`;
+                    new QRCode(qrContainer, {
+                        text: liveUrl,
+                        width: 200,
+                        height: 200
+                    });
+                }
+            }
+
+            // Load questions
+            loadLiveQuestions();
+        } catch (error) {
+            console.error('Error loading live session:', error);
+        }
+    }
+
+    // Save Live Mode settings
+    window.saveLiveSettings = async function() {
+        const enabled = document.getElementById('live-enabled').checked;
+        const buttonCount = parseInt(document.getElementById('live-button-count').value);
+
+        try {
+            const response = await fetch('/api/host/live/session', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    is_enabled: enabled,
+                    button_count: buttonCount
+                })
+            });
+
+            if (response.ok) {
+                showAlert('Ustawienia zapisane', 'success');
+                loadLiveSession();
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            showAlert('Błąd zapisu ustawień', 'danger');
+        }
+    };
+
+    // Live enabled toggle handler
+    if (document.getElementById('live-enabled')) {
+        document.getElementById('live-enabled').addEventListener('change', function(e) {
+            const statusBadge = document.getElementById('live-status');
+            if (e.target.checked) {
+                statusBadge.textContent = 'Aktywna';
+                statusBadge.className = 'badge bg-success';
+            } else {
+                statusBadge.textContent = 'Nieaktywna';
+                statusBadge.className = 'badge bg-secondary';
+            }
+            saveLiveSettings();
+        });
+    }
+
+    // Create new live question
+    window.createLiveQuestion = async function() {
+        const questionText = document.getElementById('live-new-question-text').value;
+        const optionA = document.getElementById('live-new-option-a').value;
+        const optionB = document.getElementById('live-new-option-b').value;
+        const optionC = document.getElementById('live-new-option-c').value;
+        const optionD = document.getElementById('live-new-option-d').value;
+        const timeLimit = parseInt(document.getElementById('live-new-time-limit').value);
+
+        try {
+            const response = await fetch('/api/host/live/question', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    question_text: questionText,
+                    option_a: optionA,
+                    option_b: optionB,
+                    option_c: optionC,
+                    option_d: optionD,
+                    time_limit: timeLimit
+                })
+            });
+
+            if (response.ok) {
+                showAlert('Pytanie dodane', 'success');
+                // Clear form
+                document.getElementById('live-new-question-text').value = '';
+                document.getElementById('live-new-option-a').value = '';
+                document.getElementById('live-new-option-b').value = '';
+                document.getElementById('live-new-option-c').value = '';
+                document.getElementById('live-new-option-d').value = '';
+                document.getElementById('live-new-time-limit').value = '30';
+                loadLiveQuestions();
+            }
+        } catch (error) {
+            console.error('Error creating question:', error);
+            showAlert('Błąd tworzenia pytania', 'danger');
+        }
+    };
+
+    // Load live questions list
+    async function loadLiveQuestions() {
+        try {
+            const response = await fetch('/api/host/live/questions');
+            const data = await response.json();
+            const container = document.getElementById('live-questions-list');
+
+            if (data.questions && data.questions.length > 0) {
+                container.innerHTML = data.questions.map(q => `
+                    <div class="card mb-2 ${q.is_active ? 'border-warning' : ''}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <p class="mb-1"><strong>${q.question_text || '(Pytanie czytane ze sceny)'}</strong></p>
+                                    ${q.option_a ? `<small>A: ${q.option_a}</small><br>` : ''}
+                                    ${q.option_b ? `<small>B: ${q.option_b}</small><br>` : ''}
+                                    ${q.option_c ? `<small>C: ${q.option_c}</small><br>` : ''}
+                                    ${q.option_d ? `<small>D: ${q.option_d}</small><br>` : ''}
+                                    <small class="text-muted">Limit: ${q.time_limit}s | Odpowiedzi: ${q.total_answers}</small>
+                                    ${q.is_revealed ? `<br><small class="text-success">Poprawna: ${q.correct_answer} (${q.correct_answers} poprawnych)</small>` : ''}
+                                </div>
+                                <div class="btn-group-vertical ms-2">
+                                    ${!q.is_active && !q.is_revealed ? `
+                                        <button class="btn btn-sm btn-success" onclick="startLiveQuestion(${q.id})">▶ Start</button>
+                                    ` : ''}
+                                    ${q.is_active ? `<span class="badge bg-warning">Aktywne</span>` : ''}
+                                    ${q.is_revealed ? `<span class="badge bg-info">Zakończone</span>` : ''}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteLiveQuestion(${q.id})">🗑</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">Brak pytań. Dodaj nowe pytanie powyżej.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading questions:', error);
+        }
+    }
+
+    // Start live question
+    window.startLiveQuestion = async function(questionId) {
+        try {
+            const response = await fetch(`/api/host/live/question/${questionId}/start`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                activeQuestionId = questionId;
+                showAlert('Pytanie uruchomione', 'success');
+                loadLiveQuestions();
+                showActiveQuestionPanel(questionId);
+                startLiveTimer();
+            }
+        } catch (error) {
+            console.error('Error starting question:', error);
+            showAlert('Błąd uruchamiania pytania', 'danger');
+        }
+    };
+
+    // Show active question panel
+    function showActiveQuestionPanel(questionId) {
+        const card = document.getElementById('live-active-question-card');
+        card.style.display = 'block';
+        // Scroll to active question card
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Hide active question panel
+    function hideActiveQuestionPanel() {
+        const card = document.getElementById('live-active-question-card');
+        card.style.display = 'none';
+        if (liveTimerInterval) {
+            clearInterval(liveTimerInterval);
+            liveTimerInterval = null;
+        }
+    }
+
+    // Start live timer
+    function startLiveTimer() {
+        if (liveTimerInterval) {
+            clearInterval(liveTimerInterval);
+        }
+
+        let timeRemaining = 30; // Default, will be updated
+        const timerDisplay = document.getElementById('live-timer-display');
+
+        liveTimerInterval = setInterval(() => {
+            timeRemaining--;
+            if (timerDisplay) {
+                timerDisplay.textContent = timeRemaining;
+            }
+
+            if (timeRemaining <= 0) {
+                clearInterval(liveTimerInterval);
+                liveTimerInterval = null;
+            }
+        }, 1000);
+    }
+
+    // Reveal answer
+    window.revealAnswer = async function(answer) {
+        if (!activeQuestionId) return;
+
+        try {
+            const response = await fetch(`/api/host/live/question/${activeQuestionId}/reveal`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ correct_answer: answer })
+            });
+
+            if (response.ok) {
+                showAlert(`Poprawna odpowiedź: ${answer}`, 'success');
+                activeQuestionId = null;
+                hideActiveQuestionPanel();
+                loadLiveQuestions();
+            }
+        } catch (error) {
+            console.error('Error revealing answer:', error);
+            showAlert('Błąd ujawniania odpowiedzi', 'danger');
+        }
+    };
+
+    // Delete live question
+    window.deleteLiveQuestion = async function(questionId) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/live/question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showAlert('Pytanie usunięte', 'success');
+                loadLiveQuestions();
+            }
+        } catch (error) {
+            console.error('Error deleting question:', error);
+            showAlert('Błąd usuwania pytania', 'danger');
+        }
+    };
+
+    // Open Live QR Preview (similar to other QR previews)
+    window.openLiveQRPreview = function() {
+        if (liveSession && liveSession.qr_code) {
+            const liveUrl = `${window.location.origin}/live/{{ event.id }}/${liveSession.qr_code}`;
+            window.open(`/player_qr_preview/{{ event.id }}?url=${encodeURIComponent(liveUrl)}&title=Tryb Na Żywo`, '_blank');
+        }
+    };
+
+    // WebSocket listeners for live mode
+    if (socket) {
+        socket.on('live_question_started', function(data) {
+            console.log('Live question started:', data);
+            loadLiveQuestions();
+        });
+
+        socket.on('live_answer_revealed', function(data) {
+            console.log('Live answer revealed:', data);
+            loadLiveQuestions();
+        });
+    }
+
+    // Initialize Live Mode on page load
+    loadLiveSession();
 
 });
 </script>

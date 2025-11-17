@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% block title %}Tryb Na Żywo{% endblock %}
+{% block content %}
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="text-center">
+        <h2>🎯 Tryb Na Żywo</h2>
+        <p class="text-muted">Czekaj na pytania od konferansjera</p>
+        <hr>
+    </div>
+
+    <!-- Status oczekiwania -->
+    <div id="waiting-section" class="text-center">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="mb-3">⏳ Oczekiwanie na pytanie...</h5>
+                <p class="text-muted">Konferansjer uruchomi pytanie ze sceny</p>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Ładowanie...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aktywne pytanie -->
+    <div id="question-section" style="display: none;">
+        <div class="card border-primary mb-3">
+            <div class="card-body">
+                <!-- Timer -->
+                <div class="text-center mb-3">
+                    <h4 class="text-danger">
+                        ⏱️ Czas: <span id="timer-display">30</span>s
+                    </h4>
+                </div>
+
+                <!-- Pytanie (jeśli dostępne) -->
+                <div id="question-text-container" style="display: none;">
+                    <h5 class="mb-3" id="question-text"></h5>
+                </div>
+
+                <!-- Opcje odpowiedzi (jeśli dostępne) -->
+                <div id="options-container" style="display: none;" class="mb-3">
+                    <div id="option-a-container" style="display: none;">
+                        <strong>A:</strong> <span id="option-a"></span>
+                    </div>
+                    <div id="option-b-container" style="display: none;">
+                        <strong>B:</strong> <span id="option-b"></span>
+                    </div>
+                    <div id="option-c-container" style="display: none;">
+                        <strong>C:</strong> <span id="option-c"></span>
+                    </div>
+                    <div id="option-d-container" style="display: none;">
+                        <strong>D:</strong> <span id="option-d"></span>
+                    </div>
+                </div>
+
+                <!-- Przyciski odpowiedzi -->
+                <div id="answer-buttons" class="d-grid gap-3">
+                    <button class="btn btn-lg btn-primary" onclick="submitAnswer('A')" id="btn-a">A</button>
+                    <button class="btn btn-lg btn-primary" onclick="submitAnswer('B')" id="btn-b">B</button>
+                    <button class="btn btn-lg btn-primary" onclick="submitAnswer('C')" id="btn-c" style="display: none;">C</button>
+                    <button class="btn btn-lg btn-primary" onclick="submitAnswer('D')" id="btn-d" style="display: none;">D</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sekcja po udzieleniu odpowiedzi -->
+    <div id="answered-section" style="display: none;">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5>✅ Odpowiedź wysłana!</h5>
+                <p class="mb-0">Twoja odpowiedź: <strong id="your-answer"></strong></p>
+                <p class="text-white-50 small mt-2">Czekaj na ujawnienie poprawnej odpowiedzi...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wynik po ujawnieniu -->
+    <div id="result-section" style="display: none;">
+        <div class="card" id="result-card">
+            <div class="card-body text-center">
+                <h4 id="result-title"></h4>
+                <p id="result-message"></p>
+                <button class="btn btn-primary" onclick="location.reload()">Gotowy na kolejne pytanie</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Komunikaty błędów -->
+    <div id="error-section" style="display: none;">
+        <div class="alert alert-danger" role="alert">
+            <strong>Błąd!</strong> <span id="error-message"></span>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    const eventId = {{ event_id }};
+    const qrCode = '{{ qr_code }}';
+    let currentQuestionId = null;
+    let timerInterval = null;
+    let socket = null;
+
+    // Połącz z WebSocket
+    socket = io();
+
+    socket.on('connect', function() {
+        console.log('Connected to WebSocket');
+        socket.emit('join', {room: `event_${eventId}`});
+    });
+
+    // Nasłuchuj na nowe pytania
+    socket.on('live_question_started', function(data) {
+        console.log('New question started:', data);
+        checkQuestionStatus();
+    });
+
+    // Nasłuchuj na ujawnienie odpowiedzi
+    socket.on('live_answer_revealed', function(data) {
+        console.log('Answer revealed:', data);
+        checkQuestionStatus();
+    });
+
+    // Sprawdź status pytania
+    async function checkQuestionStatus() {
+        try {
+            const response = await fetch(`/api/player/live/status/${eventId}/${qrCode}`);
+            const data = await response.json();
+
+            if (data.active) {
+                currentQuestionId = data.question_id;
+                showQuestion(data);
+            } else {
+                showWaiting();
+            }
+        } catch (error) {
+            console.error('Error checking question status:', error);
+            showError('Nie udało się pobrać statusu pytania');
+        }
+    }
+
+    // Pokaż sekcję oczekiwania
+    function showWaiting() {
+        document.getElementById('waiting-section').style.display = 'block';
+        document.getElementById('question-section').style.display = 'none';
+        document.getElementById('answered-section').style.display = 'none';
+        document.getElementById('result-section').style.display = 'none';
+    }
+
+    // Pokaż pytanie
+    function showQuestion(data) {
+        // Ukryj sekcję oczekiwania
+        document.getElementById('waiting-section').style.display = 'none';
+
+        // Sprawdź czy gracz już odpowiedział
+        if (data.has_answered) {
+            if (data.is_revealed) {
+                showResult(data);
+            } else {
+                showAnswered();
+            }
+            return;
+        }
+
+        // Sprawdź czy odpowiedź została ujawniona
+        if (data.is_revealed) {
+            showResult(data);
+            return;
+        }
+
+        // Pokaż sekcję pytania
+        document.getElementById('question-section').style.display = 'block';
+        document.getElementById('answered-section').style.display = 'none';
+        document.getElementById('result-section').style.display = 'none';
+
+        // Wyświetl treść pytania jeśli dostępna
+        if (data.question_text && data.question_text.trim() !== '') {
+            document.getElementById('question-text-container').style.display = 'block';
+            document.getElementById('question-text').textContent = data.question_text;
+        } else {
+            document.getElementById('question-text-container').style.display = 'none';
+        }
+
+        // Wyświetl opcje odpowiedzi jeśli dostępne
+        let hasOptions = false;
+        if (data.option_a && data.option_a.trim() !== '') {
+            document.getElementById('option-a-container').style.display = 'block';
+            document.getElementById('option-a').textContent = data.option_a;
+            hasOptions = true;
+        }
+        if (data.option_b && data.option_b.trim() !== '') {
+            document.getElementById('option-b-container').style.display = 'block';
+            document.getElementById('option-b').textContent = data.option_b;
+            hasOptions = true;
+        }
+        if (data.option_c && data.option_c.trim() !== '') {
+            document.getElementById('option-c-container').style.display = 'block';
+            document.getElementById('option-c').textContent = data.option_c;
+            hasOptions = true;
+        }
+        if (data.option_d && data.option_d.trim() !== '') {
+            document.getElementById('option-d-container').style.display = 'block';
+            document.getElementById('option-d').textContent = data.option_d;
+            hasOptions = true;
+        }
+
+        if (hasOptions) {
+            document.getElementById('options-container').style.display = 'block';
+        }
+
+        // Pokaż odpowiednie przyciski na podstawie button_count
+        const buttonCount = data.button_count || 3;
+        document.getElementById('btn-a').style.display = 'block';
+        document.getElementById('btn-b').style.display = 'block';
+        document.getElementById('btn-c').style.display = buttonCount >= 3 ? 'block' : 'none';
+        document.getElementById('btn-d').style.display = buttonCount >= 4 ? 'block' : 'none';
+
+        // Uruchom timer
+        if (data.time_remaining) {
+            startTimer(Math.floor(data.time_remaining));
+        }
+    }
+
+    // Pokaż sekcję po udzieleniu odpowiedzi
+    function showAnswered() {
+        document.getElementById('question-section').style.display = 'none';
+        document.getElementById('answered-section').style.display = 'block';
+        document.getElementById('result-section').style.display = 'none';
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+    }
+
+    // Pokaż wynik
+    function showResult(data) {
+        document.getElementById('question-section').style.display = 'none';
+        document.getElementById('answered-section').style.display = 'none';
+        document.getElementById('result-section').style.display = 'block';
+
+        const resultCard = document.getElementById('result-card');
+        const resultTitle = document.getElementById('result-title');
+        const resultMessage = document.getElementById('result-message');
+
+        // Tutaj możemy dodać logikę sprawdzania czy odpowiedź była poprawna
+        // (wymaga dodatkowego endpointu API lub przekazania danych w data)
+
+        resultCard.className = 'card border-info';
+        resultTitle.textContent = '✅ Pytanie zakończone';
+        resultMessage.innerHTML = `Poprawna odpowiedź: <strong>${data.correct_answer}</strong>`;
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+    }
+
+    // Pokaż błąd
+    function showError(message) {
+        document.getElementById('error-section').style.display = 'block';
+        document.getElementById('error-message').textContent = message;
+    }
+
+    // Uruchom timer
+    function startTimer(seconds) {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+
+        let timeRemaining = seconds;
+        const timerDisplay = document.getElementById('timer-display');
+        timerDisplay.textContent = timeRemaining;
+
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            timerDisplay.textContent = timeRemaining;
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }, 1000);
+    }
+
+    // Wyślij odpowiedź
+    async function submitAnswer(answer) {
+        if (!currentQuestionId) {
+            showError('Brak aktywnego pytania');
+            return;
+        }
+
+        // Wyłącz przyciski
+        const buttons = document.querySelectorAll('#answer-buttons button');
+        buttons.forEach(btn => btn.disabled = true);
+
+        try {
+            const response = await fetch('/api/player/live/answer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    question_id: currentQuestionId,
+                    answer: answer,
+                    event_id: eventId,
+                    qr_code: qrCode
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('your-answer').textContent = answer;
+                showAnswered();
+            } else {
+                showError(data.error || 'Błąd wysyłania odpowiedzi');
+                // Włącz przyciski z powrotem
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        } catch (error) {
+            console.error('Error submitting answer:', error);
+            showError('Nie udało się wysłać odpowiedzi');
+            buttons.forEach(btn => btn.disabled = false);
+        }
+    }
+
+    // Inicjalizacja - sprawdź status przy załadowaniu strony
+    checkQuestionStatus();
+
+    // Sprawdzaj status co 5 sekund (backup gdyby WebSocket nie działał)
+    setInterval(checkQuestionStatus, 5000);
+</script>
+{% endblock %}

@@ -202,6 +202,42 @@ class ARObject(db.Model):
     scan_interval = db.Column(db.Integer, default=2)  # Interwał skanowania w sekundach (1-10)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class LiveSession(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    is_enabled = db.Column(db.Boolean, default=True)
+    button_count = db.Column(db.Integer, default=3)  # 2, 3, lub 4 przyciski (A,B) (A,B,C) lub (A,B,C,D)
+    qr_code = db.Column(db.String(50), nullable=True)  # Kod QR dla graczy
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class LiveQuestion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('live_session.id', ondelete='CASCADE'), nullable=False)
+    question_text = db.Column(db.String(500), nullable=True)  # Opcjonalne - może być puste jeśli host czyta
+    option_a = db.Column(db.String(200), nullable=True)
+    option_b = db.Column(db.String(200), nullable=True)
+    option_c = db.Column(db.String(200), nullable=True)
+    option_d = db.Column(db.String(200), nullable=True)
+    correct_answer = db.Column(db.String(1), nullable=True)  # 'A', 'B', 'C', lub 'D' - null dopóki host nie ujawni
+    is_active = db.Column(db.Boolean, default=False)  # Czy pytanie jest aktualnie aktywne
+    is_revealed = db.Column(db.Boolean, default=False)  # Czy poprawna odpowiedź została ujawniona
+    time_limit = db.Column(db.Integer, default=30)  # Limit czasu w sekundach
+    started_at = db.Column(db.DateTime, nullable=True)  # Kiedy pytanie zostało uruchomione
+    revealed_at = db.Column(db.DateTime, nullable=True)  # Kiedy odpowiedź została ujawniona
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class LivePlayerAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('live_question.id', ondelete='CASCADE'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    answer = db.Column(db.String(1), nullable=False)  # 'A', 'B', 'C', lub 'D'
+    is_correct = db.Column(db.Boolean, nullable=True)  # Wyznaczane po ujawnieniu poprawnej odpowiedzi
+    points_awarded = db.Column(db.Integer, default=0)  # Punkty przyznane za odpowiedź
+    answered_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __table_args__ = (db.UniqueConstraint('player_id', 'question_id', name='_player_live_question_uc'),)
+
 # Inicjalizacja bazy danych przy starcie aplikacji
 with app.app_context():
     try:
@@ -5359,6 +5395,401 @@ def get_event_players(event_id):
     players = Player.query.filter_by(event_id=event_id).order_by(Player.name).all()
     return jsonify({
         'players': [{'id': p.id, 'name': p.name, 'score': p.score} for p in players]
+    })
+
+# ========================================
+# LIVE MODE API ENDPOINTS
+# ========================================
+
+@app.route('/api/host/live/session', methods=['GET', 'POST'])
+@host_required
+def live_session():
+    """Pobierz lub utwórz sesję Live Mode"""
+    event_id = session['host_event_id']
+
+    if request.method == 'GET':
+        live_session = LiveSession.query.filter_by(event_id=event_id).first()
+        if not live_session:
+            # Utwórz domyślną sesję jeśli nie istnieje
+            import secrets
+            qr_code = secrets.token_urlsafe(16)[:12]
+            live_session = LiveSession(
+                event_id=event_id,
+                is_enabled=True,
+                button_count=3,
+                qr_code=qr_code
+            )
+            db.session.add(live_session)
+            db.session.commit()
+
+        return jsonify({
+            'id': live_session.id,
+            'is_enabled': live_session.is_enabled,
+            'button_count': live_session.button_count,
+            'qr_code': live_session.qr_code
+        })
+
+    elif request.method == 'POST':
+        data = request.json
+        live_session = LiveSession.query.filter_by(event_id=event_id).first()
+
+        if live_session:
+            live_session.is_enabled = data.get('is_enabled', live_session.is_enabled)
+            live_session.button_count = data.get('button_count', live_session.button_count)
+        else:
+            import secrets
+            qr_code = secrets.token_urlsafe(16)[:12]
+            live_session = LiveSession(
+                event_id=event_id,
+                is_enabled=data.get('is_enabled', True),
+                button_count=data.get('button_count', 3),
+                qr_code=qr_code
+            )
+            db.session.add(live_session)
+
+        db.session.commit()
+        return jsonify({'message': 'Sesja Live zaktualizowana', 'session_id': live_session.id})
+
+@app.route('/api/host/live/questions', methods=['GET'])
+@host_required
+def get_live_questions():
+    """Pobierz wszystkie pytania Live Mode"""
+    event_id = session['host_event_id']
+    live_session = LiveSession.query.filter_by(event_id=event_id).first()
+
+    if not live_session:
+        return jsonify({'questions': []})
+
+    questions = LiveQuestion.query.filter_by(
+        event_id=event_id,
+        session_id=live_session.id
+    ).order_by(LiveQuestion.created_at.desc()).all()
+
+    result = []
+    for q in questions:
+        # Policz odpowiedzi
+        total_answers = LivePlayerAnswer.query.filter_by(question_id=q.id).count()
+        correct_answers = LivePlayerAnswer.query.filter_by(question_id=q.id, is_correct=True).count() if q.is_revealed else 0
+
+        result.append({
+            'id': q.id,
+            'question_text': q.question_text,
+            'option_a': q.option_a,
+            'option_b': q.option_b,
+            'option_c': q.option_c,
+            'option_d': q.option_d,
+            'correct_answer': q.correct_answer if q.is_revealed else None,
+            'is_active': q.is_active,
+            'is_revealed': q.is_revealed,
+            'time_limit': q.time_limit,
+            'started_at': q.started_at.isoformat() if q.started_at else None,
+            'total_answers': total_answers,
+            'correct_answers': correct_answers
+        })
+
+    return jsonify({'questions': result})
+
+@app.route('/api/host/live/question', methods=['POST'])
+@host_required
+def create_live_question():
+    """Utwórz nowe pytanie Live Mode"""
+    event_id = session['host_event_id']
+    data = request.json
+
+    live_session = LiveSession.query.filter_by(event_id=event_id).first()
+    if not live_session:
+        return jsonify({'error': 'Brak aktywnej sesji Live'}), 400
+
+    # Dezaktywuj wszystkie poprzednie pytania
+    LiveQuestion.query.filter_by(
+        event_id=event_id,
+        session_id=live_session.id,
+        is_active=True
+    ).update({'is_active': False})
+
+    new_question = LiveQuestion(
+        event_id=event_id,
+        session_id=live_session.id,
+        question_text=data.get('question_text', ''),
+        option_a=data.get('option_a', ''),
+        option_b=data.get('option_b', ''),
+        option_c=data.get('option_c', ''),
+        option_d=data.get('option_d', ''),
+        time_limit=data.get('time_limit', 30),
+        is_active=False
+    )
+
+    db.session.add(new_question)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Pytanie utworzone',
+        'question_id': new_question.id
+    })
+
+@app.route('/api/host/live/question/<int:question_id>/start', methods=['POST'])
+@host_required
+def start_live_question(question_id):
+    """Uruchom pytanie Live Mode"""
+    event_id = session['host_event_id']
+    question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    # Dezaktywuj wszystkie inne pytania
+    LiveQuestion.query.filter_by(
+        event_id=event_id,
+        is_active=True
+    ).update({'is_active': False})
+
+    # Aktywuj to pytanie
+    question.is_active = True
+    question.started_at = datetime.utcnow()
+    question.is_revealed = False
+    db.session.commit()
+
+    # Wyślij powiadomienie przez WebSocket
+    socketio.emit('live_question_started', {
+        'question_id': question.id,
+        'question_text': question.question_text,
+        'option_a': question.option_a,
+        'option_b': question.option_b,
+        'option_c': question.option_c,
+        'option_d': question.option_d,
+        'time_limit': question.time_limit
+    }, room=f'event_{event_id}')
+
+    return jsonify({'message': 'Pytanie uruchomione'})
+
+@app.route('/api/host/live/question/<int:question_id>/reveal', methods=['POST'])
+@host_required
+def reveal_live_answer(question_id):
+    """Ujawnij poprawną odpowiedź"""
+    event_id = session['host_event_id']
+    data = request.json
+    question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    correct_answer = data.get('correct_answer', '').upper()
+    if correct_answer not in ['A', 'B', 'C', 'D']:
+        return jsonify({'error': 'Nieprawidłowa odpowiedź'}), 400
+
+    question.correct_answer = correct_answer
+    question.is_revealed = True
+    question.revealed_at = datetime.utcnow()
+    question.is_active = False
+
+    # Zaktualizuj odpowiedzi graczy i przyznaj punkty
+    answers = LivePlayerAnswer.query.filter_by(question_id=question_id).all()
+    for answer in answers:
+        answer.is_correct = (answer.answer == correct_answer)
+        if answer.is_correct:
+            answer.points_awarded = 10  # Można to skonfigurować
+            # Dodaj punkty do głównego score gracza
+            player = Player.query.get(answer.player_id)
+            if player:
+                player.score += answer.points_awarded
+
+    db.session.commit()
+
+    # Wyślij powiadomienie przez WebSocket
+    socketio.emit('live_answer_revealed', {
+        'question_id': question.id,
+        'correct_answer': correct_answer
+    }, room=f'event_{event_id}')
+
+    return jsonify({'message': 'Odpowiedź ujawniona', 'correct_answer': correct_answer})
+
+@app.route('/api/host/live/question/<int:question_id>', methods=['PUT', 'DELETE'])
+@host_required
+def update_or_delete_live_question(question_id):
+    """Edytuj lub usuń pytanie Live Mode"""
+    event_id = session['host_event_id']
+    question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    if request.method == 'PUT':
+        data = request.json
+        question.question_text = data.get('question_text', question.question_text)
+        question.option_a = data.get('option_a', question.option_a)
+        question.option_b = data.get('option_b', question.option_b)
+        question.option_c = data.get('option_c', question.option_c)
+        question.option_d = data.get('option_d', question.option_d)
+        question.time_limit = data.get('time_limit', question.time_limit)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie zaktualizowane'})
+
+    elif request.method == 'DELETE':
+        db.session.delete(question)
+        db.session.commit()
+        return jsonify({'message': 'Pytanie usunięte'})
+
+@app.route('/api/host/live/answers/<int:question_id>', methods=['GET'])
+@host_required
+def get_live_answers(question_id):
+    """Pobierz odpowiedzi graczy dla pytania"""
+    event_id = session['host_event_id']
+    question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    answers = db.session.query(
+        LivePlayerAnswer, Player
+    ).join(
+        Player, LivePlayerAnswer.player_id == Player.id
+    ).filter(
+        LivePlayerAnswer.question_id == question_id
+    ).all()
+
+    result = []
+    for answer, player in answers:
+        result.append({
+            'player_name': player.name,
+            'answer': answer.answer,
+            'is_correct': answer.is_correct,
+            'points_awarded': answer.points_awarded,
+            'answered_at': answer.answered_at.isoformat()
+        })
+
+    return jsonify({'answers': result})
+
+@app.route('/live/<int:event_id>/<qr_code>')
+def live_player_view(event_id, qr_code):
+    """Widok gracza dla Live Mode"""
+    # Sprawdź czy sesja live istnieje
+    live_session = LiveSession.query.filter_by(event_id=event_id, qr_code=qr_code).first()
+
+    if not live_session or not live_session.is_enabled:
+        return "Tryb Live nie jest aktywny", 404
+
+    # Sprawdź czy gracz jest zalogowany
+    player_id = session.get('player_id')
+    if not player_id:
+        # Przekieruj do rejestracji lub zaloguj automatycznie
+        return render_template('live_player.html',
+                             event_id=event_id,
+                             qr_code=qr_code,
+                             button_count=live_session.button_count,
+                             player_id=None)
+
+    player = Player.query.filter_by(id=player_id, event_id=event_id).first()
+    if not player:
+        return "Gracz nie znaleziony", 404
+
+    return render_template('live_player.html',
+                         event_id=event_id,
+                         qr_code=qr_code,
+                         button_count=live_session.button_count,
+                         player=player)
+
+@app.route('/api/player/live/answer', methods=['POST'])
+def submit_live_answer():
+    """Gracz wysyła odpowiedź w trybie Live"""
+    data = request.json
+    player_id = session.get('player_id')
+
+    if not player_id:
+        # Spróbuj utworzyć gracza anonimowego
+        event_id = data.get('event_id')
+        qr_code = data.get('qr_code')
+
+        if not event_id or not qr_code:
+            return jsonify({'error': 'Brak danych gracza'}), 400
+
+        # Utwórz gracza tymczasowego
+        import secrets
+        temp_name = f"Gracz_{secrets.token_hex(4)}"
+        player = Player(name=temp_name, event_id=event_id)
+        db.session.add(player)
+        db.session.commit()
+        player_id = player.id
+        session['player_id'] = player_id
+
+    question_id = data.get('question_id')
+    answer = data.get('answer', '').upper()
+
+    if not question_id or answer not in ['A', 'B', 'C', 'D']:
+        return jsonify({'error': 'Nieprawidłowe dane'}), 400
+
+    # Sprawdź czy pytanie jest aktywne
+    question = LiveQuestion.query.get(question_id)
+    if not question or not question.is_active:
+        return jsonify({'error': 'Pytanie nie jest aktywne'}), 400
+
+    # Sprawdź czy gracz już odpowiedział
+    existing_answer = LivePlayerAnswer.query.filter_by(
+        player_id=player_id,
+        question_id=question_id
+    ).first()
+
+    if existing_answer:
+        return jsonify({'error': 'Już udzielono odpowiedzi'}), 400
+
+    # Zapisz odpowiedź
+    player_answer = LivePlayerAnswer(
+        player_id=player_id,
+        question_id=question_id,
+        event_id=question.event_id,
+        answer=answer
+    )
+    db.session.add(player_answer)
+    db.session.commit()
+
+    return jsonify({'message': 'Odpowiedź zapisana', 'answer': answer})
+
+@app.route('/api/player/live/status/<int:event_id>/<qr_code>', methods=['GET'])
+def get_live_status(event_id, qr_code):
+    """Pobierz aktualny status pytania Live dla gracza"""
+    live_session = LiveSession.query.filter_by(event_id=event_id, qr_code=qr_code).first()
+
+    if not live_session or not live_session.is_enabled:
+        return jsonify({'active': False})
+
+    # Znajdź aktywne pytanie
+    active_question = LiveQuestion.query.filter_by(
+        event_id=event_id,
+        session_id=live_session.id,
+        is_active=True
+    ).first()
+
+    if not active_question:
+        return jsonify({'active': False})
+
+    player_id = session.get('player_id')
+    has_answered = False
+
+    if player_id:
+        existing_answer = LivePlayerAnswer.query.filter_by(
+            player_id=player_id,
+            question_id=active_question.id
+        ).first()
+        has_answered = existing_answer is not None
+
+    # Oblicz pozostały czas
+    time_remaining = None
+    if active_question.started_at and active_question.time_limit:
+        elapsed = (datetime.utcnow() - active_question.started_at).total_seconds()
+        time_remaining = max(0, active_question.time_limit - elapsed)
+
+    return jsonify({
+        'active': True,
+        'question_id': active_question.id,
+        'question_text': active_question.question_text,
+        'option_a': active_question.option_a,
+        'option_b': active_question.option_b,
+        'option_c': active_question.option_c,
+        'option_d': active_question.option_d,
+        'button_count': live_session.button_count,
+        'has_answered': has_answered,
+        'is_revealed': active_question.is_revealed,
+        'correct_answer': active_question.correct_answer if active_question.is_revealed else None,
+        'time_remaining': time_remaining
     })
 
 # Uruchomienie Aplikacji
