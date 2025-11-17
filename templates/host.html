@@ -6914,12 +6914,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (response.ok) {
-                showAlert('Ustawienia zapisane', 'success');
+                console.log('Ustawienia zapisane');
                 loadLiveSession();
+            } else {
+                alert('Błąd zapisu ustawień');
             }
         } catch (error) {
             console.error('Error saving settings:', error);
-            showAlert('Błąd zapisu ustawień', 'danger');
+            alert('Błąd zapisu ustawień: ' + error.message);
         }
     };
 
@@ -6962,7 +6964,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (response.ok) {
-                showAlert('Pytanie dodane', 'success');
+                console.log('Pytanie dodane');
                 // Clear form
                 document.getElementById('live-new-question-text').value = '';
                 document.getElementById('live-new-option-a').value = '';
@@ -6971,10 +6973,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('live-new-option-d').value = '';
                 document.getElementById('live-new-time-limit').value = '30';
                 loadLiveQuestions();
+            } else {
+                const data = await response.json();
+                alert('Błąd: ' + (data.error || 'Nie udało się dodać pytania'));
             }
         } catch (error) {
             console.error('Error creating question:', error);
-            showAlert('Błąd tworzenia pytania', 'danger');
+            alert('Błąd tworzenia pytania: ' + error.message);
         }
     };
 
@@ -7028,14 +7033,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (response.ok) {
                 activeQuestionId = questionId;
-                showAlert('Pytanie uruchomione', 'success');
+                console.log('Pytanie uruchomione');
                 loadLiveQuestions();
                 showActiveQuestionPanel(questionId);
                 startLiveTimer();
+            } else {
+                alert('Błąd uruchamiania pytania');
             }
         } catch (error) {
             console.error('Error starting question:', error);
-            showAlert('Błąd uruchamiania pytania', 'danger');
+            alert('Błąd uruchamiania pytania: ' + error.message);
         }
     };
 
@@ -7091,14 +7098,16 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (response.ok) {
-                showAlert(`Poprawna odpowiedź: ${answer}`, 'success');
+                console.log(`Poprawna odpowiedź: ${answer}`);
                 activeQuestionId = null;
                 hideActiveQuestionPanel();
                 loadLiveQuestions();
+            } else {
+                alert('Błąd ujawniania odpowiedzi');
             }
         } catch (error) {
             console.error('Error revealing answer:', error);
-            showAlert('Błąd ujawniania odpowiedzi', 'danger');
+            alert('Błąd ujawniania odpowiedzi: ' + error.message);
         }
     };
 
@@ -7112,12 +7121,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             if (response.ok) {
-                showAlert('Pytanie usunięte', 'success');
+                console.log('Pytanie usunięte');
                 loadLiveQuestions();
+            } else {
+                alert('Błąd usuwania pytania');
             }
         } catch (error) {
             console.error('Error deleting question:', error);
-            showAlert('Błąd usuwania pytania', 'danger');
+            alert('Błąd usuwania pytania: ' + error.message);
         }
     };
 
