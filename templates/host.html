@@ -644,7 +644,36 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- 3.5 POLE WYŚWIETLACZ (pełna szerokość) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="display_panel">Wyświetlacz</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3" data-translate="display_panel_description">
+                        Otwórz ekrany gry lub przejdź do ustawień wyświetlacza.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-primary" id="open-display-1-btn">
+                            <i class="bi bi-display"></i> Otwórz ekran gry 1
+                        </button>
+                        <button class="btn btn-primary" id="open-display-2-btn">
+                            <i class="bi bi-display"></i> Otwórz ekran gry 2
+                        </button>
+                        <button class="btn btn-primary" id="open-display-3-btn">
+                            <i class="bi bi-display"></i> Otwórz ekran gry 3
+                        </button>
+                        <button class="btn btn-primary" id="open-display-4-btn">
+                            <i class="bi bi-display"></i> Otwórz ekran gry 4
+                        </button>
+                        <button class="btn btn-secondary" id="open-display-settings-btn">
+                            <i class="bi bi-gear"></i> <span data-translate="display_settings">Ustawienia</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- 4. KOMUNIKATY NA EKRAN GRY (pełna szerokość) -->
             <div class="card mb-4">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
@@ -2583,6 +2612,9 @@
         password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
         tab_timing: 'Czas i tempo',
         timing_settings: 'Czas i tempo gry',
+        display_panel: 'Wyświetlacz',
+        display_panel_description: 'Otwórz ekrany gry lub przejdź do ustawień wyświetlacza.',
+        display_settings: 'Ustawienia',
     },
     en: {
         host_title: 'GAME ORGANIZATION',
@@ -2683,6 +2715,9 @@
         password_preview: 'Password',
         tab_timing: 'Time & Speed',
         timing_settings: 'Game Time and Speed',
+        display_panel: 'Display',
+        display_panel_description: 'Open game screens or go to display settings.',
+        display_settings: 'Settings',
     },
     de: {
         host_title: 'SPIELORGANISATION',
@@ -2779,6 +2814,9 @@
         password_preview: 'Passwort',
         tab_timing: 'Zeit & Tempo',
         timing_settings: 'Spielzeit und Geschwindigkeit',
+        display_panel: 'Anzeige',
+        display_panel_description: 'Spielbildschirme öffnen oder zu den Anzeigeeinstellungen wechseln.',
+        display_settings: 'Einstellungen',
     }
 };
 
@@ -6658,6 +6696,38 @@ document.addEventListener('DOMContentLoaded', function () {
         // Przeładuj galerię jeśli jest otwarta zakładka Foto
         if (document.getElementById('photo').classList.contains('active')) {
             loadHostPhotoGallery();
+        }
+    });
+
+    // ========================================
+    // PRZYCISKI WYŚWIETLACZA
+    // ========================================
+
+    // Otwórz ekran gry 1
+    document.getElementById('open-display-1-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 2
+    document.getElementById('open-display-2-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display2', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 3
+    document.getElementById('open-display-3-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('photo_player', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 4
+    document.getElementById('open-display-4-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display4', event_id=event.id) }}", '_blank');
+    });
+
+    // Przejdź do zakładki Ustawienia wyświetlacza
+    document.getElementById('open-display-settings-btn')?.addEventListener('click', () => {
+        const displayTab = document.querySelector('button[data-bs-target="#display"]');
+        if (displayTab) {
+            displayTab.click();
         }
     });
 
