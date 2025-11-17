@@ -26,13 +26,15 @@ except ImportError:
     ANTHROPIC_AVAILABLE = False
     print("⚠️  anthropic package not installed. AI features (question generation, Fortune Teller) will not work.")
 
+# Import dla obrazów (używane w wielu miejscach, nie tylko AR)
+from PIL import Image
+import base64
+import io
+
 # Import dla rozpoznawania obrazów AR
 try:
     import cv2
     import numpy as np
-    from PIL import Image
-    import base64
-    import io
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
@@ -1593,7 +1595,8 @@ def host_questions():
     event_id = session['host_event_id']
     if request.method == 'POST':
         data = request.json
-        round_num = data.get('round', 1)
+        # Sprawdź najpierw query params, potem body, domyślnie 1
+        round_num = request.args.get('round', type=int) or data.get('round', 1)
         new_q = Question(
             text=data['text'],
             option_a=data['answers'][0],
@@ -3289,9 +3292,6 @@ def get_ar_objects():
 @host_required
 def setup_ar_object():
     """Zapisz nowy obiekt AR z obrazem"""
-    if not CV2_AVAILABLE:
-        return jsonify({'error': 'OpenCV nie jest zainstalowany. AR nie jest dostępne.'}), 500
-
     data = request.json
     event_id = session['host_event_id']
 
@@ -3307,25 +3307,32 @@ def setup_ar_object():
         image_bytes = base64.b64decode(image_data.split(',')[1])
         image = Image.open(io.BytesIO(image_bytes))
 
-        # Konwertuj na OpenCV format
-        cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        # Jeśli OpenCV jest dostępne, wyciągnij cechy obrazu
+        features = None
+        if CV2_AVAILABLE:
+            try:
+                # Konwertuj na OpenCV format
+                cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
-        # Wyciągnij cechy obrazu (ORB - szybkie i dobre do obiektów)
-        orb = cv2.ORB_create(nfeatures=500)
-        keypoints, descriptors = orb.detectAndCompute(cv_image, None)
+                # Wyciągnij cechy obrazu (ORB - szybkie i dobre do obiektów)
+                orb = cv2.ORB_create(nfeatures=500)
+                keypoints, descriptors = orb.detectAndCompute(cv_image, None)
 
-        # Zapisz cechy jako JSON
-        features = {
-            'descriptors': descriptors.tolist() if descriptors is not None else [],
-            'shape': cv_image.shape
-        }
+                # Zapisz cechy jako JSON
+                features = {
+                    'descriptors': descriptors.tolist() if descriptors is not None else [],
+                    'shape': cv_image.shape
+                }
+            except Exception as e:
+                print(f"⚠️  Warning: Could not extract image features: {e}")
+                features = None
 
         # Zapisz do bazy
         ar_object = ARObject(
             event_id=event_id,
             object_name=object_name,
             image_data=image_data,
-            image_features=json.dumps(features),
+            image_features=json.dumps(features) if features else None,
             game_type=game_type
         )
         db.session.add(ar_object)
