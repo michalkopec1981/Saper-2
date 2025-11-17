@@ -113,6 +113,7 @@
 
     <ul class="nav nav-tabs mb-4" id="hostTabs">
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings" data-translate="tab_settings">Ustawienia</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
@@ -210,44 +211,6 @@
                                 <button id="reset-game" class="btn btn-dark w-100" data-translate="reset_game">Reset Gry</button>
                             </div>
                         </div>
-        
-                        <hr>
-        
-                        <!-- Drugi rząd: szybki dostęp do zakładek -->
-                        <div class="row g-2">
-                            {% if is_superhost %}
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="qrcodes" data-translate="tab_qrcodes">Kody QR</button>
-                            </div>
-                            {% endif %}
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="password" data-translate="tab_password">Hasło</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="players" data-translate="tab_players">Gracze</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="questions" data-translate="tab_questions">Pytania</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="display" data-translate="tab_display">Wyświetlacz</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="timing" data-translate="tab_timing">Czas i tempo</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </fieldset>
@@ -307,9 +270,116 @@
                         </div>
                     </div>
                 </div>
-            </fieldset>   
+            </fieldset>
         </div>  <!-- ✅ To musi mieć zamknięcie -->
-        
+
+        <div class="tab-pane fade" id="settings">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="settings_tab">Ustawienia</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted" data-translate="settings_description">
+                        Użyj zakładek powyżej, aby dostać się do poszczególnych ustawień gry:
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_timing">Czas i tempo</h6>
+                                    <p class="card-text small text-muted">Ustawienia czasu gry i tempa</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="timing" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_players">Gracze</h6>
+                                    <p class="card-text small text-muted">Zarządzanie graczami</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="players" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_password">Hasło</h6>
+                                    <p class="card-text small text-muted">Ustawienia hasła do odgadnięcia</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="password" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_display">Wyświetlacz</h6>
+                                    <p class="card-text small text-muted">Ustawienia ekranów zewnętrznych</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="display" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_language">Język</h6>
+                                    <p class="card-text small text-muted">Ustawienia języka gry</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="language" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% if is_superhost %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_qrcodes">Kody QR</h6>
+                                    <p class="card-text small text-muted">Zarządzanie kodami QR</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="qrcodes" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_ar">AR</h6>
+                                    <p class="card-text small text-muted">Ustawienia rzeczywistości rozszerzonej</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="ar" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_questions">Pytania</h6>
+                                    <p class="card-text small text-muted">Zarządzanie pytaniami</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="questions" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_minigames">Minigry</h6>
+                                    <p class="card-text small text-muted">Ustawienia minigier</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="minigames" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title" data-translate="tab_photo">Foto</h6>
+                                    <p class="card-text small text-muted">Ustawienia foto</p>
+                                    <button class="btn btn-sm btn-primary quick-tab-btn" data-tab="photo" data-translate="go_to">Przejdź</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% if is_superhost %}
         <div class="tab-pane fade" id="qrcodes">
             <!-- Kod QR Gracza -->
@@ -1328,6 +1398,12 @@
                             <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
                                 🖥️ Ekran 2 - Ranking i zdjęcia
                             </a>
+                            <a href="{{ url_for('photo_player', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display3-link">
+                                🖥️ Ekran 3 - Selfie
+                            </a>
+                            <a href="{{ url_for('display4', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display4-link">
+                                🖥️ Ekran 4 - Przemioty do znalezienia oraz kod gracza
+                            </a>
                         </div>
                     </div>
 
@@ -2218,7 +2294,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <tr>
                                     <td>${p.name}</td>
                                     <td>${p.score}</td>
-                                    <td>${p.completion_percentage !== undefined ? p.completion_percentage + '%' : '-'}</td>
+                                    <td>${(p.completion_percentage !== null && p.completion_percentage !== undefined) ? p.completion_percentage + '%' : '-'}</td>
                                     <td>${p.warnings}</td>
                                     <td>
                                         <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>

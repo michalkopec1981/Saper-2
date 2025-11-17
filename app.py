@@ -674,6 +674,12 @@ def display2(event_id):
     event = db.session.get(Event, event_id)
     return render_template('display2.html', event=event)
 
+@app.route('/display4/<int:event_id>')
+def display4(event_id):
+    """Czwarty ekran - przedmioty AR do znalezienia i kod gracza"""
+    event = db.session.get(Event, event_id)
+    return render_template('display4.html', event=event)
+
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     is_admin = session.get('admin_logged_in', False)
