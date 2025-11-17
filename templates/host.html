@@ -1936,10 +1936,9 @@
                     <h6>2. Kod QR dla graczy (AR Scanner)</h6>
                     <p class="text-muted">Wygeneruj kod QR, który gracze będą skanować, aby uruchomić skaner AR.</p>
                     <div class="text-center">
-                        <div id="ar-player-qr" class="mb-3"></div>
-                        <button class="btn btn-primary" onclick="generateARPlayerQR()">
-                            Wygeneruj QR dla skanowania AR
-                        </button>
+                        <a href="/ar_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
+                            🔍 Podgląd i Druk Kodu QR AR
+                        </a>
                     </div>
                 </div>
             </div>
@@ -5058,27 +5057,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             alert('Błąd dostępu do kamery: ' + error.message);
         }
-    };
-
-    window.generateARPlayerQR = function() {
-        const qrDiv = document.getElementById('ar-player-qr');
-        qrDiv.innerHTML = '';
-
-        // URL do AR scannera
-        const arScannerUrl = `${window.location.origin}/ar-scanner/{{ event.id }}`;
-
-        // Generuj QR kod używając biblioteki
-        new QRCode(qrDiv, {
-            text: arScannerUrl,
-            width: 256,
-            height: 256
-        });
-
-        // Dodaj link
-        const linkDiv = document.createElement('div');
-        linkDiv.className = 'mt-2';
-        linkDiv.innerHTML = `<a href="${arScannerUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Otwórz AR Scanner</a>`;
-        qrDiv.appendChild(linkDiv);
     };
 
     // Załaduj istniejące obiekty AR przy otwieraniu zakładki

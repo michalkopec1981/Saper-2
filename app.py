@@ -791,6 +791,21 @@ def ar_scanner(event_id):
         return "Event nie znaleziony", 404
     return render_template('ar_scanner.html', event=event)
 
+@app.route('/ar_qr_preview/<int:event_id>')
+def ar_qr_preview(event_id):
+    """Podgląd i druk kodu QR do AR Scanner"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Nie znaleziono eventu", 404
+
+    # URL do AR Scannera
+    ar_scanner_url = url_for('ar_scanner', event_id=event_id, _external=True)
+
+    return render_template('ar_qr_preview.html',
+                         event=event,
+                         ar_scanner_url=ar_scanner_url,
+                         event_id=event_id)
+
 # ===================================================================
 # --- API Endpoints ---
 # ===================================================================
