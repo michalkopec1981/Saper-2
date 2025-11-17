@@ -11,6 +11,7 @@ import json
 import uuid
 from flask import Flask, render_template, render_template_string, request, jsonify, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from flask_socketio import SocketIO, emit, join_room
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -205,18 +206,43 @@ class ARObject(db.Model):
 with app.app_context():
     try:
         db.create_all()
+
+        # Automatyczna migracja: Dodaj kolumnę 'round' do tabeli 'question' jeśli nie istnieje
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'question'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'round' not in existing_columns:
+                db.session.execute(text("ALTER TABLE question ADD COLUMN round INTEGER DEFAULT 1"))
+                db.session.commit()
+                print("✓ Database migration: Added 'round' column to question table.")
+        except Exception as migration_error:
+            # Może to być SQLite, spróbujmy innej składni
+            try:
+                # SQLite używa PRAGMA zamiast information_schema
+                db.session.execute(text("ALTER TABLE question ADD COLUMN round INTEGER DEFAULT 1"))
+                db.session.commit()
+                print("✓ Database migration: Added 'round' column to question table (SQLite).")
+            except Exception as e:
+                # Kolumna prawdopodobnie już istnieje
+                db.session.rollback()
+
         if not Admin.query.first():
             admin = Admin(login='admin')
             admin.set_password('admin')
             db.session.add(admin)
             print("Default admin created.")
-        
+
         if not Event.query.first():
             event = Event(id=1, login='host1', name='Event #1', password_plain='password1')
             event.set_password('password1')
             db.session.add(event)
             print("Default event created.")
-        
+
         db.session.commit()
         print("Database tables checked/created successfully.")
     except Exception as e:
@@ -1215,7 +1241,11 @@ def fix_db_columns_v2():
         if 'times_correct' not in existing_columns:
             db.session.execute("ALTER TABLE question ADD COLUMN times_correct INTEGER DEFAULT 0")
             added.append('times_correct')
-        
+
+        if 'round' not in existing_columns:
+            db.session.execute("ALTER TABLE question ADD COLUMN round INTEGER DEFAULT 1")
+            added.append('round')
+
         db.session.commit()
         
         if added:
