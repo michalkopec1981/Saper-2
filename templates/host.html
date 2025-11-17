@@ -3013,10 +3013,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             ${players.map(p => `
                                 <tr>
-                                    <td>${p.name}</td>
-                                    <td>${p.score}</td>
-                                    <td>${(p.completion_percentage !== null && p.completion_percentage !== undefined) ? p.completion_percentage + '%' : '-'}</td>
-                                    <td>${p.warnings}</td>
+                                    <td style="color: #ffc107; font-weight: 500;">${p.name}</td>
+                                    <td style="color: #ffc107; font-weight: 500;">${p.score}</td>
+                                    <td style="color: #ffc107; font-weight: 500;">${(p.completion_percentage !== null && p.completion_percentage !== undefined) ? p.completion_percentage + '%' : '-'}</td>
+                                    <td style="color: #ffc107; font-weight: 500;">${p.warnings}</td>
                                     <td>
                                         <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
                                         <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
@@ -6751,8 +6751,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Load dark mode preference from localStorage
-    const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+    // Load dark mode preference from localStorage (default: enabled)
+    const darkModeEnabled = localStorage.getItem('darkMode') !== 'false';
     if (darkModeToggle) {
         darkModeToggle.checked = darkModeEnabled;
         applyDarkMode(darkModeEnabled);
@@ -6761,7 +6761,7 @@ document.addEventListener('DOMContentLoaded', function () {
         darkModeToggle.addEventListener('change', (e) => {
             const enabled = e.target.checked;
             applyDarkMode(enabled);
-            localStorage.setItem('darkMode', enabled);
+            localStorage.setItem('darkMode', enabled ? 'true' : 'false');
         });
     }
 
