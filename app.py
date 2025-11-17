@@ -119,6 +119,7 @@ class Question(db.Model):
     difficulty = db.Column(db.String(20), nullable=False, default='easy')
     times_shown = db.Column(db.Integer, default=0)
     times_correct = db.Column(db.Integer, default=0)
+    round = db.Column(db.Integer, nullable=False, default=1)
 
 class QRCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1524,30 +1525,33 @@ def get_available_minigames():
 @host_required
 def host_questions():
     event_id = session['host_event_id']
+    round_num = request.args.get('round', 1, type=int)
+
     if request.method == 'POST':
         data = request.json
         new_q = Question(
             text=data['text'],
-            option_a=data['answers'][0], 
-            option_b=data['answers'][1], 
+            option_a=data['answers'][0],
+            option_b=data['answers'][1],
             option_c=data['answers'][2],
-            correct_answer=data['correctAnswer'], 
+            correct_answer=data['correctAnswer'],
             letter_to_reveal=data.get('letterToReveal', 'X').upper(),
-            category=data.get('category', 'company'), 
+            category=data.get('category', 'company'),
             difficulty=data.get('difficulty', 'easy'),
+            round=round_num,
             event_id=event_id
         )
         db.session.add(new_q)
         db.session.commit()
         return jsonify({'id': new_q.id})
-    
-    questions = Question.query.filter_by(event_id=event_id).all()
+
+    questions = Question.query.filter_by(event_id=event_id, round=round_num).all()
     return jsonify([{
-        'id': q.id, 
-        'text': q.text, 
-        'answers': [q.option_a, q.option_b, q.option_c], 
-        'correctAnswer': q.correct_answer, 
-        'letterToReveal': q.letter_to_reveal, 
+        'id': q.id,
+        'text': q.text,
+        'answers': [q.option_a, q.option_b, q.option_c],
+        'correctAnswer': q.correct_answer,
+        'letterToReveal': q.letter_to_reveal,
         'category': q.category,
         'difficulty': q.difficulty,
         'times_shown': q.times_shown,
@@ -2035,14 +2039,16 @@ def scan_qr():
         # Pokaż pytania ręczne (dla żółtego lub białego bez kategorii AI)
         answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
 
-        # Sprawdź czy w sesji jest zapisany poziom trudności (z kodów QR hosta)
+        # Sprawdź czy w sesji jest zapisany poziom trudności i runda (z kodów QR hosta)
         difficulty_filter = session.get('questions_difficulty', None)
+        round_filter = session.get('questions_round', 1)
 
-        # Filtruj pytania według poziomu trudności jeśli jest zapisany
+        # Filtruj pytania według poziomu trudności, rundy i kategorii
         query = Question.query.filter(
             Question.id.notin_(answered_ids),
             Question.event_id == event_id,
-            Question.category == quiz_category
+            Question.category == quiz_category,
+            Question.round == round_filter
         )
 
         if difficulty_filter and difficulty_filter in ['easy', 'medium', 'hard']:
@@ -2386,13 +2392,15 @@ def process_answer():
         # Zwiększ licznik poprawnych odpowiedzi
         question.times_correct += 1
 
-        # Pobierz punkty w zależności od poziomu trudności pytania
+        # Pobierz punkty w zależności od poziomu trudności pytania i rundy
+        round_suffix = f'_r{question.round}' if question.round > 1 else ''
+
         if question.difficulty == 'easy':
-            base_points = int(get_game_state(player.event_id, 'questions_easy_points', '5'))
+            base_points = int(get_game_state(player.event_id, f'questions_easy_points{round_suffix}', '5'))
         elif question.difficulty == 'medium':
-            base_points = int(get_game_state(player.event_id, 'questions_medium_points', '10'))
+            base_points = int(get_game_state(player.event_id, f'questions_medium_points{round_suffix}', '10'))
         elif question.difficulty == 'hard':
-            base_points = int(get_game_state(player.event_id, 'questions_hard_points', '15'))
+            base_points = int(get_game_state(player.event_id, f'questions_hard_points{round_suffix}', '15'))
         else:
             base_points = 10  # Domyślna wartość dla nieznanych poziomów trudności
 
@@ -3470,6 +3478,9 @@ def questions_qr_preview(event_id):
     if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
+    # Pobierz numer rundy
+    round_num = request.args.get('round', 1, type=int)
+
     difficulty_labels = {
         'easy': 'Łatwe',
         'medium': 'Średnie',
@@ -3479,14 +3490,15 @@ def questions_qr_preview(event_id):
 
     # Generuj kod QR dla pytań
     if is_backup:
-        backup_uuid = get_game_state(event_id, f'questions_backup_qr_{difficulty}_uuid', None)
+        backup_key = f'questions_backup_qr_{difficulty}_uuid_r{round_num}' if round_num > 1 else f'questions_backup_qr_{difficulty}_uuid'
+        backup_uuid = get_game_state(event_id, backup_key, None)
         if not backup_uuid:
             return f"Zapasowy kod QR dla {difficulty_labels[difficulty].lower()} pytań nie został jeszcze wygenerowany", 404
         questions_url = url_for('questions_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
-        title = f"❓ Pytania - {difficulty_labels[difficulty]} - Zapasowy Kod"
+        title = f"❓ Pytania - {difficulty_labels[difficulty]} - Zapasowy Kod" + (f" - Runda {round_num}" if round_num > 1 else "")
     else:
-        questions_url = url_for('questions_player', event_id=event_id, difficulty=difficulty, _external=True)
-        title = f"❓ Pytania - {difficulty_labels[difficulty]}"
+        questions_url = url_for('questions_player', event_id=event_id, difficulty=difficulty, round=round_num, _external=True)
+        title = f"❓ Pytania - {difficulty_labels[difficulty]}" + (f" - Runda {round_num}" if round_num > 1 else "")
 
     return f'''
     <!DOCTYPE html>
@@ -3581,9 +3593,17 @@ def generate_questions_backup_qr(event_id):
     if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
+    # Pobierz numer rundy
+    round_num = request.args.get('round', 1, type=int)
+
     # Generuj nowy UUID dla zapasowego kodu QR
     backup_uuid = str(uuid.uuid4())
-    set_game_state(event_id, f'questions_backup_qr_{difficulty}_uuid', backup_uuid)
+    backup_key = f'questions_backup_qr_{difficulty}_uuid_r{round_num}' if round_num > 1 else f'questions_backup_qr_{difficulty}_uuid'
+
+    # Zapisz również numer rundy dla tego UUID
+    set_game_state(event_id, backup_key, backup_uuid)
+    set_game_state(event_id, f'questions_backup_qr_{backup_uuid}_round', str(round_num))
+    set_game_state(event_id, f'questions_backup_qr_{backup_uuid}_difficulty', difficulty)
 
     difficulty_labels = {
         'easy': 'łatwych pytań',
@@ -3604,19 +3624,27 @@ def questions_player_backup(event_id, backup_uuid):
     if not event:
         return "Event nie znaleziony", 404
 
-    # Sprawdź który poziom trudności ma ten UUID
-    difficulty = None
-    for diff in ['easy', 'medium', 'hard', 'mixed']:
-        stored_uuid = get_game_state(event_id, f'questions_backup_qr_{diff}_uuid', None)
-        if stored_uuid and stored_uuid == backup_uuid:
-            difficulty = diff
-            break
+    # Pobierz metadane zapisane dla tego UUID
+    round_num = get_game_state(event_id, f'questions_backup_qr_{backup_uuid}_round', None)
+    difficulty = get_game_state(event_id, f'questions_backup_qr_{backup_uuid}_difficulty', None)
+
+    if not difficulty or not round_num:
+        # Sprawdź starym sposobem dla kompatybilności wstecznej
+        for diff in ['easy', 'medium', 'hard', 'mixed']:
+            stored_uuid = get_game_state(event_id, f'questions_backup_qr_{diff}_uuid', None)
+            if stored_uuid and stored_uuid == backup_uuid:
+                difficulty = diff
+                round_num = '1'
+                break
 
     if not difficulty:
         return "Nieprawidłowy kod QR", 403
 
-    # Sprawdź czy włączona
-    enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+    round_num = int(round_num)
+
+    # Sprawdź czy włączona dla danej rundy
+    enabled_key = f'questions_enabled_r{round_num}' if round_num > 1 else 'questions_enabled'
+    enabled = get_game_state(event_id, enabled_key, 'True') == 'True'
     if not enabled:
         return render_template_string('''
         <!DOCTYPE html>
@@ -3651,12 +3679,12 @@ def questions_player_backup(event_id, backup_uuid):
         </html>
         ''')
 
-    # Przekieruj do widoku pytań z odpowiednim poziomem trudności
-    return redirect(url_for('questions_player', event_id=event_id, difficulty=difficulty))
+    # Przekieruj do widoku pytań z odpowiednim poziomem trudności i rundą
+    return redirect(url_for('questions_player', event_id=event_id, difficulty=difficulty, round=round_num))
 
 @app.route('/questions/<int:event_id>')
 def questions_player(event_id):
-    """Widok Pytań dla gracza z filtrowaniem po poziomie trudności"""
+    """Widok Pytań dla gracza z filtrowaniem po poziomie trudności i rundzie"""
     event = db.session.get(Event, event_id)
     if not event:
         return "Event nie znaleziony", 404
@@ -3666,11 +3694,16 @@ def questions_player(event_id):
     if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
-    # Zapisz difficulty w sesji
-    session['questions_difficulty'] = difficulty
+    # Pobierz numer rundy
+    round_num = request.args.get('round', 1, type=int)
 
-    # Sprawdź czy pytania są włączone
-    enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+    # Zapisz difficulty i round w sesji
+    session['questions_difficulty'] = difficulty
+    session['questions_round'] = round_num
+
+    # Sprawdź czy pytania są włączone dla danej rundy
+    enabled_key = f'questions_enabled_r{round_num}' if round_num > 1 else 'questions_enabled'
+    enabled = get_game_state(event_id, enabled_key, 'True') == 'True'
     if not enabled:
         return render_template_string('''
         <!DOCTYPE html>
@@ -3705,7 +3738,7 @@ def questions_player(event_id):
         </html>
         ''')
 
-    # Przekieruj do rejestracji gracza z zapisanym difficulty w sesji
+    # Przekieruj do rejestracji gracza z zapisanym difficulty i round w sesji
     return redirect(url_for('player_register', event_id=event_id))
 
 # ===================================================================
@@ -4084,8 +4117,10 @@ def toggle_questions():
     event_id = session['host_event_id']
     data = request.json
     enabled = data.get('enabled', False)
+    round_num = request.args.get('round', 1, type=int)
 
-    set_game_state(event_id, 'questions_enabled', 'True' if enabled else 'False')
+    key = f'questions_enabled_r{round_num}' if round_num > 1 else 'questions_enabled'
+    set_game_state(event_id, key, 'True' if enabled else 'False')
 
     return jsonify({
         'message': f'Pytania {"aktywowane" if enabled else "deaktywowane"}',
@@ -4189,11 +4224,13 @@ def update_questions_easy_points(event_id):
     """Aktualizuj punkty za łatwe pytanie"""
     data = request.json
     value = data.get('value')
+    round_num = request.args.get('round', 1, type=int)
 
     if not value or value < 1 or value > 100:
         return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
 
-    set_game_state(event_id, 'questions_easy_points', str(value))
+    key = f'questions_easy_points_r{round_num}' if round_num > 1 else 'questions_easy_points'
+    set_game_state(event_id, key, str(value))
     return jsonify({'message': f'Punkty za łatwe pytanie zaktualizowane do {value}'})
 
 @app.route('/api/host/questions/medium-points/<int:event_id>', methods=['PUT'])
@@ -4202,11 +4239,13 @@ def update_questions_medium_points(event_id):
     """Aktualizuj punkty za średnie pytanie"""
     data = request.json
     value = data.get('value')
+    round_num = request.args.get('round', 1, type=int)
 
     if not value or value < 1 or value > 100:
         return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
 
-    set_game_state(event_id, 'questions_medium_points', str(value))
+    key = f'questions_medium_points_r{round_num}' if round_num > 1 else 'questions_medium_points'
+    set_game_state(event_id, key, str(value))
     return jsonify({'message': f'Punkty za średnie pytanie zaktualizowane do {value}'})
 
 @app.route('/api/host/questions/hard-points/<int:event_id>', methods=['PUT'])
@@ -4215,11 +4254,13 @@ def update_questions_hard_points(event_id):
     """Aktualizuj punkty za trudne pytanie"""
     data = request.json
     value = data.get('value')
+    round_num = request.args.get('round', 1, type=int)
 
     if not value or value < 1 or value > 100:
         return jsonify({'error': 'Wartość musi być w zakresie 1-100'}), 400
 
-    set_game_state(event_id, 'questions_hard_points', str(value))
+    key = f'questions_hard_points_r{round_num}' if round_num > 1 else 'questions_hard_points'
+    set_game_state(event_id, key, str(value))
     return jsonify({'message': f'Punkty za trudne pytanie zaktualizowane do {value}'})
 
 # ===================================================================
