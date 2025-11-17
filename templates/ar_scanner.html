@@ -250,15 +250,61 @@ function objectRecognized(result) {
     setTimeout(() => {
         document.getElementById('scanner-section').style.display = 'none';
 
-        // Uruchom odpowiednią grę
-        if (result.game_type === 'quiz') {
+        // Uruchom odpowiednią funkcję z zakładki
+        const gameType = result.game_type;
+
+        // Pytania - różne poziomy trudności
+        if (gameType.startsWith('questions_') || gameType.startsWith('ai_')) {
+            const difficulty = gameType.includes('easy') ? 'łatwe' :
+                             gameType.includes('medium') ? 'średnie' :
+                             gameType.includes('hard') ? 'trudne' :
+                             gameType.includes('mixed') ? 'mieszane' : '';
+            const round = gameType.includes('round2') ? ' (Runda 2)' :
+                         gameType.includes('round3') ? ' (Runda 3)' : '';
+            const type = gameType.startsWith('ai_') ? 'AI' : '';
+
+            showMessage(`🎯 Uruchamiam: ${type} Pytania ${difficulty}${round}`, 'success');
+            // Tutaj będzie logika uruchomienia pytań z odpowiednim filtrem
+
+        // Wróżka AI
+        } else if (gameType === 'fortune') {
+            showMessage('🔮 Uruchamiam: Wróżka AI', 'success');
+            // Przekierowanie do wróżki AI
+            setTimeout(() => {
+                window.location.href = '/fortune/' + eventId;
+            }, 2000);
+
+        // Minigry
+        } else if (gameType === 'minigames') {
+            showMessage('🎮 Uruchamiam: Minigry', 'success');
+            // Tutaj będzie logika uruchomienia minigier
+
+        // Foto
+        } else if (gameType === 'photo') {
+            showMessage('📸 Uruchamiam: Wyzwanie Foto', 'success');
+            // Tutaj będzie logika uruchomienia wyzwania foto
+
+        // Głosowanie
+        } else if (gameType === 'voting') {
+            showMessage('🗳️ Uruchamiam: Głosowanie', 'success');
+            // Tutaj będzie logika uruchomienia głosowania
+
+        // Na żywo
+        } else if (gameType === 'live') {
+            showMessage('📡 Uruchamiam: Tryb Na Żywo', 'success');
+            // Tutaj będzie logika uruchomienia trybu na żywo
+
+        // Stare wartości (zachowane dla kompatybilności)
+        } else if (gameType === 'quiz') {
             showQuiz(result.question);
-        } else if (result.game_type === 'snake') {
+        } else if (gameType === 'snake') {
             showSnakeGame();
-        } else if (result.game_type === 'tetris') {
-            showMessage('Tetris nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
-        } else if (result.game_type === 'arkanoid') {
-            showMessage('Arkanoid nie jest jeszcze zaimplementowany w AR Scanner', 'warning');
+        } else if (gameType === 'tetris') {
+            showMessage('Tetris nie jest jeszcze zaimplementowany', 'warning');
+        } else if (gameType === 'arkanoid') {
+            showMessage('Arkanoid nie jest jeszcze zaimplementowany', 'warning');
+        } else {
+            showMessage('⚠️ Nieznany typ gry: ' + gameType, 'warning');
         }
     }, 2000);
 }
