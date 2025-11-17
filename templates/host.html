@@ -538,6 +538,8 @@
         {% endif %}
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
         <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r2">Pytania runda 2</button></li>
+        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r3">Pytania runda 3</button></li>
         <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
         <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
         <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
@@ -1212,6 +1214,244 @@
 
                     <h6 class="mb-3">Twoje kategorie:</h6>
                     <div id="ai-categories-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pytania Runda 2 -->
+        <div class="tab-pane fade" id="questions-r2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Zarządzanie pytaniami - Runda 2</h5>
+                    <button class="btn btn-primary" id="r2-add-question-btn">Dodaj pytanie</button>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="r2-questions-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="r2-questions-enabled">
+                                    <span id="r2-questions-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Kody QR dla łatwych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">Łatwe pytania:</h6>
+                                <button id="r2-questions-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla łatwych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r2-questions-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla łatwych pytań</button>
+                                    <button id="r2-questions-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla łatwych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla średnich pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-warning mb-2">Średnie pytania:</h6>
+                                <button id="r2-questions-medium-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r2-questions-medium-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
+                                    <button id="r2-questions-medium-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla trudnych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-danger mb-2">Trudne pytania:</h6>
+                                <button id="r2-questions-hard-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r2-questions-hard-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
+                                    <button id="r2-questions-hard-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla mieszanych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-info mb-2">Mieszane pytania:</h6>
+                                <button id="r2-questions-mixed-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla mieszanych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r2-questions-mixed-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla mieszanych pytań</button>
+                                    <button id="r2-questions-mixed-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla mieszanych pytań</button>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">Zapasowe kody QR mogą być użyte jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za łatwe pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na łatwe pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r2-questions-easy-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR2QuestionsSetting('easy_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Punkty za średnie pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na średnie pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r2-questions-medium-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR2QuestionsSetting('medium_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty za trudne pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na trudne pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r2-questions-hard-points" value="15" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR2QuestionsSetting('hard_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 15 punktów</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div id="r2-questions-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pytania Runda 3 -->
+        <div class="tab-pane fade" id="questions-r3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Zarządzanie pytaniami - Runda 3</h5>
+                    <button class="btn btn-primary" id="r3-add-question-btn">Dodaj pytanie</button>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="r3-questions-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="r3-questions-enabled">
+                                    <span id="r3-questions-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Kody QR dla łatwych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">Łatwe pytania:</h6>
+                                <button id="r3-questions-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla łatwych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla łatwych pytań</button>
+                                    <button id="r3-questions-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla łatwych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla średnich pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-warning mb-2">Średnie pytania:</h6>
+                                <button id="r3-questions-medium-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-medium-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
+                                    <button id="r3-questions-medium-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla trudnych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-danger mb-2">Trudne pytania:</h6>
+                                <button id="r3-questions-hard-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-hard-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
+                                    <button id="r3-questions-hard-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla mieszanych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-info mb-2">Mieszane pytania:</h6>
+                                <button id="r3-questions-mixed-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla mieszanych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-mixed-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla mieszanych pytań</button>
+                                    <button id="r3-questions-mixed-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla mieszanych pytań</button>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">Zapasowe kody QR mogą być użyte jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za łatwe pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na łatwe pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-easy-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('easy_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Punkty za średnie pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na średnie pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-medium-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('medium_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty za trudne pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na trudne pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-hard-points" value="15" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('hard_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 15 punktów</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div id="r3-questions-list"></div>
                 </div>
             </div>
         </div>
@@ -3015,6 +3255,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     document.getElementById('add-question-btn').addEventListener('click', () => {
         currentEditingQuestionId = null;
+        currentEditingQuestionRound = 1;
         document.getElementById('modal-question-text').value = '';
         document.getElementById('modal-answer-a').value = '';
         document.getElementById('modal-answer-b').value = '';
@@ -3030,6 +3271,8 @@ document.addEventListener('DOMContentLoaded', function () {
         questionModal.show();
     });
     
+    let currentEditingQuestionRound = 1; // Default round
+
     document.getElementById('save-question-btn').addEventListener('click', async () => {
         const text = document.getElementById('modal-question-text').value.trim();
         const answerA = document.getElementById('modal-answer-a').value.trim();
@@ -3039,12 +3282,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const difficulty = document.querySelector('#difficulty-buttons .btn.active')?.dataset.difficulty || 'easy';
         const category = document.querySelector('#category-buttons .btn.active')?.dataset.category || 'company';
         const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
-        
+
         if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
             alert('Wypełnij wszystkie pola!');
             return;
         }
-        
+
         const payload = {
             text,
             answers: [answerA, answerB, answerC],
@@ -3053,27 +3296,47 @@ document.addEventListener('DOMContentLoaded', function () {
             letterToReveal: letter,
             category: category
         };
-        
+
         try {
             let response;
-            if (currentEditingQuestionId) {
-                response = await fetch(`/api/host/question/${currentEditingQuestionId}`, {
+            const roundParam = currentEditingQuestionRound > 1 ? `?round=${currentEditingQuestionRound}` : '';
+
+            // Determine which editing ID to use based on round
+            let editingId = null;
+            if (currentEditingQuestionRound === 2) {
+                editingId = currentEditingQuestionIdR2;
+            } else if (currentEditingQuestionRound === 3) {
+                editingId = currentEditingQuestionIdR3;
+            } else {
+                editingId = currentEditingQuestionId;
+            }
+
+            if (editingId) {
+                response = await fetch(`/api/host/question/${editingId}${roundParam}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
             } else {
-                response = await fetch('/api/host/questions', {
+                response = await fetch(`/api/host/questions${roundParam}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
             }
-            
+
             if (!response.ok) throw new Error('Błąd zapisu pytania');
-            
+
             questionModal.hide();
-            loadQuestions();
+
+            // Reload appropriate round
+            if (currentEditingQuestionRound === 2) {
+                loadQuestionsR2();
+            } else if (currentEditingQuestionRound === 3) {
+                loadQuestionsR3();
+            } else {
+                loadQuestions();
+            }
         } catch (error) {
             alert('Błąd: ' + error.message);
         }
@@ -3122,6 +3385,230 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', loadQuestions);
+
+    // =====================================================================
+    // PYTANIA RUNDA 2
+    // =====================================================================
+    let currentEditingQuestionIdR2 = null;
+
+    function loadQuestionsR2() {
+        fetch('/api/host/questions?round=2')
+            .then(res => res.json())
+            .then(questions => {
+                const list = document.getElementById('r2-questions-list');
+                if (questions.length === 0) {
+                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
+                    return;
+                }
+
+                list.innerHTML = questions.map((q, index) => {
+                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
+                    return `
+                        <div class="question-item d-flex align-items-start">
+                            <div class="me-3">
+                                <strong>${index + 1}.</strong>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-2">${q.text}</p>
+                                <div class="question-stats">
+                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
+                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> |
+                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> |
+                                    <span>${percentage}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-r2-btn" data-id="${q.id}">Edytuj</button>
+                                <button class="btn btn-sm btn-outline-danger delete-question-r2-btn" data-id="${q.id}">Usuń</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Attach event listeners
+                document.querySelectorAll('.edit-question-r2-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editQuestionR2(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-question-r2-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteQuestionR2(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+
+    document.getElementById('r2-add-question-btn')?.addEventListener('click', () => {
+        currentEditingQuestionIdR2 = null;
+        currentEditingQuestionRound = 2;
+        document.getElementById('modal-question-text').value = '';
+        document.getElementById('modal-answer-a').value = '';
+        document.getElementById('modal-answer-b').value = '';
+        document.getElementById('modal-answer-c').value = '';
+        document.getElementById('modal-letter').value = 'X';
+        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+        document.getElementById('correct-a').checked = true;
+        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 2';
+        questionModal.show();
+    });
+
+    async function editQuestionR2(id) {
+        try {
+            const response = await fetch('/api/host/questions?round=2');
+            const questions = await response.json();
+            const question = questions.find(q => q.id === id);
+
+            if (!question) return;
+
+            currentEditingQuestionIdR2 = id;
+            currentEditingQuestionRound = 2;
+            document.getElementById('modal-question-text').value = question.text;
+            document.getElementById('modal-answer-a').value = question.answers[0];
+            document.getElementById('modal-answer-b').value = question.answers[1];
+            document.getElementById('modal-answer-c').value = question.answers[2];
+            document.getElementById('modal-letter').value = question.letterToReveal;
+
+            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
+
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
+
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
+
+            document.querySelector('.modal-title').textContent = 'Edytuj pytanie - Runda 2';
+            questionModal.show();
+        } catch (error) {
+            alert('Błąd ładowania pytania: ' + error.message);
+        }
+    }
+
+    async function deleteQuestionR2(id) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/question/${id}?round=2`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+            loadQuestionsR2();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    document.querySelector('button[data-bs-target="#questions-r2"]')?.addEventListener('click', loadQuestionsR2);
+
+    // =====================================================================
+    // PYTANIA RUNDA 3
+    // =====================================================================
+    let currentEditingQuestionIdR3 = null;
+
+    function loadQuestionsR3() {
+        fetch('/api/host/questions?round=3')
+            .then(res => res.json())
+            .then(questions => {
+                const list = document.getElementById('r3-questions-list');
+                if (questions.length === 0) {
+                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
+                    return;
+                }
+
+                list.innerHTML = questions.map((q, index) => {
+                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
+                    return `
+                        <div class="question-item d-flex align-items-start">
+                            <div class="me-3">
+                                <strong>${index + 1}.</strong>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-2">${q.text}</p>
+                                <div class="question-stats">
+                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
+                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> |
+                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> |
+                                    <span>${percentage}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-r3-btn" data-id="${q.id}">Edytuj</button>
+                                <button class="btn btn-sm btn-outline-danger delete-question-r3-btn" data-id="${q.id}">Usuń</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Attach event listeners
+                document.querySelectorAll('.edit-question-r3-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editQuestionR3(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-question-r3-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteQuestionR3(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+
+    document.getElementById('r3-add-question-btn')?.addEventListener('click', () => {
+        currentEditingQuestionIdR3 = null;
+        currentEditingQuestionRound = 3;
+        document.getElementById('modal-question-text').value = '';
+        document.getElementById('modal-answer-a').value = '';
+        document.getElementById('modal-answer-b').value = '';
+        document.getElementById('modal-answer-c').value = '';
+        document.getElementById('modal-letter').value = 'X';
+        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+        document.getElementById('correct-a').checked = true;
+        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 3';
+        questionModal.show();
+    });
+
+    async function editQuestionR3(id) {
+        try {
+            const response = await fetch('/api/host/questions?round=3');
+            const questions = await response.json();
+            const question = questions.find(q => q.id === id);
+
+            if (!question) return;
+
+            currentEditingQuestionIdR3 = id;
+            currentEditingQuestionRound = 3;
+            document.getElementById('modal-question-text').value = question.text;
+            document.getElementById('modal-answer-a').value = question.answers[0];
+            document.getElementById('modal-answer-b').value = question.answers[1];
+            document.getElementById('modal-answer-c').value = question.answers[2];
+            document.getElementById('modal-letter').value = question.letterToReveal;
+
+            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
+
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
+
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
+
+            document.querySelector('.modal-title').textContent = 'Edytuj pytanie - Runda 3';
+            questionModal.show();
+        } catch (error) {
+            alert('Błąd ładowania pytania: ' + error.message);
+        }
+    }
+
+    async function deleteQuestionR3(id) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/question/${id}?round=3`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+            loadQuestionsR3();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    document.querySelector('button[data-bs-target="#questions-r3"]')?.addEventListener('click', loadQuestionsR3);
 
     // =====================================================================
     // MINIGRY
@@ -5919,6 +6406,94 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             endpoint = `/api/host/questions/hard-points/${eventId}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateR2QuestionsSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('r2-questions-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/easy-points/${eventId}?round=2`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('r2-questions-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/medium-points/${eventId}?round=2`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('r2-questions-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/hard-points/${eventId}?round=2`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateR3QuestionsSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('r3-questions-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/easy-points/${eventId}?round=3`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('r3-questions-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/medium-points/${eventId}?round=3`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('r3-questions-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/hard-points/${eventId}?round=3`;
         }
 
         try {
