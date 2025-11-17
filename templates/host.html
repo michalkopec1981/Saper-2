@@ -66,6 +66,43 @@
         border-color: #dc3545 !important;
     }
 
+    /* Style dla sekcji zakładek */
+    .tabs-section {
+        background-color: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    body.dark-mode .tabs-section {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+
+    .tabs-section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    body.dark-mode .tabs-section-title {
+        color: #cbd5e0;
+    }
+
+    .tabs-section .nav-tabs {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .tabs-section .nav-tabs .nav-link {
+        margin-right: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
     /* Zawsze widoczny scrollbar dla wszystkich zakładek */
     .tab-content {
         overflow-y: scroll !important;
@@ -525,28 +562,39 @@
         <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otwórz Ekran Gry</a>
     </div>
 
-    <ul class="nav nav-tabs mb-4" id="hostTabs">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings" data-translate="tab_settings">Ustawienia</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
-        {% if is_superhost %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
-        {% endif %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r2">Pytania runda 2</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r3">Pytania runda 3</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
-        <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#voting" data-translate="tab_voting">Głosowanie</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#live" data-translate="tab_live">Na żywo</button></li>
-    </ul>
+    <!-- Sekcja 1: Sterowanie -->
+    <div class="tabs-section">
+        <div class="tabs-section-title">🎮 Sterowanie</div>
+        <ul class="nav nav-tabs flex-wrap" id="controlTabs">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings" data-translate="tab_settings">Ustawienia</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
+            {% if is_superhost %}
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
+            {% endif %}
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
+        </ul>
+    </div>
+
+    <!-- Sekcja 2: Gry i atrakcje -->
+    <div class="tabs-section">
+        <div class="tabs-section-title">🎯 Gry i atrakcje</div>
+        <ul class="nav nav-tabs flex-wrap" id="gamesTabs">
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r2">Pytania runda 2</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r3">Pytania runda 3</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
+            <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#voting" data-translate="tab_voting">Głosowanie</button></li>
+            <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#live" data-translate="tab_live">Na żywo</button></li>
+        </ul>
+    </div>
 
     <div class="tab-content">
         <div class="tab-pane fade show active" id="game">
@@ -2853,7 +2901,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-    
+
+    // =====================================================================
+    // SYNCHRONIZACJA ZAKŁADEK MIĘDZY SEKCJAMI
+    // =====================================================================
+    // Upewniamy się, że tylko jedna zakładka jest aktywna w danym momencie
+    // (niezależnie od tego, czy pochodzi z sekcji Sterowanie czy Gry i atrakcje)
+    const allTabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    allTabButtons.forEach(button => {
+        button.addEventListener('show.bs.tab', function (e) {
+            // Usuń klasę active ze wszystkich zakładek w obu sekcjach
+            allTabButtons.forEach(btn => {
+                if (btn !== e.target) {
+                    btn.classList.remove('active');
+                }
+            });
+        });
+    });
+
     // =====================================================================
     // SZYBKI DOSTĘP DO ZAKŁADEK
     // =====================================================================
