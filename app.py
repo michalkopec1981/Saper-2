@@ -462,7 +462,7 @@ def get_full_game_state(event_id):
     
     # Bonus i prędkość
     bonus_multiplier = int(get_game_state(event_id, 'bonus_multiplier', 1))
-    time_speed = int(get_game_state(event_id, 'time_speed', 1))
+    time_speed = float(get_game_state(event_id, 'time_speed', 1))
     
     # ✅ Generowanie hasła na podstawie indeksów
     password_value = get_game_state(event_id, 'game_password', 'SAPEREVENT')
@@ -1070,13 +1070,13 @@ def game_control():
             new_end_time = datetime.utcnow() + timedelta(seconds=time_left)
             set_game_state(event_id, 'game_end_time', new_end_time.isoformat())
             set_game_state(event_id, 'is_timer_running', 'True')
-            
-            current_speed = int(get_game_state(event_id, 'time_speed', 1))
+
+            current_speed = float(get_game_state(event_id, 'time_speed', 1))
             print(f"▶️  Resumed at: {time_left:.1f}s (speed x{current_speed})")
     
     elif control == 'speed':
-        current_speed = int(get_game_state(event_id, 'time_speed', 1))
-        new_speed = int(value) if str(current_speed) != str(value) else 1
+        current_speed = float(get_game_state(event_id, 'time_speed', 1))
+        new_speed = float(value) if str(current_speed) != str(value) else 1
         
         print(f"⚡ Speed change: {current_speed}x → {new_speed}x")
         
@@ -3046,7 +3046,7 @@ def update_timers():
                     
                     if is_running == 'True':
                         # Pobierz time_speed dla tego eventu
-                        time_speed = int(get_game_state(event_id, 'time_speed', 1))
+                        time_speed = float(get_game_state(event_id, 'time_speed', 1))
                         
                         # Oblicz ile czasu upłynęło od ostatniego tick'a
                         if event_id in last_tick_times:
