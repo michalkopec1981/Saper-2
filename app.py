@@ -1979,10 +1979,24 @@ def check_auto_login():
     if ip_address and ',' in ip_address:
         ip_address = ip_address.split(',')[0].strip()
 
-    print(f"🔍 Auto-login check: Event={event_id}, IP={ip_address}, Fingerprint={device_fingerprint[:20] if device_fingerprint else 'None'}...")
+    print(f"\n{'='*80}")
+    print(f"🔍 AUTO-LOGIN CHECK")
+    print(f"   Event ID: {event_id}")
+    print(f"   IP Address: {ip_address}")
+    print(f"   Device Fingerprint: {device_fingerprint}")
+    print(f"{'='*80}")
+
+    # Debug: Pokaż wszystkich graczy dla tego eventu
+    all_players = Player.query.filter_by(event_id=event_id).all()
+    print(f"📋 Players in database for event {event_id}: {len(all_players)} total")
+    for p in all_players:
+        print(f"   - {p.name} (ID: {p.id})")
+        print(f"     IP: {p.ip_address}")
+        print(f"     Fingerprint: {p.device_fingerprint}")
 
     # POZIOM 1: Exact match (IP + Fingerprint)
     if ip_address and device_fingerprint:
+        print(f"\n🔍 LEVEL 1: Checking exact match (IP + Fingerprint)...")
         exact_match = Player.query.filter_by(
             event_id=event_id,
             ip_address=ip_address,
@@ -1990,7 +2004,7 @@ def check_auto_login():
         ).first()
 
         if exact_match:
-            print(f"✅ Exact match found: {exact_match.name} (ID: {exact_match.id})")
+            print(f"✅ EXACT MATCH FOUND: {exact_match.name} (ID: {exact_match.id})")
             exact_match.last_active = datetime.utcnow()
             db.session.commit()
 
@@ -2002,16 +2016,20 @@ def check_auto_login():
                 'match_type': 'exact',
                 'message': f'Witaj ponownie, {exact_match.name}!'
             })
+        else:
+            print(f"❌ No exact match found")
 
     # POZIOM 2: Fingerprint match (różne IP - zmiana sieci)
     if device_fingerprint:
+        print(f"\n🔍 LEVEL 2: Checking fingerprint match...")
         fingerprint_match = Player.query.filter_by(
             event_id=event_id,
             device_fingerprint=device_fingerprint
         ).first()
 
         if fingerprint_match:
-            print(f"✅ Fingerprint match found (IP changed): {fingerprint_match.name}")
+            print(f"✅ FINGERPRINT MATCH FOUND: {fingerprint_match.name}")
+            print(f"   Old IP: {fingerprint_match.ip_address} → New IP: {ip_address}")
             # Zaktualizuj IP (gracz zmienił sieć)
             fingerprint_match.ip_address = ip_address
             fingerprint_match.last_active = datetime.utcnow()
@@ -2025,9 +2043,12 @@ def check_auto_login():
                 'match_type': 'fingerprint',
                 'message': f'Witaj ponownie, {fingerprint_match.name}! (wykryto zmianę sieci)'
             })
+        else:
+            print(f"❌ No fingerprint match found")
 
     # Gracz nie został rozpoznany
-    print("❌ No player recognized - new player")
+    print(f"\n❌ NO MATCH - New player needed")
+    print(f"{'='*80}\n")
     return jsonify({
         'recognized': False,
         'message': 'Nowy gracz - wymagana rejestracja'

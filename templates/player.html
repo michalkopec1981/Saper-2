@@ -351,8 +351,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ✅ Funkcja sprawdzająca czy backend rozpoznaje gracza po IP + fingerprint
     async function checkAutoLoginByFingerprint() {
-        console.log('🔍 Checking auto-login by fingerprint...');
+        console.log('🔍 === CHECKING AUTO-LOGIN ===');
+        console.log('   EventId:', eventId);
+        console.log('   DeviceFingerprint:', deviceFingerprint);
+
         try {
+            console.log('   Sending request to /api/player/check_auto_login...');
             const response = await fetch('/api/player/check_auto_login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -363,16 +367,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
+            console.log('   Response from backend:', data);
 
             // Jeśli backend rozpoznał gracza (exact lub fingerprint match)
             if (data.recognized && data.id) {
-                console.log(`✅ Auto-login: Backend rozpoznał gracza po ${data.match_type} - ${data.name}`);
+                console.log(`✅ AUTO-LOGIN SUCCESS: ${data.match_type} match - ${data.name}`);
 
                 // Zapisz dane gracza
                 playerId = data.id;
                 playerName = data.name;
                 localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
                 localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+                console.log('   Saved to localStorage:', playerId, playerName);
 
                 // Zaloguj automatycznie
                 playerNameDisplay.textContent = playerName;
@@ -381,14 +387,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 gameView.style.display = 'block';
 
                 showMessage(data.message || `Witaj ponownie, ${playerName}!`, 'success');
+                console.log('   Calling scanQrCode()...');
                 scanQrCode();
                 return true;  // Auto-login się udał
             }
 
-            console.log('❌ Backend nie rozpoznał gracza - nowy użytkownik');
+            console.log('❌ AUTO-LOGIN FAILED: Backend nie rozpoznał gracza');
             return false;  // Backend nie rozpoznał gracza
         } catch (error) {
-            console.error('Error checking auto-login:', error);
+            console.error('❌ AUTO-LOGIN ERROR:', error);
             return false;
         }
     }
