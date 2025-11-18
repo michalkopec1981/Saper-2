@@ -1964,6 +1964,75 @@ def host_generate_qr_codes():
     return jsonify({'message': 'Kody QR zostały wygenerowane.'})
 
 # --- API: PLAYER ---
+@app.route('/api/player/check_auto_login', methods=['POST'])
+def check_auto_login():
+    """
+    Sprawdza czy gracz może być automatycznie zalogowany na podstawie IP + Device Fingerprint.
+    NIE tworzy nowego gracza - tylko sprawdza czy istnieje.
+    """
+    data = request.json
+    event_id = data.get('event_id')
+    device_fingerprint = data.get('device_fingerprint')
+
+    # Pobierz adres IP gracza
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip_address and ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
+    print(f"🔍 Auto-login check: Event={event_id}, IP={ip_address}, Fingerprint={device_fingerprint[:20] if device_fingerprint else 'None'}...")
+
+    # POZIOM 1: Exact match (IP + Fingerprint)
+    if ip_address and device_fingerprint:
+        exact_match = Player.query.filter_by(
+            event_id=event_id,
+            ip_address=ip_address,
+            device_fingerprint=device_fingerprint
+        ).first()
+
+        if exact_match:
+            print(f"✅ Exact match found: {exact_match.name} (ID: {exact_match.id})")
+            exact_match.last_active = datetime.utcnow()
+            db.session.commit()
+
+            return jsonify({
+                'recognized': True,
+                'id': exact_match.id,
+                'name': exact_match.name,
+                'score': exact_match.score,
+                'match_type': 'exact',
+                'message': f'Witaj ponownie, {exact_match.name}!'
+            })
+
+    # POZIOM 2: Fingerprint match (różne IP - zmiana sieci)
+    if device_fingerprint:
+        fingerprint_match = Player.query.filter_by(
+            event_id=event_id,
+            device_fingerprint=device_fingerprint
+        ).first()
+
+        if fingerprint_match:
+            print(f"✅ Fingerprint match found (IP changed): {fingerprint_match.name}")
+            # Zaktualizuj IP (gracz zmienił sieć)
+            fingerprint_match.ip_address = ip_address
+            fingerprint_match.last_active = datetime.utcnow()
+            db.session.commit()
+
+            return jsonify({
+                'recognized': True,
+                'id': fingerprint_match.id,
+                'name': fingerprint_match.name,
+                'score': fingerprint_match.score,
+                'match_type': 'fingerprint',
+                'message': f'Witaj ponownie, {fingerprint_match.name}! (wykryto zmianę sieci)'
+            })
+
+    # Gracz nie został rozpoznany
+    print("❌ No player recognized - new player")
+    return jsonify({
+        'recognized': False,
+        'message': 'Nowy gracz - wymagana rejestracja'
+    })
+
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json

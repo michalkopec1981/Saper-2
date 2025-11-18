@@ -349,6 +349,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ✅ Funkcja sprawdzająca czy backend rozpoznaje gracza po IP + fingerprint
+    async function checkAutoLoginByFingerprint() {
+        console.log('🔍 Checking auto-login by fingerprint...');
+        try {
+            const response = await fetch('/api/player/check_auto_login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_id: eventId,
+                    device_fingerprint: deviceFingerprint
+                })
+            });
+
+            const data = await response.json();
+
+            // Jeśli backend rozpoznał gracza (exact lub fingerprint match)
+            if (data.recognized && data.id) {
+                console.log(`✅ Auto-login: Backend rozpoznał gracza po ${data.match_type} - ${data.name}`);
+
+                // Zapisz dane gracza
+                playerId = data.id;
+                playerName = data.name;
+                localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+                localStorage.setItem(`saperPlayerName_${eventId}`, playerName);
+
+                // Zaloguj automatycznie
+                playerNameDisplay.textContent = playerName;
+                playerScoreDisplay.textContent = data.score;
+                nameInputSection.style.display = 'none';
+                gameView.style.display = 'block';
+
+                showMessage(data.message || `Witaj ponownie, ${playerName}!`, 'success');
+                scanQrCode();
+                return true;  // Auto-login się udał
+            }
+
+            console.log('❌ Backend nie rozpoznał gracza - nowy użytkownik');
+            return false;  // Backend nie rozpoznał gracza
+        } catch (error) {
+            console.error('Error checking auto-login:', error);
+            return false;
+        }
+    }
+
     // Inicjalizacja przy załadowaniu strony
     (async function initializePlayer() {
         console.log('🔍 Initializing player...');
@@ -377,11 +421,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 showMessage('⚠️ Twoje dane wygasły po resecie gry. Zarejestruj się ponownie.', 'warning');
                 nameInputSection.style.display = 'block';
                 gameView.style.display = 'none';
+
+                // ✅ Sprawdź auto-login przez fingerprint
+                await checkAutoLoginByFingerprint();
             }
         } else {
-            console.log('❌ No player found in localStorage - showing registration form');
-            nameInputSection.style.display = 'block';
-            gameView.style.display = 'none';
+            console.log('❌ No player found in localStorage');
+
+            // ✅ NOWA LOGIKA: Sprawdź czy backend rozpoznaje gracza po fingerprint ZANIM pokażesz formularz
+            const autoLoggedIn = await checkAutoLoginByFingerprint();
+
+            if (!autoLoggedIn) {
+                console.log('📝 Showing registration form');
+                nameInputSection.style.display = 'block';
+                gameView.style.display = 'none';
+            }
         }
     })();
 
