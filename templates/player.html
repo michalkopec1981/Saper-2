@@ -286,53 +286,59 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelPhotoBtn = document.getElementById('cancel-photo-btn');
     const photoCanvas = document.getElementById('photo-canvas');
 
-    // ✅ AUTO-LOGIN: Sprawdź czy gracz jest już zalogowany
-    async function checkExistingPlayer() {
+    // ===================================================================
+    // INICJALIZACJA Z WERYFIKACJĄ GRACZA
+    // ===================================================================
+
+    // Funkcja weryfikująca czy gracz istnieje w bazie danych
+    async function verifyPlayerExists(playerId) {
+        try {
+            const response = await fetch(`/api/event/${eventId}/players`);
+            if (!response.ok) return false;
+
+            const data = await response.json();
+            return data.players.some(p => p.id == playerId);
+        } catch (error) {
+            console.error('Error verifying player:', error);
+            return false;
+        }
+    }
+
+    // Inicjalizacja przy załadowaniu strony
+    (async function initializePlayer() {
+        console.log('🔍 Initializing player...');
+
         if (playerId && playerName) {
             console.log(`📦 Found player in localStorage: ${playerName} (ID: ${playerId})`);
 
-            try {
-                // Weryfikuj czy gracz nadal istnieje w bazie
-                const response = await fetch(`/api/player/verify/${eventId}/${playerId}`);
+            // ✅ KLUCZOWA ZMIANA: Sprawdź czy gracz nadal istnieje w bazie
+            const exists = await verifyPlayerExists(playerId);
 
-                if (response.ok) {
-                    const data = await response.json();
-
-                    if (data.exists) {
-                        console.log('✅ Player verified in database - auto-login');
-                        // Gracz istnieje - automatyczne logowanie
-                        playerNameDisplay.textContent = playerName;
-                        playerScoreDisplay.textContent = data.score || 0;
-
-                        nameInputSection.style.display = 'none';
-                        gameView.style.display = 'block';
-
-                        // Automatycznie skanuj kod QR
-                        await scanQrCode();
-                        return true;
-                    }
-                }
-
-                console.log('❌ Player not found in database - clearing localStorage');
-                // Gracz nie istnieje (został usunięty po resecie)
+            if (exists) {
+                console.log('✅ Player verified in database - auto-login');
+                playerNameDisplay.textContent = playerName;
+                nameInputSection.style.display = 'none';
+                gameView.style.display = 'block';
+                scanQrCode(); // Automatycznie zeskanuj kod QR
+            } else {
+                console.log('❌ Player not found in database (reset?) - clearing localStorage');
+                // Gracz został usunięty (np. po resecie gry)
                 localStorage.removeItem(`saperPlayerId_${eventId}`);
                 localStorage.removeItem(`saperPlayerName_${eventId}`);
                 playerId = null;
-                playerName = null;
-            } catch (error) {
-                console.error('Error verifying player:', error);
+                playerName = '';
+
+                // Pokaż komunikat i formularz rejestracji
+                showMessage('⚠️ Twoje dane wygasły po resecie gry. Zarejestruj się ponownie.', 'warning');
+                nameInputSection.style.display = 'block';
+                gameView.style.display = 'none';
             }
+        } else {
+            console.log('❌ No player found in localStorage - showing registration form');
+            nameInputSection.style.display = 'block';
+            gameView.style.display = 'none';
         }
-
-        console.log('❌ No valid player found - showing registration form');
-        // Pokaż formularz rejestracji
-        nameInputSection.style.display = 'block';
-        gameView.style.display = 'none';
-        return false;
-    }
-
-    // Wywołaj auto-login przy starcie
-    checkExistingPlayer();
+    })();
 
     // Helper functions
     function showMessage(text, type = 'info') {
