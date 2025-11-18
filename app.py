@@ -5853,6 +5853,172 @@ def get_live_answers(question_id):
 
     return jsonify({'answers': result})
 
+# ========================================
+# REGISTRATION SECURITY API ENDPOINTS
+# ========================================
+
+@app.route('/api/host/registration/limits', methods=['GET', 'PUT'])
+@host_required
+def manage_registration_limits():
+    """Zarządzaj limitami rejestracji dla eventu"""
+    event_id = session['host_event_id']
+
+    if request.method == 'GET':
+        # Pobierz aktualne limity
+        max_per_ip = int(get_game_state(event_id, 'max_players_per_ip', '3'))
+        max_per_device = int(get_game_state(event_id, 'max_players_per_device', '1'))
+
+        # Pobierz statystyki
+        players = Player.query.filter_by(event_id=event_id).all()
+
+        # Statystyki IP
+        ip_stats = {}
+        for player in players:
+            if player.ip_address:
+                if player.ip_address not in ip_stats:
+                    ip_stats[player.ip_address] = []
+                ip_stats[player.ip_address].append({
+                    'id': player.id,
+                    'name': player.name,
+                    'score': player.score,
+                    'fingerprint': player.device_fingerprint[:20] + '...' if player.device_fingerprint else None
+                })
+
+        # Statystyki Fingerprint
+        fingerprint_stats = {}
+        for player in players:
+            if player.device_fingerprint:
+                if player.device_fingerprint not in fingerprint_stats:
+                    fingerprint_stats[player.device_fingerprint] = []
+                fingerprint_stats[player.device_fingerprint].append({
+                    'id': player.id,
+                    'name': player.name,
+                    'score': player.score,
+                    'ip': player.ip_address
+                })
+
+        # Znajdź podejrzane przypadki
+        suspicious_ips = {ip: players_list for ip, players_list in ip_stats.items() if len(players_list) > max_per_ip}
+        suspicious_devices = {fp: players_list for fp, players_list in fingerprint_stats.items() if len(players_list) > max_per_device}
+
+        return jsonify({
+            'limits': {
+                'max_players_per_ip': max_per_ip,
+                'max_players_per_device': max_per_device
+            },
+            'stats': {
+                'total_players': len(players),
+                'unique_ips': len(ip_stats),
+                'unique_devices': len(fingerprint_stats),
+                'suspicious_ips_count': len(suspicious_ips),
+                'suspicious_devices_count': len(suspicious_devices)
+            },
+            'ip_distribution': ip_stats,
+            'device_distribution': fingerprint_stats,
+            'suspicious_ips': suspicious_ips,
+            'suspicious_devices': suspicious_devices
+        })
+
+    elif request.method == 'PUT':
+        # Ustaw nowe limity
+        data = request.json
+
+        max_per_ip = data.get('max_players_per_ip')
+        max_per_device = data.get('max_players_per_device')
+
+        if max_per_ip is not None:
+            if max_per_ip < 1 or max_per_ip > 20:
+                return jsonify({'error': 'Limit IP musi być w zakresie 1-20'}), 400
+            set_game_state(event_id, 'max_players_per_ip', str(max_per_ip))
+
+        if max_per_device is not None:
+            if max_per_device < 1 or max_per_device > 5:
+                return jsonify({'error': 'Limit urządzenia musi być w zakresie 1-5'}), 400
+            set_game_state(event_id, 'max_players_per_device', str(max_per_device))
+
+        return jsonify({
+            'message': 'Limity zaktualizowane',
+            'limits': {
+                'max_players_per_ip': int(get_game_state(event_id, 'max_players_per_ip', '3')),
+                'max_players_per_device': int(get_game_state(event_id, 'max_players_per_device', '1'))
+            }
+        })
+
+@app.route('/api/host/registration/cleanup_duplicates', methods=['POST'])
+@host_required
+def cleanup_duplicate_players():
+    """Usuń duplikaty graczy (automatyczna detekcja)"""
+    event_id = session['host_event_id']
+    data = request.json
+    strategy = data.get('strategy', 'fingerprint')  # 'fingerprint', 'ip', lub 'both'
+
+    removed_count = 0
+    kept_players = []
+
+    if strategy in ['fingerprint', 'both']:
+        # Grupuj graczy według fingerprintu
+        fingerprints = {}
+        players = Player.query.filter(
+            Player.event_id == event_id,
+            Player.device_fingerprint.isnot(None)
+        ).all()
+
+        for player in players:
+            if player.device_fingerprint not in fingerprints:
+                fingerprints[player.device_fingerprint] = []
+            fingerprints[player.device_fingerprint].append(player)
+
+        # Dla każdego fingerprintu, zostaw tylko gracza z najwyższym wynikiem
+        for fp, group in fingerprints.items():
+            if len(group) > 1:
+                # Sortuj po wyniku (najwyższy najpierw)
+                group.sort(key=lambda p: p.score, reverse=True)
+                best = group[0]
+                kept_players.append({'name': best.name, 'score': best.score, 'reason': 'best_score_fingerprint'})
+
+                # Usuń resztę
+                for player in group[1:]:
+                    db.session.delete(player)
+                    removed_count += 1
+
+    if strategy in ['ip', 'both']:
+        # Grupuj graczy według IP (tylko jeśli przekraczają limit)
+        max_per_ip = int(get_game_state(event_id, 'max_players_per_ip', '3'))
+
+        ips = {}
+        players = Player.query.filter(
+            Player.event_id == event_id,
+            Player.ip_address.isnot(None)
+        ).all()
+
+        for player in players:
+            if player.ip_address not in ips:
+                ips[player.ip_address] = []
+            ips[player.ip_address].append(player)
+
+        for ip, group in ips.items():
+            if len(group) > max_per_ip:
+                # Sortuj po wyniku
+                group.sort(key=lambda p: p.score, reverse=True)
+
+                # Zostaw tylko max_per_ip najlepszych
+                for player in group[:max_per_ip]:
+                    kept_players.append({'name': player.name, 'score': player.score, 'reason': f'top_{max_per_ip}_ip'})
+
+                # Usuń resztę
+                for player in group[max_per_ip:]:
+                    db.session.delete(player)
+                    removed_count += 1
+
+    db.session.commit()
+    emit_leaderboard_update(f'event_{event_id}')
+
+    return jsonify({
+        'message': f'Usunięto {removed_count} duplikatów',
+        'removed_count': removed_count,
+        'kept_players': kept_players
+    })
+
 @app.route('/live/<int:event_id>/<qr_code>')
 def live_player_view(event_id, qr_code):
     """Widok gracza dla Live Mode"""
