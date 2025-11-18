@@ -775,31 +775,6 @@
                 </div>
             </div>
 
-            <!-- Zarządzanie Kodami QR -->
-            <div class="card mx-auto">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
-                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
-                        <a href="/player_qrcodes/{{ event.id }}" target="_blank" class="btn btn-success">
-                            📱 Kody QR dla Graczy (Dashboard)
-                        </a>
-                    </div>
-                    <div id="qrcodes-status" class="mt-3"></div>
-                </div>
-            </div>
         </div>
         {% endif %}
 
@@ -2507,7 +2482,6 @@
         fortune_description: 'Gracze po zeskanowaniu kodu QR otrzymują możliwość opisania ostatniego snu, by uzyskać przepowiednię.',
         tab_display: 'Wyświetlacz',
         tab_language: 'Język',
-        qr_management: 'Zarządzanie Kodami QR',
         password_tab: 'Hasło do odsłonięcia',
         password_description: 'Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.',
         photo_tab: 'Galeria zdjęć',
@@ -2610,7 +2584,6 @@
         fortune_description: 'Players after scanning the QR code get the opportunity to describe their last dream to get a prediction.',
         tab_display: 'Display',
         tab_language: 'Language',
-        qr_management: 'QR Codes Management',
         password_tab: 'Password to reveal',
         password_description: 'Here you will see the password that players must reveal during the game.',
         photo_tab: 'Photo gallery',
@@ -2713,7 +2686,6 @@
         fortune_description: 'Spieler erhalten nach dem Scannen des QR-Codes die Möglichkeit, ihren letzten Traum zu beschreiben, um eine Vorhersage zu erhalten.',
         tab_display: 'Anzeige',
         tab_language: 'Sprache',
-        qr_management: 'QR-Code-Verwaltung',
         password_tab: 'Zu enthüllendes Passwort',
         password_description: 'Hier sehen Sie das Passwort, das die Spieler während des Spiels aufdecken müssen.',
         photo_tab: 'Fotogalerie',
@@ -2914,55 +2886,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Liczba ekranów ustawiona na:', screensCount);
         }
     });
-    
-    // =====================================================================
-    // SEKCJA KODÓW QR - TYLKO DLA SUPERHOST
-    // =====================================================================
-    if (IS_SUPERHOST) {
-        // Załaduj liczby kodów po otwarciu zakładki
-        document.querySelector('button[data-bs-target="#qrcodes"]')?.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/api/host/qrcodes/counts');
-                if (response.ok) {
-                    const counts = await response.json();
-                    document.getElementById('red-count').value = counts.red || 0;
-                    document.getElementById('white_trap-count').value = counts.white_trap || 0;
-                    document.getElementById('green-count').value = counts.green || 0;
-                    document.getElementById('pink-count').value = counts.pink || 0;
-                }
-            } catch (error) {
-                console.error('Błąd ładowania kodów QR:', error);
-            }
-        });
-
-        // Generowanie kodów QR
-        document.getElementById('save-qrcodes').addEventListener('click', async () => {
-            const statusEl = document.getElementById('qrcodes-status');
-            const payload = {
-                counts: {
-                    red: document.getElementById('red-count').value,
-                    white_trap: document.getElementById('white_trap-count').value,
-                    green: document.getElementById('green-count').value,
-                    pink: document.getElementById('pink-count').value,
-                }
-            };
-            try {
-                const response = await fetch('/api/host/qrcodes/generate', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-                statusEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
-            } catch (error) {
-                statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
-            }
-        });
-
-        // Link do podglądu kodów QR
-        document.getElementById('preview-qrcodes-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
-    }
     
     // =====================================================================
     // GRACZE
