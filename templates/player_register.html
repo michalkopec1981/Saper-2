@@ -219,6 +219,40 @@
 {% block scripts %}
 {{ super() }}
 <script>
+// Device Fingerprinting
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(36);
+}
+
+function generateDeviceFingerprint() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('🎮 Saper QR', 0, 0);
+    const canvasData = canvas.toDataURL();
+
+    const fingerprint = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screenResolution: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        canvasHash: simpleHash(canvasData),
+        platform: navigator.platform,
+        hardwareConcurrency: navigator.hardwareConcurrency || 0,
+        deviceMemory: navigator.deviceMemory || 0,
+        touchSupport: 'ontouchstart' in window
+    };
+
+    return simpleHash(JSON.stringify(fingerprint));
+}
+
 // Translations
 const translations = {
     pl: {
@@ -318,12 +352,15 @@ document.addEventListener('DOMContentLoaded', function() {
         loading.classList.add('active');
 
         try {
+            const deviceFingerprint = generateDeviceFingerprint();
+
             const response = await fetch('/api/player/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: name,
-                    event_id: eventId
+                    event_id: eventId,
+                    device_fingerprint: deviceFingerprint
                 })
             });
 
@@ -333,7 +370,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || translations[currentLang].error_generic);
             }
 
-            // Save player info
+            // Handle existing player auto-login
+            if (data.existing && data.match_type) {
+                console.log(`✅ Auto-login: ${data.match_type} match`);
+                const playerId = data.id;
+                localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+                localStorage.setItem(`saperPlayerName_${eventId}`, data.name);
+                window.location.href = `/player_dashboard/${eventId}/${playerId}`;
+                return;
+            }
+
+            // Save player info for new registration
             const playerId = data.id;
             localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
             localStorage.setItem(`saperPlayerName_${eventId}`, name);
