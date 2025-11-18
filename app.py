@@ -1381,7 +1381,7 @@ def calculate_max_possible_points(event_id):
         total_max_points += (active_minigames * completion_points * bonus_multiplier)
 
     # 5. Foto - jeśli aktywne (nie uwzględniamy polubień)
-    photo_enabled = get_game_state(event_id, 'photo_enabled', 'True') == 'True'
+    photo_enabled = get_game_state(event_id, 'photo_enabled', 'True') != 'False'
     if photo_enabled:
         selfie_points = int(get_game_state(event_id, 'photo_selfie_points', '10'))
         # Zakładamy że gracz może zrobić jedno zdjęcie
@@ -4614,8 +4614,8 @@ def photo_player_backup(event_id, backup_uuid):
     if not stored_uuid or stored_uuid != backup_uuid:
         return "Nieprawidłowy kod QR", 403
 
-    # Sprawdź czy włączona
-    enabled = get_game_state(event_id, 'photo_enabled', 'True') == 'True'
+    # Sprawdź czy włączona (domyślnie True)
+    enabled = get_game_state(event_id, 'photo_enabled', 'True') != 'False'
     if not enabled:
         return render_template_string('''
         <!DOCTYPE html>
@@ -4661,8 +4661,8 @@ def photo_player(event_id):
     if not event:
         return "Event nie znaleziony", 404
 
-    # Sprawdź czy włączona
-    enabled = get_game_state(event_id, 'photo_enabled', 'True') == 'True'
+    # Sprawdź czy włączona (domyślnie True)
+    enabled = get_game_state(event_id, 'photo_enabled', 'True') != 'False'
     if not enabled:
         return render_template_string('''
         <!DOCTYPE html>
