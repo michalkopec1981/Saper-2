@@ -100,6 +100,10 @@ class Player(db.Model):
     warnings = db.Column(db.Integer, default=0)
     revealed_letters = db.Column(db.String(100), default='')
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
+    ip_address = db.Column(db.String(50), nullable=True, index=True)  # ← IP Address
+    device_fingerprint = db.Column(db.String(100), nullable=True, index=True)  # ← Device Fingerprint
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_active = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class PlayerAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -266,6 +270,73 @@ with app.app_context():
             except Exception as e:
                 # Kolumna prawdopodobnie już istnieje
                 db.session.rollback()
+
+        # ✅ Automatyczna migracja: Dodaj kolumny zabezpieczeń do tabeli 'player'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'player'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            migrations_done = []
+
+            if 'ip_address' not in existing_columns:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN ip_address VARCHAR(50)"))
+                migrations_done.append('ip_address')
+
+            if 'device_fingerprint' not in existing_columns:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN device_fingerprint VARCHAR(100)"))
+                migrations_done.append('device_fingerprint')
+
+            if 'created_at' not in existing_columns:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                migrations_done.append('created_at')
+
+            if 'last_active' not in existing_columns:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                migrations_done.append('last_active')
+
+            if migrations_done:
+                db.session.commit()
+                print(f"✓ Database migration: Added columns to player table: {', '.join(migrations_done)}")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                migrations_done = []
+
+                try:
+                    db.session.execute(text("ALTER TABLE player ADD COLUMN ip_address VARCHAR(50)"))
+                    migrations_done.append('ip_address')
+                except:
+                    pass
+
+                try:
+                    db.session.execute(text("ALTER TABLE player ADD COLUMN device_fingerprint VARCHAR(100)"))
+                    migrations_done.append('device_fingerprint')
+                except:
+                    pass
+
+                try:
+                    db.session.execute(text("ALTER TABLE player ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                    migrations_done.append('created_at')
+                except:
+                    pass
+
+                try:
+                    db.session.execute(text("ALTER TABLE player ADD COLUMN last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                    migrations_done.append('last_active')
+                except:
+                    pass
+
+                if migrations_done:
+                    db.session.commit()
+                    print(f"✓ Database migration (SQLite): Added columns: {', '.join(migrations_done)}")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumny prawdopodobnie już istnieją
 
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -1896,14 +1967,109 @@ def host_generate_qr_codes():
 @app.route('/api/player/register', methods=['POST'])
 def register_player():
     data = request.json
-    name, event_id = data.get('name'), data.get('event_id')
+    name = data.get('name')
+    event_id = data.get('event_id')
+    device_fingerprint = data.get('device_fingerprint')
+
+    # ✅ Pobierz adres IP gracza
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ip_address and ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
+    print(f"🔍 Registration attempt: Name={name}, Event={event_id}, IP={ip_address}, Fingerprint={device_fingerprint[:20] if device_fingerprint else 'None'}...")
+
+    # ✅ POZIOM 1: Exact match (IP + Fingerprint) - ten sam gracz, to samo urządzenie, ta sama sieć
+    if ip_address and device_fingerprint:
+        exact_match = Player.query.filter_by(
+            event_id=event_id,
+            ip_address=ip_address,
+            device_fingerprint=device_fingerprint
+        ).first()
+
+        if exact_match:
+            print(f"✅ Exact match found: {exact_match.name} (ID: {exact_match.id})")
+            exact_match.last_active = datetime.utcnow()
+            db.session.commit()
+            return jsonify({
+                'id': exact_match.id,
+                'name': exact_match.name,
+                'score': exact_match.score,
+                'existing': True,
+                'match_type': 'exact',
+                'message': f'Witaj ponownie, {exact_match.name}!'
+            })
+
+    # ✅ POZIOM 2: Fingerprint match (różne IP) - ten sam gracz zmienił sieć (WiFi → 4G)
+    if device_fingerprint:
+        fingerprint_match = Player.query.filter_by(
+            event_id=event_id,
+            device_fingerprint=device_fingerprint
+        ).first()
+
+        if fingerprint_match:
+            print(f"✅ Fingerprint match (IP changed): {fingerprint_match.name}")
+            # Zaktualizuj IP i timestamp
+            fingerprint_match.ip_address = ip_address
+            fingerprint_match.last_active = datetime.utcnow()
+            db.session.commit()
+
+            return jsonify({
+                'id': fingerprint_match.id,
+                'name': fingerprint_match.name,
+                'score': fingerprint_match.score,
+                'existing': True,
+                'match_type': 'fingerprint',
+                'message': f'Witaj ponownie, {fingerprint_match.name}! (wykryto zmianę sieci)'
+            })
+
+    # ✅ POZIOM 3: Limit urządzeń - jedno urządzenie = jeden gracz
+    if device_fingerprint:
+        existing_from_device = Player.query.filter_by(
+            event_id=event_id,
+            device_fingerprint=device_fingerprint
+        ).count()
+
+        if existing_from_device >= 1:
+            existing_player = Player.query.filter_by(
+                event_id=event_id,
+                device_fingerprint=device_fingerprint
+            ).first()
+
+            print(f"⚠️ Device limit reached for {device_fingerprint[:20]}...")
+            return jsonify({
+                'error': 'Z tego urządzenia może grać tylko 1 gracz.',
+                'existing_player': {
+                    'id': existing_player.id,
+                    'name': existing_player.name,
+                    'score': existing_player.score
+                },
+                'limit_type': 'device',
+                'suggestion': f'Kontynuuj jako: {existing_player.name}'
+            }), 403
+
+    # ✅ Sprawdź czy nick jest zajęty
     if Player.query.filter_by(name=name, event_id=event_id).first():
         return jsonify({'error': 'Ta nazwa jest już zajęta.'}), 409
-    new_player = Player(name=name, event_id=event_id)
+
+    # ✅ NOWY GRACZ - wszystkie sprawdzenia przeszły
+    new_player = Player(
+        name=name,
+        event_id=event_id,
+        ip_address=ip_address,
+        device_fingerprint=device_fingerprint
+    )
     db.session.add(new_player)
     db.session.commit()
+
+    print(f"✅ New player registered: {name} (ID: {new_player.id})")
     emit_leaderboard_update(f'event_{event_id}')
-    return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
+
+    return jsonify({
+        'id': new_player.id,
+        'name': new_player.name,
+        'score': 0,
+        'existing': False
+    })
 
 @app.route('/api/player/verify/<int:event_id>/<int:player_id>', methods=['GET'])
 def verify_player(event_id, player_id):
