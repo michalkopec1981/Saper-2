@@ -2890,6 +2890,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // =====================================================================
     // GRACZE
     // =====================================================================
+    // Załaduj listę graczy po otwarciu zakładki
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', () => {
+        loadPlayers();
+    });
+
     function loadPlayers() {
         fetch('/api/host/players')
             .then(res => res.json())
@@ -2914,10 +2919,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tbody>
                             ${players.map(p => `
                                 <tr>
-                                    <td style="color: #ffc107; font-weight: 500;">${p.name}</td>
-                                    <td style="color: #ffc107; font-weight: 500;">${p.score}</td>
-                                    <td style="color: #ffc107; font-weight: 500;">${(p.completion_percentage !== null && p.completion_percentage !== undefined) ? p.completion_percentage + '%' : '-'}</td>
-                                    <td style="color: #ffc107; font-weight: 500;">${p.warnings}</td>
+                                    <td>${p.name}</td>
+                                    <td>${p.score}</td>
+                                    <td>${p.completion_percentage !== undefined ? p.completion_percentage + '%' : '-'}</td>
+                                    <td>${p.warnings}</td>
                                     <td>
                                         <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
                                         <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
@@ -4024,11 +4029,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (passwordDisplay) {
             passwordDisplay.textContent = password.split('').join(' ');
         }
-        
+
         // ✅ NOWE: Aktualizuj również podgląd hasła w zakładce Gra
         loadPasswordState();
     });
-    
+
+    socket.on('leaderboard_update', (players) => {
+        console.log('📊 Leaderboard update received:', players);
+        loadPlayers();
+    });
+
     // Initial state load
     console.log('🔄 Loading initial state...');
     fetch('/api/host/state')
@@ -4045,9 +4055,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
                 document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
             }
-            
+
             // ✅ Załaduj stan hasła od razu przy inicjalizacji - WYMUSZONY
             setTimeout(() => loadPasswordState(), 100);
+
+            // ✅ Załaduj listę graczy od razu przy inicjalizacji
+            setTimeout(() => loadPlayers(), 100);
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
