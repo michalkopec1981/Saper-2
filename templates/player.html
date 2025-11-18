@@ -1015,17 +1015,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize
-    if (playerId && playerName) {
-        console.log('Player already registered:', playerName, playerId);
-        playerNameDisplay.textContent = playerName;
-        nameInputSection.style.display = 'none';
-        gameView.style.display = 'block';
-        scanQrCode();
-    } else {
-        console.log('New player - showing registration form');
-        nameInputSection.style.display = 'block';
-    }
+    // ✅ STARA INICJALIZACJA ZOSTAŁA USUNIĘTA
+    // Inicjalizacja odbywa się teraz w funkcji initializePlayer() (linie ~308-341)
+    // która weryfikuje gracza w bazie danych przed auto-logowaniem
 });
 </script>
 {% endblock %}
