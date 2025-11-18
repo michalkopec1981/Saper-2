@@ -1905,6 +1905,19 @@ def register_player():
     emit_leaderboard_update(f'event_{event_id}')
     return jsonify({'id': new_player.id, 'name': new_player.name, 'score': 0})
 
+@app.route('/api/player/verify/<int:event_id>/<int:player_id>', methods=['GET'])
+def verify_player(event_id, player_id):
+    """Sprawdź czy gracz nadal istnieje w bazie danych"""
+    player = Player.query.filter_by(id=player_id, event_id=event_id).first()
+    if player:
+        return jsonify({
+            'exists': True,
+            'id': player.id,
+            'name': player.name,
+            'score': player.score
+        })
+    return jsonify({'exists': False}), 404
+
 @app.route('/api/player/upload_photo', methods=['POST'])
 def upload_photo():
     """Upload selfie photo from player"""

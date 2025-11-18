@@ -286,6 +286,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelPhotoBtn = document.getElementById('cancel-photo-btn');
     const photoCanvas = document.getElementById('photo-canvas');
 
+    // ✅ AUTO-LOGIN: Sprawdź czy gracz jest już zalogowany
+    async function checkExistingPlayer() {
+        if (playerId && playerName) {
+            console.log(`📦 Found player in localStorage: ${playerName} (ID: ${playerId})`);
+
+            try {
+                // Weryfikuj czy gracz nadal istnieje w bazie
+                const response = await fetch(`/api/player/verify/${eventId}/${playerId}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.exists) {
+                        console.log('✅ Player verified in database - auto-login');
+                        // Gracz istnieje - automatyczne logowanie
+                        playerNameDisplay.textContent = playerName;
+                        playerScoreDisplay.textContent = data.score || 0;
+
+                        nameInputSection.style.display = 'none';
+                        gameView.style.display = 'block';
+
+                        // Automatycznie skanuj kod QR
+                        await scanQrCode();
+                        return true;
+                    }
+                }
+
+                console.log('❌ Player not found in database - clearing localStorage');
+                // Gracz nie istnieje (został usunięty po resecie)
+                localStorage.removeItem(`saperPlayerId_${eventId}`);
+                localStorage.removeItem(`saperPlayerName_${eventId}`);
+                playerId = null;
+                playerName = null;
+            } catch (error) {
+                console.error('Error verifying player:', error);
+            }
+        }
+
+        console.log('❌ No valid player found - showing registration form');
+        // Pokaż formularz rejestracji
+        nameInputSection.style.display = 'block';
+        gameView.style.display = 'none';
+        return false;
+    }
+
+    // Wywołaj auto-login przy starcie
+    checkExistingPlayer();
+
     // Helper functions
     function showMessage(text, type = 'info') {
         messageSection.textContent = text;
