@@ -1977,10 +1977,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Link do podglądu kodów QR
         document.getElementById('preview-qrcodes-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
     }
-    
+
     // =====================================================================
     // GRACZE
     // =====================================================================
+    // Załaduj listę graczy po otwarciu zakładki
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', () => {
+        loadPlayers();
+    });
+
     function loadPlayers() {
         fetch('/api/host/players')
             .then(res => res.json())
@@ -2867,11 +2872,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (passwordDisplay) {
             passwordDisplay.textContent = password.split('').join(' ');
         }
-        
+
         // ✅ NOWE: Aktualizuj również podgląd hasła w zakładce Gra
         loadPasswordState();
     });
-    
+
+    socket.on('leaderboard_update', (players) => {
+        console.log('📊 Leaderboard update received:', players);
+        loadPlayers();
+    });
+
     // Initial state load
     console.log('🔄 Loading initial state...');
     fetch('/api/host/state')
@@ -2891,6 +2901,9 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // ✅ Załaduj stan hasła od razu przy inicjalizacji - WYMUSZONY
             setTimeout(() => loadPasswordState(), 100);
+
+            // ✅ Załaduj listę graczy od razu przy inicjalizacji
+            setTimeout(() => loadPlayers(), 100);
         })
         .catch(error => console.error('❌ Error loading initial state:', error));
     
