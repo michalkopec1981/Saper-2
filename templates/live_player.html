@@ -8,6 +8,20 @@
         <hr>
     </div>
 
+    <!-- Sekcja rejestracji gracza -->
+    <div id="registration-section" style="display: none;">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">Podaj swoje imię</h5>
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="player-name-input" placeholder="Twoje imię lub nazwa drużyny" required>
+                </div>
+                <button id="register-btn" class="btn btn-primary w-100">Dołącz do gry</button>
+                <div id="registration-error" class="alert alert-danger mt-2" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Status oczekiwania -->
     <div id="waiting-section" class="text-center">
         <div class="card bg-light">
@@ -101,26 +115,98 @@
     let currentQuestionId = null;
     let timerInterval = null;
     let socket = null;
+    let playerId = null;
+    let playerName = null;
 
-    // Połącz z WebSocket
-    socket = io();
+    // Check if player is already logged in
+    window.addEventListener('DOMContentLoaded', function() {
+        const storedPlayerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+        const storedPlayerName = localStorage.getItem(`saperPlayerName_${eventId}`);
 
-    socket.on('connect', function() {
-        console.log('Connected to WebSocket');
-        socket.emit('join', {room: `event_${eventId}`});
+        if (storedPlayerId && storedPlayerName) {
+            // Player already logged in
+            playerId = storedPlayerId;
+            playerName = storedPlayerName;
+            initializeGame();
+        } else {
+            // Show registration form
+            document.getElementById('registration-section').style.display = 'block';
+            document.getElementById('waiting-section').style.display = 'none';
+        }
     });
 
-    // Nasłuchuj na nowe pytania
-    socket.on('live_question_started', function(data) {
-        console.log('New question started:', data);
+    // Handle registration
+    document.getElementById('register-btn').addEventListener('click', async function() {
+        const name = document.getElementById('player-name-input').value.trim();
+        const errorDiv = document.getElementById('registration-error');
+
+        if (!name) {
+            errorDiv.textContent = 'Proszę podać imię';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/player/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    event_id: eventId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd rejestracji');
+            }
+
+            // Save player info
+            playerId = data.id;
+            playerName = name;
+            localStorage.setItem(`saperPlayerId_${eventId}`, playerId);
+            localStorage.setItem(`saperPlayerName_${eventId}`, name);
+
+            // Hide registration, show game
+            document.getElementById('registration-section').style.display = 'none';
+            document.getElementById('waiting-section').style.display = 'block';
+
+            initializeGame();
+
+        } catch (error) {
+            errorDiv.textContent = error.message;
+            errorDiv.style.display = 'block';
+        }
+    });
+
+    function initializeGame() {
+        // Połącz z WebSocket
+        socket = io();
+
+        socket.on('connect', function() {
+            console.log('Connected to WebSocket');
+            socket.emit('join', {room: `event_${eventId}`});
+        });
+
+        // Nasłuchuj na nowe pytania
+        socket.on('live_question_started', function(data) {
+            console.log('New question started:', data);
+            checkQuestionStatus();
+        });
+
+        // Nasłuchuj na ujawnienie odpowiedzi
+        socket.on('live_answer_revealed', function(data) {
+            console.log('Answer revealed:', data);
+            checkQuestionStatus();
+        });
+
+        // Inicjalizacja - sprawdź status przy załadowaniu strony
         checkQuestionStatus();
-    });
 
-    // Nasłuchuj na ujawnienie odpowiedzi
-    socket.on('live_answer_revealed', function(data) {
-        console.log('Answer revealed:', data);
-        checkQuestionStatus();
-    });
+        // Sprawdzaj status co 5 sekund (backup gdyby WebSocket nie działał)
+        setInterval(checkQuestionStatus, 5000);
+    }
 
     // Sprawdź status pytania
     async function checkQuestionStatus() {
@@ -289,6 +375,11 @@
             return;
         }
 
+        if (!playerId) {
+            showError('Brak ID gracza - odśwież stronę');
+            return;
+        }
+
         // Wyłącz przyciski
         const buttons = document.querySelectorAll('#answer-buttons button');
         buttons.forEach(btn => btn.disabled = true);
@@ -301,7 +392,8 @@
                     question_id: currentQuestionId,
                     answer: answer,
                     event_id: eventId,
-                    qr_code: qrCode
+                    qr_code: qrCode,
+                    player_id: parseInt(playerId)
                 })
             });
 
@@ -321,11 +413,5 @@
             buttons.forEach(btn => btn.disabled = false);
         }
     }
-
-    // Inicjalizacja - sprawdź status przy załadowaniu strony
-    checkQuestionStatus();
-
-    // Sprawdzaj status co 5 sekund (backup gdyby WebSocket nie działał)
-    setInterval(checkQuestionStatus, 5000);
 </script>
 {% endblock %}

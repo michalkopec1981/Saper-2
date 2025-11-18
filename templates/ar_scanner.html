@@ -124,6 +124,30 @@ let scanning = false;
 let scanInterval = null;
 let stream = null;
 
+// Check if player is already logged in
+window.addEventListener('DOMContentLoaded', async function() {
+    const storedPlayerId = localStorage.getItem(`saperPlayerId_${EVENT_ID}`);
+    const storedPlayerName = localStorage.getItem(`saperPlayerName_${EVENT_ID}`);
+
+    if (storedPlayerId && storedPlayerName) {
+        // Player already logged in, go directly to scanner
+        playerId = storedPlayerId;
+        playerName = storedPlayerName;
+        document.getElementById('player-name-display').textContent = playerName;
+
+        // Ukryj sekcję imienia, pokaż skaner
+        document.getElementById('name-input-section').style.display = 'none';
+        document.getElementById('scanner-section').style.display = 'block';
+
+        // Uruchom kamerę
+        await startCamera();
+        startScanning();
+    } else {
+        // Show registration form
+        document.getElementById('name-input-section').style.display = 'block';
+    }
+});
+
 // Rozpocznij skaner
 document.getElementById('start-scanner-btn').addEventListener('click', async () => {
     const nameInput = document.getElementById('player-name');
@@ -134,21 +158,27 @@ document.getElementById('start-scanner-btn').addEventListener('click', async () 
         return;
     }
 
-    // Zarejestruj gracza lub pobierz dane istniejącego
+    // Register player
     try {
-        // Tutaj możesz dodać API call do zarejestrowania gracza
-        // Na razie użyjemy localStorage
-        const storedPlayerId = localStorage.getItem(`player_${EVENT_ID}_id`);
-        const storedName = localStorage.getItem(`player_${EVENT_ID}_name`);
+        const response = await fetch('/api/player/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: playerName,
+                event_id: EVENT_ID
+            })
+        });
 
-        if (storedPlayerId && storedName === playerName) {
-            playerId = parseInt(storedPlayerId);
-        } else {
-            // Dla uproszczenia, używamy timestamp jako ID
-            playerId = Date.now();
-            localStorage.setItem(`player_${EVENT_ID}_id`, playerId);
-            localStorage.setItem(`player_${EVENT_ID}_name`, playerName);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Błąd rejestracji');
         }
+
+        // Save player info
+        playerId = data.id;
+        localStorage.setItem(`saperPlayerId_${EVENT_ID}`, playerId);
+        localStorage.setItem(`saperPlayerName_${EVENT_ID}`, playerName);
 
         document.getElementById('player-name-display').textContent = playerName;
 

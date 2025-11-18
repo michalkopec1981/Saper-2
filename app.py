@@ -5707,24 +5707,16 @@ def live_player_view(event_id, qr_code):
 def submit_live_answer():
     """Gracz wysyła odpowiedź w trybie Live"""
     data = request.json
-    player_id = session.get('player_id')
+
+    # Najpierw sprawdź player_id z requestu (z localStorage)
+    player_id = data.get('player_id')
+
+    # Jeśli nie ma w requestcie, sprawdź sesję (fallback dla starych implementacji)
+    if not player_id:
+        player_id = session.get('player_id')
 
     if not player_id:
-        # Spróbuj utworzyć gracza anonimowego
-        event_id = data.get('event_id')
-        qr_code = data.get('qr_code')
-
-        if not event_id or not qr_code:
-            return jsonify({'error': 'Brak danych gracza'}), 400
-
-        # Utwórz gracza tymczasowego
-        import secrets
-        temp_name = f"Gracz_{secrets.token_hex(4)}"
-        player = Player(name=temp_name, event_id=event_id)
-        db.session.add(player)
-        db.session.commit()
-        player_id = player.id
-        session['player_id'] = player_id
+        return jsonify({'error': 'Brak ID gracza. Odśwież stronę i zaloguj się ponownie.'}), 400
 
     question_id = data.get('question_id')
     answer = data.get('answer', '').upper()
