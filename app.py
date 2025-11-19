@@ -839,6 +839,12 @@ def display4(event_id):
     event = db.session.get(Event, event_id)
     return render_template('display4.html', event=event)
 
+@app.route('/display5/<int:event_id>')
+def display5(event_id):
+    """Piąty ekran - kody QR i zadania specjalne z zakładek Głosowanie i Na Żywo"""
+    event = db.session.get(Event, event_id)
+    return render_template('display5.html', event=event)
+
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     is_admin = session.get('admin_logged_in', False)
@@ -1569,6 +1575,48 @@ def manage_player(player_id):
                 'score': player.score
             }
         })
+
+# --- API: DISPLAY Screen 5 ---
+@app.route('/api/display/screen5/send_qr', methods=['POST'])
+@host_required
+def send_qr_to_screen5():
+    """Wysyła kod QR na ekran numer 5"""
+    event_id = session['host_event_id']
+    data = request.json
+
+    qr_type = data.get('type')  # 'voting' lub 'live'
+    url = data.get('url')
+    description = data.get('description', '')
+
+    if not qr_type or not url:
+        return jsonify({'error': 'Brak wymaganych danych (type, url)'}), 400
+
+    # Zapisz dane kodu QR w GameState
+    qr_data = {
+        'type': qr_type,
+        'url': url,
+        'description': description
+    }
+
+    import json
+    set_game_state(event_id, 'screen5_qr_data', json.dumps(qr_data))
+
+    # Wyślij aktualizację przez WebSocket
+    socketio.emit('screen5_qr_update', qr_data, room=f'event_{event_id}')
+
+    return jsonify({'message': 'Kod QR wysłany na ekran 5', 'qr_data': qr_data})
+
+@app.route('/api/display/screen5/current/<int:event_id>', methods=['GET'])
+def get_screen5_current_qr(event_id):
+    """Pobiera aktualny kod QR dla ekranu 5"""
+    qr_data_json = get_game_state(event_id, 'screen5_qr_data', None)
+
+    if qr_data_json:
+        import json
+        qr_data = json.loads(qr_data_json)
+        return jsonify({'qr_data': qr_data})
+
+    return jsonify({'qr_data': None})
 
 # --- API: HOST Minigames ---
 @app.route('/api/host/minigames/status', methods=['GET'])
