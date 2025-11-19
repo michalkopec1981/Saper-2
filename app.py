@@ -5375,6 +5375,130 @@ def update_questions_r3_disable_other_rounds(event_id):
     return jsonify({'message': 'Ustawienie zaktualizowane'})
 
 # ===================================================================
+# --- Questions Round Timer Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/questions_r2/timer/<int:event_id>', methods=['POST', 'GET', 'DELETE'])
+@host_required
+def manage_questions_r2_timer(event_id):
+    """Zarządzaj timerem dla pytań rundy 2"""
+    from datetime import datetime, timedelta
+
+    if request.method == 'POST':
+        # Uruchom timer
+        data = request.json
+        minutes = data.get('minutes')
+
+        if not minutes or minutes < 1:
+            return jsonify({'error': 'Nieprawidłowa liczba minut'}), 400
+
+        # Oblicz czas końcowy
+        end_time = datetime.utcnow() + timedelta(minutes=minutes)
+
+        # Zapisz w game_state
+        set_game_state(event_id, 'questions_r2_timer_end', end_time.isoformat())
+        set_game_state(event_id, 'questions_r2_timer_active', 'True')
+
+        return jsonify({
+            'message': 'Timer uruchomiony',
+            'end_time': end_time.isoformat(),
+            'minutes': minutes
+        })
+
+    elif request.method == 'GET':
+        # Sprawdź status timera
+        end_time_str = get_game_state(event_id, 'questions_r2_timer_end', None)
+        active = get_game_state(event_id, 'questions_r2_timer_active', 'False') == 'True'
+
+        if not end_time_str or not active:
+            return jsonify({'active': False})
+
+        try:
+            end_time = datetime.fromisoformat(end_time_str)
+            now = datetime.utcnow()
+
+            # Sprawdź czy timer wygasł
+            if now >= end_time:
+                # Timer wygasł - włącz pytania i usuń timer
+                set_game_state(event_id, 'questions_r2_timer_active', 'False')
+                set_game_state(event_id, 'questions_enabled', 'True')
+                return jsonify({'active': False, 'expired': True})
+
+            return jsonify({
+                'active': True,
+                'end_time': end_time.isoformat()
+            })
+        except:
+            return jsonify({'active': False})
+
+    elif request.method == 'DELETE':
+        # Anuluj timer
+        set_game_state(event_id, 'questions_r2_timer_active', 'False')
+        set_game_state(event_id, 'questions_r2_timer_end', '')
+
+        return jsonify({'message': 'Timer anulowany'})
+
+@app.route('/api/host/questions_r3/timer/<int:event_id>', methods=['POST', 'GET', 'DELETE'])
+@host_required
+def manage_questions_r3_timer(event_id):
+    """Zarządzaj timerem dla pytań rundy 3"""
+    from datetime import datetime, timedelta
+
+    if request.method == 'POST':
+        # Uruchom timer
+        data = request.json
+        minutes = data.get('minutes')
+
+        if not minutes or minutes < 1:
+            return jsonify({'error': 'Nieprawidłowa liczba minut'}), 400
+
+        # Oblicz czas końcowy
+        end_time = datetime.utcnow() + timedelta(minutes=minutes)
+
+        # Zapisz w game_state
+        set_game_state(event_id, 'questions_r3_timer_end', end_time.isoformat())
+        set_game_state(event_id, 'questions_r3_timer_active', 'True')
+
+        return jsonify({
+            'message': 'Timer uruchomiony',
+            'end_time': end_time.isoformat(),
+            'minutes': minutes
+        })
+
+    elif request.method == 'GET':
+        # Sprawdź status timera
+        end_time_str = get_game_state(event_id, 'questions_r3_timer_end', None)
+        active = get_game_state(event_id, 'questions_r3_timer_active', 'False') == 'True'
+
+        if not end_time_str or not active:
+            return jsonify({'active': False})
+
+        try:
+            end_time = datetime.fromisoformat(end_time_str)
+            now = datetime.utcnow()
+
+            # Sprawdź czy timer wygasł
+            if now >= end_time:
+                # Timer wygasł - włącz pytania i usuń timer
+                set_game_state(event_id, 'questions_r3_timer_active', 'False')
+                set_game_state(event_id, 'questions_enabled', 'True')
+                return jsonify({'active': False, 'expired': True})
+
+            return jsonify({
+                'active': True,
+                'end_time': end_time.isoformat()
+            })
+        except:
+            return jsonify({'active': False})
+
+    elif request.method == 'DELETE':
+        # Anuluj timer
+        set_game_state(event_id, 'questions_r3_timer_active', 'False')
+        set_game_state(event_id, 'questions_r3_timer_end', '')
+
+        return jsonify({'message': 'Timer anulowany'})
+
+# ===================================================================
 # --- AI Points Settings Endpoints ---
 # ===================================================================
 

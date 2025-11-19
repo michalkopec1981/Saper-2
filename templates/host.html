@@ -1216,6 +1216,20 @@
                                 </label>
                             </div>
                             <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+
+                            <!-- Timer do automatycznego uruchomienia -->
+                            <div class="mt-3">
+                                <label class="form-label"><strong>Czas do uruchomienia:</strong></label>
+                                <div class="input-group" style="max-width: 400px;">
+                                    <input type="number" class="form-control" id="r2-questions-timer-minutes" placeholder="Minuty" min="1" max="1440">
+                                    <button class="btn btn-primary" onclick="startR2QuestionsTimer()">OK</button>
+                                    <button class="btn btn-danger" onclick="cancelR2QuestionsTimer()" id="r2-questions-timer-cancel" style="display: none;">Anuluj</button>
+                                </div>
+                                <div id="r2-questions-timer-display" class="mt-2" style="display: none;">
+                                    <span class="badge bg-info">Timer aktywny: <span id="r2-questions-timer-countdown"></span></span>
+                                </div>
+                                <small class="text-muted">Pytania zostaną automatycznie uruchomione po określonym czasie</small>
+                            </div>
                         </div>
                     </div>
 
@@ -1352,6 +1366,20 @@
                                 </label>
                             </div>
                             <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+
+                            <!-- Timer do automatycznego uruchomienia -->
+                            <div class="mt-3">
+                                <label class="form-label"><strong>Czas do uruchomienia:</strong></label>
+                                <div class="input-group" style="max-width: 400px;">
+                                    <input type="number" class="form-control" id="r3-questions-timer-minutes" placeholder="Minuty" min="1" max="1440">
+                                    <button class="btn btn-primary" onclick="startR3QuestionsTimer()">OK</button>
+                                    <button class="btn btn-danger" onclick="cancelR3QuestionsTimer()" id="r3-questions-timer-cancel" style="display: none;">Anuluj</button>
+                                </div>
+                                <div id="r3-questions-timer-display" class="mt-2" style="display: none;">
+                                    <span class="badge bg-info">Timer aktywny: <span id="r3-questions-timer-countdown"></span></span>
+                                </div>
+                                <small class="text-muted">Pytania zostaną automatycznie uruchomione po określonym czasie</small>
+                            </div>
                         </div>
                     </div>
 
@@ -7976,6 +8004,266 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.textContent = '📺 Wyślij kod na ekran numer 5';
         }
     });
+
+    // ===================================================
+    // TIMER DLA PYTAŃ RUNDA 2
+    // ===================================================
+
+    let r2TimerInterval = null;
+    let r2TimerEndTime = null;
+
+    async function startR2QuestionsTimer() {
+        const eventId = {{ event.id }};
+        const minutes = parseInt(document.getElementById('r2-questions-timer-minutes').value);
+
+        if (!minutes || minutes < 1) {
+            alert('Proszę wprowadzić prawidłową liczbę minut (min. 1)');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/timer/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: minutes })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd uruchamiania timera');
+            }
+
+            const data = await response.json();
+            r2TimerEndTime = new Date(data.end_time);
+
+            // Pokaż timer i przycisk anulowania
+            document.getElementById('r2-questions-timer-display').style.display = 'block';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'inline-block';
+            document.getElementById('r2-questions-timer-minutes').disabled = true;
+
+            // Rozpocznij odliczanie
+            updateR2TimerDisplay();
+            r2TimerInterval = setInterval(updateR2TimerDisplay, 1000);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    function updateR2TimerDisplay() {
+        if (!r2TimerEndTime) return;
+
+        const now = new Date();
+        const diff = r2TimerEndTime - now;
+
+        if (diff <= 0) {
+            // Timer zakończony - włącz pytania
+            clearInterval(r2TimerInterval);
+            r2TimerInterval = null;
+            r2TimerEndTime = null;
+
+            document.getElementById('r2-questions-timer-display').style.display = 'none';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r2-questions-timer-minutes').disabled = false;
+            document.getElementById('r2-questions-timer-minutes').value = '';
+
+            // Włącz pytania
+            document.getElementById('r2-questions-enabled').checked = true;
+            document.getElementById('r2-questions-status').textContent = 'Aktywna';
+            document.getElementById('r2-questions-status').className = 'badge bg-success';
+
+            alert('Pytania Runda 2 zostały automatycznie włączone!');
+            return;
+        }
+
+        // Oblicz pozostały czas
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const display = `${hours}h ${minutes}m ${seconds}s`;
+        document.getElementById('r2-questions-timer-countdown').textContent = display;
+    }
+
+    async function cancelR2QuestionsTimer() {
+        const eventId = {{ event.id }};
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/timer/${eventId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd anulowania timera');
+            }
+
+            // Zatrzymaj timer
+            clearInterval(r2TimerInterval);
+            r2TimerInterval = null;
+            r2TimerEndTime = null;
+
+            // Ukryj elementy timera
+            document.getElementById('r2-questions-timer-display').style.display = 'none';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r2-questions-timer-minutes').disabled = false;
+            document.getElementById('r2-questions-timer-minutes').value = '';
+
+            alert('Timer został anulowany');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // ===================================================
+    // TIMER DLA PYTAŃ RUNDA 3
+    // ===================================================
+
+    let r3TimerInterval = null;
+    let r3TimerEndTime = null;
+
+    async function startR3QuestionsTimer() {
+        const eventId = {{ event.id }};
+        const minutes = parseInt(document.getElementById('r3-questions-timer-minutes').value);
+
+        if (!minutes || minutes < 1) {
+            alert('Proszę wprowadzić prawidłową liczbę minut (min. 1)');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/timer/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: minutes })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd uruchamiania timera');
+            }
+
+            const data = await response.json();
+            r3TimerEndTime = new Date(data.end_time);
+
+            // Pokaż timer i przycisk anulowania
+            document.getElementById('r3-questions-timer-display').style.display = 'block';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'inline-block';
+            document.getElementById('r3-questions-timer-minutes').disabled = true;
+
+            // Rozpocznij odliczanie
+            updateR3TimerDisplay();
+            r3TimerInterval = setInterval(updateR3TimerDisplay, 1000);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    function updateR3TimerDisplay() {
+        if (!r3TimerEndTime) return;
+
+        const now = new Date();
+        const diff = r3TimerEndTime - now;
+
+        if (diff <= 0) {
+            // Timer zakończony - włącz pytania
+            clearInterval(r3TimerInterval);
+            r3TimerInterval = null;
+            r3TimerEndTime = null;
+
+            document.getElementById('r3-questions-timer-display').style.display = 'none';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r3-questions-timer-minutes').disabled = false;
+            document.getElementById('r3-questions-timer-minutes').value = '';
+
+            // Włącz pytania
+            document.getElementById('r3-questions-enabled').checked = true;
+            document.getElementById('r3-questions-status').textContent = 'Aktywna';
+            document.getElementById('r3-questions-status').className = 'badge bg-success';
+
+            alert('Pytania Runda 3 zostały automatycznie włączone!');
+            return;
+        }
+
+        // Oblicz pozostały czas
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const display = `${hours}h ${minutes}m ${seconds}s`;
+        document.getElementById('r3-questions-timer-countdown').textContent = display;
+    }
+
+    async function cancelR3QuestionsTimer() {
+        const eventId = {{ event.id }};
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/timer/${eventId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd anulowania timera');
+            }
+
+            // Zatrzymaj timer
+            clearInterval(r3TimerInterval);
+            r3TimerInterval = null;
+            r3TimerEndTime = null;
+
+            // Ukryj elementy timera
+            document.getElementById('r3-questions-timer-display').style.display = 'none';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r3-questions-timer-minutes').disabled = false;
+            document.getElementById('r3-questions-timer-minutes').value = '';
+
+            alert('Timer został anulowany');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Sprawdź przy ładowaniu czy są aktywne timery
+    async function checkActiveTimers() {
+        const eventId = {{ event.id }};
+
+        try {
+            // Sprawdź timer rundy 2
+            const r2Response = await fetch(`/api/host/questions_r2/timer/${eventId}`);
+            if (r2Response.ok) {
+                const r2Data = await r2Response.json();
+                if (r2Data.active && r2Data.end_time) {
+                    r2TimerEndTime = new Date(r2Data.end_time);
+                    document.getElementById('r2-questions-timer-display').style.display = 'block';
+                    document.getElementById('r2-questions-timer-cancel').style.display = 'inline-block';
+                    document.getElementById('r2-questions-timer-minutes').disabled = true;
+                    r2TimerInterval = setInterval(updateR2TimerDisplay, 1000);
+                    updateR2TimerDisplay();
+                }
+            }
+
+            // Sprawdź timer rundy 3
+            const r3Response = await fetch(`/api/host/questions_r3/timer/${eventId}`);
+            if (r3Response.ok) {
+                const r3Data = await r3Response.json();
+                if (r3Data.active && r3Data.end_time) {
+                    r3TimerEndTime = new Date(r3Data.end_time);
+                    document.getElementById('r3-questions-timer-display').style.display = 'block';
+                    document.getElementById('r3-questions-timer-cancel').style.display = 'inline-block';
+                    document.getElementById('r3-questions-timer-minutes').disabled = true;
+                    r3TimerInterval = setInterval(updateR3TimerDisplay, 1000);
+                    updateR3TimerDisplay();
+                }
+            }
+        } catch (error) {
+            console.error('Błąd sprawdzania timerów:', error);
+        }
+    }
+
+    // Sprawdź timery przy załadowaniu strony
+    checkActiveTimers();
 
 });
 </script>
