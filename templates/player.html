@@ -300,6 +300,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const eventId = {{ event_id }};
     const qrCode = "{{ qr_code }}";
+    const aiAutoLoad = {{ 'true' if ai_auto_load else 'false' }};
+    const aiDifficulty = "{{ ai_difficulty }}";
     let playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
     let playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
     let currentQuestionId = null;
@@ -389,8 +391,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 gameView.style.display = 'block';
 
                 showMessage(data.message || `Witaj ponownie, ${playerName}!`, 'success');
-                console.log('   Calling scanQrCode()...');
-                scanQrCode();
+
+                // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
+                if (aiAutoLoad) {
+                    console.log('🤖 AI Auto-load enabled - loading AI question');
+                    autoLoadAIQuestionByDifficulty(aiDifficulty);
+                } else {
+                    console.log('   Calling scanQrCode()...');
+                    scanQrCode();
+                }
+
                 return true;  // Auto-login się udał
             }
 
@@ -417,7 +427,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 playerNameDisplay.textContent = playerName;
                 nameInputSection.style.display = 'none';
                 gameView.style.display = 'block';
-                scanQrCode(); // Automatycznie zeskanuj kod QR
+
+                // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
+                if (aiAutoLoad) {
+                    console.log('🤖 AI Auto-load enabled - loading AI question');
+                    autoLoadAIQuestionByDifficulty(aiDifficulty);
+                } else {
+                    scanQrCode(); // Automatycznie zeskanuj kod QR
+                }
             } else {
                 console.log('❌ Player not found in database (reset?) - clearing localStorage');
                 // Gracz został usunięty (np. po resecie gry)
@@ -537,6 +554,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // NOWA FUNKCJA: Automatyczne ładowanie pytania AI dla danego poziomu trudności
+    async function autoLoadAIQuestionByDifficulty(difficulty) {
+        try {
+            console.log('🤖 Auto-loading AI question for difficulty:', difficulty);
+
+            // Pobierz kategorie dla danego poziomu trudności
+            const categoriesResponse = await fetch(`/api/player/ai/categories?event_id=${eventId}&difficulty=${difficulty}`);
+            const categories = await categoriesResponse.json();
+
+            if (!categories || categories.length === 0) {
+                showMessage(`Brak dostępnych kategorii AI dla poziomu: ${difficulty}`, 'info');
+                return;
+            }
+
+            // Wybierz pierwszą dostępną kategorię
+            const firstCategory = categories[0];
+            console.log('🎯 Selected first available category:', firstCategory.name);
+
+            // Załaduj pytanie z tej kategorii
+            await selectAICategory(firstCategory.id);
+        } catch (error) {
+            console.error('Error auto-loading AI question:', error);
+            showMessage('Błąd ładowania pytań AI', 'danger');
+        }
+    }
+
     // Register player
     registerBtn.addEventListener('click', async () => {
         const name = playerNameInput.value.trim();
@@ -602,7 +645,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     gameView.style.display = 'block';
 
                     showMessage(`Witaj ponownie, ${playerName}!`, 'success');
-                    scanQrCode();
+
+                    // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
+                    if (aiAutoLoad) {
+                        console.log('🤖 AI Auto-load enabled - loading AI question');
+                        autoLoadAIQuestionByDifficulty(aiDifficulty);
+                    } else {
+                        scanQrCode();
+                    }
                 } else {
                     showMessage('Skontaktuj się z organizatorem.', 'warning');
                 }
@@ -627,7 +677,14 @@ document.addEventListener('DOMContentLoaded', function() {
             gameView.style.display = 'block';
 
             showMessage('✅ Rejestracja pomyślna!', 'success');
-            scanQrCode();
+
+            // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
+            if (aiAutoLoad) {
+                console.log('🤖 AI Auto-load enabled - loading AI question');
+                autoLoadAIQuestionByDifficulty(aiDifficulty);
+            } else {
+                scanQrCode();
+            }
 
         } catch (error) {
             console.error('Registration error:', error);

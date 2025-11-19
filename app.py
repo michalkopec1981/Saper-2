@@ -775,7 +775,19 @@ def logout_impersonate():
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
 def player_view(event_id, qr_code):
-    return render_template('player.html', qr_code=qr_code, event_id=event_id)
+    # Pobierz flagi z sesji dla automatycznego ładowania AI
+    ai_auto_load = session.get('ai_auto_load', False)
+    ai_difficulty = session.get('ai_difficulty', 'easy')
+
+    # Wyczyść flagę ai_auto_load po pobraniu (jednorazowe użycie)
+    if ai_auto_load:
+        session.pop('ai_auto_load', None)
+
+    return render_template('player.html',
+                         qr_code=qr_code,
+                         event_id=event_id,
+                         ai_auto_load=ai_auto_load,
+                         ai_difficulty=ai_difficulty)
 
 @app.route('/player_dashboard/<int:event_id>/<int:player_id>')
 def player_dashboard(event_id, player_id):
@@ -5785,6 +5797,7 @@ def ai_player(event_id):
 
     # Zapisz difficulty w sesji
     session['ai_difficulty'] = difficulty
+    session['ai_auto_load'] = True  # Flaga do automatycznego ładowania pytań AI
 
     # Sprawdź czy włączona
     enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
@@ -5823,65 +5836,9 @@ def ai_player(event_id):
         </html>
         ''')
 
-    # Przekieruj do widoku player - gracz musi być zalogowany
-    # Kod QR dla AI uruchomi quiz z pytaniami z kategorii AI
-    return render_template_string('''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AI - Quiz!</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                background: linear-gradient(135deg, #6c757d, #adb5bd);
-                color: white;
-            }
-            .container {
-                text-align: center;
-                padding: 40px;
-                max-width: 500px;
-            }
-            h1 { font-size: 3rem; margin-bottom: 20px; }
-            p { font-size: 1.2rem; margin-bottom: 30px; }
-            .btn {
-                display: inline-block;
-                padding: 15px 40px;
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #6c757d;
-                background: white;
-                border: none;
-                border-radius: 30px;
-                text-decoration: none;
-                cursor: pointer;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-                transition: transform 0.2s;
-            }
-            .btn:hover {
-                transform: scale(1.05);
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🤖 Quiz AI!</h1>
-            <p>Odpowiedz na pytania z wybranej kategorii i zdobądź 5 punktów!</p>
-            <p style="font-size: 1rem;">
-                Aby zagrać, musisz być zarejestrowany w grze.
-            </p>
-            <a href="{{ url_for('player_register', event_id=event_id, qr_code='ai_' + event_id|string) }}" class="btn">
-                🤖 Rozpocznij Quiz
-            </a>
-        </div>
-    </body>
-    </html>
-    ''', event_id=event_id)
+    # ZMIENIONE: Przekieruj bezpośrednio do player_register
+    # To spowoduje automatyczne załadowanie pytań AI zamiast panelu gracza
+    return redirect(url_for('player_register', event_id=event_id, qr_code='ai_' + str(event_id)))
 
 @app.route('/api/fortune/predict', methods=['POST'])
 def fortune_predict():
