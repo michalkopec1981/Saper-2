@@ -2433,7 +2433,121 @@ def scan_qr():
                 'message': f'Brak aktywnych kategorii AI dla poziomu: {difficulty}'
             })
 
-    # B. Obsługa Foto (action_photo)
+    # B. Obsługa Pytań Runda 2 (action_questions_r2_easy, action_questions_r2_medium, action_questions_r2_hard, action_questions_r2_mixed)
+    if qr_id and qr_id.startswith('action_questions_r2_'):
+        difficulty = qr_id.replace('action_questions_r2_', '')
+        print(f"📝 Virtual Questions R2 action detected: {difficulty}")
+
+        # Zapisz difficulty i round w sesji
+        session['questions_difficulty'] = difficulty
+        session['questions_round'] = 2
+
+        # Sprawdź czy włączone jest blokowanie innych rund
+        disable_other_rounds = get_game_state(event_id, 'questions_r2_disable_other_rounds', 'False') == 'True'
+        session['questions_disable_other_rounds'] = disable_other_rounds
+
+        # Sprawdź czy pytania są włączone
+        enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+        if not enabled:
+            return jsonify({
+                'status': 'info',
+                'message': 'Pytania są obecnie wyłączone przez organizatora.'
+            })
+
+        # Pobierz pytania
+        answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
+
+        query = Question.query.filter(
+            Question.id.notin_(answered_ids),
+            Question.event_id == event_id,
+            Question.category == 'company'
+        )
+
+        # Filtruj według trudności
+        if difficulty and difficulty in ['easy', 'medium', 'hard']:
+            query = query.filter(Question.difficulty == difficulty)
+
+        # Filtruj według rundy jeśli włączone
+        if disable_other_rounds:
+            query = query.filter(Question.round >= 2)
+
+        question = query.order_by(db.func.random()).first()
+
+        if not question:
+            return jsonify({
+                'status': 'info',
+                'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'
+            })
+
+        return jsonify({
+            'status': 'question',
+            'question': {
+                'id': question.id,
+                'text': question.text,
+                'option_a': question.option_a,
+                'option_b': question.option_b,
+                'option_c': question.option_c
+            }
+        })
+
+    # C. Obsługa Pytań Runda 3 (action_questions_r3_easy, action_questions_r3_medium, action_questions_r3_hard, action_questions_r3_mixed)
+    if qr_id and qr_id.startswith('action_questions_r3_'):
+        difficulty = qr_id.replace('action_questions_r3_', '')
+        print(f"📝 Virtual Questions R3 action detected: {difficulty}")
+
+        # Zapisz difficulty i round w sesji
+        session['questions_difficulty'] = difficulty
+        session['questions_round'] = 3
+
+        # Sprawdź czy włączone jest blokowanie innych rund
+        disable_other_rounds = get_game_state(event_id, 'questions_r3_disable_other_rounds', 'False') == 'True'
+        session['questions_disable_other_rounds'] = disable_other_rounds
+
+        # Sprawdź czy pytania są włączone
+        enabled = get_game_state(event_id, 'questions_enabled', 'True') == 'True'
+        if not enabled:
+            return jsonify({
+                'status': 'info',
+                'message': 'Pytania są obecnie wyłączone przez organizatora.'
+            })
+
+        # Pobierz pytania
+        answered_ids = [ans.question_id for ans in PlayerAnswer.query.filter_by(player_id=player_id).all()]
+
+        query = Question.query.filter(
+            Question.id.notin_(answered_ids),
+            Question.event_id == event_id,
+            Question.category == 'company'
+        )
+
+        # Filtruj według trudności
+        if difficulty and difficulty in ['easy', 'medium', 'hard']:
+            query = query.filter(Question.difficulty == difficulty)
+
+        # Filtruj według rundy jeśli włączone
+        if disable_other_rounds:
+            query = query.filter(Question.round >= 3)
+
+        question = query.order_by(db.func.random()).first()
+
+        if not question:
+            return jsonify({
+                'status': 'info',
+                'message': 'Odpowiedziałeś na wszystkie pytania z tej kategorii!'
+            })
+
+        return jsonify({
+            'status': 'question',
+            'question': {
+                'id': question.id,
+                'text': question.text,
+                'option_a': question.option_a,
+                'option_b': question.option_b,
+                'option_c': question.option_c
+            }
+        })
+
+    # D. Obsługa Foto (action_photo)
     if qr_id == 'action_photo':
         print(f"📸 Virtual Photo action detected")
         photo_enabled = get_game_state(event_id, 'photo_enabled', 'True') != 'False'
@@ -4295,6 +4409,212 @@ def questions_player(event_id):
     # Przekieruj do rejestracji gracza z zapisanym difficulty w sesji
     return redirect(url_for('player_register', event_id=event_id))
 
+@app.route('/questions_r2_qr/<int:event_id>')
+@host_required
+def questions_r2_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Pytań Runda 2"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
+        difficulty = 'easy'
+
+    difficulty_labels = {
+        'easy': 'Łatwe',
+        'medium': 'Średnie',
+        'hard': 'Trudne',
+        'mixed': 'Mieszane'
+    }
+
+    # Generuj URL z wirtualną akcją
+    questions_url = url_for('player_view', event_id=event_id, qr_code=f'action_questions_r2_{difficulty}', _external=True)
+    title = f"❓ Pytania Runda 2 - {difficulty_labels[difficulty]}"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pytania Runda 2 - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #0d6efd;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #0d6efd;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #0a58ca;
+            }}
+            @media print {{
+                body {{ background: white; }}
+                button {{ display: none; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <div class="info">Zeskanuj kod QR aby uzyskać dostęp do pytań!</div>
+            <div id="qrcode"></div>
+            <div class="info"><strong>Event:</strong> {event.name}</div>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+        </div>
+        <script>
+            var qrcode = new QRCode(document.getElementById("qrcode"), {{
+                text: "{questions_url}",
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/questions_r3_qr/<int:event_id>')
+@host_required
+def questions_r3_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Pytań Runda 3"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
+        difficulty = 'easy'
+
+    difficulty_labels = {
+        'easy': 'Łatwe',
+        'medium': 'Średnie',
+        'hard': 'Trudne',
+        'mixed': 'Mieszane'
+    }
+
+    # Generuj URL z wirtualną akcją
+    questions_url = url_for('player_view', event_id=event_id, qr_code=f'action_questions_r3_{difficulty}', _external=True)
+    title = f"❓ Pytania Runda 3 - {difficulty_labels[difficulty]}"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Pytania Runda 3 - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #0d6efd;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #0d6efd;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #0a58ca;
+            }}
+            @media print {{
+                body {{ background: white; }}
+                button {{ display: none; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <div class="info">Zeskanuj kod QR aby uzyskać dostęp do pytań!</div>
+            <div id="qrcode"></div>
+            <div class="info"><strong>Event:</strong> {event.name}</div>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+        </div>
+        <script>
+            var qrcode = new QRCode(document.getElementById("qrcode"), {{
+                text: "{questions_url}",
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
 # ===================================================================
 # --- VOTING QR CODE ENDPOINTS ---
 # ===================================================================
@@ -5029,6 +5349,30 @@ def update_questions_hard_points(event_id):
 
     set_game_state(event_id, 'questions_hard_points', str(value))
     return jsonify({'message': f'Punkty za trudne pytanie zaktualizowane do {value}'})
+
+# ===================================================================
+# --- Questions Round Settings Endpoints ---
+# ===================================================================
+
+@app.route('/api/host/questions_r2/disable_other_rounds/<int:event_id>', methods=['PUT'])
+@host_required
+def update_questions_r2_disable_other_rounds(event_id):
+    """Włącz/wyłącz blokowanie pytań z innych rund dla rundy 2"""
+    data = request.json
+    value = data.get('value', False)
+
+    set_game_state(event_id, 'questions_r2_disable_other_rounds', 'True' if value else 'False')
+    return jsonify({'message': 'Ustawienie zaktualizowane'})
+
+@app.route('/api/host/questions_r3/disable_other_rounds/<int:event_id>', methods=['PUT'])
+@host_required
+def update_questions_r3_disable_other_rounds(event_id):
+    """Włącz/wyłącz blokowanie pytań z innych rund dla rundy 3"""
+    data = request.json
+    value = data.get('value', False)
+
+    set_game_state(event_id, 'questions_r3_disable_other_rounds', 'True' if value else 'False')
+    return jsonify({'message': 'Ustawienie zaktualizowane'})
 
 # ===================================================================
 # --- AI Points Settings Endpoints ---

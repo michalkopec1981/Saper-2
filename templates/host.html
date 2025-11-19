@@ -1224,12 +1224,21 @@
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
 
-                            <!-- Przełącznik QR z rundy 1 -->
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="r2-use-round1-qr" onchange="toggleR2Round1QR()">
-                                <label class="form-check-label" for="r2-use-round1-qr">
-                                    <strong>QR z Pytania runda 1</strong>
-                                </label>
+                            <!-- Przełączniki -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="r2-use-round1-qr" onchange="toggleR2Round1QR()">
+                                    <label class="form-check-label" for="r2-use-round1-qr">
+                                        <strong>QR z Pytania runda 1</strong>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="r2-disable-other-rounds" disabled onchange="toggleR2DisableOtherRounds()">
+                                    <label class="form-check-label" for="r2-disable-other-rounds">
+                                        <strong>Wyłącz pytania z innych rund</strong>
+                                        <small class="text-muted d-block">Po zczytaniu QR gracz nie ma dostępu do pytań z rundy 1</small>
+                                    </label>
+                                </div>
                             </div>
 
                             <!-- Kody QR dla łatwych pytań -->
@@ -1351,12 +1360,21 @@
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
 
-                            <!-- Przełącznik QR z rundy 1 -->
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="r3-use-round1-qr" onchange="toggleR3Round1QR()">
-                                <label class="form-check-label" for="r3-use-round1-qr">
-                                    <strong>QR z Pytania runda 1</strong>
-                                </label>
+                            <!-- Przełączniki -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="r3-use-round1-qr" onchange="toggleR3Round1QR()">
+                                    <label class="form-check-label" for="r3-use-round1-qr">
+                                        <strong>QR z Pytania runda 1</strong>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="r3-disable-other-rounds" disabled onchange="toggleR3DisableOtherRounds()">
+                                    <label class="form-check-label" for="r3-disable-other-rounds">
+                                        <strong>Wyłącz pytania z innych rund</strong>
+                                        <small class="text-muted d-block">Po zczytaniu QR gracz nie ma dostępu do pytań z rund 1 i 2</small>
+                                    </label>
+                                </div>
                             </div>
 
                             <!-- Kody QR dla łatwych pytań -->
@@ -5645,6 +5663,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Funkcja przełączania QR z rundy 1 dla rundy 2
     function toggleR2Round1QR() {
         const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+        const disableOtherRoundsCheckbox = document.getElementById('r2-disable-other-rounds');
+
+        // Włącz/wyłącz przełącznik "Wyłącz pytania z innych rund"
+        if (useRound1QR) {
+            disableOtherRoundsCheckbox.disabled = false;
+        } else {
+            disableOtherRoundsCheckbox.disabled = true;
+            disableOtherRoundsCheckbox.checked = false;
+        }
 
         // Przyciski generowania zapasowych kodów
         const generateButtons = [
@@ -5694,6 +5721,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Przyciski podglądu zapasowych kodów pozostają wyłączone
             // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Funkcja przełączania "Wyłącz pytania z innych rund" dla rundy 2
+    async function toggleR2DisableOtherRounds() {
+        const eventId = {{ event.id }};
+        const disableOtherRounds = document.getElementById('r2-disable-other-rounds').checked;
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/disable_other_rounds/${eventId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: disableOtherRounds })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd zapisywania ustawienia');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
         }
     }
 
@@ -5922,6 +5969,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Funkcja przełączania QR z rundy 1 dla rundy 3
     function toggleR3Round1QR() {
         const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+        const disableOtherRoundsCheckbox = document.getElementById('r3-disable-other-rounds');
+
+        // Włącz/wyłącz przełącznik "Wyłącz pytania z innych rund"
+        if (useRound1QR) {
+            disableOtherRoundsCheckbox.disabled = false;
+        } else {
+            disableOtherRoundsCheckbox.disabled = true;
+            disableOtherRoundsCheckbox.checked = false;
+        }
 
         // Przyciski generowania zapasowych kodów
         const generateButtons = [
@@ -5971,6 +6027,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Przyciski podglądu zapasowych kodów pozostają wyłączone
             // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Funkcja przełączania "Wyłącz pytania z innych rund" dla rundy 3
+    async function toggleR3DisableOtherRounds() {
+        const eventId = {{ event.id }};
+        const disableOtherRounds = document.getElementById('r3-disable-other-rounds').checked;
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/disable_other_rounds/${eventId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: disableOtherRounds })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd zapisywania ustawienia');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
         }
     }
 
