@@ -1435,19 +1435,26 @@ def calculate_max_possible_points(event_id):
     # 2. AI - jeśli aktywne
     ai_enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
     if ai_enabled:
-        # Policz pytania AI według trudności
-        easy_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='easy').count()
-        medium_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='medium').count()
-        hard_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='hard').count()
+        # ⚠️ TYMCZASOWE OBEJŚCIE: Kolumna difficulty może nie istnieć w bazie
+        try:
+            # Policz pytania AI według trudności
+            easy_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='easy').count()
+            medium_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='medium').count()
+            hard_ai = AIQuestion.query.filter_by(event_id=event_id, difficulty='hard').count()
 
-        # Punkty za AI
-        ai_easy_points = int(get_game_state(event_id, 'ai_easy_points', '5'))
-        ai_medium_points = int(get_game_state(event_id, 'ai_medium_points', '10'))
-        ai_hard_points = int(get_game_state(event_id, 'ai_hard_points', '15'))
+            # Punkty za AI
+            ai_easy_points = int(get_game_state(event_id, 'ai_easy_points', '5'))
+            ai_medium_points = int(get_game_state(event_id, 'ai_medium_points', '10'))
+            ai_hard_points = int(get_game_state(event_id, 'ai_hard_points', '15'))
 
-        total_max_points += (easy_ai * ai_easy_points)
-        total_max_points += (medium_ai * ai_medium_points)
-        total_max_points += (hard_ai * ai_hard_points)
+            total_max_points += (easy_ai * ai_easy_points)
+            total_max_points += (medium_ai * ai_medium_points)
+            total_max_points += (hard_ai * ai_hard_points)
+        except Exception as e:
+            # Fallback: Policz wszystkie pytania AI i użyj średniej wartości punktów
+            total_ai = AIQuestion.query.filter_by(event_id=event_id).count()
+            ai_medium_points = int(get_game_state(event_id, 'ai_medium_points', '10'))
+            total_max_points += (total_ai * ai_medium_points)
 
     # 3. Wróżka AI (Fortune) - jeśli aktywne
     fortune_enabled = get_game_state(event_id, 'fortune_enabled', 'False') == 'True'
