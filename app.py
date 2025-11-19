@@ -775,19 +775,10 @@ def logout_impersonate():
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
 def player_view(event_id, qr_code):
-    # Pobierz flagi z sesji dla automatycznego ładowania AI
-    ai_auto_load = session.get('ai_auto_load', False)
-    ai_difficulty = session.get('ai_difficulty', 'easy')
-
-    # Wyczyść flagę ai_auto_load po pobraniu (jednorazowe użycie)
-    if ai_auto_load:
-        session.pop('ai_auto_load', None)
-
+    """SSO: Główny widok gracza - obsługuje wszystkie wirtualne kody akcji"""
     return render_template('player.html',
                          qr_code=qr_code,
-                         event_id=event_id,
-                         ai_auto_load=ai_auto_load,
-                         ai_difficulty=ai_difficulty)
+                         event_id=event_id)
 
 @app.route('/player_dashboard/<int:event_id>/<int:player_id>')
 def player_dashboard(event_id, player_id):
@@ -2408,7 +2399,150 @@ def scan_qr():
             'message': 'Nieprawidłowy event. Odśwież stronę.',
             'clear_storage': True
         }), 400
-    
+
+    # ===================================================================
+    # ✅ SSO: OBSŁUGA WIRTUALNYCH KODÓW AKCJI
+    # Te kody nie istnieją w bazie QRCode - są "akcjami" z URL
+    # ===================================================================
+
+    # A. Obsługa AI (action_ai_easy, action_ai_medium, action_ai_hard)
+    if qr_id and qr_id.startswith('action_ai_'):
+        difficulty = qr_id.replace('action_ai_', '')
+        print(f"🤖 Virtual AI action detected: {difficulty}")
+
+        # Mapowanie poziomów trudności (hard -> advanced dla AI)
+        difficulty_map = {'easy': 'easy', 'medium': 'medium', 'hard': 'advanced', 'mixed': None}
+        mapped_difficulty = difficulty_map.get(difficulty)
+
+        # Znajdź kategorie o danym poziomie trudności
+        query = AICategory.query.filter_by(event_id=event_id, is_enabled=True)
+
+        if mapped_difficulty:
+            query = query.filter_by(difficulty_level=mapped_difficulty)
+
+        categories = query.all()
+
+        if categories:
+            return jsonify({
+                'status': 'ai_categories',
+                'categories': [{'id': c.id, 'name': c.name, 'difficulty_level': c.difficulty_level} for c in categories]
+            })
+        else:
+            return jsonify({
+                'status': 'info',
+                'message': f'Brak aktywnych kategorii AI dla poziomu: {difficulty}'
+            })
+
+    # B. Obsługa Foto (action_photo)
+    if qr_id == 'action_photo':
+        print(f"📸 Virtual Photo action detected")
+        photo_enabled = get_game_state(event_id, 'photo_enabled', 'True') != 'False'
+        if not photo_enabled:
+            return jsonify({
+                'status': 'info',
+                'message': 'Galeria foto jest wyłączona.'
+            })
+        return jsonify({'status': 'photo_challenge'})
+
+    # C. Obsługa Minigier (action_minigames)
+    if qr_id == 'action_minigames':
+        print(f"🎮 Virtual Minigames action detected")
+
+        # Sprawdź czy minigry są aktywne
+        tetris_disabled = get_game_state(event_id, 'minigame_tetris_disabled', 'False')
+        arkanoid_disabled = get_game_state(event_id, 'minigame_arkanoid_disabled', 'False')
+        snake_disabled = get_game_state(event_id, 'minigame_snake_disabled', 'False')
+        trex_disabled = get_game_state(event_id, 'minigame_trex_disabled', 'False')
+
+        # Jeśli wszystkie minigry są wyłączone
+        if tetris_disabled == 'True' and arkanoid_disabled == 'True' and snake_disabled == 'True' and trex_disabled == 'True':
+            return jsonify({
+                'status': 'info',
+                'message': 'Wszystkie minigry zostały wyłączone przez organizatora.'
+            })
+
+        # Sprawdź postęp gracza we wszystkich grach
+        tetris_score_key = f'minigame_tetris_score_{player_id}'
+        arkanoid_score_key = f'minigame_arkanoid_score_{player_id}'
+        snake_score_key = f'minigame_snake_score_{player_id}'
+        trex_score_key = f'minigame_trex_score_{player_id}'
+
+        current_tetris_score = int(get_game_state(event_id, tetris_score_key, '0'))
+        current_arkanoid_score = int(get_game_state(event_id, arkanoid_score_key, '0'))
+        current_snake_score = int(get_game_state(event_id, snake_score_key, '0'))
+        current_trex_score = int(get_game_state(event_id, trex_score_key, '0'))
+
+        # Sprawdź czy gracz ukończył wszystkie gry
+        tetris_completed = current_tetris_score >= 20
+        arkanoid_completed = current_arkanoid_score >= 20
+        snake_completed = current_snake_score >= 20
+        trex_completed = current_trex_score >= 20
+
+        # Jeśli ukończył wszystkie, nie może grać więcej
+        if tetris_completed and arkanoid_completed and snake_completed and trex_completed:
+            return jsonify({
+                'status': 'info',
+                'message': 'Ukończyłeś już wszystkie minigry! Świetna robota!'
+            })
+
+        # Wybierz dostępną minigrę
+        available_games = []
+
+        if tetris_disabled != 'True' and not tetris_completed:
+            available_games.append('tetris')
+
+        if arkanoid_disabled != 'True' and not arkanoid_completed:
+            available_games.append('arkanoid')
+
+        if snake_disabled != 'True' and not snake_completed:
+            available_games.append('snake')
+
+        if trex_disabled != 'True' and not trex_completed:
+            available_games.append('trex')
+
+        # Jeśli nie ma dostępnych gier
+        if not available_games:
+            return jsonify({
+                'status': 'info',
+                'message': 'Brak dostępnych minigier do ukończenia.'
+            })
+
+        # Wybierz grę losowo
+        selected_game = random.choice(available_games)
+
+        if selected_game == 'tetris':
+            return jsonify({
+                'status': 'minigame',
+                'game': 'tetris',
+                'current_score': current_tetris_score,
+                'message': f'🎮 Minigra Tetris! Twój postęp: {current_tetris_score}/20 pkt'
+            })
+        elif selected_game == 'arkanoid':
+            return jsonify({
+                'status': 'minigame',
+                'game': 'arkanoid',
+                'current_score': current_arkanoid_score,
+                'message': f'🏓 Minigra Arkanoid! Twój postęp: {current_arkanoid_score}/20 pkt'
+            })
+        elif selected_game == 'snake':
+            return jsonify({
+                'status': 'minigame',
+                'game': 'snake',
+                'current_score': current_snake_score,
+                'message': f'🐍 Minigra Snake! Twój postęp: {current_snake_score}/20 pkt'
+            })
+        else:  # trex
+            return jsonify({
+                'status': 'minigame',
+                'game': 'trex',
+                'current_score': current_trex_score,
+                'message': f'🦖 Minigra T-Rex! Twój postęp: {current_trex_score}/20 pkt'
+            })
+
+    # ===================================================================
+    # OBSŁUGA STANDARDOWYCH KODÓW Z BAZY DANYCH
+    # ===================================================================
+
     # Znajdź kod QR
     qr_code = QRCode.query.filter_by(code_identifier=qr_id, event_id=event_id).first()
     
@@ -5281,10 +5415,9 @@ def photo_player(event_id):
         </html>
         ''')
 
-    # Renderuj dedykowany template do selfie
-    return render_template('photo_selfie.html',
-                         event_id=event_id,
-                         event_name=event.name)
+    # SSO: Przekieruj do player_view z wirtualnym kodem akcji
+    # Kod action_photo nie istnieje w bazie - będzie obsłużony przez scan_qr API
+    return redirect(url_for('player_view', event_id=event_id, qr_code='action_photo'))
 
 # ===================================================================
 # --- Minigames QR Code Endpoints ---
@@ -5504,80 +5637,9 @@ def minigames_player(event_id):
         </html>
         ''')
 
-    # Pobierz ustawienia punktów
-    target_points = int(get_game_state(event_id, 'minigame_target_points', '20'))
-    completion_points = int(get_game_state(event_id, 'minigame_completion_points', '10'))
-    player_choice = get_game_state(event_id, 'minigame_player_choice', 'False') == 'True'
-
-    # Przekieruj do widoku player - gracz musi być zalogowany
-    game_mode_text = "wybierz grę" if player_choice else "zagraj w losową minigrę"
-
-    return render_template_string('''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Minigry - Wyzwanie!</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                background: linear-gradient(135deg, #28a745, #5cb85c);
-                color: white;
-            }
-            .container {
-                text-align: center;
-                padding: 40px;
-                max-width: 500px;
-            }
-            h1 { font-size: 3rem; margin-bottom: 20px; }
-            p { font-size: 1.2rem; margin-bottom: 30px; }
-            .btn {
-                display: inline-block;
-                padding: 15px 40px;
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #28a745;
-                background: white;
-                border: none;
-                border-radius: 30px;
-                text-decoration: none;
-                cursor: pointer;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-                transition: transform 0.2s;
-            }
-            .btn:hover {
-                transform: scale(1.05);
-            }
-            .info-box {
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 15px;
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🎮 Minigry!</h1>
-            <div class="info-box">
-                <p style="margin: 0;">{{ game_mode_text|title }} i zdobądź {{ target_points }} punktów!</p>
-                <p style="margin: 10px 0 0 0; font-size: 1rem;">Nagroda: {{ completion_points }} punktów</p>
-            </div>
-            <p style="font-size: 1rem;">
-                Aby zagrać, musisz być zarejestrowany w grze.
-            </p>
-            <a href="{{ url_for('player_register', event_id=event_id, qr_code='minigames_' + event_id|string) }}" class="btn">
-                🎮 Rozpocznij Grę
-            </a>
-        </div>
-    </body>
-    </html>
-    ''', event_id=event_id, target_points=target_points, completion_points=completion_points, game_mode_text=game_mode_text)
+    # SSO: Przekieruj do player_view z wirtualnym kodem akcji
+    # Kod action_minigames nie istnieje w bazie - będzie obsłużony przez scan_qr API
+    return redirect(url_for('player_view', event_id=event_id, qr_code='action_minigames'))
 
 # ===================================================================
 # --- AI QR Code Endpoints ---
@@ -5795,10 +5857,6 @@ def ai_player(event_id):
     if difficulty not in ['easy', 'medium', 'hard', 'mixed']:
         difficulty = 'easy'
 
-    # Zapisz difficulty w sesji
-    session['ai_difficulty'] = difficulty
-    session['ai_auto_load'] = True  # Flaga do automatycznego ładowania pytań AI
-
     # Sprawdź czy włączona
     enabled = get_game_state(event_id, 'ai_enabled', 'True') == 'True'
     if not enabled:
@@ -5836,9 +5894,9 @@ def ai_player(event_id):
         </html>
         ''')
 
-    # ZMIENIONE: Przekieruj bezpośrednio do player_view z qr_code
-    # To spowoduje automatyczne załadowanie pytań AI zamiast panelu gracza
-    qr_code = f'ai_{difficulty}'
+    # SSO: Przekieruj do player_view z wirtualnym kodem akcji
+    # Kod action_ai_* nie istnieje w bazie - będzie obsłużony przez scan_qr API
+    qr_code = f'action_ai_{difficulty}'
     return redirect(url_for('player_view', event_id=event_id, qr_code=qr_code))
 
 @app.route('/api/fortune/predict', methods=['POST'])

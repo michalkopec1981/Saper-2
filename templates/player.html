@@ -296,12 +296,10 @@ function simpleHash(str) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 PLAYER.HTML LOADED - VERSION 2.0 WITH AUTO-LOGIN');  // ← MARKER WERSJI
+    console.log('🚀 PLAYER.HTML LOADED - VERSION 3.0 WITH GLOBAL SSO');  // ← MARKER WERSJI
 
     const eventId = {{ event_id }};
     const qrCode = "{{ qr_code }}";
-    const aiAutoLoad = {{ 'true' if ai_auto_load else 'false' }};
-    const aiDifficulty = "{{ ai_difficulty }}";
     let playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
     let playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
     let currentQuestionId = null;
@@ -387,19 +385,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Zaloguj automatycznie
                 playerNameDisplay.textContent = playerName;
                 playerScoreDisplay.textContent = data.score;
-                nameInputSection.style.display = 'none';
-                gameView.style.display = 'block';
 
                 showMessage(data.message || `Witaj ponownie, ${playerName}!`, 'success');
 
-                // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
-                if (aiAutoLoad) {
-                    console.log('🤖 AI Auto-load enabled - loading AI question');
-                    autoLoadAIQuestionByDifficulty(aiDifficulty);
-                } else {
-                    console.log('   Calling scanQrCode()...');
-                    scanQrCode();
-                }
+                // ✅ SSO: Wywołaj zunifikowaną funkcję loginSuccess
+                loginSuccess();
 
                 return true;  // Auto-login się udał
             }
@@ -425,16 +415,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (exists) {
                 console.log('✅ Player verified in database - auto-login');
                 playerNameDisplay.textContent = playerName;
-                nameInputSection.style.display = 'none';
-                gameView.style.display = 'block';
 
-                // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
-                if (aiAutoLoad) {
-                    console.log('🤖 AI Auto-load enabled - loading AI question');
-                    autoLoadAIQuestionByDifficulty(aiDifficulty);
-                } else {
-                    scanQrCode(); // Automatycznie zeskanuj kod QR
-                }
+                // ✅ SSO: Wywołaj zunifikowaną funkcję loginSuccess
+                loginSuccess();
             } else {
                 console.log('❌ Player not found in database (reset?) - clearing localStorage');
                 // Gracz został usunięty (np. po resecie gry)
@@ -471,6 +454,17 @@ document.addEventListener('DOMContentLoaded', function() {
         messageSection.className = `alert alert-${type}`;
         messageSection.style.display = 'block';
         quizSection.style.display = 'none';
+    }
+
+    // ✅ SSO: Zunifikowana funkcja po udanym logowaniu
+    // Automatycznie wykonuje akcję z kodu QR
+    function loginSuccess() {
+        console.log('✅ Login success - executing QR action:', qrCode);
+        // Ukryj formularz, pokaż grę
+        nameInputSection.style.display = 'none';
+        gameView.style.display = 'block';
+        // Automatycznie zeskanuj kod QR (który może być wirtualnym kodem akcji)
+        scanQrCode();
     }
 
     function displayQuestion(question) {
@@ -554,40 +548,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // NOWA FUNKCJA: Automatyczne ładowanie pytania AI dla danego poziomu trudności
-    async function autoLoadAIQuestionByDifficulty(difficulty) {
-        try {
-            console.log('🤖 Auto-loading AI question for difficulty:', difficulty);
-
-            // Pobierz kategorie dla danego eventu
-            const categoriesResponse = await fetch(`/api/player/ai/categories/${eventId}`);
-            if (!categoriesResponse.ok) {
-                showMessage('Błąd pobierania kategorii AI', 'danger');
-                return;
-            }
-
-            const allCategories = await categoriesResponse.json();
-
-            // Filtruj kategorie po poziomie trudności
-            const categories = allCategories.filter(cat => cat.difficulty_level === difficulty);
-
-            if (!categories || categories.length === 0) {
-                showMessage(`Brak dostępnych kategorii AI dla poziomu: ${difficulty}`, 'info');
-                return;
-            }
-
-            // Wybierz pierwszą dostępną kategorię
-            const firstCategory = categories[0];
-            console.log('🎯 Selected first available category:', firstCategory.name);
-
-            // Załaduj pytanie z tej kategorii
-            await selectAICategory(firstCategory.id);
-        } catch (error) {
-            console.error('Error auto-loading AI question:', error);
-            showMessage('Błąd ładowania pytań AI', 'danger');
-        }
-    }
-
     // Register player
     registerBtn.addEventListener('click', async () => {
         const name = playerNameInput.value.trim();
@@ -649,18 +609,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     playerNameDisplay.textContent = playerName;
                     playerScoreDisplay.textContent = data.existing_player.score;
 
-                    nameInputSection.style.display = 'none';
-                    gameView.style.display = 'block';
-
                     showMessage(`Witaj ponownie, ${playerName}!`, 'success');
 
-                    // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
-                    if (aiAutoLoad) {
-                        console.log('🤖 AI Auto-load enabled - loading AI question');
-                        autoLoadAIQuestionByDifficulty(aiDifficulty);
-                    } else {
-                        scanQrCode();
-                    }
+                    // ✅ SSO: Wywołaj zunifikowaną funkcję loginSuccess
+                    loginSuccess();
                 } else {
                     showMessage('Skontaktuj się z organizatorem.', 'warning');
                 }
@@ -681,18 +633,10 @@ document.addEventListener('DOMContentLoaded', function() {
             playerNameDisplay.textContent = playerName;
             playerScoreDisplay.textContent = data.score;
 
-            nameInputSection.style.display = 'none';
-            gameView.style.display = 'block';
-
             showMessage('✅ Rejestracja pomyślna!', 'success');
 
-            // ZMIENIONE: Jeśli aiAutoLoad jest true, załaduj pytanie AI zamiast skanować QR
-            if (aiAutoLoad) {
-                console.log('🤖 AI Auto-load enabled - loading AI question');
-                autoLoadAIQuestionByDifficulty(aiDifficulty);
-            } else {
-                scanQrCode();
-            }
+            // ✅ SSO: Wywołaj zunifikowaną funkcję loginSuccess
+            loginSuccess();
 
         } catch (error) {
             console.error('Registration error:', error);
