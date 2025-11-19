@@ -313,6 +313,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const eventId = {{ event_id }};
     const qrCode = "{{ qr_code }}";
+    const autoLoadAI = {{ 'true' if auto_load_ai else 'false' }};
+    const aiDifficulty = "{{ ai_difficulty }}";
+    const aiMode = {{ 'true' if ai_mode else 'false' }};
+
     let playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
     let playerName = localStorage.getItem(`saperPlayerName_${eventId}`);
     let currentQuestionId = null;
@@ -411,6 +415,39 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) {
+                showMessage(data.message || 'Błąd pobierania pytania', 'danger');
+                aiCategorySelection.style.display = 'none';
+                return;
+            }
+
+            if (data.status === 'question') {
+                isAIQuestion = true;
+                displayQuestion(data.question);
+            }
+        } catch (error) {
+            console.error('Error selecting AI category:', error);
+            showMessage('Błąd połączenia z serwerem', 'danger');
+        }
+    }
+
+    // Automatyczne załadowanie pytania AI na podstawie poziomu trudności (bez wyboru kategorii)
+    async function autoLoadAIQuestion(difficulty) {
+        try {
+            console.log('Auto-loading AI question with difficulty:', difficulty);
+
+            const response = await fetch('/api/player/ai/get_question_by_difficulty', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    player_id: parseInt(playerId),
+                    difficulty: difficulty,
+                    event_id: parseInt(eventId)
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
                 showMessage(data.error || 'Błąd pobierania pytania', 'danger');
                 return;
             }
@@ -464,8 +501,14 @@ document.addEventListener('DOMContentLoaded', function() {
             nameInputSection.style.display = 'none';
             gameView.style.display = 'block';
 
-            // Scan QR code after registration
-            scanQrCode();
+            // Sprawdź czy należy automatycznie załadować pytanie AI
+            if (autoLoadAI && aiMode) {
+                console.log('Auto-loading AI question after registration');
+                autoLoadAIQuestion(aiDifficulty);
+            } else {
+                // Scan QR code after registration
+                scanQrCode();
+            }
         } catch (error) {
             console.error('Registration error:', error);
             alert('Błąd połączenia z serwerem: ' + error.message);
@@ -1070,7 +1113,14 @@ document.addEventListener('DOMContentLoaded', function() {
         playerNameDisplay.textContent = playerName;
         nameInputSection.style.display = 'none';
         gameView.style.display = 'block';
-        scanQrCode();
+
+        // Sprawdź czy należy automatycznie załadować pytanie AI
+        if (autoLoadAI && aiMode) {
+            console.log('Auto-loading AI question for existing player');
+            autoLoadAIQuestion(aiDifficulty);
+        } else {
+            scanQrCode();
+        }
     } else {
         console.log('New player - showing registration form');
         nameInputSection.style.display = 'block';

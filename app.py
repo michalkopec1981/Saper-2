@@ -613,7 +613,21 @@ def logout_impersonate():
 # --- PLAYER & DISPLAY ---
 @app.route('/player/<int:event_id>/<qr_code>')
 def player_view(event_id, qr_code):
-    return render_template('player.html', qr_code=qr_code, event_id=event_id)
+    # Pobierz flagi z sesji dla automatycznego ładowania AI
+    auto_load_ai = session.get('auto_load_ai', False)
+    ai_difficulty = session.get('ai_difficulty', 'easy')
+    ai_mode = session.get('ai_mode', False)
+
+    # Wyczyść flagi po pobraniu (jednorazowe użycie)
+    if auto_load_ai:
+        session.pop('auto_load_ai', None)
+
+    return render_template('player.html',
+                         qr_code=qr_code,
+                         event_id=event_id,
+                         auto_load_ai=auto_load_ai,
+                         ai_difficulty=ai_difficulty,
+                         ai_mode=ai_mode)
 
 @app.route('/player_dashboard/<int:event_id>/<int:player_id>')
 def player_dashboard(event_id, player_id):
@@ -1880,6 +1894,69 @@ def get_ai_question():
         }
     })
 
+@app.route('/api/player/ai/get_question_by_difficulty', methods=['POST'])
+def get_ai_question_by_difficulty():
+    """Pobierz losowe pytanie AI na podstawie poziomu trudności (bez wyboru kategorii)"""
+    data = request.json
+    player_id = data.get('player_id')
+    difficulty = data.get('difficulty', 'easy')
+    event_id = data.get('event_id')
+
+    player = db.session.get(Player, player_id)
+    if not player:
+        return jsonify({'error': 'Nieprawidłowy gracz'}), 404
+
+    # Znajdź aktywne kategorie dla danego poziomu trudności
+    categories = AICategory.query.filter_by(
+        event_id=event_id,
+        difficulty_level=difficulty,
+        is_enabled=True
+    ).all()
+
+    if not categories:
+        return jsonify({
+            'status': 'info',
+            'message': f'Brak aktywnych kategorii dla poziomu trudności: {difficulty}'
+        })
+
+    # Znajdź pytania na które gracz jeszcze nie odpowiedział
+    answered_ids = [ans.question_id for ans in AIPlayerAnswer.query.filter_by(player_id=player_id).all()]
+
+    # Pobierz ID kategorii
+    category_ids = [c.id for c in categories]
+
+    # Znajdź losowe pytanie z dowolnej aktywnej kategorii tego poziomu trudności
+    question = AIQuestion.query.filter(
+        AIQuestion.category_id.in_(category_ids),
+        AIQuestion.event_id == event_id,
+        AIQuestion.id.notin_(answered_ids) if answered_ids else True
+    ).order_by(db.func.random()).first()
+
+    if not question:
+        return jsonify({
+            'status': 'info',
+            'message': f'Odpowiedziałeś na wszystkie pytania AI dla poziomu: {difficulty}!'
+        })
+
+    # Pobierz nazwę kategorii
+    category = db.session.get(AICategory, question.category_id)
+
+    # Zwiększ licznik wyświetleń
+    question.times_shown += 1
+    db.session.commit()
+
+    return jsonify({
+        'status': 'question',
+        'question': {
+            'id': question.id,
+            'text': question.text,
+            'option_a': question.option_a,
+            'option_b': question.option_b,
+            'option_c': question.option_c,
+            'category_name': category.name if category else 'AI'
+        }
+    })
+
 @app.route('/api/player/ai/answer', methods=['POST'])
 def process_ai_answer():
     """Przetwarza odpowiedź na pytanie AI"""
@@ -2916,6 +2993,190 @@ def recognize_ar_object():
         import traceback
         traceback.print_exc()
         return jsonify({'recognized': False, 'error': str(e)}), 500
+
+# --- AI QR ENDPOINTS ---
+
+@app.route('/ai_qr/<int:event_id>')
+@host_required
+def ai_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy to zapasowy kod QR
+    is_backup = request.args.get('backup', 'false').lower() == 'true'
+
+    # Pobierz poziom trudności
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = 'easy'
+
+    difficulty_labels = {
+        'easy': 'Łatwe',
+        'medium': 'Średnie',
+        'hard': 'Trudne'
+    }
+
+    # Generuj kod QR dla AI
+    if is_backup:
+        backup_uuid = get_game_state(event_id, f'ai_backup_qr_{difficulty}_uuid', None)
+        if not backup_uuid:
+            return f"Zapasowy kod QR dla {difficulty_labels[difficulty].lower()} pytań AI nie został jeszcze wygenerowany", 404
+        ai_url = url_for('ai_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
+        title = f"🤖 AI - {difficulty_labels[difficulty]} - Zapasowy Kod"
+    else:
+        ai_url = url_for('ai_player', event_id=event_id, difficulty=difficulty, _external=True)
+        title = f"🤖 AI - {difficulty_labels[difficulty]}"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>AI - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #6c757d;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #6c757d;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 10px;
+            }}
+            button:hover {{
+                background: #5a6268;
+            }}
+            @media print {{
+                button {{ display: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <p class="info">Poziom trudności: {difficulty_labels[difficulty]}</p>
+            <div id="qrcode"></div>
+            <p class="info">Zeskanuj kod QR, aby uruchomić quiz AI</p>
+            <p style="font-size: 14px; color: #666;">{ai_url}</p>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+            <button onclick="window.close()">❌ Zamknij</button>
+        </div>
+        <script>
+            new QRCode(document.getElementById("qrcode"), {{
+                text: "{ai_url}",
+                width: 300,
+                height: 300,
+                colorDark: "#6c757d",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/ai_player/<int:event_id>')
+@app.route('/ai_player/<int:event_id>/<difficulty>')
+def ai_player(event_id, difficulty='easy'):
+    """Widok AI dla gracza - główny kod QR - BEZPOŚREDNIE ŁADOWANIE PYTAŃ"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Pobierz poziom trudności z parametru URL jeśli jest
+    if not difficulty or difficulty not in ['easy', 'medium', 'hard']:
+        difficulty = request.args.get('difficulty', 'easy')
+        if difficulty not in ['easy', 'medium', 'hard']:
+            difficulty = 'easy'
+
+    # Zapisz difficulty w sesji
+    session['ai_difficulty'] = difficulty
+    session['ai_mode'] = True  # Flaga że gracz wszedł przez kod QR AI
+
+    # Przekieruj bezpośrednio do panelu gracza, który automatycznie załaduje pytania AI
+    # Zapisujemy w sesji informację, że gracz ma być automatycznie zalogowany
+    session['auto_login_event'] = event_id
+    session['auto_load_ai'] = True
+
+    return redirect(url_for('player_register', event_id=event_id, qr_code=f'ai_{difficulty}'))
+
+@app.route('/ai_player_backup/<int:event_id>/<backup_uuid>')
+def ai_player_backup(event_id, backup_uuid):
+    """Widok AI dla gracza - zapasowy kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź wszystkie poziomy trudności
+    for difficulty in ['easy', 'medium', 'hard']:
+        stored_uuid = get_game_state(event_id, f'ai_backup_qr_{difficulty}_uuid', None)
+        if stored_uuid == backup_uuid:
+            # Znaleziono pasujący UUID
+            session['ai_difficulty'] = difficulty
+            session['ai_mode'] = True
+            session['auto_login_event'] = event_id
+            session['auto_load_ai'] = True
+            return redirect(url_for('player_register', event_id=event_id, qr_code=f'ai_{difficulty}_backup'))
+
+    return "Nieprawidłowy kod QR", 404
+
+@app.route('/api/host/ai/generate_backup_qr/<int:event_id>', methods=['POST'])
+@host_required
+def generate_ai_backup_qr(event_id):
+    """Generuj zapasowy kod QR dla AI"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Event nie znaleziony'}), 404
+
+    difficulty = request.args.get('difficulty', 'easy')
+    if difficulty not in ['easy', 'medium', 'hard']:
+        return jsonify({'error': 'Nieprawidłowy poziom trudności'}), 400
+
+    # Generuj unikalny UUID dla zapasowego kodu QR
+    import uuid
+    backup_uuid = str(uuid.uuid4())
+
+    # Zapisz UUID w game_state
+    set_game_state(event_id, f'ai_backup_qr_{difficulty}_uuid', backup_uuid)
+
+    return jsonify({
+        'success': True,
+        'message': f'Zapasowy kod QR dla {difficulty} pytań AI został wygenerowany',
+        'backup_uuid': backup_uuid
+    })
 
 # Uruchomienie Aplikacji
 if __name__ == '__main__':
