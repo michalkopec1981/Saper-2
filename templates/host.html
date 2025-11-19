@@ -1224,6 +1224,14 @@
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
 
+                            <!-- Przełącznik QR z rundy 1 -->
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="r2-use-round1-qr" onchange="toggleR2Round1QR()">
+                                <label class="form-check-label" for="r2-use-round1-qr">
+                                    <strong>QR z Pytania runda 1</strong>
+                                </label>
+                            </div>
+
                             <!-- Kody QR dla łatwych pytań -->
                             <div class="mb-3">
                                 <h6 class="text-success mb-2">Łatwe pytania:</h6>
@@ -1342,6 +1350,14 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Przełącznik QR z rundy 1 -->
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="r3-use-round1-qr" onchange="toggleR3Round1QR()">
+                                <label class="form-check-label" for="r3-use-round1-qr">
+                                    <strong>QR z Pytania runda 1</strong>
+                                </label>
+                            </div>
 
                             <!-- Kody QR dla łatwych pytań -->
                             <div class="mb-3">
@@ -5620,6 +5636,558 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
         const eventId = {{ event.id }};
         window.open(`/questions_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA PYTAŃ RUNDA 2
+    // ===================================================
+
+    // Funkcja przełączania QR z rundy 1 dla rundy 2
+    function toggleR2Round1QR() {
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        // Przyciski generowania zapasowych kodów
+        const generateButtons = [
+            'r2-questions-generate-backup-qr-btn',
+            'r2-questions-medium-generate-backup-qr-btn',
+            'r2-questions-hard-generate-backup-qr-btn',
+            'r2-questions-mixed-generate-backup-qr-btn'
+        ];
+
+        // Przyciski podglądu zapasowych kodów
+        const backupButtons = [
+            'r2-questions-backup-qr-btn',
+            'r2-questions-medium-backup-qr-btn',
+            'r2-questions-hard-backup-qr-btn',
+            'r2-questions-mixed-backup-qr-btn'
+        ];
+
+        if (useRound1QR) {
+            // Wyłącz przyciski generowania i podglądu zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+
+            backupButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+        } else {
+            // Włącz przyciski generowania zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-success');
+                }
+            });
+
+            // Przyciski podglądu zapasowych kodów pozostają wyłączone
+            // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Podgląd głównego QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            // Użyj kodu QR z rundy 1
+            window.open(`/questions_qr/${eventId}?difficulty=easy`, '_blank');
+        } else {
+            // Użyj kodu QR z rundy 2
+            window.open(`/questions_r2_qr/${eventId}?difficulty=easy`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=medium`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=hard`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=mixed`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=mixed`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA PYTAŃ RUNDA 3
+    // ===================================================
+
+    // Funkcja przełączania QR z rundy 1 dla rundy 3
+    function toggleR3Round1QR() {
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        // Przyciski generowania zapasowych kodów
+        const generateButtons = [
+            'r3-questions-generate-backup-qr-btn',
+            'r3-questions-medium-generate-backup-qr-btn',
+            'r3-questions-hard-generate-backup-qr-btn',
+            'r3-questions-mixed-generate-backup-qr-btn'
+        ];
+
+        // Przyciski podglądu zapasowych kodów
+        const backupButtons = [
+            'r3-questions-backup-qr-btn',
+            'r3-questions-medium-backup-qr-btn',
+            'r3-questions-hard-backup-qr-btn',
+            'r3-questions-mixed-backup-qr-btn'
+        ];
+
+        if (useRound1QR) {
+            // Wyłącz przyciski generowania i podglądu zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+
+            backupButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+        } else {
+            // Włącz przyciski generowania zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-success');
+                }
+            });
+
+            // Przyciski podglądu zapasowych kodów pozostają wyłączone
+            // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Podgląd głównego QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=easy`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=easy`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=medium`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=hard`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=mixed`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=mixed`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
     });
 
     // ===================================================
