@@ -559,9 +559,17 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('🤖 Auto-loading AI question for difficulty:', difficulty);
 
-            // Pobierz kategorie dla danego poziomu trudności
-            const categoriesResponse = await fetch(`/api/player/ai/categories?event_id=${eventId}&difficulty=${difficulty}`);
-            const categories = await categoriesResponse.json();
+            // Pobierz kategorie dla danego eventu
+            const categoriesResponse = await fetch(`/api/player/ai/categories/${eventId}`);
+            if (!categoriesResponse.ok) {
+                showMessage('Błąd pobierania kategorii AI', 'danger');
+                return;
+            }
+
+            const allCategories = await categoriesResponse.json();
+
+            // Filtruj kategorie po poziomie trudności
+            const categories = allCategories.filter(cat => cat.difficulty_level === difficulty);
 
             if (!categories || categories.length === 0) {
                 showMessage(`Brak dostępnych kategorii AI dla poziomu: ${difficulty}`, 'info');
