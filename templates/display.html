@@ -68,6 +68,28 @@
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
     }
+
+    /* Bomba z lontem */
+    #bomb-container {
+        width: 100%;
+        max-height: 20vh;
+        position: relative;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #bomb-svg {
+        width: 100%;
+        height: auto;
+        max-height: 20vh;
+    }
+
+    @keyframes spark {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.3); }
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -87,7 +109,54 @@
             <h2 class="text-center">Ranking</h2>
             <ul id="leaderboard" class="list-group mb-4 flex-grow-1" style="overflow-y: auto;"></ul>
             <h2 class="text-center mt-auto">Czas: <span id="timer" class="display-4">00:00</span></h2>
-            
+
+            <!-- 💣 BOMBA Z LONTEM -->
+            <div id="bomb-container">
+                <svg id="bomb-svg" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Definicje gradientów i filtrów -->
+                    <defs>
+                        <linearGradient id="fuseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Lont (zakrzywiony - od lewej do bomby) -->
+                    <path id="fuse-path" d="M 10 60 Q 150 20, 300 60" stroke="url(#fuseGradient)" stroke-width="4" fill="none"/>
+
+                    <!-- Wypalający się fragment lonta (na wierzchu) -->
+                    <path id="fuse-burning" d="M 10 60 Q 150 20, 300 60"
+                          stroke="#ff6600"
+                          stroke-width="4"
+                          fill="none"
+                          stroke-dasharray="280"
+                          stroke-dashoffset="0"
+                          style="transition: stroke-dashoffset 1s linear"/>
+
+                    <!-- Iskra na końcu wypalającego się lonta -->
+                    <circle id="fuse-spark" cx="10" cy="60" r="5" fill="#FFD700" filter="url(#glow)"
+                            style="animation: spark 0.5s infinite"/>
+                    <circle id="fuse-spark2" cx="10" cy="60" r="3" fill="#FFA500"
+                            style="animation: spark 0.5s infinite 0.25s"/>
+
+                    <!-- Bomba (po prawej stronie) -->
+                    <circle cx="360" cy="60" r="35" fill="#2a2a2a" stroke="#000" stroke-width="2"/>
+                    <circle cx="355" cy="55" r="5" fill="#444"/> <!-- Highlight -->
+                    <circle cx="365" cy="70" r="3" fill="#555"/> <!-- Śruba -->
+
+                    <!-- Bezpiecznik na górze bomby -->
+                    <rect x="358" y="25" width="4" height="10" fill="#666"/>
+                    <rect x="357" y="23" width="6" height="4" fill="#888" rx="1"/>
+                </svg>
+            </div>
+
             <!-- 📸 KARUZELA ZDJĘĆ -->
             <div id="funny-photos-carousel" class="carousel slide mt-4" data-bs-ride="carousel" data-bs-interval="5000">
                 <div class="carousel-inner" id="photos-carousel-inner">
@@ -121,6 +190,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const passwordEl = document.getElementById('anagram');
     const timerEl = document.getElementById('timer');
     const photoCarouselInner = document.getElementById('photos-carousel-inner');
+
+    // 💣 Elementy bomby
+    const fuseBurning = document.getElementById('fuse-burning');
+    const fuseSpark = document.getElementById('fuse-spark');
+    const fuseSpark2 = document.getElementById('fuse-spark2');
+    const fusePath = document.getElementById('fuse-path');
+    const fuseLength = 280; // Całkowita długość lonta w SVG
+    let totalGameTime = null; // Całkowity czas gry w sekundach
 
     // 📸 Funkcja ładowania zdjęć z serwera
     async function loadPhotos() {
@@ -189,6 +266,39 @@ document.addEventListener('DOMContentLoaded', function () {
         const minutes = Math.floor(timeLeft / 60);
         const seconds = timeLeft % 60;
         timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        // 💣 Animacja lonta bomby
+        // Oblicz całkowity czas gry na podstawie time_left + time_elapsed
+        if (totalGameTime === null && data.time_elapsed !== undefined) {
+            totalGameTime = Math.floor(data.time_left + data.time_elapsed);
+        }
+
+        if (totalGameTime && totalGameTime > 0 && timeLeft >= 0) {
+            // Oblicz ile procent czasu pozostało
+            const percentageLeft = timeLeft / totalGameTime;
+
+            // Oblicz offset lonta (od 0 do fuseLength)
+            // Im mniej czasu, tym większy offset (lont się wypala)
+            const offset = fuseLength * (1 - percentageLeft);
+            fuseBurning.style.strokeDashoffset = -offset;
+
+            // Przesuń iskrę wzdłuż lonta
+            // Używamy path.getPointAtLength() aby uzyskać pozycję na krzywej
+            const pathLength = fusePath.getTotalLength();
+            const pointPosition = pathLength * percentageLeft;
+            const point = fusePath.getPointAtLength(pointPosition);
+
+            fuseSpark.setAttribute('cx', point.x);
+            fuseSpark.setAttribute('cy', point.y);
+            fuseSpark2.setAttribute('cx', point.x);
+            fuseSpark2.setAttribute('cy', point.y);
+
+            // Przyspiesz animację iskry gdy pozostało <10% czasu
+            if (percentageLeft < 0.1) {
+                fuseSpark.style.animation = 'spark 0.1s infinite';
+                fuseSpark2.style.animation = 'spark 0.1s infinite 0.05s';
+            }
+        }
     });
     
     // 📸 Obsługa nowych zdjęć w czasie rzeczywistym
