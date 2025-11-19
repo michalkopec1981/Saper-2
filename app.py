@@ -5836,9 +5836,10 @@ def ai_player(event_id):
         </html>
         ''')
 
-    # ZMIENIONE: Przekieruj bezpośrednio do player_register
+    # ZMIENIONE: Przekieruj bezpośrednio do player_view z qr_code
     # To spowoduje automatyczne załadowanie pytań AI zamiast panelu gracza
-    return redirect(url_for('player_register', event_id=event_id, qr_code='ai_' + str(event_id)))
+    qr_code = f'ai_{difficulty}'
+    return redirect(url_for('player_view', event_id=event_id, qr_code=qr_code))
 
 @app.route('/api/fortune/predict', methods=['POST'])
 def fortune_predict():
