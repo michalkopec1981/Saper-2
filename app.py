@@ -183,6 +183,7 @@ class AIQuestion(db.Model):
     option_b = db.Column(db.String(200), nullable=False)
     option_c = db.Column(db.String(200), nullable=False)
     correct_answer = db.Column(db.String(1), nullable=False)
+    difficulty = db.Column(db.String(20), nullable=False, default='medium')  # ← DODANE
     source = db.Column(db.String(20), default='generated')
     times_shown = db.Column(db.Integer, default=0)
     times_correct = db.Column(db.Integer, default=0)
@@ -337,6 +338,30 @@ with app.app_context():
             except Exception as e:
                 db.session.rollback()
                 # Kolumny prawdopodobnie już istnieją
+
+        # ✅ Automatyczna migracja: Dodaj kolumnę 'difficulty' do tabeli 'ai_question'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'ai_question'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'difficulty' not in existing_columns:
+                db.session.execute(text("ALTER TABLE ai_question ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medium'"))
+                db.session.commit()
+                print("✓ Database migration: Added 'difficulty' column to ai_question table")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                db.session.execute(text("ALTER TABLE ai_question ADD COLUMN difficulty VARCHAR(20) DEFAULT 'medium'"))
+                db.session.commit()
+                print("✓ Database migration (SQLite): Added 'difficulty' column to ai_question table")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumna prawdopodobnie już istnieje
 
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -1875,6 +1900,7 @@ def generate_questions_for_category(category_id):
             option_b=q_data['option_b'],
             option_c=q_data['option_c'],
             correct_answer=q_data['correct_answer'].upper(),
+            difficulty=category.difficulty_level,  # ← DODANE: Użyj difficulty_level z kategorii
             source='generated'
         )
         db.session.add(new_question)
