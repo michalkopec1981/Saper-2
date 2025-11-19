@@ -1703,7 +1703,19 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Kod QR</h6>
-                            <p class="text-muted">Tutaj będzie kod QR dla głosowania</p>
+
+                            <!-- Główny kod QR -->
+                            <button id="voting-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-2 mb-3">
+                                <button id="voting-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR</button>
+                                <button id="voting-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+
+                            <!-- Wyślij na ekran 5 -->
+                            <button id="voting-send-to-screen5-btn" class="btn btn-info w-100">📺 Wyślij kod na ekran numer 5</button>
+
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
                         </div>
                     </div>
 
@@ -1848,8 +1860,11 @@
                             <div class="text-center mb-3">
                                 <div id="live-qr-code"></div>
                             </div>
-                            <button class="btn btn-primary w-100" onclick="openLiveQRPreview()">
+                            <button class="btn btn-primary w-100 mb-2" onclick="openLiveQRPreview()">
                                 📱 Podgląd i druk kodu QR
+                            </button>
+                            <button id="live-send-to-screen5-btn" class="btn btn-info w-100">
+                                📺 Wyślij kod na ekran numer 5
                             </button>
                         </div>
                     </div>
@@ -7185,6 +7200,137 @@ document.addEventListener('DOMContentLoaded', function () {
     // Załaduj statystyki przy otwarciu zakładki Gracze
     document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', () => {
         setTimeout(() => loadSecurityStats(), 100);
+    });
+
+    // === VOTING QR CODES ===
+
+    // Podgląd głównego kodu QR dla głosowania
+    document.getElementById('voting-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/voting_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla głosowania
+    document.getElementById('voting-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('voting-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('voting-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/voting/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd generowania kodu QR');
+            }
+
+            const data = await response.json();
+            alert(data.message);
+
+            // Aktywuj przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+        }
+    });
+
+    // Podgląd zapasowego kodu QR dla głosowania
+    document.getElementById('voting-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/voting_qr/${eventId}?backup=true`, '_blank');
+    });
+
+    // Wyślij kod QR głosowania na ekran 5
+    document.getElementById('voting-send-to-screen5-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const btn = document.getElementById('voting-send-to-screen5-btn');
+
+        btn.disabled = true;
+        btn.textContent = '📺 Wysyłanie...';
+
+        try {
+            const votingUrl = `${window.location.origin}/voting/${eventId}`;
+
+            const response = await fetch('/api/display/screen5/send_qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'voting',
+                    url: votingUrl,
+                    description: 'Zeskanuj kod aby zagłosować'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd wysyłania kodu QR');
+            }
+
+            const data = await response.json();
+            alert('Kod QR został wysłany na ekran 5!');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📺 Wyślij kod na ekran numer 5';
+        }
+    });
+
+    // === LIVE MODE - SEND TO SCREEN 5 ===
+
+    document.getElementById('live-send-to-screen5-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const btn = document.getElementById('live-send-to-screen5-btn');
+
+        btn.disabled = true;
+        btn.textContent = '📺 Wysyłanie...';
+
+        try {
+            // Sprawdź czy liveSession istnieje
+            if (!liveSession || !liveSession.qr_code) {
+                throw new Error('Brak sesji live. Upewnij się że tryb live jest włączony.');
+            }
+
+            const liveUrl = `${window.location.origin}/live/${eventId}/${liveSession.qr_code}`;
+
+            const response = await fetch('/api/display/screen5/send_qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'live',
+                    url: liveUrl,
+                    description: 'Dołącz do trybu live'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd wysyłania kodu QR');
+            }
+
+            const data = await response.json();
+            alert('Kod QR został wysłany na ekran 5!');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📺 Wyślij kod na ekran numer 5';
+        }
     });
 
 });

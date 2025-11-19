@@ -4150,6 +4150,227 @@ def questions_player(event_id):
     return redirect(url_for('player_register', event_id=event_id))
 
 # ===================================================================
+# --- VOTING QR CODE ENDPOINTS ---
+# ===================================================================
+
+@app.route('/voting_qr/<int:event_id>')
+@host_required
+def voting_qr_preview(event_id):
+    """Podgląd i druk kodu QR dla Głosowania"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy to zapasowy kod QR
+    is_backup = request.args.get('backup', 'false').lower() == 'true'
+
+    # Generuj kod QR dla głosowania
+    if is_backup:
+        backup_uuid = get_game_state(event_id, 'voting_backup_qr_uuid', None)
+        if not backup_uuid:
+            return "Zapasowy kod QR dla głosowania nie został jeszcze wygenerowany", 404
+        voting_url = url_for('voting_player_backup', event_id=event_id, backup_uuid=backup_uuid, _external=True)
+        title = "🗳️ Głosowanie - Zapasowy Kod"
+    else:
+        voting_url = url_for('voting_player', event_id=event_id, _external=True)
+        title = "🗳️ Głosowanie"
+
+    return f'''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Głosowanie - Kod QR</title>
+        <meta charset="UTF-8">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+                background: #f5f5f5;
+            }}
+            .container {{
+                background: white;
+                padding: 40px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 0 auto;
+            }}
+            h1 {{
+                color: #198754;
+                margin-bottom: 10px;
+            }}
+            #qrcode {{
+                margin: 30px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }}
+            .info {{
+                margin: 20px;
+                font-size: 18px;
+                color: #333;
+            }}
+            button {{
+                background: #198754;
+                color: white;
+                border: none;
+                padding: 12px 30px;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin-top: 20px;
+            }}
+            button:hover {{
+                background: #146c43;
+            }}
+            @media print {{
+                body {{ background: white; }}
+                button {{ display: none; }}
+                .container {{ box-shadow: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{title}</h1>
+            <div class="info">Zeskanuj kod QR aby zagłosować!</div>
+            <div id="qrcode"></div>
+            <div class="info"><strong>Event:</strong> {event.name}</div>
+            <button onclick="window.print()">🖨️ Drukuj</button>
+        </div>
+        <script>
+            // Generuj kod QR
+            var qrcode = new QRCode(document.getElementById("qrcode"), {{
+                text: "{voting_url}",
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            }});
+        </script>
+    </body>
+    </html>
+    '''
+
+@app.route('/api/host/voting/generate_backup_qr/<int:event_id>', methods=['POST'])
+@host_required
+def generate_voting_backup_qr(event_id):
+    """Generuj zapasowy kod QR dla Głosowania"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return jsonify({'error': 'Event nie znaleziony'}), 404
+
+    # Generuj nowy UUID dla zapasowego kodu QR
+    backup_uuid = str(uuid.uuid4())
+    set_game_state(event_id, 'voting_backup_qr_uuid', backup_uuid)
+
+    return jsonify({
+        'message': 'Zapasowy kod QR dla głosowania został wygenerowany',
+        'backup_uuid': backup_uuid
+    })
+
+@app.route('/voting_backup/<int:event_id>/<backup_uuid>')
+def voting_player_backup(event_id, backup_uuid):
+    """Widok Głosowania dla gracza - zapasowy kod QR"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź UUID
+    stored_uuid = get_game_state(event_id, 'voting_backup_qr_uuid', None)
+    if not stored_uuid or stored_uuid != backup_uuid:
+        return "Nieprawidłowy kod QR", 403
+
+    # Sprawdź czy głosowanie jest włączone
+    enabled = get_game_state(event_id, 'voting_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Głosowanie</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                    color: white;
+                }
+                .message {
+                    background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    max-width: 400px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>🗳️ Głosowanie</h1>
+            <div class="message">
+                <h2>⏸️ Chwilowo niedostępne</h2>
+                <p>Głosowanie jest obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # Przekieruj do widoku głosowania
+    return redirect(url_for('voting_player', event_id=event_id))
+
+@app.route('/voting/<int:event_id>')
+def voting_player(event_id):
+    """Widok Głosowania dla gracza"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie znaleziony", 404
+
+    # Sprawdź czy głosowanie jest włączone
+    enabled = get_game_state(event_id, 'voting_enabled', 'True') == 'True'
+    if not enabled:
+        return render_template_string('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Głosowanie</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                    color: white;
+                }
+                .message {
+                    background: rgba(255,255,255,0.1);
+                    padding: 30px;
+                    border-radius: 15px;
+                    margin: 20px auto;
+                    max-width: 400px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>🗳️ Głosowanie</h1>
+            <div class="message">
+                <h2>⏸️ Chwilowo niedostępne</h2>
+                <p>Głosowanie jest obecnie wyłączone przez organizatora.</p>
+            </div>
+        </body>
+        </html>
+        ''')
+
+    # TODO: Tutaj będzie pełny widok głosowania dla gracza
+    # Na razie przekieruj do rejestracji gracza
+    return redirect(url_for('player_register', event_id=event_id))
+
+# ===================================================================
 # --- Fortune Teller AI Endpoints ---
 # ===================================================================
 
