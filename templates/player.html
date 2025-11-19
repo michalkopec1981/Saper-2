@@ -296,6 +296,8 @@ function simpleHash(str) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 PLAYER.HTML LOADED - VERSION 2.0 WITH AUTO-LOGIN');  // ← MARKER WERSJI
+
     const eventId = {{ event_id }};
     const qrCode = "{{ qr_code }}";
     let playerId = localStorage.getItem(`saperPlayerId_${eventId}`);
