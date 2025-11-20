@@ -97,6 +97,7 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     score = db.Column(db.Integer, default=0)
+    live_score = db.Column(db.Integer, default=0)  # Osobna pula punktów dla trybu Na żywo
     warnings = db.Column(db.Integer, default=0)
     revealed_letters = db.Column(db.String(100), default='')
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
@@ -212,6 +213,7 @@ class LiveSession(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('event.id', ondelete='CASCADE'), nullable=False)
     is_enabled = db.Column(db.Boolean, default=True)
     button_count = db.Column(db.Integer, default=3)  # 2, 3, lub 4 przyciski (A,B) (A,B,C) lub (A,B,C,D)
+    separate_score_pool = db.Column(db.Boolean, default=False)  # Czy punkty z trybu Na żywo idą do osobnej puli
     qr_code = db.Column(db.String(50), nullable=True)  # Kod QR dla graczy
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -426,6 +428,54 @@ with app.app_context():
             except Exception as e:
                 db.session.rollback()
                 # Kolumny prawdopodobnie już istnieją
+
+        # ✅ Automatyczna migracja: Dodaj kolumnę 'live_score' do tabeli 'player'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'player'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'live_score' not in existing_columns:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN live_score INTEGER DEFAULT 0"))
+                db.session.commit()
+                print("✓ Database migration: Added 'live_score' column to player table")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                db.session.execute(text("ALTER TABLE player ADD COLUMN live_score INTEGER DEFAULT 0"))
+                db.session.commit()
+                print("✓ Database migration (SQLite): Added 'live_score' column to player table")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumna prawdopodobnie już istnieje
+
+        # ✅ Automatyczna migracja: Dodaj kolumnę 'separate_score_pool' do tabeli 'live_session'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'live_session'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'separate_score_pool' not in existing_columns:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN separate_score_pool BOOLEAN DEFAULT FALSE"))
+                db.session.commit()
+                print("✓ Database migration: Added 'separate_score_pool' column to live_session table")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN separate_score_pool BOOLEAN DEFAULT 0"))
+                db.session.commit()
+                print("✓ Database migration (SQLite): Added 'separate_score_pool' column to live_session table")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumna prawdopodobnie już istnieje
 
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -6551,6 +6601,7 @@ def live_session():
                 event_id=event_id,
                 is_enabled=True,
                 button_count=3,
+                separate_score_pool=False,
                 qr_code=qr_code
             )
             db.session.add(live_session)
@@ -6560,6 +6611,7 @@ def live_session():
             'id': live_session.id,
             'is_enabled': live_session.is_enabled,
             'button_count': live_session.button_count,
+            'separate_score_pool': live_session.separate_score_pool,
             'qr_code': live_session.qr_code
         })
 
@@ -6570,6 +6622,7 @@ def live_session():
         if live_session:
             live_session.is_enabled = data.get('is_enabled', live_session.is_enabled)
             live_session.button_count = data.get('button_count', live_session.button_count)
+            live_session.separate_score_pool = data.get('separate_score_pool', live_session.separate_score_pool)
         else:
             import secrets
             qr_code = secrets.token_urlsafe(16)[:12]
@@ -6577,6 +6630,7 @@ def live_session():
                 event_id=event_id,
                 is_enabled=data.get('is_enabled', True),
                 button_count=data.get('button_count', 3),
+                separate_score_pool=data.get('separate_score_pool', False),
                 qr_code=qr_code
             )
             db.session.add(live_session)
@@ -6737,6 +6791,10 @@ def reveal_live_answer(question_id):
     question.revealed_at = datetime.utcnow()
     question.is_active = False
 
+    # Pobierz ustawienia sesji Live aby sprawdzić czy punkty idą do osobnej puli
+    live_session = LiveSession.query.filter_by(event_id=event_id).first()
+    separate_score_pool = live_session.separate_score_pool if live_session else False
+
     # Zaktualizuj odpowiedzi graczy i przyznaj punkty
     answers = LivePlayerAnswer.query.filter_by(question_id=question_id).all()
     for answer in answers:
@@ -6744,10 +6802,15 @@ def reveal_live_answer(question_id):
         answer.is_correct = (answer.answer in correct_answers)
         if answer.is_correct:
             answer.points_awarded = 10  # Można to skonfigurować
-            # Dodaj punkty do głównego score gracza
+            # Dodaj punkty do odpowiedniej puli punktów gracza
             player = Player.query.get(answer.player_id)
             if player:
-                player.score += answer.points_awarded
+                if separate_score_pool:
+                    # Dodaj punkty do osobnej puli punktów Na żywo
+                    player.live_score += answer.points_awarded
+                else:
+                    # Dodaj punkty do ogólnej puli punktów
+                    player.score += answer.points_awarded
 
     db.session.commit()
 

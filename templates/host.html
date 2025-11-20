@@ -1960,6 +1960,24 @@
                         <div class="card-body">
                             <h6 class="mb-3">Ustawienia</h6>
                             <p class="text-muted">Liczba przycisków odpowiedzi jest dostosowywana automatycznie do liczby wypełnionych pól w pytaniu.</p>
+
+                            <hr class="my-3">
+
+                            <!-- Przełącznik puli punktów -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Pula punktów:</strong></label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="text-muted">Obecna pula punktów</span>
+                                    <div class="form-check form-switch" style="transform: scale(1.5); margin: 0 15px;">
+                                        <input class="form-check-input" type="checkbox" id="live-separate-score-pool" style="cursor: pointer;">
+                                    </div>
+                                    <span class="text-primary"><strong>Osobna pula punktów</strong></span>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <strong>Obecna pula:</strong> Punkty z trybu Na żywo trafiają do ogólnego licznika punktów gracza.<br>
+                                    <strong>Osobna pula:</strong> Punkty z trybu Na żywo są liczone oddzielnie (np. gracz ma 60 pkt. ogólnych + 20 pkt. z trybu Na żywo).
+                                </small>
+                            </div>
                         </div>
                     </div>
 
@@ -7433,7 +7451,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Update UI
             const enabledCheckbox = document.getElementById('live-enabled');
             const statusBadge = document.getElementById('live-status');
-            const buttonCountSelect = document.getElementById('live-button-count');
+            const separateScorePoolCheckbox = document.getElementById('live-separate-score-pool');
 
             if (enabledCheckbox) {
                 enabledCheckbox.checked = data.is_enabled;
@@ -7441,8 +7459,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 statusBadge.className = data.is_enabled ? 'badge bg-success' : 'badge bg-secondary';
             }
 
-            if (buttonCountSelect) {
-                buttonCountSelect.value = data.button_count;
+            if (separateScorePoolCheckbox) {
+                separateScorePoolCheckbox.checked = data.separate_score_pool || false;
             }
 
             // Generate QR code
@@ -7469,13 +7487,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Save Live Mode settings
     window.saveLiveSettings = async function() {
         const enabled = document.getElementById('live-enabled').checked;
+        const separateScorePool = document.getElementById('live-separate-score-pool').checked;
 
         try {
             const response = await fetch('/api/host/live/session', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    is_enabled: enabled
+                    is_enabled: enabled,
+                    separate_score_pool: separateScorePool
                 })
             });
 
@@ -7502,6 +7522,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 statusBadge.textContent = 'Nieaktywna';
                 statusBadge.className = 'badge bg-secondary';
             }
+            saveLiveSettings();
+        });
+    }
+
+    // Separate score pool toggle handler
+    if (document.getElementById('live-separate-score-pool')) {
+        document.getElementById('live-separate-score-pool').addEventListener('change', function(e) {
             saveLiveSettings();
         });
     }
