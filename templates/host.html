@@ -272,7 +272,7 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <small class="text-muted d-block">Zalogowany jako:</small>
-                    <strong>{{ current_user_id if current_user_id else 'Host' }}</strong>
+                    <strong>Host</strong>
                 </div>
                 <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-power"></i></a>
             </div>
@@ -495,67 +495,35 @@
             </div>
 
             <!-- SEKCJE: PYTANIA RUNDA 1, 2, 3 -->
-            {% for round_id in ['r1', 'r2', 'r3'] %}
-            <div id="pytania-{{ round_id }}" class="content-section">
-                <h2 class="section-title">Pytania: Runda {{ round_id[-1] }}</h2>
-
-                <!-- Kontener pytań - zachowujemy pętle Jinja2 -->
-                <div id="questions-{{ round_id }}-container">
-                    {% set questions = questions_r1 if round_id == 'r1' else (questions_r2 if round_id == 'r2' else questions_r3) %}
-
-                    {% for q in questions %}
-                    <div class="question-item" id="q-{{ round_id }}-{{ q.id }}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h5 class="mb-2"><span class="badge bg-secondary me-2">#{{ loop.index }}</span> {{ q.question_text }}</h5>
-                                {% if round_id == 'r1' %}
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    <span class="badge bg-light text-dark border">A: {{ q.option_a }}</span>
-                                    <span class="badge bg-light text-dark border">B: {{ q.option_b }}</span>
-                                    <span class="badge bg-light text-dark border">C: {{ q.option_c }}</span>
-                                    <span class="badge bg-light text-dark border">D: {{ q.option_d }}</span>
-                                </div>
-                                {% endif %}
-                                <div class="small text-muted">
-                                    Prawidłowa: <strong>{{ q.correct_answer }}</strong>
-                                    {% if q.time_limit %}| Czas: {{ q.time_limit }}s{% endif %}
-                                </div>
-                            </div>
-
-                            <div class="d-flex flex-column gap-2 ms-3" style="min-width: 120px;">
-                                <button class="btn btn-sm btn-primary activate-q-btn" data-qid="{{ q.id }}" data-type="{{ round_id }}">
-                                    <i class="bi bi-play-fill"></i> Aktywuj
-                                </button>
-
-                                {% if round_id == 'r1' %}
-                                <button class="btn btn-sm btn-outline-secondary reveal-q-btn" data-qid="{{ q.id }}" disabled>
-                                    <i class="bi bi-eye"></i> Pokaż odp.
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger close-q-btn" data-qid="{{ q.id }}" disabled>
-                                    <i class="bi bi-x-circle"></i> Zakończ
-                                </button>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Pasek postępu (tylko R1) -->
-                        {% if round_id == 'r1' %}
-                        <div class="mt-3">
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-success" id="progress-q-{{ q.id }}" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <div class="d-flex justify-content-between small text-muted mt-1">
-                                <span id="answers-count-{{ q.id }}">Odpowiedzi: 0</span>
-                            </div>
-                        </div>
-                        {% endif %}
+            <div id="pytania-r1" class="content-section">
+                <h2 class="section-title">Pytania: Runda 1</h2>
+                <div id="questions-r1-container">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Pytania będą ładowane dynamicznie...
                     </div>
-                    {% else %}
-                    <div class="alert alert-light text-center">Brak pytań w tej rundzie.</div>
-                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+
+            <div id="pytania-r2" class="content-section">
+                <h2 class="section-title">Pytania: Runda 2</h2>
+                <div id="questions-r2-container">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Pytania będą ładowane dynamicznie...
+                    </div>
+                </div>
+            </div>
+
+            <div id="pytania-r3" class="content-section">
+                <h2 class="section-title">Pytania: Runda 3</h2>
+                <div id="questions-r3-container">
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Pytania będą ładowane dynamicznie...
+                    </div>
+                </div>
+            </div>
 
             <!-- POZOSTAŁE SEKCJE (AI, Minigry, etc.) -->
             <div id="ai" class="content-section">
@@ -796,41 +764,8 @@
     };
 
     // --- 4. OBSŁUGA PYTAŃ (R1, R2, R3) ---
-    document.querySelectorAll('.activate-q-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const qid = this.dataset.qid;
-            const type = this.dataset.type; // r1, r2, r3
-
-            // Wywołanie API
-            fetch(`/api/host/question/activate/${eventId}/${qid}`, { method: 'POST' })
-                .then(r => r.json())
-                .then(res => {
-                    if(res.status === 'success') {
-                        logAction(`Aktywowano pytanie ${qid} (${type})`);
-
-                        // UI Update dla R1
-                        if(type === 'r1') {
-                            const parent = document.getElementById(`q-r1-${qid}`);
-                            // Resetuj inne aktywne
-                            document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-q'));
-                            parent.classList.add('active-q');
-
-                            parent.querySelector('.activate-q-btn').disabled = true;
-                            parent.querySelector('.reveal-q-btn').disabled = false;
-                            parent.querySelector('.close-q-btn').disabled = false;
-                        }
-                    }
-                });
-        });
-    });
-
-    // Obsługa Reveal / Close dla R1 (przykład)
-    document.querySelectorAll('.reveal-q-btn').forEach(btn => {
-        btn.onclick = function() {
-            const qid = this.dataset.qid;
-            fetch(`/api/host/question/reveal/${eventId}/${qid}`, { method: 'POST' });
-        }
-    });
+    // TODO: Dynamiczne ładowanie pytań zostanie zaimplementowane później
+    // Pytania będą ładowane przez API i wyświetlane w kontenerach questions-r1-container, questions-r2-container, questions-r3-container
 
     // --- 5. OBSŁUGA TIMERÓW R2 i R3 ---
     function handleRoundTimer(roundPrefix, displayId, inputId, startBtnId, cancelBtnId) {
