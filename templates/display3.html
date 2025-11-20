@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Ekran 3 - Selfie - {{ event.name }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    body {
+        background-color: #1a1a2e;
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+    }
+    .container-fluid {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+    }
+
+    .selfie-title {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 30px;
+        color: #ff6b9d;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+    }
+
+    .carousel-inner {
+        max-height: 80vh;
+    }
+
+    .carousel-item img {
+        max-height: 75vh;
+        width: 100%;
+        object-fit: contain;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .carousel-caption {
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .carousel-caption h5 {
+        font-size: 2rem;
+        margin: 0;
+        font-weight: bold;
+        color: #ff6b9d;
+    }
+
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
+    }
+
+    #no-selfies-message {
+        font-size: 2rem;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="selfie-title">📸 Zabawne Selfie</h1>
+
+    <div id="selfie-carousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000" style="width: 100%; max-width: 1200px;">
+        <div class="carousel-inner" id="selfie-carousel-inner">
+            <div class="carousel-item active">
+                <div id="no-selfies-message">
+                    Brak selfie. Gracze mogą przesyłać selfie skanując kod QR.
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#selfie-carousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#selfie-carousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script>
+    const eventId = {{ event.id }};
+    const socket = io();
+
+    socket.on('connect', () => {
+        console.log('WebSocket connected');
+        socket.emit('join_event', { event_id: eventId });
+        loadSelfies();
+    });
+
+    socket.on('photos_update', () => {
+        loadSelfies();
+    });
+
+    async function loadSelfies() {
+        try {
+            const response = await fetch(`/api/player/selfies?event_id=${eventId}`);
+            if (!response.ok) throw new Error('Failed to fetch selfies');
+
+            const selfies = await response.json();
+            const carouselInner = document.getElementById('selfie-carousel-inner');
+
+            if (!selfies || selfies.length === 0) {
+                carouselInner.innerHTML = `
+                    <div class="carousel-item active">
+                        <div id="no-selfies-message">
+                            Brak selfie. Gracze mogą przesyłać selfie skanując kod QR.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            carouselInner.innerHTML = selfies.map((selfie, index) => `
+                <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                    <img src="${selfie.url}" alt="Selfie od ${selfie.player_name}">
+                    <div class="carousel-caption">
+                        <h5>${selfie.player_name}</h5>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error loading selfies:', error);
+        }
+    }
+</script>
+{% endblock %}

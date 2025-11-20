@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Ekran 5 - Kody Specjalne - {{ event.name }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+    }
+
+    .container-fluid {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+    }
+
+    #qr-container {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        text-align: center;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    #qr-type-badge {
+        display: inline-block;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    .type-voting {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+
+    .type-live {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    #qr-code-display {
+        margin: 30px auto;
+    }
+
+    #qr-description {
+        color: #333;
+        font-size: 1.5rem;
+        margin-top: 20px;
+        font-weight: 500;
+    }
+
+    #event-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    #waiting-message {
+        font-size: 2rem;
+        text-align: center;
+        animation: fadeInOut 3s infinite;
+    }
+
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h1 id="event-title">{{ event.name }}</h1>
+
+    <div id="qr-container" style="display: none;">
+        <div id="qr-type-badge"></div>
+        <div id="qr-code-display"></div>
+        <p id="qr-description"></p>
+    </div>
+
+    <div id="waiting-message">
+        <p>⏳ Oczekiwanie na kod QR...</p>
+        <p style="font-size: 1.2rem; margin-top: 20px;">Kod pojawi się gdy host go wyśle z zakładki Głosowanie lub Na Żywo</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+    const eventId = {{ event.id }};
+    const socket = io();
+
+    let currentQRCode = null;
+
+    // Dołącz do pokoju wydarzenia
+    socket.emit('join', { event_id: eventId });
+
+    // Nasłuchuj na kody QR wysyłane na ekran 5
+    socket.on('screen5_qr_update', (data) => {
+        displayQRCode(data);
+    });
+
+    // Pobierz aktualny kod QR przy załadowaniu strony
+    async function loadCurrentQR() {
+        try {
+            const response = await fetch(`/api/display/screen5/current/${eventId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.qr_data) {
+                    displayQRCode(data.qr_data);
+                }
+            }
+        } catch (error) {
+            console.error('Błąd pobierania kodu QR:', error);
+        }
+    }
+
+    function displayQRCode(data) {
+        const qrContainer = document.getElementById('qr-container');
+        const waitingMessage = document.getElementById('waiting-message');
+        const qrTypeBadge = document.getElementById('qr-type-badge');
+        const qrCodeDisplay = document.getElementById('qr-code-display');
+        const qrDescription = document.getElementById('qr-description');
+
+        // Wyczyść poprzedni kod QR
+        qrCodeDisplay.innerHTML = '';
+
+        // Ukryj komunikat oczekiwania
+        waitingMessage.style.display = 'none';
+
+        // Pokaż kontener QR
+        qrContainer.style.display = 'block';
+
+        // Ustaw typ
+        if (data.type === 'voting') {
+            qrTypeBadge.className = 'type-voting';
+            qrTypeBadge.textContent = '🗳️ GŁOSOWANIE';
+        } else if (data.type === 'live') {
+            qrTypeBadge.className = 'type-live';
+            qrTypeBadge.textContent = '📡 NA ŻYWO';
+        }
+
+        // Ustaw opis
+        qrDescription.textContent = data.description || 'Zeskanuj kod QR aby dołączyć';
+
+        // Wygeneruj kod QR
+        if (currentQRCode) {
+            currentQRCode.clear();
+        }
+
+        currentQRCode = new QRCode(qrCodeDisplay, {
+            text: data.url,
+            width: 400,
+            height: 400,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+
+    // Załaduj aktualny kod QR przy starcie
+    loadCurrentQR();
+</script>
+{% endblock %}

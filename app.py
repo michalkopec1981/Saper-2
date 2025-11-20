@@ -671,6 +671,24 @@ def display2(event_id):
     event = db.session.get(Event, event_id)
     return render_template('display2.html', event=event)
 
+@app.route('/display3/<int:event_id>')
+def display3(event_id):
+    """Trzeci ekran - selfie w karuzeli"""
+    event = db.session.get(Event, event_id)
+    return render_template('display3.html', event=event)
+
+@app.route('/display4/<int:event_id>')
+def display4(event_id):
+    """Czwarty ekran - przedmioty AR do znalezienia"""
+    event = db.session.get(Event, event_id)
+    return render_template('display4.html', event=event)
+
+@app.route('/display5/<int:event_id>')
+def display5(event_id):
+    """Piąty ekran - głosowanie i pytania na żywo"""
+    event = db.session.get(Event, event_id)
+    return render_template('display5.html', event=event)
+
 @app.route('/qrcodes/<int:event_id>')
 def list_qrcodes_public(event_id):
     is_admin = session.get('admin_logged_in', False)
