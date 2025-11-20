@@ -2292,15 +2292,42 @@
                             <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display1-link">
                                 🖥️ Ekran 1 - Główny wyświetlacz
                             </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 1:</strong></small><br>
+                                <small><a href="{{ url_for('display', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
                             <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
                                 🖥️ Ekran 2 - Ranking i zdjęcia
                             </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 2:</strong></small><br>
+                                <small><a href="{{ url_for('display2', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display2', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
                             <a href="{{ url_for('photo_player', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display3-link">
                                 🖥️ Ekran 3 - Selfie
                             </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 3:</strong></small><br>
+                                <small><a href="{{ url_for('photo_player', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('photo_player', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
                             <a href="{{ url_for('display4', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display4-link">
                                 🖥️ Ekran 4 - Przemioty do znalezienia oraz kod gracza
                             </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 4:</strong></small><br>
+                                <small><a href="{{ url_for('display4', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display4', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
+                            <a href="{{ url_for('display5', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display5-link">
+                                🖥️ Ekran 5 - Głosowanie lub Pytania na Żywo
+                            </a>
+                            <div class="alert alert-info mb-0">
+                                <small><strong>Link do ekranu 5:</strong></small><br>
+                                <small><a href="{{ url_for('display5', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display5', event_id=event.id, _external=True) }}</a></small>
+                            </div>
                         </div>
                     </div>
 
