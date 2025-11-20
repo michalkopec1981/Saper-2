@@ -317,7 +317,7 @@
                                 <i class="bi bi-link-45deg fs-3 me-3"></i>
                                 <div class="flex-grow-1 overflow-hidden">
                                     <small>Link dla graczy:</small><br>
-                                    <strong class="text-truncate d-block" style="max-width: 100%;">{{ url_for('player_join', event_id=event.id, _external=True) }}</strong>
+                                    <strong class="text-truncate d-block" style="max-width: 100%;">{{ url_for('player_register', event_id=event.id, _external=True) }}</strong>
                                 </div>
                                 <button class="btn btn-sm btn-primary ms-2" onclick="copyLink()">Kopiuj</button>
                             </div>
@@ -472,9 +472,9 @@
                             <div class="card shadow-sm">
                                 <div class="card-body p-4">
                                     <h5 class="card-title">Dołącz do gry</h5>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ url_for('player_join', event_id=event.id, _external=True) }}" class="img-fluid my-3" alt="QR Code">
-                                    <p class="card-text text-muted small">{{ url_for('player_join', event_id=event.id, _external=True) }}</p>
-                                    <a href="{{ url_for('player_join', event_id=event.id, _external=True) }}" target="_blank" class="btn btn-outline-primary btn-sm">Otwórz w nowej karcie</a>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ url_for('player_register', event_id=event.id, _external=True) }}" class="img-fluid my-3" alt="QR Code">
+                                    <p class="card-text text-muted small">{{ url_for('player_register', event_id=event.id, _external=True) }}</p>
+                                    <a href="{{ url_for('player_register', event_id=event.id, _external=True) }}" target="_blank" class="btn btn-outline-primary btn-sm">Otwórz w nowej karcie</a>
                                 </div>
                             </div>
                         </div>
@@ -625,7 +625,7 @@
 
     function copyLink() {
         const el = document.createElement('textarea');
-        el.value = "{{ url_for('player_join', event_id=event.id, _external=True) }}";
+        el.value = "{{ url_for('player_register', event_id=event.id, _external=True) }}";
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
