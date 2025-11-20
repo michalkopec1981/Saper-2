@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}Kod QR Gracza - {{ event.name }}{% endblock %}
+{% block title %}Kod QR AR Scanner - {{ event.name }}{% endblock %}
 
 {% block styles %}
 <style>
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         min-height: 100vh;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -30,7 +30,7 @@
     .event-name {
         font-size: 2rem;
         font-weight: bold;
-        color: #667eea;
+        color: #11998e;
         margin-bottom: 10px;
     }
 
@@ -53,9 +53,9 @@
         margin: 20px 0;
     }
 
-    .qr-container #player-qr {
+    .qr-container #ar-scanner-qr {
         display: inline-block;
-        border: 5px solid #667eea;
+        border: 5px solid #11998e;
         border-radius: 15px;
         padding: 20px;
         background: white;
@@ -75,7 +75,7 @@
     }
 
     .qr-instructions {
-        background: #e3f2fd;
+        background: #e8f5e9;
         padding: 20px;
         border-radius: 10px;
         margin: 20px 0;
@@ -83,7 +83,7 @@
     }
 
     .qr-instructions h3 {
-        color: #667eea;
+        color: #11998e;
         margin-bottom: 15px;
         font-size: 1.1rem;
     }
@@ -132,13 +132,13 @@
     }
 
     .btn-print {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         color: white;
     }
 
     .btn-print:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 10px 25px rgba(17, 153, 142, 0.4);
     }
 
     .btn-download {
@@ -183,8 +183,19 @@
     .stat-value {
         font-size: 2rem;
         font-weight: bold;
-        color: #667eea;
+        color: #11998e;
         margin-top: 5px;
+    }
+
+    .ar-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 20px;
     }
 
     @media print {
@@ -235,17 +246,18 @@
     <div class="preview-card">
         <!-- Header -->
         <div class="header">
+            <div class="ar-badge">🎯 ROZSZERZONA RZECZYWISTOŚĆ</div>
             <h1 class="event-name">{{ event.name }}</h1>
-            <p class="subtitle">Kod QR do rejestracji graczy</p>
+            <p class="subtitle">Kod QR do uruchomienia skanera AR</p>
         </div>
 
         <!-- QR Code Section -->
         <div class="qr-section">
-            <div class="qr-label">📱 Zeskanuj, aby dołączyć do gry</div>
+            <div class="qr-label">📱 Zeskanuj, aby uruchomić skaner AR</div>
             <div class="qr-container">
-                <div id="player-qr"></div>
+                <div id="ar-scanner-qr"></div>
             </div>
-            <div class="url-display">{{ register_url }}</div>
+            <div class="url-display">{{ ar_scanner_url }}</div>
         </div>
 
         <!-- Instructions -->
@@ -253,17 +265,18 @@
             <h3>📋 Instrukcja dla graczy:</h3>
             <ol>
                 <li>Zeskanuj kod QR swoim smartfonem</li>
-                <li>Wpisz swoje imię lub nazwę drużyny</li>
-                <li>Kliknij "Dołącz do gry"</li>
-                <li>Otrzymasz dostęp do swojego panelu gracza z informacjami o grze</li>
+                <li>Zezwól na dostęp do kamery (wymagane do skanowania AR)</li>
+                <li>Kieruj kamerę na przedmioty oznaczone przez organizatora</li>
+                <li>Gdy system rozpozna obiekt, automatycznie uruchomi się gra lub wyzwanie</li>
+                <li>Ukończ wyzwanie, aby zdobyć punkty!</li>
             </ol>
         </div>
 
         <!-- Stats -->
         <div class="stats">
             <div class="stat-item">
-                <div class="stat-label">Aktywni gracze</div>
-                <div class="stat-value" id="player-count">-</div>
+                <div class="stat-label">Obiekty AR</div>
+                <div class="stat-value" id="ar-objects-count">-</div>
             </div>
         </div>
 
@@ -291,10 +304,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const eventId = {{ event_id }};
-    const registerUrl = "{{ register_url }}";
+    const arScannerUrl = "{{ ar_scanner_url }}";
 
     // Generate QR code
-    const qrContainer = document.getElementById('player-qr');
+    const qrContainer = document.getElementById('ar-scanner-qr');
 
     try {
         // Clear any existing content
@@ -302,42 +315,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Create QR code
         new QRCode(qrContainer, {
-            text: registerUrl,
+            text: arScannerUrl,
             width: 300,
             height: 300,
-            colorDark: '#667eea',
+            colorDark: '#11998e',
             colorLight: '#ffffff',
             correctLevel: QRCode.CorrectLevel.H
         });
 
-        console.log('QR code generated successfully for:', registerUrl);
+        console.log('AR Scanner QR code generated successfully for:', arScannerUrl);
     } catch (error) {
         console.error('Error generating QR code:', error);
         qrContainer.innerHTML = '<div style="color: red; padding: 20px;">Błąd generowania kodu QR. Odśwież stronę.</div>';
     }
 
-    // Load player count
-    loadPlayerCount();
+    // Load AR objects count
+    loadARObjectsCount();
 
-    function loadPlayerCount() {
-        fetch(`/api/host/players?event_id=${eventId}`)
+    function loadARObjectsCount() {
+        fetch(`/api/host/ar/objects?event_id=${eventId}`)
             .then(response => response.json())
             .then(data => {
-                if (data.players) {
-                    document.getElementById('player-count').textContent = data.players.length;
+                if (data.objects) {
+                    document.getElementById('ar-objects-count').textContent = data.objects.length;
                 }
             })
             .catch(error => {
-                console.error('Error loading player count:', error);
+                console.error('Error loading AR objects count:', error);
+                document.getElementById('ar-objects-count').textContent = '0';
             });
     }
 
-    // Refresh player count every 5 seconds
-    setInterval(loadPlayerCount, 5000);
+    // Refresh AR objects count every 5 seconds
+    setInterval(loadARObjectsCount, 5000);
 });
 
 function downloadQR() {
-    const qrContainer = document.getElementById('player-qr');
+    const qrContainer = document.getElementById('ar-scanner-qr');
     const canvas = qrContainer.querySelector('canvas');
 
     if (!canvas) {
@@ -347,7 +361,7 @@ function downloadQR() {
 
     const url = canvas.toDataURL('image/png');
     const link = document.createElement('a');
-    link.download = 'player_qr_code.png';
+    link.download = 'ar_scanner_qr_code.png';
     link.href = url;
     link.click();
 }

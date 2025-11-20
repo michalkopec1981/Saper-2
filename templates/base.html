@@ -10,6 +10,16 @@
     {% block styles %}{% endblock %}
 </head>
 <body>
+    <!-- Inline script to prevent dark mode flash - runs immediately after body tag -->
+    <script>
+        // Apply dark mode immediately to prevent flash of light theme
+        (function() {
+            const darkModeEnabled = localStorage.getItem('darkMode') !== 'false';
+            if (darkModeEnabled) {
+                document.body.classList.add('dark-mode');
+            }
+        })();
+    </script>
     <div class="container mt-4">
         {% block content %}{% endblock %}
     </div>

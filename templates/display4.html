@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Ekran 4 - AR i Kod Gracza - {{ event.name }}{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+    }
+    .container-fluid {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    /* AR Objects Section - 60% */
+    .ar-section {
+        flex: 0 0 60%;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        overflow-y: auto;
+    }
+
+    .ar-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .ar-object {
+        background-color: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.3);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .ar-object-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #ffd700;
+    }
+
+    .ar-object-points {
+        font-size: 1.2rem;
+        color: #4ade80;
+    }
+
+    /* QR Code Section - 40% */
+    .qr-section {
+        flex: 0 0 40%;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .qr-title {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #4ade80;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    #qr-code {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto;
+    }
+
+    .qr-description {
+        font-size: 1.3rem;
+        margin-top: 15px;
+        color: #e0e0e0;
+    }
+
+    .no-objects {
+        text-align: center;
+        font-size: 1.5rem;
+        color: #ffa500;
+        padding: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- AR Objects Section -->
+    <div class="ar-section">
+        <div class="ar-title">🎯 Przedmioty do Znalezienia</div>
+        <div id="ar-objects-list">
+            <div class="no-objects">Ładowanie przedmiotów...</div>
+        </div>
+    </div>
+
+    <!-- QR Code Section -->
+    <div class="qr-section">
+        <div class="qr-title">📱 Dołącz do Gry</div>
+        <div id="qr-code"></div>
+        <div class="qr-description">Zeskanuj kod, aby dołączyć do gry</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script>
+    const eventId = {{ event.id }};
+
+    // Generate QR code for player registration
+    function generateQRCode() {
+        const playerUrl = window.location.origin + '/player_register/' + eventId;
+        const qrContainer = document.getElementById('qr-code');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {
+            text: playerUrl,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+
+    // Load AR objects
+    function loadARObjects() {
+        fetch('/api/host/ar/objects?event_id=' + eventId)
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('ar-objects-list');
+
+                if (!data.objects || data.objects.length === 0) {
+                    container.innerHTML = '<div class="no-objects">Brak przedmiotów AR do wyświetlenia</div>';
+                    return;
+                }
+
+                container.innerHTML = data.objects.map(obj => `
+                    <div class="ar-object">
+                        <div class="ar-object-name">🔍 ${obj.name}</div>
+                        <div class="ar-object-points">💎 ${obj.points} punktów</div>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading AR objects:', error);
+                document.getElementById('ar-objects-list').innerHTML =
+                    '<div class="no-objects">Błąd wczytywania przedmiotów</div>';
+            });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        generateQRCode();
+        loadARObjects();
+
+        // Refresh AR objects every 10 seconds
+        setInterval(loadARObjects, 10000);
+    });
+</script>
+{% endblock %}

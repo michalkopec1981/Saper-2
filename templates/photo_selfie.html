@@ -1,0 +1,637 @@
+{% extends 'base.html' %}
+{% block title %}Wyzwanie Fotograficzne - {{ event_name }}{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #e91e63, #f06292);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        color: #e91e63;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .form-label {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1.1rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #e91e63, #f06292);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(233, 30, 99, 0.4);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    #camera-view {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 20px;
+    }
+
+    #camera {
+        width: 100%;
+        border-radius: 15px;
+        background: #000;
+    }
+
+    #canvas {
+        display: none;
+    }
+
+    .camera-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    #preview-container {
+        margin-top: 20px;
+    }
+
+    #preview-image {
+        width: 100%;
+        max-width: 500px;
+        border-radius: 15px;
+        margin-bottom: 15px;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .success-message {
+        background: #4caf50;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .error-message {
+        background: #f44336;
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #e91e63;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Photo Gallery Styles */
+    #player-photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .photo-item {
+        background: #f5f5f5;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+    }
+
+    .photo-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .photo-info {
+        padding: 15px;
+        text-align: center;
+    }
+
+    .photo-player-name {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .like-btn {
+        background: linear-gradient(135deg, #e91e63, #f06292);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .like-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+    }
+
+    .like-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .like-btn.liked {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+    }
+
+    .votes-count {
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Registration Form (for new players) -->
+    <div id="registration-card" class="card">
+        <h1>📸 Wyzwanie Fotograficzne</h1>
+        <p class="subtitle">Zrób śmieszne selfie i zdobądź punkty!</p>
+
+        <div class="form-group">
+            <label for="player-name" class="form-label">Podaj swoje imię:</label>
+            <input
+                type="text"
+                id="player-name"
+                class="form-control"
+                placeholder="Twoje imię..."
+                maxlength="80"
+                autocomplete="off"
+            >
+        </div>
+
+        <button class="btn btn-primary" id="start-btn">OK - Rozpocznij</button>
+
+        <div id="error-msg" class="error-message hidden"></div>
+    </div>
+
+    <!-- Camera View (for taking selfie) -->
+    <div id="camera-card" class="card hidden">
+        <h1>📸 Zrób Selfie!</h1>
+        <p class="subtitle">Uśmiechnij się!</p>
+
+        <div id="camera-view">
+            <video id="camera" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="camera-controls">
+            <button class="btn btn-primary" id="capture-btn">📷 Zrób Zdjęcie</button>
+        </div>
+
+        <div id="preview-container" class="hidden">
+            <img id="preview-image" src="" alt="Preview">
+            <div class="camera-controls">
+                <button class="btn btn-primary" id="retake-btn">🔄 Zrób Ponownie</button>
+                <button class="btn btn-primary" id="upload-btn">✅ Wyślij Zdjęcie</button>
+            </div>
+        </div>
+
+        <div id="upload-loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Wysyłanie zdjęcia...</p>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="success-card" class="card hidden">
+        <h1>🎉 Sukces!</h1>
+        <div class="success-message">
+            <h2 id="points-message"></h2>
+            <p>Twoje zdjęcie zostało zapisane!</p>
+        </div>
+
+        <button class="btn btn-primary mt-3" id="view-gallery-btn">📷 Zobacz galerię zdjęć</button>
+    </div>
+
+    <!-- Photo Gallery -->
+    <div id="gallery-card" class="card hidden">
+        <h1>📸 Galeria Zdjęć</h1>
+        <p class="subtitle">Przeglądaj i lajkuj zdjęcia innych graczy!</p>
+
+        <div id="player-photo-gallery">
+            <!-- Zdjęcia będą tutaj ładowane dynamicznie -->
+        </div>
+
+        <div id="no-player-photos-message" class="alert alert-info text-center mt-3" style="display: none;">
+            <p class="mb-0">Brak zdjęć do wyświetlenia.</p>
+        </div>
+
+        <div class="mt-4">
+            <p class="text-muted text-center">
+                <small>Pozostałe polubienia: <strong id="remaining-likes">-</strong></small>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const eventId = {{ event_id }};
+    let stream = null;
+    let currentPlayerId = null;
+    let currentPlayerName = null;
+
+    // Check if player is already logged in
+    window.addEventListener('DOMContentLoaded', function() {
+        const storedPlayerId = localStorage.getItem(`saperPlayerId_${eventId}`);
+        const storedPlayerName = localStorage.getItem(`saperPlayerName_${eventId}`);
+
+        if (storedPlayerId && storedPlayerName) {
+            // Player already logged in, go directly to camera
+            currentPlayerId = storedPlayerId;
+            currentPlayerName = storedPlayerName;
+            showCamera();
+        } else {
+            // Show registration form
+            document.getElementById('registration-card').classList.remove('hidden');
+        }
+    });
+
+    // Handle registration
+    document.getElementById('start-btn').addEventListener('click', async function() {
+        const name = document.getElementById('player-name').value.trim();
+
+        if (!name) {
+            showError('Proszę podać imię');
+            return;
+        }
+
+        // Register player
+        try {
+            const response = await fetch('/api/player/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    event_id: eventId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd rejestracji');
+            }
+
+            // Save player info
+            currentPlayerId = data.id;
+            currentPlayerName = name;
+            localStorage.setItem(`saperPlayerId_${eventId}`, currentPlayerId);
+            localStorage.setItem(`saperPlayerName_${eventId}`, name);
+
+            // Show camera
+            document.getElementById('registration-card').classList.add('hidden');
+            showCamera();
+
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    function showError(message) {
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.textContent = message;
+        errorMsg.classList.remove('hidden');
+        setTimeout(() => {
+            errorMsg.classList.add('hidden');
+        }, 3000);
+    }
+
+    async function showCamera() {
+        document.getElementById('camera-card').classList.remove('hidden');
+
+        // Start camera
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user' },
+                audio: false
+            });
+            document.getElementById('camera').srcObject = stream;
+        } catch (error) {
+            showError('Nie można uruchomić kamery: ' + error.message);
+        }
+    }
+
+    // Capture photo
+    document.getElementById('capture-btn').addEventListener('click', function() {
+        console.log('📸 Capture button clicked');
+        const video = document.getElementById('camera');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Set canvas dimensions to match video
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        console.log('📐 Canvas dimensions:', { width: canvas.width, height: canvas.height });
+
+        // Draw video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Get image data
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+        console.log('🖼️ Image captured, size:', imageData.length, 'bytes');
+
+        // Show preview
+        document.getElementById('preview-image').src = imageData;
+        document.getElementById('camera').classList.add('hidden');
+        document.getElementById('capture-btn').classList.add('hidden');
+        document.getElementById('preview-container').classList.remove('hidden');
+
+        console.log('👁️ Preview shown');
+    });
+
+    // Retake photo
+    document.getElementById('retake-btn').addEventListener('click', function() {
+        console.log('🔄 Retake button clicked');
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('camera').classList.remove('hidden');
+        document.getElementById('capture-btn').classList.remove('hidden');
+    });
+
+    // Upload photo
+    document.getElementById('upload-btn').addEventListener('click', async function() {
+        console.log('🚀 Upload button clicked');
+        const canvas = document.getElementById('canvas');
+
+        if (!currentPlayerId) {
+            console.error('❌ No player ID');
+            showError('Błąd: brak ID gracza');
+            return;
+        }
+
+        console.log('📤 Starting upload...', {
+            playerId: currentPlayerId,
+            eventId: eventId,
+            canvasWidth: canvas.width,
+            canvasHeight: canvas.height
+        });
+
+        document.getElementById('preview-container').classList.add('hidden');
+        document.getElementById('upload-loading').classList.remove('hidden');
+
+        try {
+            // Convert canvas to blob
+            console.log('🎨 Converting canvas to blob...');
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+            if (!blob) {
+                throw new Error('Nie udało się utworzyć zdjęcia');
+            }
+
+            console.log('✅ Blob created:', {
+                size: blob.size,
+                type: blob.type
+            });
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('photo', blob, 'selfie.jpg');
+            formData.append('player_id', currentPlayerId);
+            formData.append('event_id', eventId);
+
+            console.log('📦 FormData prepared, sending request...');
+
+            // Upload photo
+            const response = await fetch('/api/player/upload_photo', {
+                method: 'POST',
+                body: formData
+            });
+
+            console.log('📡 Response received:', {
+                status: response.status,
+                ok: response.ok
+            });
+
+            const data = await response.json();
+            console.log('📄 Response data:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd uploadu');
+            }
+
+            // Stop camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                console.log('📹 Camera stopped');
+            }
+
+            // Show success
+            document.getElementById('camera-card').classList.add('hidden');
+            document.getElementById('success-card').classList.remove('hidden');
+            document.getElementById('points-message').textContent =
+                `Zdobyłeś ${data.points} punktów!`;
+
+            console.log('🎉 Upload successful!');
+
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            document.getElementById('upload-loading').classList.add('hidden');
+            document.getElementById('preview-container').classList.remove('hidden');
+            showError('Błąd: ' + error.message);
+        }
+    });
+
+    // View gallery button
+    document.getElementById('view-gallery-btn').addEventListener('click', function() {
+        console.log('📷 View gallery button clicked');
+        document.getElementById('success-card').classList.add('hidden');
+        document.getElementById('gallery-card').classList.remove('hidden');
+        loadPlayerGallery();
+    });
+
+    // Load photo gallery for player
+    let playerVotedPhotos = [];
+    let maxLikes = 10;
+
+    async function loadPlayerGallery() {
+        console.log('📸 Loading player gallery...');
+        try {
+            // Get max likes setting
+            const settingsResponse = await fetch(`/api/host/photo/settings/${eventId}`);
+            if (settingsResponse.ok) {
+                const settings = await settingsResponse.json();
+                maxLikes = settings.max_likes || 10;
+            }
+
+            // Get photos
+            const response = await fetch(`/api/photos/${eventId}`);
+            const photos = await response.json();
+
+            console.log(`📷 Loaded ${photos.length} photos`);
+
+            const gallery = document.getElementById('player-photo-gallery');
+            const noPhotosMsg = document.getElementById('no-player-photos-message');
+
+            if (photos.length === 0) {
+                gallery.innerHTML = '';
+                noPhotosMsg.style.display = 'block';
+                return;
+            }
+
+            noPhotosMsg.style.display = 'none';
+
+            // Get player's votes
+            const votesResponse = await fetch(`/api/player/${currentPlayerId}/votes`);
+            if (votesResponse.ok) {
+                playerVotedPhotos = await votesResponse.json();
+            }
+
+            const remainingLikes = maxLikes - playerVotedPhotos.length;
+            document.getElementById('remaining-likes').textContent = remainingLikes;
+
+            gallery.innerHTML = photos.map(photo => {
+                const hasVoted = playerVotedPhotos.includes(photo.id);
+                const isOwnPhoto = photo.player_name === currentPlayerName;
+                const canVote = !isOwnPhoto && !hasVoted && remainingLikes > 0;
+
+                return `
+                    <div class="photo-item">
+                        <img src="${photo.image_url}" alt="Photo by ${photo.player_name}">
+                        <div class="photo-info">
+                            <div class="photo-player-name">${photo.player_name}</div>
+                            <button
+                                class="like-btn ${hasVoted ? 'liked' : ''}"
+                                onclick="handleLike(${photo.id}, this)"
+                                ${!canVote ? 'disabled' : ''}
+                            >
+                                ${hasVoted ? '✓ Polubione' : '❤️ Polub'}
+                            </button>
+                            <div class="votes-count">❤️ ${photo.votes} polubień</div>
+                            ${isOwnPhoto ? '<div class="text-muted mt-2"><small>Twoje zdjęcie</small></div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            console.log('✅ Gallery loaded');
+
+        } catch (error) {
+            console.error('❌ Error loading gallery:', error);
+            showError('Błąd ładowania galerii: ' + error.message);
+        }
+    }
+
+    // Handle like/unlike
+    window.handleLike = async function(photoId, button) {
+        console.log(`❤️ Liking photo ${photoId}...`);
+
+        try {
+            const response = await fetch(`/api/photo/${photoId}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    player_id: currentPlayerId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Błąd głosowania');
+            }
+
+            console.log('✅ Vote registered:', data);
+
+            // Reload gallery to update votes
+            await loadPlayerGallery();
+
+        } catch (error) {
+            console.error('❌ Like error:', error);
+            showError('Błąd: ' + error.message);
+        }
+    };
+</script>
+{% endblock %}
