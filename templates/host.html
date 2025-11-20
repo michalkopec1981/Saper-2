@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Panel Hosta - {{ event.name }}{% endblock %}
+{% block title %}Panel Hosta - {{ event.name }}
+{% endblock %}
 
 {% block styles %}
 <meta charset="UTF-8">
@@ -506,8 +507,150 @@
     body.dark-mode legend {
         color: #c9d1d9 !important;
     }
+
+    /* --- LAYOUT W STYLU MAILERLITE --- */
+    body {
+        overflow: hidden;
+        background-color: #f5f7fa;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #app-wrapper {
+        display: flex;
+        height: 100vh;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    nav.navbar {
+        display: none !important;
+    }
+
+    #sidebar {
+        width: 260px;
+        background-color: #ffffff;
+        border-right: 1px solid #e2e5e8;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        z-index: 1000;
+        height: 100%;
+        overflow-y: auto;
+        transition: margin-left 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 20px 15px;
+        border-bottom: 1px solid #e2e5e8;
+        display: flex;
+        align-items: center;
+    }
+
+    .sidebar-header h5 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 15px 10px;
+        margin: 0;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        color: #5f6368;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        margin-bottom: 4px;
+    }
+
+    .sidebar-link i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+
+    .sidebar-link:hover {
+        background-color: #f4f6f8;
+        color: #222;
+    }
+
+    .sidebar-link.active {
+        background-color: #ebf5fa;
+        color: #007bff;
+        font-weight: 600;
+    }
+
+    #main-content {
+        flex-grow: 1;
+        background-color: #f5f7fa;
+        overflow-y: auto;
+        padding: 30px;
+        height: 100%;
+        position: relative;
+    }
+
+    .content-section {
+        display: none;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .content-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile menu */
+    #mobile-menu-toggle {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1001;
+        background: white;
+        border: 1px solid #e2e5e8;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+    @media (max-width: 992px) {
+        #mobile-menu-toggle {
+            display: block;
+        }
+
+        #sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            margin-left: -260px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        #sidebar.show {
+            margin-left: 0;
+        }
+
+        #main-content {
+            padding: 70px 15px 15px 15px;
+        }
+    }
+
 </style>
-{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -525,30 +668,44 @@
         <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otwórz Ekran Gry</a>
     </div>
 
-    <ul class="nav nav-tabs mb-4" id="hostTabs">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings" data-translate="tab_settings">Ustawienia</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
-        {% if is_superhost %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
-        {% endif %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania runda 1</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r2">Pytania runda 2</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#questions-r3">Pytania runda 3</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#fortune" data-translate="tab_fortune">Wróżka AI</button></li>
-        <li class="nav-item"><button id="minigry-tab" class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#voting" data-translate="tab_voting">Głosowanie</button></li>
-        <li class="nav-item"><button class="nav-link game-tab" data-bs-toggle="tab" data-bs-target="#live" data-translate="tab_live">Na żywo</button></li>
-    </ul>
+    
 
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="game">
+    
+    <div id="app-wrapper">
+        <button id="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <i class="bi bi-list"></i> Menu
+        </button>
+
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <i class="bi bi-grid-1x2-fill text-primary me-2"></i>
+                <h5>Host Panel</h5>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a class="sidebar-link active" onclick="showSection('pulpit', this)"><i class="bi bi-speedometer2"></i> <span data-translate="tab_game">Pulpit (Gra)</span></a></li>
+                <li><a class="sidebar-link" onclick="showSection('ustawienia', this)"><i class="bi bi-gear"></i> <span data-translate="tab_settings">Ustawienia</span></a></li>
+                <li><a class="sidebar-link" onclick="showSection('czas', this)"><i class="bi bi-clock"></i> <span data-translate="tab_timing">Czas i tempo</span></a></li>
+                <li><a class="sidebar-link" onclick="showSection('gracze', this)"><i class="bi bi-people"></i> <span data-translate="tab_players">Gracze</span></a></li>
+                <li><a class="sidebar-link" onclick="showSection('haslo', this)"><i class="bi bi-key"></i> <span data-translate="tab_password">Hasło</span></a></li>
+                <li><a class="sidebar-link" onclick="showSection('wyswietlacz', this)"><i class="bi bi-display"></i> <span data-translate="tab_display">Wyświetlacz</span></a></li>
+                {% if is_superhost %}
+                <li><a class="sidebar-link" onclick="showSection('kody-qr', this)"><i class="bi bi-qr-code"></i> <span data-translate="tab_qrcodes">Kody QR</span></a></li>
+                {% endif %}
+                <li><a class="sidebar-link" onclick="showSection('ar', this)"><i class="bi bi-badge-ar"></i> <span data-translate="tab_ar">AR</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('pytania-r1', this)"><i class="bi bi-question-circle"></i> <span data-translate="tab_questions">Pytania runda 1</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('pytania-r2', this)"><i class="bi bi-question-circle"></i> Pytania runda 2</a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('pytania-r3', this)"><i class="bi bi-question-circle"></i> Pytania runda 3</a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('ai', this)"><i class="bi bi-robot"></i> <span data-translate="tab_ai">AI</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('wrozka', this)"><i class="bi bi-crystal-ball"></i> <span data-translate="tab_fortune">Wróżka AI</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('minigry', this)"><i class="bi bi-controller"></i> <span data-translate="tab_minigames">Minigry</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('foto', this)"><i class="bi bi-camera"></i> <span data-translate="tab_photo">Foto</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('glosowanie', this)"><i class="bi bi-hand-thumbs-up"></i> <span data-translate="tab_voting">Głosowanie</span></a></li>
+                <li><a class="sidebar-link game-tab" onclick="showSection('na-zywo', this)"><i class="bi bi-broadcast"></i> <span data-translate="tab_live">Na żywo</span></a></li>
+            </ul>
+        </nav>
+
+        <div id="main-content">
+        <div class="content-section active" id="pulpit">
             <!-- 1. INFORMACJE O GRZE (bez zmian) -->
             <div class="card mb-4">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="game_info">Informacje o grze</h5></div>
@@ -715,9 +872,9 @@
                     </div>
                 </div>
             </fieldset>
-        </div>  <!-- ✅ To musi mieć zamknięcie -->
+        </div>  <!-- end content-section -->
 
-        <div class="tab-pane fade" id="settings">
+        <div class="content-section" id="ustawienia">
             <!-- Dark Mode Toggle Card -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -775,7 +932,7 @@
         </div>
 
         {% if is_superhost %}
-        <div class="tab-pane fade" id="qrcodes">
+        <div class="content-section" id="kody-qr">
             <!-- Kod QR Gracza -->
             <div class="card mx-auto mb-4">
                 <div class="card-header bg-success text-white">
@@ -802,7 +959,7 @@
         </div>
         {% endif %}
 
-        <div class="tab-pane fade" id="password">
+        <div class="content-section" id="haslo">
             <div class="card mb-3">
                 <div class="card-header"><h5 class="card-title mb-0">1. Edycja hasła</h5></div>
                 <div class="card-body">
@@ -873,7 +1030,7 @@
             </div>
         </div>
         
-        <div class="tab-pane fade" id="players">
+        <div class="content-section" id="gracze">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="players_management">Zarządzanie graczami</h5>
@@ -939,7 +1096,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="questions">
+        <div class="content-section" id="pytania-r1">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
@@ -1057,7 +1214,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="ai">
+        <div class="content-section" id="ai">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
@@ -1198,7 +1355,7 @@
         </div>
 
         <!-- Pytania Runda 2 -->
-        <div class="tab-pane fade" id="questions-r2">
+        <div class="content-section" id="pytania-r2">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Zarządzanie pytaniami - Runda 2</h5>
@@ -1348,7 +1505,7 @@
         </div>
 
         <!-- Pytania Runda 3 -->
-        <div class="tab-pane fade" id="questions-r3">
+        <div class="content-section" id="pytania-r3">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Zarządzanie pytaniami - Runda 3</h5>
@@ -1497,7 +1654,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="minigames">
+        <div class="content-section" id="minigry">
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
                 <div class="card-body">
@@ -1672,7 +1829,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="photo">
+        <div class="content-section" id="foto">
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
                 <div class="card-body">
@@ -1767,7 +1924,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="voting">
+        <div class="content-section" id="glosowanie">
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="voting_tab">Głosowanie</h5></div>
                 <div class="card-body">
@@ -1917,7 +2074,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="live">
+        <div class="content-section" id="na-zywo">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="live_tab">Na żywo</h5>
@@ -2124,7 +2281,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="ar">
+        <div class="content-section" id="ar">
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
                 <div class="card-body">
@@ -2152,7 +2309,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="fortune">
+        <div class="content-section" id="wrozka">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="fortune_title">Wróżka AI - atrakcja wykorzystująca sztuczną inteligencję</h5>
@@ -2227,7 +2384,7 @@
             </div>
         </div>
 
-        <div class="tab-pane fade" id="timing">
+        <div class="content-section" id="czas">
             <fieldset id="timing-settings" disabled>
                 <div class="card mb-4">
                     <div class="card-header"><h5 class="card-title mb-0" data-translate="timing_settings">Czas i tempo gry</h5></div>
@@ -2264,7 +2421,7 @@
         </div>
 
         <!-- ✅ NOWA ZAKŁADKA: WYŚWIETLACZ -->
-        <div class="tab-pane fade" id="display">
+        <div class="content-section" id="wyswietlacz">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0" data-translate="display_tab">Ustawienia wyświetlacza</h5>
@@ -2689,7 +2846,6 @@
     </div>
 </div>
 
-{% endblock %}
 
 {% block scripts %}
 {{ super() }}
@@ -8698,8 +8854,42 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sprawdź timery przy załadowaniu strony
     checkActiveTimers();
 
+
+
+    // Funkcja przełączania sekcji
+    function showSection(sectionId, element) {
+        // Ukryj wszystkie sekcje
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+
+        // Pokaż wybraną sekcję
+        const target = document.getElementById(sectionId);
+        if (target) {
+            target.classList.add('active');
+        }
+
+        // Zaktualizuj aktywny link w sidebar
+        document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+        if (element) {
+            element.classList.add('active');
+        }
+
+        // Zamknij menu mobilne jeśli jest otwarte
+        if (window.innerWidth <= 992) {
+            toggleMobileMenu();
+        }
+    }
+
+    // Funkcja przełączania menu mobilnego
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('show');
+    }
+
+
 });
 </script>
+        </div> <!-- end main-content -->
+    </div> <!-- end app-wrapper -->
 {% endblock %}
 
 
