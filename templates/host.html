@@ -1959,16 +1959,7 @@
                     <div class="card mb-3 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3">Ustawienia</h6>
-                            <div class="mb-3">
-                                <label for="live-button-count" class="form-label">Liczba przycisków odpowiedzi</label>
-                                <select class="form-select" id="live-button-count">
-                                    <option value="2">2 (A, B)</option>
-                                    <option value="3" selected>3 (A, B, C)</option>
-                                    <option value="4">4 (A, B, C, D)</option>
-                                </select>
-                                <small class="text-muted">Wybierz ile przycisków odpowiedzi zobaczą gracze</small>
-                            </div>
-                            <button class="btn btn-success" onclick="saveLiveSettings()">Zapisz ustawienia</button>
+                            <p class="text-muted">Liczba przycisków odpowiedzi jest dostosowywana automatycznie do liczby wypełnionych pól w pytaniu.</p>
                         </div>
                     </div>
 
@@ -1981,26 +1972,35 @@
                                 <textarea class="form-control" id="live-new-question-text" rows="2" placeholder="Możesz zostawić puste jeśli czytasz pytanie ze sceny"></textarea>
                                 <small class="text-muted">Jeśli wypełnisz, gracze zobaczą pytanie w swoich telefonach</small>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="live-new-option-a" class="form-label">Odpowiedź A</label>
-                                    <input type="text" class="form-control" id="live-new-option-a" placeholder="Opcjonalnie">
+
+                            <!-- Pola odpowiedzi -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Odpowiedzi:</strong></label>
+                                <div id="live-answers-container">
+                                    <div class="input-group mb-2 live-answer-item">
+                                        <span class="input-group-text">Odpowiedź A</span>
+                                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                                            <span class="ms-2 small">Poprawna</span>
+                                        </div>
+                                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                                    </div>
+                                    <div class="input-group mb-2 live-answer-item">
+                                        <span class="input-group-text">Odpowiedź B</span>
+                                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                                            <span class="ms-2 small">Poprawna</span>
+                                        </div>
+                                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="live-new-option-b" class="form-label">Odpowiedź B</label>
-                                    <input type="text" class="form-control" id="live-new-option-b" placeholder="Opcjonalnie">
-                                </div>
+                                <button class="btn btn-sm btn-outline-primary" id="live-add-answer-btn">
+                                    + Dodaj nowe pole
+                                </button>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="live-new-option-c" class="form-label">Odpowiedź C</label>
-                                    <input type="text" class="form-control" id="live-new-option-c" placeholder="Opcjonalnie">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="live-new-option-d" class="form-label">Odpowiedź D</label>
-                                    <input type="text" class="form-control" id="live-new-option-d" placeholder="Opcjonalnie">
-                                </div>
-                            </div>
+
                             <div class="mb-3">
                                 <label for="live-new-time-limit" class="form-label">Limit czasu (sekundy)</label>
                                 <input type="number" class="form-control" id="live-new-time-limit" value="30" min="5" max="180">
@@ -2027,18 +2027,16 @@
                             <h6 class="mb-3">⚡ Aktywne pytanie</h6>
                             <div id="live-active-question-content">
                                 <p class="mb-2"><strong id="live-active-q-text"></strong></p>
+                                <div id="live-active-options" class="mb-3 small"></div>
                                 <div id="live-active-timer" class="mb-3">
                                     <h4 class="text-danger">Czas: <span id="live-timer-display">30</span>s</h4>
                                 </div>
                                 <div class="mb-3">
                                     <strong>Odpowiedzi graczy: <span id="live-answers-count">0</span></strong>
                                 </div>
-                                <h6 class="mb-2">Ujawnij poprawną odpowiedź:</h6>
-                                <div class="btn-group w-100" role="group">
-                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('A')">A</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('B')">B</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('C')">C</button>
-                                    <button type="button" class="btn btn-outline-primary" onclick="revealAnswer('D')">D</button>
+                                <h6 class="mb-2">Ujawnij poprawną odpowiedź (można wybrać wiele):</h6>
+                                <div id="live-reveal-buttons" class="d-flex flex-wrap gap-2" role="group">
+                                    <!-- Przyciski generowane dynamicznie -->
                                 </div>
                             </div>
                         </div>
@@ -7471,15 +7469,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Save Live Mode settings
     window.saveLiveSettings = async function() {
         const enabled = document.getElementById('live-enabled').checked;
-        const buttonCount = parseInt(document.getElementById('live-button-count').value);
 
         try {
             const response = await fetch('/api/host/live/session', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    is_enabled: enabled,
-                    button_count: buttonCount
+                    is_enabled: enabled
                 })
             });
 
@@ -7510,14 +7506,103 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Handle adding new answer fields for Live mode
+    const liveAddAnswerBtn = document.getElementById('live-add-answer-btn');
+    if (liveAddAnswerBtn) {
+        liveAddAnswerBtn.addEventListener('click', function() {
+            const container = document.getElementById('live-answers-container');
+            const currentCount = container.querySelectorAll('.live-answer-item').length;
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            if (currentCount < 26) {
+                const newLetter = letters[currentCount];
+                const newItem = document.createElement('div');
+                newItem.className = 'input-group mb-2 live-answer-item';
+                newItem.innerHTML = `
+                    <span class="input-group-text">Odpowiedź ${newLetter}</span>
+                    <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                    <div class="input-group-text">
+                        <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                        <span class="ms-2 small">Poprawna</span>
+                    </div>
+                    <button class="btn btn-danger live-remove-answer-btn" type="button">×</button>
+                `;
+
+                // Add event listener to the remove button
+                const removeBtn = newItem.querySelector('.live-remove-answer-btn');
+                removeBtn.addEventListener('click', function() {
+                    newItem.remove();
+                    updateLiveAnswerLabels();
+                    updateLiveRemoveButtons();
+                });
+
+                container.appendChild(newItem);
+                updateLiveRemoveButtons();
+            }
+        });
+    }
+
+    // Update answer labels after removal
+    function updateLiveAnswerLabels() {
+        const items = document.querySelectorAll('#live-answers-container .live-answer-item');
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        items.forEach((item, index) => {
+            const label = item.querySelector('.input-group-text');
+            if (label) {
+                label.textContent = `Odpowiedź ${letters[index]}`;
+            }
+        });
+    }
+
+    // Update visibility of remove buttons (always show for >2 items)
+    function updateLiveRemoveButtons() {
+        const items = document.querySelectorAll('#live-answers-container .live-answer-item');
+        items.forEach((item, index) => {
+            const removeBtn = item.querySelector('.live-remove-answer-btn');
+            if (removeBtn) {
+                // Show remove button only if there are more than 2 items
+                if (items.length > 2) {
+                    removeBtn.style.display = 'block';
+                    // Add event listener if not already present
+                    if (!removeBtn.hasAttribute('data-listener')) {
+                        removeBtn.setAttribute('data-listener', 'true');
+                        removeBtn.addEventListener('click', function() {
+                            item.remove();
+                            updateLiveAnswerLabels();
+                            updateLiveRemoveButtons();
+                        });
+                    }
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            }
+        });
+    }
+
     // Create new live question
     window.createLiveQuestion = async function() {
         const questionText = document.getElementById('live-new-question-text').value;
-        const optionA = document.getElementById('live-new-option-a').value;
-        const optionB = document.getElementById('live-new-option-b').value;
-        const optionC = document.getElementById('live-new-option-c').value;
-        const optionD = document.getElementById('live-new-option-d').value;
         const timeLimit = parseInt(document.getElementById('live-new-time-limit').value);
+
+        // Collect answers and correct answers from dynamic fields
+        const answerItems = document.querySelectorAll('#live-answers-container .live-answer-item');
+        const options = {};
+        const correctAnswers = [];
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        answerItems.forEach((item, index) => {
+            const input = item.querySelector('.live-answer-input');
+            const checkbox = item.querySelector('.live-correct-checkbox');
+            const letter = letters[index];
+
+            if (input && input.value.trim()) {
+                options[`option_${letter.toLowerCase()}`] = input.value.trim();
+
+                if (checkbox && checkbox.checked) {
+                    correctAnswers.push(letter);
+                }
+            }
+        });
 
         try {
             const response = await fetch('/api/host/live/question', {
@@ -7525,10 +7610,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     question_text: questionText,
-                    option_a: optionA,
-                    option_b: optionB,
-                    option_c: optionC,
-                    option_d: optionD,
+                    ...options,
+                    correct_answers: correctAnswers,
                     time_limit: timeLimit
                 })
             });
@@ -7537,11 +7620,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Pytanie dodane');
                 // Clear form
                 document.getElementById('live-new-question-text').value = '';
-                document.getElementById('live-new-option-a').value = '';
-                document.getElementById('live-new-option-b').value = '';
-                document.getElementById('live-new-option-c').value = '';
-                document.getElementById('live-new-option-d').value = '';
                 document.getElementById('live-new-time-limit').value = '30';
+
+                // Reset answer fields to initial state (A and B only)
+                const container = document.getElementById('live-answers-container');
+                container.innerHTML = `
+                    <div class="input-group mb-2 live-answer-item">
+                        <span class="input-group-text">Odpowiedź A</span>
+                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                        <div class="input-group-text">
+                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                            <span class="ms-2 small">Poprawna</span>
+                        </div>
+                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                    </div>
+                    <div class="input-group mb-2 live-answer-item">
+                        <span class="input-group-text">Odpowiedź B</span>
+                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                        <div class="input-group-text">
+                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                            <span class="ms-2 small">Poprawna</span>
+                        </div>
+                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                    </div>
+                `;
+                updateLiveRemoveButtons();
+
                 loadLiveQuestions();
             } else {
                 const data = await response.json();
@@ -7561,31 +7665,47 @@ document.addEventListener('DOMContentLoaded', function () {
             const container = document.getElementById('live-questions-list');
 
             if (data.questions && data.questions.length > 0) {
-                container.innerHTML = data.questions.map(q => `
-                    <div class="card mb-2 ${q.is_active ? 'border-warning' : ''}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <p class="mb-1"><strong>${q.question_text || '(Pytanie czytane ze sceny)'}</strong></p>
-                                    ${q.option_a ? `<small>A: ${q.option_a}</small><br>` : ''}
-                                    ${q.option_b ? `<small>B: ${q.option_b}</small><br>` : ''}
-                                    ${q.option_c ? `<small>C: ${q.option_c}</small><br>` : ''}
-                                    ${q.option_d ? `<small>D: ${q.option_d}</small><br>` : ''}
-                                    <small class="text-muted">Limit: ${q.time_limit}s | Odpowiedzi: ${q.total_answers}</small>
-                                    ${q.is_revealed ? `<br><small class="text-success">Poprawna: ${q.correct_answer} (${q.correct_answers} poprawnych)</small>` : ''}
-                                </div>
-                                <div class="btn-group-vertical ms-2">
-                                    ${!q.is_active && !q.is_revealed ? `
-                                        <button class="btn btn-sm btn-success" onclick="startLiveQuestion(${q.id})">▶ Start</button>
-                                    ` : ''}
-                                    ${q.is_active ? `<span class="badge bg-warning">Aktywne</span>` : ''}
-                                    ${q.is_revealed ? `<span class="badge bg-info">Zakończone</span>` : ''}
-                                    <button class="btn btn-sm btn-danger" onclick="deleteLiveQuestion(${q.id})">🗑</button>
+                container.innerHTML = data.questions.map(q => {
+                    // Build options dynamically
+                    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    let optionsHtml = '';
+                    for (let i = 0; i < letters.length; i++) {
+                        const letter = letters[i].toLowerCase();
+                        const optionKey = `option_${letter}`;
+                        if (q[optionKey]) {
+                            optionsHtml += `<small>${letters[i]}: ${q[optionKey]}</small><br>`;
+                        }
+                    }
+
+                    // Display correct answers
+                    let correctAnswersHtml = '';
+                    if (q.is_revealed && q.correct_answer) {
+                        correctAnswersHtml = `<br><small class="text-success">Poprawna: ${q.correct_answer} (${q.correct_answers || 0} poprawnych)</small>`;
+                    }
+
+                    return `
+                        <div class="card mb-2 ${q.is_active ? 'border-warning' : ''}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1"><strong>${q.question_text || '(Pytanie czytane ze sceny)'}</strong></p>
+                                        ${optionsHtml}
+                                        <small class="text-muted">Limit: ${q.time_limit}s | Odpowiedzi: ${q.total_answers || 0}</small>
+                                        ${correctAnswersHtml}
+                                    </div>
+                                    <div class="btn-group-vertical ms-2">
+                                        ${!q.is_active && !q.is_revealed ? `
+                                            <button class="btn btn-sm btn-success" onclick="startLiveQuestion(${q.id})">▶ Start</button>
+                                        ` : ''}
+                                        ${q.is_active ? `<span class="badge bg-warning">Aktywne</span>` : ''}
+                                        ${q.is_revealed ? `<span class="badge bg-info">Zakończone</span>` : ''}
+                                        <button class="btn btn-sm btn-danger" onclick="deleteLiveQuestion(${q.id})">🗑</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } else {
                 container.innerHTML = '<p class="text-muted text-center">Brak pytań. Dodaj nowe pytanie powyżej.</p>';
             }
@@ -7617,11 +7737,88 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // Show active question panel
-    function showActiveQuestionPanel(questionId) {
-        const card = document.getElementById('live-active-question-card');
-        card.style.display = 'block';
-        // Scroll to active question card
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    async function showActiveQuestionPanel(questionId) {
+        try {
+            // Fetch question details to show options
+            const response = await fetch('/api/host/live/questions');
+            const data = await response.json();
+            const question = data.questions.find(q => q.id === questionId);
+
+            if (!question) return;
+
+            // Update question text
+            const questionTextEl = document.getElementById('live-active-q-text');
+            if (questionTextEl) {
+                questionTextEl.textContent = question.question_text || '(Pytanie czytane ze sceny)';
+            }
+
+            // Display options
+            const optionsEl = document.getElementById('live-active-options');
+            if (optionsEl) {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let optionsHtml = '';
+                for (let i = 0; i < letters.length; i++) {
+                    const letter = letters[i].toLowerCase();
+                    const optionKey = `option_${letter}`;
+                    if (question[optionKey]) {
+                        optionsHtml += `<div><strong>${letters[i]}:</strong> ${question[optionKey]}</div>`;
+                    }
+                }
+                optionsEl.innerHTML = optionsHtml;
+            }
+
+            // Generate reveal buttons dynamically
+            const buttonsContainer = document.getElementById('live-reveal-buttons');
+            if (buttonsContainer) {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let buttonsHtml = '';
+                for (let i = 0; i < letters.length; i++) {
+                    const letter = letters[i].toLowerCase();
+                    const optionKey = `option_${letter}`;
+                    if (question[optionKey]) {
+                        buttonsHtml += `<button type="button" class="btn btn-outline-primary live-reveal-btn" data-answer="${letters[i]}">${letters[i]}</button>`;
+                    }
+                }
+                buttonsContainer.innerHTML = buttonsHtml;
+
+                // Add event listeners to buttons
+                const selectedAnswers = new Set();
+                buttonsContainer.querySelectorAll('.live-reveal-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const answer = this.dataset.answer;
+                        if (selectedAnswers.has(answer)) {
+                            selectedAnswers.delete(answer);
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-outline-primary');
+                        } else {
+                            selectedAnswers.add(answer);
+                            this.classList.remove('btn-outline-primary');
+                            this.classList.add('btn-success');
+                        }
+                    });
+                });
+
+                // Add final reveal button
+                const revealBtn = document.createElement('button');
+                revealBtn.className = 'btn btn-danger w-100 mt-2';
+                revealBtn.textContent = '✅ Ujawnij wybrane odpowiedzi';
+                revealBtn.onclick = function() {
+                    if (selectedAnswers.size === 0) {
+                        alert('Wybierz przynajmniej jedną poprawną odpowiedź');
+                        return;
+                    }
+                    revealAnswers(Array.from(selectedAnswers));
+                };
+                buttonsContainer.appendChild(revealBtn);
+            }
+
+            const card = document.getElementById('live-active-question-card');
+            card.style.display = 'block';
+            // Scroll to active question card
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (error) {
+            console.error('Error showing active question panel:', error);
+        }
     }
 
     // Hide active question panel
@@ -7656,19 +7853,27 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 1000);
     }
 
-    // Reveal answer
+    // Reveal answer (legacy function for backwards compatibility)
     window.revealAnswer = async function(answer) {
+        return revealAnswers([answer]);
+    };
+
+    // Reveal answers (supports multiple correct answers)
+    window.revealAnswers = async function(answers) {
         if (!activeQuestionId) return;
 
         try {
             const response = await fetch(`/api/host/live/question/${activeQuestionId}/reveal`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ correct_answer: answer })
+                body: JSON.stringify({
+                    correct_answer: answers.join(','),  // Send as comma-separated string
+                    correct_answers: answers  // Also send as array
+                })
             });
 
             if (response.ok) {
-                console.log(`Poprawna odpowiedź: ${answer}`);
+                console.log(`Poprawne odpowiedzi: ${answers.join(', ')}`);
                 activeQuestionId = null;
                 hideActiveQuestionPanel();
                 loadLiveQuestions();
