@@ -1130,6 +1130,11 @@ def reset_event(event_id):
         AIQuestion.query.filter_by(event_id=event_id).delete()
         AIPlayerAnswer.query.filter_by(event_id=event_id).delete()
         AICategory.query.filter_by(event_id=event_id).delete()
+
+        # Usuń pytania i odpowiedzi z trybu "Na żywo"
+        LivePlayerAnswer.query.filter_by(event_id=event_id).delete()
+        LiveQuestion.query.filter_by(event_id=event_id).delete()
+
         db.session.commit()
 
         # Po resecie nie ma kategorii AI - użytkownik może dodać własne
@@ -1138,6 +1143,10 @@ def reset_event(event_id):
         emit_leaderboard_update(room)
         emit_password_update(room)
         emit_full_state_update(room)
+
+        # Powiadom hosty o resecie pytań Live Mode
+        socketio.emit('live_questions_reset', {}, room=room)
+
         return jsonify({'message': f'Gra dla eventu {event_id} została zresetowana.'})
     except Exception as e:
         db.session.rollback()

@@ -7953,6 +7953,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Live answer revealed:', data);
             loadLiveQuestions();
         });
+
+        socket.on('live_questions_reset', function(data) {
+            console.log('Live questions reset by admin');
+            loadLiveQuestions();
+            // Ukryj aktywne pytanie jeśli było wyświetlane
+            hideActiveQuestionPanel();
+        });
     }
 
     // Initialize Live Mode on page load
