@@ -2,2800 +2,801 @@
 {% block title %}Panel Hosta - {{ event.name }}{% endblock %}
 
 {% block styles %}
-<meta charset="UTF-8">
 {{ super() }}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Ikony Bootstrap -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
 <style>
-    .btn-group .btn.active-modifier {
-        background-color: #0d6efd;
-        color: white;
-        border-color: #0d6efd;
+    /* --- 1. BAZA LAYOUTU (MAILERLITE STYLE) --- */
+    body {
+        overflow: hidden; /* Blokujemy scroll całego okna, scrollujemy tylko content */
+        background-color: #f5f7fa; /* Jasnoszare tło typowe dla paneli SaaS */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin: 0; padding: 0;
     }
-    #info-time-left {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #dc3545;
+
+    /* Ukrycie starego navbara z base.html, jeśli istnieje */
+    nav.navbar { display: none !important; }
+
+    /* Główny kontener Flexbox */
+    #app-wrapper {
+        display: flex;
+        height: 100vh;
+        width: 100%;
     }
-    #info-time-elapsed, #info-time-elapsed-pauses {
+
+    /* --- 2. SIDEBAR (LEWA STRONA) --- */
+    #sidebar {
+        width: 260px;
+        background-color: #ffffff;
+        border-right: 1px solid #e2e5e8;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        overflow-y: auto;
+        z-index: 1000;
+        transition: margin-left 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        position: sticky;
+        top: 0;
+    }
+
+    .sidebar-header h5 { margin: 0; font-weight: 700; color: #333; font-size: 1.1rem; }
+
+    .sidebar-menu { list-style: none; padding: 15px 10px; margin: 0; }
+    .sidebar-menu li { margin-bottom: 2px; }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        color: #5f6368;
+        text-decoration: none;
+        font-size: 0.95rem;
         font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
-    .question-item {
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-    }
-    .question-stats {
-        font-size: 0.875rem;
-        color: #6c757d;
-    }
-    /* Style dla statusu gry */
-    #info-game-status {
+
+    .sidebar-link:hover { background-color: #f4f6f8; color: #222; text-decoration: none; }
+
+    /* Styl aktywnej zakładki */
+    .sidebar-link.active {
+        background-color: #ebf5fa;
+        color: #007bff;
         font-weight: 600;
     }
-    #info-game-status.status-waiting {
-        color: #6c757d;
-    }
-    #info-game-status.status-active {
-        color: #198754;
-    }
-    #info-game-status.status-paused {
-        color: #ffc107;
-    }
-    #info-game-status.status-stopped {
-        color: #dc3545;
+
+    .sidebar-link i { margin-right: 12px; font-size: 1.1rem; width: 20px; text-align: center; }
+
+    /* --- 3. MAIN CONTENT (PRAWA STRONA) --- */
+    #main-content {
+        flex-grow: 1;
+        background-color: #f5f7fa;
+        overflow-y: auto;
+        padding: 30px;
+        position: relative;
     }
 
-    /* ✅ NOWE: Style dla klikalnego pola hasła */
-    #password-preview-card {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    #password-preview-card:hover {
-        background-color: #f8f9fa;
+    .content-wrapper { max-width: 1600px; margin: 0 auto; }
+
+    /* Sekcje treści - domyślnie ukryte */
+    .content-section { display: none; animation: fadeIn 0.2s ease-out; }
+    .content-section.active { display: block; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Styl dla zakładki Minigry */
-    #minigry-tab {
-        background-color: #dc3545 !important;
-        color: white !important;
-    }
-    #minigry-tab:hover {
-        background-color: #bb2d3b !important;
-        color: white !important;
-    }
-    #minigry-tab.active {
-        background-color: #b02a37 !important;
-        color: white !important;
+    /* --- 4. KOMPONENTY UI (KARTY, TIMERY) --- */
+    .panel-card {
+        background: #fff;
+        border: 1px solid #e2e5e8;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
-    /* Styl dla przycisku szybkiej nawigacji Minigry */
-    .quick-tab-btn[data-tab="minigames"] {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #e2e5e8;
+        padding-bottom: 15px;
     }
-    .quick-tab-btn[data-tab="minigames"]:hover {
-        background-color: #bb2d3b !important;
-        border-color: #bb2d3b !important;
+
+    /* Styl Timerów */
+    .timer-display { font-family: 'Courier New', monospace; font-weight: bold; font-size: 2.5rem; }
+
+    /* Statusy gry */
+    .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+    .status-active { background-color: #28a745; }
+    .status-paused { background-color: #ffc107; }
+    .status-waiting { background-color: #6c757d; }
+
+    /* Pytania */
+    .question-item { border: 1px solid #edf0f2; background: #fff; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
+    .question-item.active-q { border-left: 5px solid #007bff; background-color: #f8fbff; }
+
+    /* --- 5. MOBILE --- */
+    #mobile-menu-toggle {
+        display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1100;
+        width: 56px; height: 56px; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+
+    @media (max-width: 992px) {
+        #sidebar { position: fixed; left: -260px; top: 0; bottom: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+        #sidebar.open { left: 0; }
+        #mobile-menu-toggle { display: flex; }
+        #main-content { padding: 15px; }
+        #sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 999;
+        }
+        #sidebar-overlay.visible { display: block; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    {% if is_impersonated %}
-    <div class="alert alert-warning d-flex justify-content-between align-items-center">
-        <span data-translate="admin_impersonate">Jesteś zalogowany jako Admin w panelu Hosta.</span>
-        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-warning" data-translate="back_to_admin">Powrót do panelu Admina</a>
-    </div>
-    {% endif %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-0" data-translate="host_title">ORGANIZACJA GRY</h1>
-            <h3 class="text-muted mb-0">{{ event.name }}</h3>
+<div id="app-wrapper">
+
+    <!-- SIDEBAR MENU -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <i class="bi bi-grid-1x2-fill text-primary me-2"></i>
+            <h5>Host Panel</h5>
         </div>
-        <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otwórz Ekran Gry</a>
-    </div>
 
-    <ul class="nav nav-tabs mb-4" id="hostTabs">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#game" data-translate="tab_game">Gra</button></li>
-        {% if is_superhost %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#qrcodes" data-translate="tab_qrcodes">Kody QR</button></li>
-        {% endif %}
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#password" data-translate="tab_password">Hasło</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#players" data-translate="tab_players">Gracze</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#questions" data-translate="tab_questions">Pytania</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai" data-translate="tab_ai">AI</button></li>
-        <li class="nav-item"><button id="minigry-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#minigames" data-translate="tab_minigames">Minigry</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#timing" data-translate="tab_timing">Czas i tempo</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#photo" data-translate="tab_photo">Foto</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ar" data-translate="tab_ar">AR</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#display" data-translate="tab_display">Wyświetlacz</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#language" data-translate="tab_language">Język</button></li>
-    </ul>
+        <ul class="sidebar-menu">
+            <li><a class="sidebar-link active" onclick="showSection('pulpit', this)"><i class="bi bi-speedometer2"></i> Pulpit (Gra)</a></li>
+            <li><a class="sidebar-link" onclick="showSection('ustawienia', this)"><i class="bi bi-gear"></i> Ustawienia</a></li>
+            <li><a class="sidebar-link" onclick="showSection('czas', this)"><i class="bi bi-stopwatch"></i> Czas i tempo</a></li>
+            <li><a class="sidebar-link" onclick="showSection('gracze', this)"><i class="bi bi-people"></i> Gracze</a></li>
+            <li><a class="sidebar-link" onclick="showSection('haslo', this)"><i class="bi bi-input-cursor-text"></i> Hasło</a></li>
+            <li><a class="sidebar-link" onclick="showSection('wyswietlacz', this)"><i class="bi bi-tv"></i> Wyświetlacz</a></li>
+            <li><a class="sidebar-link" onclick="showSection('kody-qr', this)"><i class="bi bi-qr-code"></i> Kody QR</a></li>
+            <li><a class="sidebar-link" onclick="showSection('ar', this)"><i class="bi bi-box-seam"></i> AR</a></li>
 
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="game">
-            <!-- 1. INFORMACJE O GRZE (bez zmian) -->
-            <div class="card mb-4">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="game_info">Informacje o grze</h5></div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="player_count">Liczba graczy:</span> 
-                                    <span id="info-player-count" class="badge bg-primary rounded-pill">0</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="completion_percentage">Procent ukończenia:</span> 
-                                    <span id="info-completion-percentage" class="badge bg-success rounded-pill">0%</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="language_host_label">Język prowadzącego:</span> 
-                                    <span id="info-language" class="badge bg-secondary">Polski</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4">
-                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="time_left">Czas do końca:</span> 
-                                    <strong id="info-time-left">00:00</strong>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="time_net">Czas gry (netto):</span> 
-                                    <span id="info-time-elapsed">00:00</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="time_gross">Czas gry (brutto):</span> 
-                                    <span id="info-time-elapsed-pauses">00:00</span>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4">
-                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="current_bonus">Aktualna premia:</span> 
-                                    <span id="info-bonus" class="badge bg-success">Brak</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="current_speed">Aktualne tempo:</span> 
-                                    <span id="info-speed" class="badge bg-info">x1</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span data-translate="game_status_label">Stan gry:</span> 
-                                    <span id="info-game-status" class="status-waiting">Oczekiwanie na Start</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        
-            <!-- 2. OBSŁUGA GRY (nowa pozycja - pełna szerokość) -->
-            <fieldset id="pre-game-settings">
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Obsługa gry</h5></div>
-                    <div class="card-body">
-                        <!-- Pierwszy rząd: główne przyciski sterowania -->
-                        <div class="row g-2 mb-3">
-                            <div class="col-3">
-                                <button id="start-game" class="btn btn-success w-100" data-translate="start_game">Start Gry</button>
-                            </div>
-                            <div class="col-3">
-                                <button id="pause-btn" data-control="pause" class="btn btn-warning w-100" data-translate="pause">Pauza</button>
-                            </div>
-                            <div class="col-3">
-                                <button id="stop-game" class="btn btn-danger w-100" data-translate="stop_game">Stop Gry</button>
-                            </div>
-                            <div class="col-3">
-                                <button id="reset-game" class="btn btn-dark w-100" data-translate="reset_game">Reset Gry</button>
-                            </div>
-                        </div>
-        
-                        <hr>
-        
-                        <!-- Drugi rząd: szybki dostęp do zakładek -->
-                        <div class="row g-2">
-                            {% if is_superhost %}
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="qrcodes" data-translate="tab_qrcodes">Kody QR</button>
-                            </div>
-                            {% endif %}
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="password" data-translate="tab_password">Hasło</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="players" data-translate="tab_players">Gracze</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="questions" data-translate="tab_questions">Pytania</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="minigames" data-translate="tab_minigames">Minigry</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="photo" data-translate="tab_photo">Foto</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="ar" data-translate="tab_ar">AR</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="display" data-translate="tab_display">Wyświetlacz</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="language" data-translate="tab_language">Język</button>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-secondary btn-sm text-white quick-tab-btn" data-tab="timing" data-translate="tab_timing">Czas i tempo</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-        
-            <!-- 3. POLE HASŁO (pełna szerokość, klikalne) -->
-            <div class="card mb-4" id="password-preview-card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="password_preview">Hasło</h5>
-                </div>
-                <div class="card-body text-center">
-                    <div id="game-password-display" 
-                         class="d-flex flex-wrap gap-1 justify-content-center" 
-                         style="font-size: 1.2rem; font-family: monospace;">
-                        <!-- Litery będą generowane dynamicznie -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 4. KOMUNIKATY NA EKRAN GRY (pełna szerokość) -->
-            <div class="card mb-4">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
-                <div class="card-body">
-                    <p class="text-muted small mb-3" data-translate="messages_description">
-                        Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
-                    </p>
-                    <div class="mb-3">
-                        <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
-                        <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
-                        <small class="text-muted">
-                            <span id="message-char-count">0</span> / 500 znaków
-                        </small>
-                    </div>
-                    <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
-                    <div id="message-status" class="mt-2"></div>
-                </div>
-            </div>
-                
-            <!-- 5. TEMPO GRY ORAZ PUNKTACJA (pełna szerokość) -->
-            <fieldset id="in-game-settings" disabled>
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
-                    <div class="card-body" id="game-controls">
-                        <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
-                        <div class="btn-group w-100 mb-3" role="group">
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
-                        </div>
-                        <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
-                        <div class="btn-group w-100 mb-3" role="group">
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>   
-        </div>  <!-- ✅ To musi mieć zamknięcie -->
-        
-        {% if is_superhost %}
-        <div class="tab-pane fade" id="qrcodes">
-            <!-- Kod QR Gracza -->
-            <div class="card mx-auto mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">📱 Kod QR Gracza</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-success">
-                        <strong>ℹ️ Instrukcja:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>Ten kod QR pozwala graczom dołączyć do gry</li>
-                            <li>Gracz skanuje kod, wpisuje swoje imię i otrzymuje dostęp do panelu</li>
-                            <li>Wydrukuj i umieść kod w widocznym miejscu</li>
-                        </ul>
-                    </div>
+            <li class="mt-3 mb-1 text-muted text-uppercase small px-3 fw-bold" style="font-size: 0.75rem;">Pytania</li>
+            <li><a class="sidebar-link" onclick="showSection('pytania-r1', this)"><i class="bi bi-1-circle"></i> Runda 1</a></li>
+            <li><a class="sidebar-link" onclick="showSection('pytania-r2', this)"><i class="bi bi-2-circle"></i> Runda 2</a></li>
+            <li><a class="sidebar-link" onclick="showSection('pytania-r3', this)"><i class="bi bi-3-circle"></i> Runda 3</a></li>
 
-                    <div class="d-grid gap-2">
-                        <a href="/player_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
-                            🔍 Podgląd i Druk Kodu QR
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <li class="mt-3 mb-1 text-muted text-uppercase small px-3 fw-bold" style="font-size: 0.75rem;">Dodatki</li>
+            <li><a class="sidebar-link" onclick="showSection('ai', this)"><i class="bi bi-cpu"></i> AI</a></li>
+            <li><a class="sidebar-link" onclick="showSection('wrozka', this)"><i class="bi bi-magic"></i> Wróżka AI</a></li>
+            <li><a class="sidebar-link" onclick="showSection('minigry', this)"><i class="bi bi-joystick"></i> Minigry</a></li>
+            <li><a class="sidebar-link" onclick="showSection('foto', this)"><i class="bi bi-camera"></i> Foto</a></li>
+            <li><a class="sidebar-link" onclick="showSection('glosowanie', this)"><i class="bi bi-bar-chart"></i> Głosowanie</a></li>
+            <li><a class="sidebar-link" onclick="showSection('na-zywo', this)"><i class="bi bi-activity"></i> Na żywo</a></li>
+        </ul>
 
-            <!-- Zarządzanie Kodami QR -->
-            <div class="card mx-auto">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="qr_management">Zarządzanie Kodami QR</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info small"><b>Uwaga:</b> Kody białe i żółte są wielorazowe (z 5-minutowym limitem na gracza). Pozostałe kody są unikalne i jednorazowe.</div>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="form-label">Kody Czerwone (punkty specjalne)</label><input type="number" id="red-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Białe Pułapka (punkty ujemne)</label><input type="number" id="white_trap-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Zielone (minigry)</label><input type="number" id="green-count" class="form-control" value="0" min="0"></div>
-                        <div class="col-md-6"><label class="form-label">Kody Różowe (wyzwanie foto)</label><input type="number" id="pink-count" class="form-control" value="0" min="0"></div>
-                    </div>
-
-                    <div class="d-grid gap-2 mt-4">
-                        <button id="save-qrcodes" class="btn btn-primary">Wygeneruj i Zapisz Kody</button>
-                        <a href="#" id="preview-qrcodes-link" target="_blank" class="btn btn-secondary">Podgląd i Druk Kodów</a>
-                        <a href="/player_qrcodes/{{ event.id }}" target="_blank" class="btn btn-success">
-                            📱 Kody QR dla Graczy (Dashboard)
-                        </a>
-                    </div>
-                    <div id="qrcodes-status" class="mt-3"></div>
-                </div>
+        <div class="mt-auto p-3 bg-light border-top">
+            <small class="text-muted d-block mb-1">Zalogowany:</small>
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>{{ current_user_id if current_user_id else 'Host' }}</strong>
+                <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-box-arrow-right"></i></a>
             </div>
         </div>
-        {% endif %}
+    </nav>
 
-        <div class="tab-pane fade" id="password">
-            <div class="card mb-3">
-                <div class="card-header"><h5 class="card-title mb-0">1. Edycja hasła</h5></div>
-                <div class="card-body">
-                    <p class="text-muted small">Wpisz hasło, które gracze będą odsłaniać podczas gry (możliwe tylko przed startem gry).</p>
+    <!-- Overlay dla mobile -->
+    <div id="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+
+    <!-- ================================================================================== -->
+    <!-- CZĘŚĆ 2: CONTENT - START -->
+    <!-- ================================================================================== -->
+    <main id="main-content">
+        <div class="content-wrapper">
+
+            <!-- 1. PULPIT -->
+            <div id="pulpit" class="content-section active">
+                <h2 class="section-title">Pulpit Gry</h2>
+                <div class="row g-4">
+                    <!-- Karta Statusu -->
+                    <div class="col-xl-8 col-lg-7">
+                        <div class="panel-card h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <small class="text-muted text-uppercase">Status Systemu</small>
+                                    <h2 class="mb-0 mt-1" id="info-game-status">
+                                        <span class="status-indicator status-waiting"></span>Oczekiwanie
+                                    </h2>
+                                </div>
+                                <span class="badge bg-light text-dark border p-2" id="active-round-badge">Runda: Brak</span>
+                            </div>
+
+                            <div class="d-flex gap-3 my-4">
+                                <button id="start-game-btn" class="btn btn-lg btn-success flex-grow-1"><i class="bi bi-play-fill"></i> START</button>
+                                <button id="pause-game-btn" class="btn btn-lg btn-warning flex-grow-1" style="display:none;"><i class="bi bi-pause-fill"></i> PAUZA</button>
+                                <button id="stop-game-btn" class="btn btn-lg btn-outline-danger flex-grow-1" style="display:none;"><i class="bi bi-stop-fill"></i> STOP</button>
+                            </div>
+
+                            <div class="alert alert-info d-flex align-items-center justify-content-between m-0">
+                                <div class="text-truncate me-2">
+                                    <i class="bi bi-link-45deg fs-5 me-2"></i>
+                                    <strong>{{ url_for('player_join', event_id=event.id, _external=True) }}</strong>
+                                </div>
+                                <button class="btn btn-sm btn-primary" onclick="copyLink()">Kopiuj</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Karta Czasu -->
+                    <div class="col-xl-4 col-lg-5">
+                        <div class="panel-card h-100 text-center">
+                            <small class="text-muted text-uppercase">Czas Rozgrywki</small>
+                            <div class="timer-display text-dark my-3" id="info-time-elapsed">00:00:00</div>
+                            <p class="text-muted small mb-4">Pauzy łącznie: <span id="info-time-elapsed-pauses">0s</span></p>
+
+                            <div class="border-top pt-3">
+                                <small class="text-muted">Odliczanie aktywnego pytania</small>
+                                <div class="h2 text-danger fw-bold" id="info-time-left">--:--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. USTAWIENIA -->
+            <div id="ustawienia" class="content-section">
+                <h2 class="section-title">Ustawienia</h2>
+                <div class="panel-card">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Nazwa Wydarzenia</label>
+                            <input type="text" class="form-control" value="{{ event.name }}" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID Wydarzenia</label>
+                            <input type="text" class="form-control font-monospace" value="{{ event.id }}" readonly>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 3. CZAS I TEMPO -->
+            <div id="czas" class="content-section">
+                <h2 class="section-title">Czas i Tempo</h2>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="panel-card">
+                            <h5 class="mb-3">Timer: Runda 2</h5>
+                            <div class="input-group mb-3">
+                                <input type="number" id="r2-questions-timer-minutes" class="form-control" placeholder="Min" value="15">
+                                <button class="btn btn-primary" id="r2-questions-timer-start">Start</button>
+                            </div>
+                            <div id="r2-questions-timer-display" class="alert alert-warning text-center display-6 fw-bold" style="display:none;">00:00</div>
+                            <button class="btn btn-outline-danger w-100 mt-2" id="r2-questions-timer-cancel" style="display:none;">Anuluj</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="panel-card">
+                            <h5 class="mb-3">Timer: Runda 3</h5>
+                            <div class="input-group mb-3">
+                                <input type="number" id="r3-questions-timer-minutes" class="form-control" placeholder="Min" value="10">
+                                <button class="btn btn-primary" id="r3-questions-timer-start">Start</button>
+                            </div>
+                            <div id="r3-questions-timer-display" class="alert alert-warning text-center display-6 fw-bold" style="display:none;">00:00</div>
+                            <button class="btn btn-outline-danger w-100 mt-2" id="r3-questions-timer-cancel" style="display:none;">Anuluj</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. GRACZE -->
+            <div id="gracze" class="content-section">
+                <h2 class="section-title">Lista Graczy</h2>
+                <div class="panel-card p-0 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">#</th>
+                                    <th>Gracz</th>
+                                    <th>ID</th>
+                                    <th class="text-end">Punkty</th>
+                                    <th class="text-center pe-4">Akcje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="players-table-body">
+                                <tr><td colspan="5" class="text-center py-5 text-muted">Ładowanie listy graczy...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. HASŁO -->
+            <div id="haslo" class="content-section">
+                <h2 class="section-title">Hasło (Runda 2)</h2>
+                <div class="panel-card text-center">
+                    <p class="text-muted mb-4">Kliknij literę, aby odsłonić ją na ekranie głównym.</p>
+                    <div id="password-reveal-container" class="d-flex flex-wrap justify-content-center gap-2 mb-5">
+                        <!-- Generowane przez JS -->
+                    </div>
+                    <button id="reveal-password-full-btn" class="btn btn-warning px-4 fw-bold">
+                        <i class="bi bi-eye-fill"></i> Odsłoń Całe Hasło
+                    </button>
+                </div>
+            </div>
+
+            <!-- 6. WYŚWIETLACZ -->
+            <div id="wyswietlacz" class="content-section">
+                <h2 class="section-title">Sterowanie Ekranem</h2>
+                <div class="panel-card">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-primary w-100 p-4" onclick="sendScreenAction('show_logo')">
+                                <i class="bi bi-card-image fs-1 d-block mb-2"></i> Logo
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-success w-100 p-4" onclick="sendScreenAction('show_ranking')">
+                                <i class="bi bi-trophy fs-1 d-block mb-2"></i> Ranking
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-dark w-100 p-4" onclick="sendScreenAction('black_screen')">
+                                <i class="bi bi-display fs-1 d-block mb-2"></i> Czarny Ekran
+                            </button>
+                        </div>
+                    </div>
+                    <hr>
+                    <h5 class="mb-3">Komunikat Globalny</h5>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="password-edit-input" maxlength="50" placeholder="np. SAPEREVENT" value="SAPEREVENT">
-                        <button class="btn btn-primary" id="password-edit-ok-btn">OK</button>
+                        <input type="text" id="global-message-input" class="form-control" placeholder="Wiadomość dla wszystkich...">
+                        <button class="btn btn-primary" id="send-global-message-btn">Wyślij</button>
                     </div>
-                    <small class="text-muted">Max 50 znaków. Spacje są dozwolone.</small>
-                    <div id="password-edit-status" class="mt-2"></div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">2. Kontrola hasła</h5></div>
-                <div class="card-body">
-                    <p class="text-muted small">Zarządzaj odkrywaniem liter hasła. Odkrywanie ręczne jest zawsze dostępne.</p>
-                    
-                    <!-- Przełącznik automatycznego odkrywania -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bold mb-0">Odkrywanie automatyczne:</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="password-auto-reveal-toggle"
-                                       style="width: 3em; height: 1.5em;" checked>
-                                <label class="form-check-label ms-2" for="password-auto-reveal-toggle">
-                                    <span id="auto-reveal-status" class="badge bg-success">Włączone</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Ustawienie procentu odkrywania -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Udział % gry do aktywacji litery:</label>
-                            <div class="input-group" style="max-width: 200px;">
-                                <input type="number" class="form-control" id="auto-reveal-percentage"
-                                       min="1" max="100" value="50" step="1">
-                                <span class="input-group-text">%</span>
-                            </div>
-                            <small class="text-muted d-block mt-1">
-                                Gdy gracz zdobędzie ten procent punktów z puli, odkryje losową literę.<br>
-                                Przykład: max punktów 400, ustawienie 10% = odkrycie litery co 40 punktów.
-                            </small>
-                        </div>
-
-                        <small class="text-muted d-block">
-                            Gdy włączone: litery odkrywane automatycznie według powyższego ustawienia (oznaczone na zielono).<br>
-                            Odkrywanie ręczne jest zawsze dostępne niezależnie od ustawienia.
-                        </small>
-                    </div>
-
-                    <hr>
-
-                    <!-- Sekcja odkrywania hasła -->
-                    <h6 class="mb-3">Hasło do odsłonięcia:</h6>
-                    <p class="text-muted small mb-3">
-                        🟢 Zielone - odsłonięte | 🔴 Czerwone - zakryte<br>
-                        Kliknij na czerwoną literę, aby ją odsłonić ręcznie. Każda litera jest traktowana indywidualnie.
-                    </p>
-                    <div id="password-letters-display" class="d-flex flex-wrap gap-2 justify-content-center mb-3" style="font-size: 1.8rem; font-family: monospace;">
-                        <!-- Litery będą generowane dynamicznie -->
-                    </div>
-                    <button class="btn btn-success w-100" id="reveal-selected-letters-btn" disabled>
-                        Potwierdź odsłonięcie wybranych liter
-                    </button>
-                    <div id="password-reveal-status" class="mt-2"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-pane fade" id="players">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="players_management">Zarządzanie graczami</h5>
-                </div>
-                <div class="card-body">
-                    <div id="players-list"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="tab-pane fade" id="questions">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0" data-translate="questions_management">Zarządzanie pytaniami</h5>
-                    <button class="btn btn-primary" id="add-question-btn" data-translate="add_question">Dodaj pytanie</button>
-                </div>
-                <div class="card-body">
-                    <div id="questions-list"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="ai">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
-                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
-                </div>
-                <div class="card-body">
-                    <h6 class="mb-3">Predefiniowane kategorie:</h6>
-                    <div id="ai-categories-list" class="mb-4"></div>
-
-                    <hr>
-
-                    <h6 class="mb-3">Dodaj własną kategorię:</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
-                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Medycyna">
-                        </div>
-                        <div class="col-md-4">
-                            <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
-                            <select class="form-select" id="custom-category-difficulty">
-                                <option value="easy">Łatwy</option>
-                                <option value="medium">Średni</option>
-                                <option value="advanced">Zaawansowany</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
-                        </div>
-                    </div>
-
-                    <div id="custom-categories-list" class="mt-4"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="minigames">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR. 
-                        Każda minigra wymaga zdobycia 20 punktów, aby otrzymać nagrodę.
-                    </div>
-                    
-                    <!-- TETRIS -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">🎮 Tetris</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (ułóż linie)</p>
-                                    <small class="text-muted">Sterowanie: strzałki + obrót</small>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle" 
-                                           style="width: 3em; height: 1.5em;">
-                                    <label class="form-check-label ms-2" for="tetris-toggle">
-                                        <span id="tetris-status" class="badge bg-secondary">Nieaktywny</span>
-                                    </label>
-                                </div>
+            <!-- 7. KODY QR -->
+            <div id="kody-qr" class="content-section">
+                <h2 class="section-title">Kody QR</h2>
+                <div class="panel-card text-center">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="border rounded p-4 bg-white">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ url_for('player_join', event_id=event.id, _external=True) }}" class="img-fluid mb-3" alt="QR">
+                                <h5 class="mb-2">Dołącz do gry</h5>
+                                <a href="{{ url_for('player_join', event_id=event.id, _external=True) }}" target="_blank" class="text-decoration-none">{{ event.id }}</a>
                             </div>
                         </div>
                     </div>
-        
-                    <!-- ARKANOID -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">🏓 Arkanoid</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (zbij cegły)</p>
-                                    <small class="text-muted">3 życia | Sterowanie: przyciski ◄ ►</small>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="arkanoid-toggle" 
-                                           style="width: 3em; height: 1.5em;">
-                                    <label class="form-check-label ms-2" for="arkanoid-toggle">
-                                        <span id="arkanoid-status" class="badge bg-secondary">Nieaktywny</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SNAKE -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">🐍 Snake</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (zbieraj jedzenie)</p>
-                                    <small class="text-muted">Sterowanie: przyciski ▲ ▼ ◄ ►</small>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="snake-toggle"
-                                           style="width: 3em; height: 1.5em;">
-                                    <label class="form-check-label ms-2" for="snake-toggle">
-                                        <span id="snake-status" class="badge bg-secondary">Nieaktywny</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- PAC-MAN -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">👻 PacMan</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (zjadaj kropki, unikaj duchów)</p>
-                                    <small class="text-muted">Power pellets = duchy niebieskie | Sterowanie: przyciski ▲ ▼ ◄ ►</small>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="pacman-toggle"
-                                           style="width: 3em; height: 1.5em;">
-                                    <label class="form-check-label ms-2" for="pacman-toggle">
-                                        <span id="pacman-status" class="badge bg-secondary">Nieaktywny</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- T-REX -->
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h5 class="mb-1">🦖 T-Rex</h5>
-                                    <p class="text-muted mb-0">Cel: 20 punktów (unikaj przeszkód)</p>
-                                    <small class="text-muted">Sterowanie: przycisk skoku</small>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="trex-toggle"
-                                           style="width: 3em; height: 1.5em;">
-                                    <label class="form-check-label ms-2" for="trex-toggle">
-                                        <span id="trex-status" class="badge bg-secondary">Nieaktywny</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="photo">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
-                <div class="card-body">
-                    <p data-translate="photo_description">Tutaj będą widoczne zdjęcia przesłane przez graczy.</p>
-                    <div class="alert alert-secondary text-center">
-                        <p class="mb-0">Wkrótce - galeria zdjęć z głosowaniem</p>
+            <!-- 8. AR -->
+            <div id="ar" class="content-section">
+                <h2 class="section-title">Rzeczywistość Rozszerzona (AR)</h2>
+                <div class="panel-card">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Moduł AR wymaga dostępu do kamery i konfiguracji backendu (OpenCV).
+                    </div>
+                    <!-- Miejsce na podgląd wideo -->
+                    <div id="video_container" class="bg-dark text-white d-flex align-items-center justify-content-center" style="height: 400px; border-radius: 8px;">
+                        <span class="text-muted">Podgląd kamery niedostępny</span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="ar">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
-                <div class="card-body">
-                    <h6>1. Zdefiniuj obiekty AR</h6>
-                    <p class="text-muted">Sfotografuj przedmioty, które będą wyzwalać gry po rozpoznaniu przez graczy.</p>
-
-                    <div class="row g-3 mb-4" id="ar-objects-container">
-                        <!-- Obiekty AR będą dodawane tutaj dynamicznie -->
-                    </div>
-
-                    <button class="btn btn-success mb-4" onclick="addNewARObject()">
-                        + Dodaj nowy obiekt AR
-                    </button>
-
-                    <hr>
-
-                    <h6>2. Kod QR dla graczy (AR Scanner)</h6>
-                    <p class="text-muted">Wygeneruj kod QR, który gracze będą skanować, aby uruchomić skaner AR.</p>
-                    <div class="text-center">
-                        <div id="ar-player-qr" class="mb-3"></div>
-                        <button class="btn btn-primary" onclick="generateARPlayerQR()">
-                            Wygeneruj QR dla skanowania AR
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="timing">
-            <fieldset id="timing-settings" disabled>
-                <div class="card mb-4">
-                    <div class="card-header"><h5 class="card-title mb-0" data-translate="timing_settings">Czas i tempo gry</h5></div>
-                    <div class="card-body" id="timing-controls">
-                        <div class="mb-3">
-                            <label for="game-duration-input-2" class="form-label" data-translate="game_duration_label">Czas gry (minuty):</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="game-duration-input-2" value="60" min="1">
-                                <button class="btn btn-primary" id="set-time-btn-2" data-translate="set_time_btn">OK</button>
+            <!-- 9. PYTANIA RUNDA 1 -->
+            <div id="pytania-r1" class="content-section">
+                <h2 class="section-title">Runda 1: Pytania ABC</h2>
+                <div id="questions-r1-container">
+                    {% for q in questions_r1 %}
+                    <div class="question-item" id="q-r1-{{ q.id }}">
+                        <div class="d-flex justify-content-between">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2"><span class="badge bg-secondary me-2">{{ loop.index }}</span> {{ q.question_text }}</h5>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <span class="badge bg-light text-dark border">A: {{ q.option_a }}</span>
+                                    <span class="badge bg-light text-dark border">B: {{ q.option_b }}</span>
+                                    <span class="badge bg-light text-dark border">C: {{ q.option_c }}</span>
+                                    <span class="badge bg-light text-dark border">D: {{ q.option_d }}</span>
+                                </div>
+                                <div class="small text-muted">Poprawna: <strong>{{ q.correct_answer }}</strong> | Czas: {{ q.time_limit }}s</div>
                             </div>
-                            <small class="text-muted" data-translate="game_duration_help">Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)</small>
+                            <div class="d-flex flex-column gap-2 ms-3">
+                                <button class="btn btn-sm btn-primary activate-q-btn" data-qid="{{ q.id }}" data-type="r1">Aktywuj</button>
+                                <button class="btn btn-sm btn-outline-secondary reveal-q-btn" data-qid="{{ q.id }}" disabled>Pokaż Odp.</button>
+                                <button class="btn btn-sm btn-outline-danger close-q-btn" data-qid="{{ q.id }}" disabled>Zakończ</button>
+                            </div>
                         </div>
-        
-                        <hr>
-        
-                        <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
-                        <div class="btn-group w-100 mb-3" role="group">
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
-                            <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
-                        </div>
-                        <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
-                        <div class="btn-group w-100 mb-3" role="group">
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
+                        <div class="mt-3">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" id="progress-q-{{ q.id }}" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted d-block mt-1 text-end" id="answers-count-{{ q.id }}">Odpowiedzi: 0</small>
                         </div>
                     </div>
-                </div>
-            </fieldset>
-        </div>
-
-        <!-- ✅ NOWA ZAKŁADKA: WYŚWIETLACZ -->
-        <div class="tab-pane fade" id="display">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0" data-translate="display_tab">Ustawienia wyświetlacza</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <h6 data-translate="display_screens">Liczba ekranów zewnętrznych:</h6>
-                        <div class="btn-group w-100" role="group" id="display-screens-controls">
-                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="1" data-translate="one_screen">1 Ekran</button>
-                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="display_screens" data-value="2" data-translate="two_screens">2 Ekrany</button>
-                        </div>
-                        <small class="text-muted d-block mt-2">
-                            <strong>1 ekran:</strong> Bomba, hasło, ranking i zdjęcia na jednym ekranie<br>
-                            <strong>2 ekrany:</strong> Ekran 1 - Bomba i hasło | Ekran 2 - Ranking, zdjęcia i kod QR dla graczy
-                        </small>
-                    </div>
-
-                    <div class="mt-4">
-                        <h6>Linki do ekranów:</h6>
-                        <div class="d-grid gap-2">
-                            <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display1-link">
-                                🖥️ Ekran 1 - Główny wyświetlacz
-                            </a>
-                            <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
-                                🖥️ Ekran 2 - Ranking i zdjęcia
-                            </a>
-                        </div>
-                    </div>
-
-                    <div id="display-status" class="mt-3 alert alert-info">
-                        Aktualnie uruchomione: <strong>2 ekrany</strong>
-                    </div>
+                    {% else %}
+                    <div class="alert alert-light text-center">Brak pytań dla Rundy 1.</div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
 
-        <div class="tab-pane fade" id="language">
-            <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0" data-translate="language_tab">Ustawienia języka</h5></div>
-                <div class="card-body">
-                    <div class="mb-4">
-                        <h6 data-translate="player_language">Język graczy</h6>
-                        <div class="btn-group w-100" role="group" id="lang-player-controls">
-                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_player" data-value="pl" data-translate="lang_polish">Język polski</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="en" data-translate="lang_english">Język angielski</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="language_player" data-value="de" data-translate="lang_german">Język niemiecki</button>
+            <!-- 10. PYTANIA RUNDA 2 -->
+            <div id="pytania-r2" class="content-section">
+                <h2 class="section-title">Runda 2: Pytania Otwarte</h2>
+                <div id="questions-r2-container">
+                    {% for q in questions_r2 %}
+                    <div class="question-item" id="q-r2-{{ q.id }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ loop.index }}. {{ q.question_text }}</h5>
+                                <small class="text-muted">Odp: {{ q.correct_answer }}</small>
+                            </div>
+                            <button class="btn btn-primary activate-q-btn" data-qid="{{ q.id }}" data-type="r2">Zadaj</button>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <h6 data-translate="host_language">Język prowadzącego</h6>
-                        <div class="btn-group w-100" role="group" id="lang-host-controls">
-                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="language_host" data-value="pl" data-translate="lang_polish">Język polski</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="en" data-translate="lang_english">Język angielski</button>
-                            <button type="button" class="btn btn-outline-primary" data-control="language_host" data-value="de" data-translate="lang_german">Język niemiecki</button>
+                    {% else %}
+                    <div class="alert alert-light text-center">Brak pytań dla Rundy 2.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 11. PYTANIA RUNDA 3 -->
+            <div id="pytania-r3" class="content-section">
+                <h2 class="section-title">Runda 3: Finał</h2>
+                <div id="questions-r3-container">
+                    {% for q in questions_r3 %}
+                    <div class="question-item" id="q-r3-{{ q.id }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">{{ loop.index }}. {{ q.question_text }}</h5>
+                                <small class="text-muted">Odp: {{ q.correct_answer }}</small>
+                            </div>
+                            <button class="btn btn-primary activate-q-btn" data-qid="{{ q.id }}" data-type="r3">Zadaj</button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light text-center">Brak pytań dla Rundy 3.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 12. AI -->
+            <div id="ai" class="content-section">
+                <h2 class="section-title">Generator AI</h2>
+                <div class="panel-card">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Temat</span>
+                        <input type="text" class="form-control" placeholder="np. Historia komputerów w Polsce">
+                        <button class="btn btn-purple text-white" style="background-color: #6610f2;">Generuj</button>
+                    </div>
+                    <div class="alert alert-secondary">Tu pojawią się wygenerowane pytania.</div>
+                </div>
+            </div>
+
+            <!-- 13. WRÓŻKA AI -->
+            <div id="wrozka" class="content-section">
+                <h2 class="section-title">Wróżka AI</h2>
+                <div class="panel-card text-center py-5">
+                    <i class="bi bi-stars text-warning display-1 mb-3"></i>
+                    <h3>Panel Wróżki</h3>
+                    <p class="text-muted">Interakcje z modułem wróżki pojawią się tutaj.</p>
+                </div>
+            </div>
+
+            <!-- 14. MINIGRY -->
+            <div id="minigry" class="content-section">
+                <h2 class="section-title">Minigry</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="panel-card text-center">
+                            <i class="bi bi-pie-chart fs-1 text-primary mb-2"></i>
+                            <h5>Koło Fortuny</h5>
+                            <button class="btn btn-sm btn-outline-primary mt-2">Uruchom</button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- 15. FOTO -->
+            <div id="foto" class="content-section">
+                <h2 class="section-title">Galeria Foto</h2>
+                <div class="panel-card">
+                    <div class="alert alert-light border text-center py-4">Galeria jest pusta.</div>
+                </div>
+            </div>
+
+            <!-- 16. GŁOSOWANIE -->
+            <div id="glosowanie" class="content-section">
+                <h2 class="section-title">Głosowanie</h2>
+                <div class="panel-card">
+                    <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Utwórz Głosowanie</button>
+                </div>
+            </div>
+
+            <!-- 17. NA ŻYWO -->
+            <div id="na-zywo" class="content-section">
+                <h2 class="section-title">Logi Systemowe</h2>
+                <div class="bg-dark text-light p-3 rounded font-monospace" id="live-logs" style="height: 400px; overflow-y: auto; font-size: 0.85rem;">
+                    <div class="text-success">> System uruchomiony poprawnie.</div>
+                    <div class="text-muted">> Oczekiwanie na połączenia...</div>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </main>
 </div>
 
-<!-- Modal for adding/editing question -->
-<div class="modal fade" id="questionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" data-translate="question_modal_title">Dodaj pytanie</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label" data-translate="question_text">Treść pytania:</label>
-                    <textarea class="form-control" id="modal-question-text" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" data-translate="answers">Odpowiedzi:</label>
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">A)</span>
-                        <input type="text" class="form-control" id="modal-answer-a">
-                        <div class="input-group-text">
-                            <input class="form-check-input" type="radio" name="correct-answer" value="A" id="correct-a">
-                        </div>
-                    </div>
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">B)</span>
-                        <input type="text" class="form-control" id="modal-answer-b">
-                        <div class="input-group-text">
-                            <input class="form-check-input" type="radio" name="correct-answer" value="B" id="correct-b">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <span class="input-group-text">C)</span>
-                        <input type="text" class="form-control" id="modal-answer-c">
-                        <div class="input-group-text">
-                            <input class="form-check-input" type="radio" name="correct-answer" value="C" id="correct-c">
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" data-translate="difficulty_level">Poziom trudności:</label>
-                    <div class="btn-group w-100" role="group" id="difficulty-buttons">
-                        <button type="button" class="btn btn-outline-success active" data-difficulty="easy" data-translate="easy">Łatwy</button>
-                        <button type="button" class="btn btn-outline-warning" data-difficulty="medium" data-translate="medium">Średni</button>
-                        <button type="button" class="btn btn-outline-danger" data-difficulty="hard" data-translate="hard">Trudny</button>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" data-translate="question_category">Kategoria pytania:</label>
-                    <div class="btn-group w-100" role="group" id="category-buttons">
-                        <button type="button" class="btn btn-outline-primary active" data-category="company" data-translate="category_company">Firmowe</button>
-                        <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">Światowe</button>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label" data-translate="letter_reveal">Litera do odsłonięcia:</label>
-                    <input type="text" class="form-control" id="modal-letter" maxlength="1" value="X">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Anuluj</button>
-                <button type="button" class="btn btn-primary" id="save-question-btn" data-translate="save">Zapisz</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Przycisk Menu Mobilnego -->
+<button id="mobile-menu-toggle" class="btn btn-primary" onclick="toggleMobileMenu()">
+    <i class="bi bi-list"></i>
+</button>
+
 {% endblock %}
 
+<!-- ================================================================================== -->
+<!-- CZĘŚĆ 3: SKRYPTY (LOGIKA GRY I NAWIGACJI) -->
+<!-- ================================================================================== -->
 {% block scripts %}
 {{ super() }}
-<script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
-// Translations
-    const translations = {
-    pl: {
-        host_title: 'ORGANIZACJA GRY',
-        open_display: 'Otwórz Ekran Gry',
-        tab_game: 'Gra',
-        tab_players: 'Gracze',
-        tab_questions: 'Pytania',
-        tab_minigames: 'Minigry',
-        tab_qrcodes: 'Kody QR',
-        tab_password: 'Hasło',
-        tab_photo: 'Foto',
-        tab_ar: 'AR',
-        tab_display: 'Wyświetlacz',
-        tab_language: 'Język',
-        qr_management: 'Zarządzanie Kodami QR',
-        password_tab: 'Hasło do odsłonięcia',
-        password_description: 'Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.',
-        photo_tab: 'Galeria zdjęć',
-        photo_description: 'Tutaj będą widoczne zdjęcia przesłane przez graczy.',
-        ar_tab: 'Rozszerzona rzeczywistość (AR)',
-        ar_description: 'Tutaj będą dostępne funkcje AR.',
-        display_tab: 'Ustawienia wyświetlacza',
-        display_screens: 'Liczba ekranów zewnętrznych:',
-        one_screen: '1 Ekran',
-        two_screens: '2 Ekrany',
-        language_tab: 'Ustawienia języka',
-        game_info: 'Informacje o grze',
-        player_count: 'Liczba graczy:',
-        completion_percentage: 'Procent ukończenia:',
-        language_host_label: 'Język prowadzącego:',
-        time_left: 'Czas do końca:',
-        time_net: 'Czas gry (netto):',
-        time_gross: 'Czas gry (brutto):',
-        current_bonus: 'Aktualna premia:',
-        current_speed: 'Aktualne tempo:',
-        game_status_label: 'Stan gry:',
-        game_status_waiting: 'Oczekiwanie na Start',
-        game_status_active: 'Start. Gra aktywna',
-        game_status_paused: 'Pauza',
-        game_status_stopped: 'Stop. Zakończenie gry',
-        pre_game_settings: 'Obsługa gry',
-        game_duration_label: 'Czas gry (minuty):',
-        game_duration_help: 'Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)',
-        set_time_btn: 'OK',
-        player_language: 'Język graczy',
-        host_language: 'Język prowadzącego',
-        lang_polish: 'Język polski',
-        lang_english: 'Język angielski',
-        lang_german: 'Język niemiecki',
-        start_game: 'Start Gry',
-        in_game_settings: 'Tempo gry oraz punktacja',
-        points_bonus: 'Premia punktowa:',
-        time_speed: 'Tempo czasu:',
-        pause: 'Pauza',
-        resume: 'Wznów',
-        force_win: 'Przedwczesna wygrana',
-        stop_game: 'Stop Gry',
-        reset_game: 'Reset Gry',
-        quick_access: 'Szybki dostęp do zakładek:',
-        questions_management: 'Zarządzanie pytaniami',
-        players_management: 'Zarządzanie graczami',
-        add_question: 'Dodaj pytanie',
-        question_modal_title: 'Dodaj pytanie',
-        question_text: 'Treść pytania:',
-        answers: 'Odpowiedzi:',
-        difficulty_level: 'Poziom trudności:',
-        easy: 'Łatwy',
-        medium: 'Średni',
-        hard: 'Trudny',
-        letter_reveal: 'Litera do odsłonięcia:',
-        cancel: 'Anuluj',
-        save: 'Zapisz',
-        edit: 'Edytuj',
-        delete: 'Usuń',
-        shown: 'Wyświetlono',
-        correct: 'Poprawne',
-        times: 'razy',
-        admin_impersonate: 'Jesteś zalogowany jako Admin w panelu Hosta.',
-        back_to_admin: 'Powrót do panelu Admina',
-        warn: 'Ostrzeż',
-        warnings: 'Ostrzeżenia',
-        question_category: 'Kategoria pytania:',
-        category_company: 'Firmowe',
-        category_world: 'Światowe',
-        host_messages: 'Komunikaty na ekran gry',
-        messages_description: 'Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.',
-        message_label: 'Treść komunikatu (max 500 znaków):',
-        send_message: 'Wyślij komunikat',
-        password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
-        tab_timing: 'Czas i tempo',
-        timing_settings: 'Czas i tempo gry',
-    },
-    en: {
-        host_title: 'GAME ORGANIZATION',
-        open_display: 'Open Game Display',
-        tab_game: 'Game',
-        tab_players: 'Players',
-        tab_questions: 'Questions',
-        tab_minigames: 'Minigames',
-        tab_qrcodes: 'QR Codes',
-        tab_password: 'Password',
-        tab_photo: 'Photo',
-        tab_ar: 'AR',
-        tab_display: 'Display',
-        tab_language: 'Language',
-        qr_management: 'QR Codes Management',
-        password_tab: 'Password to reveal',
-        password_description: 'Here you will see the password that players must reveal during the game.',
-        photo_tab: 'Photo gallery',
-        photo_description: 'Here you will see photos uploaded by players.',
-        ar_tab: 'Augmented Reality (AR)',
-        ar_description: 'AR features will be available here.',
-        display_tab: 'Display settings',
-        display_screens: 'Number of external screens:',
-        one_screen: '1 Screen',
-        two_screens: '2 Screens',
-        language_tab: 'Language settings',
-        game_info: 'Game information',
-        player_count: 'Number of players:',
-        completion_percentage: 'Completion percentage:',
-        language_host_label: 'Host language:',
-        time_left: 'Time left:',
-        time_net: 'Game time (net):',
-        time_gross: 'Game time (gross):',
-        current_bonus: 'Current bonus:',
-        current_speed: 'Current speed:',
-        game_status_label: 'Game status:',
-        game_status_waiting: 'Waiting for Start',
-        game_status_active: 'Start. Game active',
-        game_status_paused: 'Pause',
-        game_status_stopped: 'Stop. Game ended',
-        pre_game_settings: 'Game Control',
-        game_duration_label: 'Game time (minutes):',
-        game_duration_help: 'Before game: set time. During game: change time (requires password)',
-        set_time_btn: 'OK',
-        player_language: 'Players language',
-        host_language: 'Host language',
-        lang_polish: 'Polish language',
-        lang_english: 'English language',
-        lang_german: 'German language',
-        start_game: 'Start Game',
-        in_game_settings: 'Game Speed and Scoring',
-        points_bonus: 'Points bonus:',
-        time_speed: 'Time speed:',
-        pause: 'Pause',
-        resume: 'Resume',
-        force_win: 'Force Win',
-        stop_game: 'Stop Game',
-        reset_game: 'Reset Game',
-        quick_access: 'Quick access to tabs:',
-        questions_management: 'Questions management',
-        players_management: 'Players management',
-        add_question: 'Add question',
-        question_modal_title: 'Add question',
-        question_text: 'Question text:',
-        answers: 'Answers:',
-        difficulty_level: 'Difficulty level:',
-        easy: 'Easy',
-        medium: 'Medium',
-        hard: 'Hard',
-        letter_reveal: 'Letter to reveal:',
-        cancel: 'Cancel',
-        save: 'Save',
-        edit: 'Edit',
-        delete: 'Delete',
-        shown: 'Shown',
-        correct: 'Correct',
-        times: 'times',
-        admin_impersonate: 'You are logged in as Admin in Host panel.',
-        back_to_admin: 'Back to Admin panel',
-        warn: 'Warn',
-        warnings: 'Warnings',
-        question_category: 'Question category:',
-        category_company: 'Company',
-        category_world: 'World',
-        host_messages: 'Messages on game screen',
-        messages_description: 'Send a message that will appear on the main game screen. Use this to share important information with all participants.',
-        message_label: 'Message content (max 500 characters):',
-        send_message: 'Send message',
-        password_preview: 'Password',
-        tab_timing: 'Time & Speed',
-        timing_settings: 'Game Time and Speed',
-    },
-    de: {
-        host_title: 'SPIELORGANISATION',
-        open_display: 'Spielbildschirm öffnen',
-        tab_game: 'Spiel',
-        tab_players: 'Spieler',
-        tab_questions: 'Fragen',
-        tab_minigames: 'Minispiele',
-        tab_qrcodes: 'QR-Codes',
-        tab_password: 'Passwort',
-        tab_photo: 'Foto',
-        tab_ar: 'AR',
-        tab_display: 'Anzeige',
-        tab_language: 'Sprache',
-        qr_management: 'QR-Code-Verwaltung',
-        password_tab: 'Zu enthüllendes Passwort',
-        password_description: 'Hier sehen Sie das Passwort, das die Spieler während des Spiels aufdecken müssen.',
-        photo_tab: 'Fotogalerie',
-        photo_description: 'Hier sehen Sie von Spielern hochgeladene Fotos.',
-        ar_tab: 'Erweiterte Realität (AR)',
-        ar_description: 'AR-Funktionen werden hier verfügbar sein.',
-        display_tab: 'Anzeigeeinstellungen',
-        display_screens: 'Anzahl externer Bildschirme:',
-        one_screen: '1 Bildschirm',
-        two_screens: '2 Bildschirme',
-        language_tab: 'Spracheinstellungen',
-        game_info: 'Spielinformationen',
-        player_count: 'Anzahl der Spieler:',
-        completion_percentage: 'Abschlussrate:',
-        language_host_label: 'Moderatorsprache:',
-        time_left: 'Verbleibende Zeit:',
-        time_net: 'Spielzeit (netto):',
-        time_gross: 'Spielzeit (brutto):',
-        current_bonus: 'Aktueller Bonus:',
-        current_speed: 'Aktuelle Geschwindigkeit:',
-        game_status_label: 'Spielstatus:',
-        game_status_waiting: 'Warten auf Start',
-        game_status_active: 'Start. Spiel aktiv',
-        game_status_paused: 'Pause',
-        game_status_stopped: 'Stopp. Spiel beendet',
-        pre_game_settings: 'Spielsteuerung',
-        game_duration_label: 'Spielzeit (Minuten):',
-        game_duration_help: 'Vor dem Spiel: Zeit einstellen. Während des Spiels: Zeit ändern (erfordert Passwort)',
-        set_time_btn: 'OK',
-        player_language: 'Spielersprache',
-        host_language: 'Moderatorsprache',
-        lang_polish: 'Polnische Sprache',
-        lang_english: 'Englische Sprache',
-        lang_german: 'Deutsche Sprache',
-        start_game: 'Spiel starten',
-        in_game_settings: 'Spielgeschwindigkeit und Punktzahl',
-        points_bonus: 'Punktebonus:',
-        time_speed: 'Zeitgeschwindigkeit:',
-        pause: 'Pause',
-        resume: 'Fortsetzen',
-        force_win: 'Erzwungener Sieg',
-        stop_game: 'Spiel stoppen',
-        reset_game: 'Spiel zurücksetzen',
-        quick_access: 'Schnellzugriff auf Registerkarten:',
-        questions_management: 'Fragenverwaltung',
-        players_management: 'Spielerverwaltung',
-        add_question: 'Frage hinzufügen',
-        question_modal_title: 'Frage hinzufügen',
-        question_text: 'Fragetext:',
-        answers: 'Antworten:',
-        difficulty_level: 'Schwierigkeitsgrad:',
-        easy: 'Einfach',
-        medium: 'Mittel',
-        hard: 'Schwer',
-        letter_reveal: 'Zu enthüllender Buchstabe:',
-        cancel: 'Abbrechen',
-        save: 'Speichern',
-        edit: 'Bearbeiten',
-        delete: 'Löschen',
-        shown: 'Angezeigt',
-        correct: 'Richtig',
-        times: 'Mal',
-        admin_impersonate: 'Sie sind als Admin im Host-Panel angemeldet.',
-        back_to_admin: 'Zurück zum Admin-Panel',
-        warn: 'Warnen',
-        warnings: 'Warnungen',
-        question_category: 'Fragenkategorie:',
-        category_company: 'Firma',
-        category_world: 'Welt',
-        host_messages: 'Nachrichten auf dem Spielbildschirm',
-        messages_description: 'Senden Sie eine Nachricht, die auf dem Hauptspielbildschirm erscheint. Verwenden Sie dies, um wichtige Informationen mit allen Teilnehmern zu teilen.',
-        message_label: 'Nachrichteninhalt (max. 500 Zeichen):',
-        send_message: 'Nachricht senden',
-        password_preview: 'Passwort',
-        tab_timing: 'Zeit & Tempo',
-        timing_settings: 'Spielzeit und Geschwindigkeit',
-    }
-};
-
-let currentLanguage = 'pl';
-let currentEditingQuestionId = null;
-const EVENT_ID = {{ event.id }};
-const IS_SUPERHOST = {{ 'true' if is_superhost else 'false' }};
-
-function translatePage(lang) {
-    currentLanguage = lang;
-    document.querySelectorAll('[data-translate]').forEach(el => {
-        const key = el.getAttribute('data-translate');
-        if (translations[lang][key]) {
-            if (el.tagName === 'INPUT' && el.type === 'button') {
-                el.value = translations[lang][key];
-            } else {
-                el.textContent = translations[lang][key];
-            }
-        }
-    });
-    
-    // Update pause button text based on state
-    const pauseBtn = document.getElementById('pause-btn');
-    if (pauseBtn && (pauseBtn.textContent.includes('Wznów') || pauseBtn.textContent.includes('Resume'))) {
-        pauseBtn.textContent = translations[lang]['resume'];
-    }
-    
-    // Update game status text
-    updateGameStatusText();
-}
-
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-// ✅ Funkcja aktualizująca tekst statusu gry
-function updateGameStatusText() {
-    const statusEl = document.getElementById('info-game-status');
-    if (!statusEl) return;
-    
-    const currentStatus = statusEl.dataset.status;
-    if (!currentStatus) return;
-    
-    const statusTexts = {
-        'waiting': translations[currentLanguage].game_status_waiting,
-        'active': translations[currentLanguage].game_status_active,
-        'paused': translations[currentLanguage].game_status_paused,
-        'stopped': translations[currentLanguage].game_status_stopped
-    };
-    
-    statusEl.textContent = statusTexts[currentStatus] || statusTexts['waiting'];
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('🎮 HOST PANEL INITIALIZING - Event ID:', EVENT_ID);
-    
+    // --- ZMIENNE GLOBALNE ---
     const socket = io();
-    const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
+    const eventId = "{{ event.id }}";
+    let gameTimerInterval, r2TimerInterval, r3TimerInterval;
+    let gameStartTime = null, totalPausedDuration = 0, isPaused = false;
+    let r2TimerEndTime = null, r3TimerEndTime = null;
 
-        // =====================================================================
-    // ✅ NOWE: Przekierowanie do zakładki Hasło po kliknięciu w pole
-    // =====================================================================
-    const passwordCard = document.getElementById('password-preview-card');
-    if (passwordCard) {
-        passwordCard.addEventListener('click', () => {
-            const passwordTab = document.querySelector('button[data-bs-target="#password"]');
-            if (passwordTab) {
-                const tab = new bootstrap.Tab(passwordTab);
-                tab.show();
-            }
-        });
+    // --- 1. NAWIGACJA (TAB SWITCHER) ---
+    function showSection(sectionId, element) {
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        const target = document.getElementById(sectionId);
+        if (target) target.classList.add('active');
+
+        document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+        if (element) element.classList.add('active');
+
+        if (window.innerWidth <= 992) toggleMobileMenu();
     }
-    
-    // =====================================================================
-    // SZYBKI DOSTĘP DO ZAKŁADEK
-    // =====================================================================
-    document.querySelectorAll('.quick-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabName = btn.dataset.tab;
-            const tabButton = document.querySelector(`button[data-bs-target="#${tabName}"]`);
-            if (tabButton) {
-                const tab = new bootstrap.Tab(tabButton);
-                tab.show();
-            }
-        });
-    });
-    
-    // =====================================================================
-    // WYŚWIETLACZ - PRZEŁĄCZANIE LICZBY EKRANÓW
-    // =====================================================================
-    document.getElementById('display-screens-controls')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-value]');
-        if (btn) {
-            const screensCount = btn.dataset.value;
-            
-            // Update active state
-            document.querySelectorAll('#display-screens-controls button').forEach(b => b.classList.remove('active-modifier'));
-            btn.classList.add('active-modifier');
-            
-            // Update status message
-            const statusDiv = document.getElementById('display-status');
-            if (statusDiv) {
-                statusDiv.innerHTML = `Aktualnie uruchomione: <strong>${screensCount} ${screensCount === '1' ? 'ekran' : 'ekrany'}</strong>`;
-            }
-            
-            // Możesz tutaj dodać zapisywanie ustawień do GameState jeśli potrzebne
-            console.log('Liczba ekranów ustawiona na:', screensCount);
-        }
-    });
-    
-    // =====================================================================
-    // SEKCJA KODÓW QR - TYLKO DLA SUPERHOST
-    // =====================================================================
-    if (IS_SUPERHOST) {
-        // Załaduj liczby kodów po otwarciu zakładki
-        document.querySelector('button[data-bs-target="#qrcodes"]')?.addEventListener('click', async () => {
-            try {
-                const response = await fetch('/api/host/qrcodes/counts');
-                if (response.ok) {
-                    const counts = await response.json();
-                    document.getElementById('red-count').value = counts.red || 0;
-                    document.getElementById('white_trap-count').value = counts.white_trap || 0;
-                    document.getElementById('green-count').value = counts.green || 0;
-                    document.getElementById('pink-count').value = counts.pink || 0;
-                }
-            } catch (error) {
-                console.error('Błąd ładowania kodów QR:', error);
-            }
-        });
 
-        // Generowanie kodów QR
-        document.getElementById('save-qrcodes').addEventListener('click', async () => {
-            const statusEl = document.getElementById('qrcodes-status');
-            const payload = {
-                counts: {
-                    red: document.getElementById('red-count').value,
-                    white_trap: document.getElementById('white_trap-count').value,
-                    green: document.getElementById('green-count').value,
-                    pink: document.getElementById('pink-count').value,
-                }
-            };
-            try {
-                const response = await fetch('/api/host/qrcodes/generate', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.message);
-                statusEl.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
-            } catch (error) {
-                statusEl.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
-            }
-        });
-
-        // Link do podglądu kodów QR
-        document.getElementById('preview-qrcodes-link').href = `{{ url_for('list_qrcodes_public', event_id=event.id) }}`;
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('visible');
     }
-    
-    // =====================================================================
-    // GRACZE
-    // =====================================================================
-    function loadPlayers() {
-        fetch('/api/host/players')
-            .then(res => res.json())
-            .then(players => {
-                const list = document.getElementById('players-list');
-                if (players.length === 0) {
-                    list.innerHTML = `<p class="text-muted">Brak graczy</p>`;
-                    return;
-                }
-                
-                list.innerHTML = `
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>${translations[currentLanguage].player_count.replace(':', '')}</th>
-                                <th>Punkty</th>
-                                <th>${translations[currentLanguage].warnings}</th>
-                                <th>Akcje</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${players.map(p => `
-                                <tr>
-                                    <td>${p.name}</td>
-                                    <td>${p.score}</td>
-                                    <td>${p.warnings}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
-                                        <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-                
-                // Attach event listeners
-                document.querySelectorAll('.warn-player-btn').forEach(btn => {
-                    btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.delete-player-btn').forEach(btn => {
-                    btn.addEventListener('click', () => deletePlayer(parseInt(btn.dataset.id)));
-                });
-            });
-    }
-    
-    async function warnPlayer(id) {
-        try {
-            const response = await fetch(`/api/host/player/${id}/warn`, { method: 'POST' });
-            if (!response.ok) throw new Error('Błąd ostrzeżenia gracza');
-            loadPlayers();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    }
-    
-    async function deletePlayer(id) {
-        if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
-        
-        try {
-            const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Błąd usuwania gracza');
-            loadPlayers();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    }
-    
-    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
-    
-    // =====================================================================
-    // JĘZYK I TRANSLACJA
-    // =====================================================================
-    document.getElementById('lang-host-controls')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-value]');
-        if (btn) {
-            const lang = btn.dataset.value;
-            translatePage(lang);
-            sendGameControl('language_host', lang);
-            
-            // Update active state
-            document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
-            btn.classList.add('active-modifier');
-        }
-    });
-    
-    document.getElementById('lang-player-controls')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-value]');
-        if (btn) {
-            const lang = btn.dataset.value;
-            sendGameControl('language_player', lang);
-            
-            // Update active state
-            document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
-            btn.classList.add('active-modifier');
-        }
-    });
-    
-    // Difficulty buttons
-    document.getElementById('difficulty-buttons').addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (btn) {
-            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-    });
 
-    // Category buttons
-    document.getElementById('category-buttons').addEventListener('click', (e) => {
-        const btn = e.target.closest('button');
-        if (btn) {
-            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-    });
-    
-    // =====================================================================
-    // PYTANIA
-    // =====================================================================
-    function loadQuestions() {
-        fetch('/api/host/questions')
-            .then(res => res.json())
-            .then(questions => {
-                const list = document.getElementById('questions-list');
-                if (questions.length === 0) {
-                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
-                    return;
-                }
-                
-                list.innerHTML = questions.map((q, index) => {
-                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
-                    return `
-                        <div class="question-item d-flex align-items-start">
-                            <div class="me-3">
-                                <strong>${index + 1}.</strong>
-                            </div>
-                            <div class="flex-grow-1">
-                                <p class="mb-2">${q.text}</p>
-                                <div class="question-stats">
-                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
-                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> | 
-                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> | 
-                                    <span>${percentage}%</span>
-                                </div>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-btn" data-id="${q.id}" data-translate="edit">${translations[currentLanguage].edit}</button>
-                                <button class="btn btn-sm btn-outline-danger delete-question-btn" data-id="${q.id}" data-translate="delete">${translations[currentLanguage].delete}</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                // Attach event listeners
-                document.querySelectorAll('.edit-question-btn').forEach(btn => {
-                    btn.addEventListener('click', () => editQuestion(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.delete-question-btn').forEach(btn => {
-                    btn.addEventListener('click', () => deleteQuestion(parseInt(btn.dataset.id)));
-                });
-            });
-    }
-    
-    document.getElementById('add-question-btn').addEventListener('click', () => {
-        currentEditingQuestionId = null;
-        document.getElementById('modal-question-text').value = '';
-        document.getElementById('modal-answer-a').value = '';
-        document.getElementById('modal-answer-b').value = '';
-        document.getElementById('modal-answer-c').value = '';
-        document.getElementById('modal-letter').value = 'X';
-        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
-        document.getElementById('correct-a').checked = true;
-        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]').classList.add('active');
-        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('#category-buttons .btn[data-category="company"]').classList.add('active');
-        document.querySelector('.modal-title').textContent = translations[currentLanguage].question_modal_title;
-        questionModal.show();
-    });
-    
-    document.getElementById('save-question-btn').addEventListener('click', async () => {
-        const text = document.getElementById('modal-question-text').value.trim();
-        const answerA = document.getElementById('modal-answer-a').value.trim();
-        const answerB = document.getElementById('modal-answer-b').value.trim();
-        const answerC = document.getElementById('modal-answer-c').value.trim();
-        const correctAnswer = document.querySelector('input[name="correct-answer"]:checked')?.value;
-        const difficulty = document.querySelector('#difficulty-buttons .btn.active')?.dataset.difficulty || 'easy';
-        const category = document.querySelector('#category-buttons .btn.active')?.dataset.category || 'company';
-        const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
-        
-        if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
-            alert('Wypełnij wszystkie pola!');
-            return;
-        }
-        
-        const payload = {
-            text,
-            answers: [answerA, answerB, answerC],
-            correctAnswer,
-            difficulty,
-            letterToReveal: letter,
-            category: category
-        };
-        
-        try {
-            let response;
-            if (currentEditingQuestionId) {
-                response = await fetch(`/api/host/question/${currentEditingQuestionId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                response = await fetch('/api/host/questions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            }
-            
-            if (!response.ok) throw new Error('Błąd zapisu pytania');
-            
-            questionModal.hide();
-            loadQuestions();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    });
-    
-    async function editQuestion(id) {
-        try {
-            const response = await fetch('/api/host/questions');
-            const questions = await response.json();
-            const question = questions.find(q => q.id === id);
-            
-            if (!question) return;
-            
-            currentEditingQuestionId = id;
-            document.getElementById('modal-question-text').value = question.text;
-            document.getElementById('modal-answer-a').value = question.answers[0];
-            document.getElementById('modal-answer-b').value = question.answers[1];
-            document.getElementById('modal-answer-c').value = question.answers[2];
-            document.getElementById('modal-letter').value = question.letterToReveal;
-            
-            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
-            
-            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
-            
-            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
-            
-            document.querySelector('.modal-title').textContent = translations[currentLanguage].edit + ' ' + translations[currentLanguage].question_text.toLowerCase();
-            questionModal.show();
-        } catch (error) {
-            alert('Błąd ładowania pytania: ' + error.message);
-        }
-    }
-    
-    async function deleteQuestion(id) {
-        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
-        
-        try {
-            const response = await fetch(`/api/host/question/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Błąd usuwania pytania');
-            loadQuestions();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    }
-    
-    document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', loadQuestions);
-
-    // =====================================================================
-    // MINIGRY
-    // =====================================================================
-    function loadMinigamesStatus() {
-        fetch('/api/host/minigames/status')
-            .then(res => res.json())
-            .then(data => {
-                // Tetris
-                const tetrisToggle = document.getElementById('tetris-toggle');
-                const tetrisStatus = document.getElementById('tetris-status');
-                if (tetrisToggle && tetrisStatus) {
-                    tetrisToggle.checked = data.tetris_enabled;
-                    tetrisStatus.textContent = data.tetris_enabled ? 'Aktywny' : 'Nieaktywny';
-                    tetrisStatus.className = data.tetris_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-
-                // Arkanoid
-                const arkanoidToggle = document.getElementById('arkanoid-toggle');
-                const arkanoidStatus = document.getElementById('arkanoid-status');
-                if (arkanoidToggle && arkanoidStatus) {
-                    arkanoidToggle.checked = data.arkanoid_enabled;
-                    arkanoidStatus.textContent = data.arkanoid_enabled ? 'Aktywny' : 'Nieaktywny';
-                    arkanoidStatus.className = data.arkanoid_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-
-                // Snake
-                const snakeToggle = document.getElementById('snake-toggle');
-                const snakeStatus = document.getElementById('snake-status');
-                if (snakeToggle && snakeStatus) {
-                    snakeToggle.checked = data.snake_enabled;
-                    snakeStatus.textContent = data.snake_enabled ? 'Aktywny' : 'Nieaktywny';
-                    snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-
-                // PacMan
-                const pacmanToggle = document.getElementById('pacman-toggle');
-                const pacmanStatus = document.getElementById('pacman-status');
-                if (pacmanToggle && pacmanStatus) {
-                    pacmanToggle.checked = data.pacman_enabled;
-                    pacmanStatus.textContent = data.pacman_enabled ? 'Aktywny' : 'Nieaktywny';
-                    pacmanStatus.className = data.pacman_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-
-                // T-Rex
-                const trexToggle = document.getElementById('trex-toggle');
-                const trexStatus = document.getElementById('trex-status');
-                if (trexToggle && trexStatus) {
-                    trexToggle.checked = data.trex_enabled;
-                    trexStatus.textContent = data.trex_enabled ? 'Aktywny' : 'Nieaktywny';
-                    trexStatus.className = data.trex_enabled ? 'badge bg-success' : 'badge bg-secondary';
-                }
-            });
-    }
-    
-    // Tetris toggle
-    document.getElementById('tetris-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('tetris-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'tetris', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-    
-    // Arkanoid toggle
-    document.getElementById('arkanoid-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('arkanoid-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'arkanoid', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-
-    // Snake toggle
-    document.getElementById('snake-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('snake-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'snake', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-
-    document.getElementById('pacman-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('pacman-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'pacman', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-
-    document.getElementById('trex-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('trex-status');
-        const infoEl = document.getElementById('minigames-info');
-        try {
-            const response = await fetch('/api/host/minigames/toggle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ game_type: 'trex', enabled })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            infoEl.textContent = result.message;
-            infoEl.style.display = 'block';
-            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-
-    document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
-        
-    // =====================================================================
-    // STEROWANIE GRĄ
-    // =====================================================================
-    const infoElements = {
-        playerCount: document.getElementById('info-player-count'),
-        completionPercentage: document.getElementById('info-completion-percentage'),
-        language: document.getElementById('info-language'),
-        timeLeft: document.getElementById('info-time-left'),
-        timeElapsed: document.getElementById('info-time-elapsed'),
-        timeElapsedPauses: document.getElementById('info-time-elapsed-pauses'),
-        bonus: document.getElementById('info-bonus'),
-        speed: document.getElementById('info-speed'),
-        gameStatus: document.getElementById('info-game-status')
-    };
-    
-    let isTimerRunning = false;
-    let isGameActive = false;
-    
-    async function sendGameControl(control, value = null) {
-        console.log('🎮 Sending game control:', control, value);
-        try {
-            const response = await fetch('/api/host/game_control', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ control, value })
-            });
-            if (!response.ok) throw new Error('Server error');
-            const result = await response.json();
-            console.log('✅ Game control response:', result);
-        } catch (error) {
-            console.error('❌ Control error:', error);
-        }
-    }
-    
-    function updateUI(state) {
-        console.log('🔄 Updating UI with state:', state);
-        
-        // Update player count
-        if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
-        
-        // ✅ Update completion percentage
-        if (infoElements.completionPercentage) {
-            infoElements.completionPercentage.textContent = `${state.completion_percentage || 0}%`;
-        }
-        
-        // Update language display
-        if (infoElements.language) {
-            const langText = state.language_host === 'en' ? 'English' : 'Polski';
-            infoElements.language.textContent = langText;
-        }
-        
-        // Update bonus display
-        if (infoElements.bonus) {
-            const bonusVal = state.bonus_multiplier || 1;
-            infoElements.bonus.textContent = bonusVal > 1 ? `x${bonusVal}` : 'Brak';
-            
-            // Update button states
-            document.querySelectorAll('[data-control="bonus"]').forEach(btn => {
-                btn.classList.toggle('active-modifier', btn.dataset.value === String(bonusVal));
-            });
-        }
-        
-        // Update speed display
-        if (infoElements.speed) {
-            const speedVal = state.time_speed || 1;
-            infoElements.speed.textContent = `x${speedVal}`;
-            
-            // Update button states
-            document.querySelectorAll('[data-control="speed"]').forEach(btn => {
-                btn.classList.toggle('active-modifier', btn.dataset.value === String(speedVal));
-            });
-        }
-        
-        // ✅ Update game status
-        if (infoElements.gameStatus) {
-            const statusEl = infoElements.gameStatus;
-            const status = state.game_status || 'waiting';
-            statusEl.dataset.status = status;
-            
-            // Remove all status classes
-            statusEl.classList.remove('status-waiting', 'status-active', 'status-paused', 'status-stopped');
-            
-            // Add appropriate class
-            statusEl.classList.add(`status-${status}`);
-            
-            // Update text
-            updateGameStatusText();
-        }
-        
-        // Update pause button text
-        const pauseBtn = document.getElementById('pause-btn');
-        if (pauseBtn) {
-            isTimerRunning = state.is_timer_running;
-            pauseBtn.textContent = state.is_timer_running 
-                ? translations[currentLanguage].pause 
-                : translations[currentLanguage].resume;
-        }
-        
-        // Store game active state
-        isGameActive = state.game_active;
-        
-        // ✅ LOGIKA AKTYWACJI/DEAKTYWACJI PRZYCISKÓW
-        const startGameBtn = document.getElementById('start-game');
-        const pauseGameBtn = document.getElementById('pause-btn');
-        const stopGameBtn = document.getElementById('stop-game');
-        const resetGameBtn = document.getElementById('reset-game');
-        
-        if (state.game_active) {
-            // GRA JEST AKTYWNA
-            // Start - nieaktywny (blady)
-            if (startGameBtn) {
-                startGameBtn.disabled = true;
-                startGameBtn.classList.add('opacity-50');
-            }
-            
-            // Pauza - aktywny
-            if (pauseGameBtn) {
-                pauseGameBtn.disabled = false;
-                pauseGameBtn.classList.remove('opacity-50');
-            }
-            
-            // Stop - aktywny
-            if (stopGameBtn) {
-                stopGameBtn.disabled = false;
-                stopGameBtn.classList.remove('opacity-50');
-            }
-            
-            // Reset - aktywny
-            if (resetGameBtn) {
-                resetGameBtn.disabled = false;
-                resetGameBtn.classList.remove('opacity-50');
-            }
+    function copyLink() {
+        const link = "{{ url_for('player_join', event_id=event.id, _external=True) }}";
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(link).then(() => alert('Skopiowano link!'));
         } else {
-            // GRA NIE JEST AKTYWNA
-            // Start - aktywny
-            if (startGameBtn) {
-                startGameBtn.disabled = false;
-                startGameBtn.classList.remove('opacity-50');
-            }
-            
-            // Pauza - nieaktywny (blady)
-            if (pauseGameBtn) {
-                pauseGameBtn.disabled = true;
-                pauseGameBtn.classList.add('opacity-50');
-            }
-            
-            // Stop - nieaktywny (blady)
-            if (stopGameBtn) {
-                stopGameBtn.disabled = true;
-                stopGameBtn.classList.add('opacity-50');
-            }
-            
-            // Reset - nieaktywny (blady)
-            if (resetGameBtn) {
-                resetGameBtn.disabled = true;
-                resetGameBtn.classList.add('opacity-50');
-            }
-        }
-        
-        // Enable/disable fieldsets based on game state
-        const preGameFieldset = document.getElementById('pre-game-settings');
-        const inGameFieldset = document.getElementById('in-game-settings');
-        const gameDurationInput = document.getElementById('game-duration-input-2');
-        const setTimeBtn = document.getElementById('set-time-btn-2');
-        
-        if (state.game_active) {
-            preGameFieldset.disabled = false; // ✅ Zawsze dostępne
-            inGameFieldset.disabled = false;
-            // ✅ Zmień tekst przycisku podczas gry
-            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
-        } else {
-            preGameFieldset.disabled = false;
-            inGameFieldset.disabled = true;
-            // ✅ Przywróć oryginalny tekst przycisku
-            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
-        }
-        
-        // ✅ Aktualizuj wyświetlanie hasła
-        const passwordDisplay = document.getElementById('current-password-display');
-        if (passwordDisplay && state.password) {
-            passwordDisplay.textContent = state.password.split('').join(' ');
+            const el = document.createElement('textarea');
+            el.value = link;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert('Skopiowano link!');
         }
     }
-    
-    // Socket.IO event handlers
+
+    // --- 2. LOGIKA SOCKET.IO ---
     socket.on('connect', () => {
-        console.log('✅ Socket connected, joining room for event:', EVENT_ID);
-        socket.emit('join', { event_id: EVENT_ID });
+        console.log('Połączono z Socket.IO');
+        socket.emit('join', { room: eventId });
+        logAction('Połączono z serwerem gry.');
     });
-    
-    socket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
-    });
-    
-    socket.on('game_state_update', (state) => {
-        console.log('📡 Game state update received:', state);
-        updateUI(state);
-    });
-    
-    socket.on('timer_tick', (data) => {
-        console.log('⏱️ Timer tick:', data);
-        if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
-        if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
-        // ✅ Zawsze aktualizuj czas brutto (również podczas pauzy)
-        if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
-    });
-    
-    socket.on('game_over', () => {
-        alert('Czas minął! Gra zakończona.');
-    });
-    
-    socket.on('game_forced_win', (data) => {
-        alert(data.message);
-    });
-    
-    socket.on('password_update', (password) => {
-        const passwordDisplay = document.getElementById('current-password-display');
-        if (passwordDisplay) {
-            passwordDisplay.textContent = password.split('').join(' ');
-        }
-        
-        // ✅ NOWE: Aktualizuj również podgląd hasła w zakładce Gra
-        loadPasswordState();
-    });
-    
-    // Initial state load
-    console.log('🔄 Loading initial state...');
-    fetch('/api/host/state')
-        .then(res => res.json())
-        .then(state => {
-            console.log('✅ Initial state loaded:', state);
-            updateUI(state);
-            if (state.language_host === 'en') {
-                translatePage('en');
-                document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
-                document.querySelector('#lang-host-controls button[data-value="en"]')?.classList.add('active-modifier');
+
+    socket.on('game_status_update', updateGameStatusUI);
+    socket.on('players_update', renderPlayersTable);
+
+    function logAction(msg) {
+        const logs = document.getElementById('live-logs');
+        const div = document.createElement('div');
+        div.textContent = `> ${new Date().toLocaleTimeString()} ${msg}`;
+        logs.prepend(div);
+    }
+
+    // --- 3. OBSŁUGA STANU GRY (Status, Timery) ---
+    function updateGameStatusUI(data) {
+        const statusEl = document.getElementById('info-game-status');
+        const startBtn = document.getElementById('start-game-btn');
+        const pauseBtn = document.getElementById('pause-game-btn');
+        const stopBtn = document.getElementById('stop-game-btn');
+        const badge = document.getElementById('active-round-badge');
+
+        if (data.status === 'active') {
+            statusEl.innerHTML = '<span class="status-indicator status-active"></span>Gra Aktywna';
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            pauseBtn.innerHTML = '<i class="bi bi-pause-fill"></i> PAUZA';
+            stopBtn.style.display = 'inline-block';
+            isPaused = false;
+            if (data.start_time) {
+                gameStartTime = new Date(data.start_time);
+                totalPausedDuration = (data.total_paused_seconds || 0) * 1000;
+                if (!gameTimerInterval) gameTimerInterval = setInterval(updateMainTimer, 1000);
             }
-            if (state.language_player === 'en') {
-                document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
-                document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
-            }
-            
-            // ✅ Załaduj stan hasła od razu przy inicjalizacji - WYMUSZONY
-            setTimeout(() => loadPasswordState(), 100);
-        })
-        .catch(error => console.error('❌ Error loading initial state:', error));
-    
-    // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
-    document.getElementById('set-time-btn-2')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
-        console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
-        
-        if (isNaN(minutes) || minutes < 1) {
-            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
-            return;
-        }
-        
-        if (!isGameActive) {
-            // ✅ PRZED GRĄ: Po prostu zapisz wartość (nie uruchamiaj gry)
-            alert(`Czas gry ustawiony na ${minutes} minut. Kliknij "Start Gry", aby rozpocząć.`);
+        } else if (data.status === 'paused') {
+            statusEl.innerHTML = '<span class="status-indicator status-paused"></span>Pauza';
+            pauseBtn.innerHTML = '<i class="bi bi-play-fill"></i> WZNÓW';
+            isPaused = true;
         } else {
-            // ✅ PODCZAS GRY: Zmień czas (wymaga hasła)
-            const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
-            if (!password) return;
-            
-            if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${minutes} minut?`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/host/adjust_time', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        new_minutes: minutes,
-                        password: password 
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Błąd zmiany czasu');
-                }
-                
-                alert(result.message || 'Czas gry został zmieniony!');
-            } catch (error) {
-                alert('Błąd: ' + error.message);
-            }
+            statusEl.innerHTML = '<span class="status-indicator status-waiting"></span>Oczekiwanie';
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
+            clearInterval(gameTimerInterval);
+            gameTimerInterval = null;
         }
-    });
-    
-    // Start game button
-    document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
-        console.log('🎮 Starting game with', minutes, 'minutes');
-        
-        if (isNaN(minutes) || minutes < 1) {
-            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
-            return;
-        }
-        
-        if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
-            return;
-        }
-        
-        try {
-            console.log('📤 Sending start game request...');
-            const response = await fetch('/api/host/start_game', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ minutes })
-            });
-            
-            const result = await response.json();
-            console.log('📥 Start game response:', result);
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Nieznany błąd uruchamiania gry');
-            }
-            
-            console.log('✅ Game started successfully');
-            alert(result.message || 'Gra rozpoczęta!');
-        } catch (error) {
-            console.error('❌ Error starting game:', error);
-            alert('Błąd podczas uruchamiania gry: ' + error.message);
-        }
-    });
-    
-    // Stop game button
-    document.getElementById('stop-game')?.addEventListener('click', async () => {
-        const password = prompt('Wprowadź hasło Hosta, aby zakończyć grę:');
-        if (!password) return;
-        
-        try {
-            const response = await fetch('/api/host/stop_game', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd zatrzymywania gry');
-            }
-            
-            alert(result.message || 'Gra zatrzymana');
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    });
-    
-    // Reset game button
-    document.getElementById('reset-game')?.addEventListener('click', async () => {
-        const password = prompt('Wprowadź hasło Hosta, aby zresetować grę:');
-        if (!password) return;
-        
-        if (!confirm('Czy na pewno chcesz zresetować całą grę? To usunie wszystkich graczy, pytania i dane gry!')) {
-            return;
-        }
-        
-        try {
-            // Weryfikuj hasło przez endpoint stop_game (możesz też dodać osobny endpoint)
-            // Na razie wykorzystamy istniejący endpoint do resetu z admina
-            const response = await fetch(`/api/admin/event/${EVENT_ID}/reset`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.message || 'Błąd resetowania gry');
-            }
-            
-            alert(result.message || 'Gra została zresetowana');
-            location.reload(); // Odśwież stronę
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    });
-    
-    // In-game controls
-    document.getElementById('game-controls')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-control]');
-        if (!btn) return;
-        
-        const control = btn.dataset.control;
-        const value = btn.dataset.value;
-        
-        console.log('🎮 Sending game control:', control, value);
-        sendGameControl(control, value);
-    });
 
-// =====================================================================
-    // ✅ KOMUNIKATY NA EKRAN GRY
-    // =====================================================================
-    const messageInput = document.getElementById('host-message-input');
-    const charCount = document.getElementById('message-char-count');
-    const sendMessageBtn = document.getElementById('send-message-btn');
-    const messageStatus = document.getElementById('message-status');
-
-    if (messageInput && charCount) {
-        messageInput.addEventListener('input', () => {
-            charCount.textContent = messageInput.value.length;
-        });
+        badge.textContent = data.active_round ? `Runda ${data.active_round}` : 'Runda: Brak';
     }
 
-    // Wysyłanie komunikatu
-    if (sendMessageBtn) {
-        sendMessageBtn.addEventListener('click', async () => {
-            const message = messageInput.value.trim();
-            
-            if (!message) {
-                messageStatus.innerHTML = '<div class="alert alert-warning">Wpisz treść komunikatu</div>';
-                setTimeout(() => messageStatus.innerHTML = '', 3000);
-                return;
-            }
-            
-            sendMessageBtn.disabled = true;
-            sendMessageBtn.textContent = 'Wysyłanie...';
-            
-            try {
-                const response = await fetch('/api/host/send_message', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
-                
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'Błąd wysyłania');
-                }
-                
-                messageStatus.innerHTML = '<div class="alert alert-success">✅ Komunikat wysłany!</div>';
-                messageInput.value = '';
-                charCount.textContent = '0';
-                
-                setTimeout(() => messageStatus.innerHTML = '', 3000);
-            } catch (error) {
-                messageStatus.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
-            } finally {
-                sendMessageBtn.disabled = false;
-                sendMessageBtn.textContent = translations[currentLanguage].send_message || 'Wyślij komunikat';
-            }
-        });
+    function updateMainTimer() {
+        if (!gameStartTime || isPaused) return;
+        const now = new Date();
+        const diff = now - gameStartTime - totalPausedDuration;
+        if (diff < 0) return;
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        document.getElementById('info-time-elapsed').textContent = `${h}:${m}:${s}`;
     }
-    
-    console.log('✅ HOST PANEL INITIALIZED');
 
-// =====================================================================
-// ZARZĄDZANIE HASŁEM - NOWY SYSTEM Z INDEKSAMI
-// =====================================================================
+    document.getElementById('start-game-btn').onclick = () => fetch(`/api/host/game/start/${eventId}`, { method: 'POST' });
+    document.getElementById('stop-game-btn').onclick = () => { if(confirm('Stop?')) fetch(`/api/host/game/stop/${eventId}`, { method: 'POST' }); };
+    document.getElementById('pause-game-btn').onclick = () => {
+        const endpoint = isPaused ? 'resume' : 'pause';
+        fetch(`/api/host/game/${endpoint}/${eventId}`, { method: 'POST' });
+    };
 
-    let currentPassword = 'SAPEREVENT';
-    let revealedLettersIndices = new Set();
-    let autoRevealEnabled = true;
-    let selectedLettersForReveal = new Set();
-    let passwordLetters = [];
-
-
-      // ✅ NOWA FUNKCJA: Renderowanie podglądu hasła w zakładce Gra
-    function renderGamePasswordPreview() {
-        const container = document.getElementById('game-password-display');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        for (let i = 0; i < currentPassword.length; i++) {
-            const char = currentPassword[i];
-            const isRevealed = revealedLettersIndices.has(i);
-            
-            if (char === ' ') {
-                // Spacja = odstęp
-                const spaceEl = document.createElement('div');
-                spaceEl.style.width = '15px';
-                spaceEl.style.height = '30px';
-                container.appendChild(spaceEl);
-            } else {
-                // Litera = badge (czerwony lub zielony)
-                const span = document.createElement('span');
-                span.className = isRevealed ? 'badge bg-success' : 'badge bg-danger';
-                span.textContent = char;
-                span.style.fontSize = '0.9rem';      // Mniejsza czcionka
-                span.style.width = '28px';           // Mniejszy rozmiar
-                span.style.height = '28px';
-                span.style.display = 'inline-flex';
-                span.style.alignItems = 'center';
-                span.style.justifyContent = 'center';
-                container.appendChild(span);
-            }
-        }
-    }
-    
-    async function loadPasswordState() {
-        try {
-            const response = await fetch('/api/host/password/state');
-            const data = await response.json();
-            
-            currentPassword = data.password;
-            autoRevealEnabled = data.mode === 'auto';
-
-            revealedLettersIndices.clear();
-            if (data.revealed_letters) {
-                const indices = data.revealed_letters.split(',').filter(x => x);
-                indices.forEach(idx => revealedLettersIndices.add(parseInt(idx)));
-            }
-
-            document.getElementById('password-edit-input').value = currentPassword;
-
-            const autoToggle = document.getElementById('password-auto-reveal-toggle');
-            const autoStatus = document.getElementById('auto-reveal-status');
-            if (autoToggle && autoStatus) {
-                autoToggle.checked = autoRevealEnabled;
-                autoStatus.textContent = autoRevealEnabled ? 'Włączone' : 'Wyłączone';
-                autoStatus.className = autoRevealEnabled ? 'badge bg-success' : 'badge bg-secondary';
-            }
-
-            // Ustaw wartość procentu
-            const percentageInput = document.getElementById('auto-reveal-percentage');
-            if (percentageInput && data.reveal_percentage) {
-                percentageInput.value = data.reveal_percentage;
-            }
-            
-            renderPasswordLetters();
-            
-       // ✅ NOWE: Renderuj również podgląd w zakładce Gra
-            renderGamePasswordPreview();
-            
-        } catch (error) {
-            console.error('Błąd ładowania hasła:', error);
-        }
-    }
-    
-    function renderPasswordLetters() {
-        const container = document.getElementById('password-letters-display');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        passwordLetters = [];
-        selectedLettersForReveal.clear();
-        
-        for (let i = 0; i < currentPassword.length; i++) {
-            const char = currentPassword[i];
-            const isRevealed = revealedLettersIndices.has(i);
-            
-            passwordLetters.push({ char, index: i, revealed: isRevealed });
-            
-            if (char === ' ') {
-                const spaceEl = document.createElement('div');
-                spaceEl.style.width = '30px';
-                spaceEl.style.height = '50px';
-                container.appendChild(spaceEl);
-            } else {
-                const btn = document.createElement('button');
-                btn.className = isRevealed ? 'btn btn-success' : 'btn btn-danger';
-                btn.textContent = char;
-                btn.disabled = false;
-                btn.style.width = '50px';
-                btn.style.height = '50px';
-                btn.style.fontSize = '1.5rem';
-                btn.style.fontWeight = 'bold';
-                btn.dataset.index = i;
-                
-                btn.addEventListener('click', () => {
-                    if (isRevealed) return;
-                    
-                    if (btn.classList.contains('btn-danger')) {
-                        btn.classList.remove('btn-danger');
-                        btn.classList.add('btn-warning');
-                        selectedLettersForReveal.add(i);
-                    } else if (btn.classList.contains('btn-warning')) {
-                        btn.classList.remove('btn-warning');
-                        btn.classList.add('btn-danger');
-                        selectedLettersForReveal.delete(i);
-                    }
-                    
-                    const confirmBtn = document.getElementById('reveal-selected-letters-btn');
-                    if (confirmBtn) {
-                        confirmBtn.disabled = selectedLettersForReveal.size === 0;
+    // --- 4. OBSŁUGA PYTAŃ ---
+    document.querySelectorAll('.activate-q-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const qid = this.dataset.qid;
+            const type = this.dataset.type;
+            fetch(`/api/host/question/activate/${eventId}/${qid}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    if(res.status === 'success') {
+                        logAction(`Aktywowano pytanie ${qid} (${type})`);
+                        if(type === 'r1') {
+                            document.querySelectorAll('.question-item').forEach(qi => qi.classList.remove('active-q'));
+                            const parent = document.getElementById(`q-r1-${qid}`);
+                            parent.classList.add('active-q');
+                            parent.querySelector('.activate-q-btn').disabled = true;
+                            parent.querySelector('.reveal-q-btn').disabled = false;
+                            parent.querySelector('.close-q-btn').disabled = false;
+                        }
                     }
                 });
-                
-                container.appendChild(btn);
-            }
-        }
-        
-        const confirmBtn = document.getElementById('reveal-selected-letters-btn');
-        if (confirmBtn) {
-            confirmBtn.disabled = true;
-        }
-        
-        // ✅ NOWE: Aktualizuj również podgląd w zakładce Gra
-        renderGamePasswordPreview();
-    }
-    
-    document.getElementById('password-edit-ok-btn')?.addEventListener('click', async () => {
-        const newPassword = document.getElementById('password-edit-input').value.trim().toUpperCase();
-        const statusEl = document.getElementById('password-edit-status');
-        
-        if (!newPassword) {
-            statusEl.innerHTML = '<div class="alert alert-warning">Hasło nie może być puste</div>';
-            return;
-        }
-        
-        if (newPassword.length > 50) {
-            statusEl.innerHTML = '<div class="alert alert-warning">Hasło może mieć maksymalnie 50 znaków</div>';
-            return;
-        }
-        
-        try {
-            const response = await fetch('/api/host/password/set', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: newPassword })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd zapisu hasła');
-            }
-            
-            currentPassword = newPassword;
-            revealedLettersIndices.clear();
-            statusEl.innerHTML = '<div class="alert alert-success">✅ Hasło zaktualizowane!</div>';
-            
-            loadPasswordState();
-            
-            setTimeout(() => statusEl.innerHTML = '', 3000);
-        } catch (error) {
-            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
-        }
-    });
-    
-    document.getElementById('password-auto-reveal-toggle')?.addEventListener('change', async (e) => {
-        const enabled = e.target.checked;
-        const statusEl = document.getElementById('auto-reveal-status');
-        
-        try {
-            const mode = enabled ? 'auto' : 'manual';
-            const response = await fetch('/api/host/password/mode', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd zmiany trybu');
-            }
-            
-            autoRevealEnabled = enabled;
-            statusEl.textContent = enabled ? 'Włączone' : 'Wyłączone';
-            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
-            
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            e.target.checked = !enabled;
-        }
-    });
-
-    // Event listener dla zmiany procentu odkrywania
-    document.getElementById('auto-reveal-percentage')?.addEventListener('change', async (e) => {
-        const percentage = parseInt(e.target.value);
-
-        if (isNaN(percentage) || percentage < 1 || percentage > 100) {
-            alert('Procent musi być w zakresie 1-100');
-            e.target.value = 50; // Reset do domyślnej wartości
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/host/password/reveal_percentage', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ percentage })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd zmiany procentu');
-            }
-
-            console.log(`Procent odkrywania ustawiony na: ${percentage}%`);
-
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            loadPasswordState(); // Przeładuj wartość z serwera
-        }
-    });
-
-    document.getElementById('reveal-selected-letters-btn')?.addEventListener('click', async () => {
-        if (selectedLettersForReveal.size === 0) return;
-        
-        const indices = Array.from(selectedLettersForReveal);
-        const statusEl = document.getElementById('password-reveal-status');
-        
-        try {
-            const response = await fetch('/api/host/password/reveal_manual', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ indices })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd odkrywania liter');
-            }
-            
-            indices.forEach(idx => revealedLettersIndices.add(idx));
-            
-            statusEl.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
-            
-            renderPasswordLetters();
-            
-            setTimeout(() => statusEl.innerHTML = '', 3000);
-        } catch (error) {
-            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
-        }
-    });
-    
-    document.querySelector('button[data-bs-target="#password"]')?.addEventListener('click', loadPasswordState);
-
-    // ===================================================
-    // AI CATEGORIES MANAGEMENT
-    // ===================================================
-    async function loadAICategories() {
-        try {
-            const response = await fetch('/api/host/ai/categories');
-            const categories = await response.json();
-
-            const predefinedList = document.getElementById('ai-categories-list');
-            const customList = document.getElementById('custom-categories-list');
-
-            predefinedList.innerHTML = '';
-            customList.innerHTML = '';
-
-            categories.forEach(cat => {
-                const categoryItem = document.createElement('div');
-                categoryItem.className = 'card mb-3';
-
-                const difficultyBadge = cat.difficulty_level === 'easy' ? 'success' :
-                                       cat.difficulty_level === 'medium' ? 'warning' : 'danger';
-                const difficultyText = cat.difficulty_level === 'easy' ? 'Łatwy' :
-                                      cat.difficulty_level === 'medium' ? 'Średni' : 'Zaawansowany';
-
-                categoryItem.innerHTML = `
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">${cat.name}</h6>
-                                <span class="badge bg-${difficultyBadge}">${difficultyText}</span>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox"
-                                       ${cat.is_enabled ? 'checked' : ''}
-                                       onchange="toggleAICategory(${cat.id}, this.checked)">
-                                <label class="form-check-label">Aktywna</label>
-                            </div>
-                            ${cat.is_custom ? `
-                                <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
-                                    Generuj pytania
-                                </button>
-                                <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
-                                    Usuń
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-
-                if (cat.is_custom) {
-                    customList.appendChild(categoryItem);
-                } else {
-                    predefinedList.appendChild(categoryItem);
-                }
-            });
-
-            if (customList.children.length === 0) {
-                customList.innerHTML = '<p class="text-muted">Brak własnych kategorii.</p>';
-            }
-        } catch (error) {
-            console.error('Error loading AI categories:', error);
-        }
-    }
-
-    window.toggleAICategory = async function(categoryId, enabled) {
-        try {
-            const response = await fetch(`/api/host/ai/category/${categoryId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ is_enabled: enabled })
-            });
-
-            if (!response.ok) throw new Error('Błąd aktualizacji kategorii');
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-            loadAICategories();
-        }
-    };
-
-    window.deleteAICategory = async function(categoryId) {
-        if (!confirm('Czy na pewno chcesz usunąć tę kategorię wraz z pytaniami?')) return;
-
-        try {
-            const response = await fetch(`/api/host/ai/category/${categoryId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) throw new Error('Błąd usuwania kategorii');
-
-            loadAICategories();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    };
-
-    window.generateQuestionsForCategory = async function(categoryId, categoryName) {
-        const count = prompt(`Ile pytań wygenerować dla kategorii "${categoryName}"?`, '10');
-        if (!count) return;
-
-        const btn = event.target;
-        btn.disabled = true;
-        btn.textContent = 'Generowanie...';
-
-        try {
-            const response = await fetch(`/api/host/ai/generate_questions/${categoryId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ count: parseInt(count) })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd generowania pytań');
-            }
-
-            alert(result.message);
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Generuj pytania';
-        }
-    };
-
-    document.getElementById('add-custom-category-btn')?.addEventListener('click', async () => {
-        const nameInput = document.getElementById('custom-category-name');
-        const difficultySelect = document.getElementById('custom-category-difficulty');
-
-        const name = nameInput.value.trim();
-        const difficulty = difficultySelect.value;
-
-        if (!name) {
-            alert('Podaj nazwę kategorii');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/host/ai/categories', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: name,
-                    difficulty_level: difficulty
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Błąd dodawania kategorii');
-            }
-
-            nameInput.value = '';
-            difficultySelect.value = 'easy';
-            loadAICategories();
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
-    });
-
-    document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
-
-    // ============ AR FUNKCJE ============
-
-    let arObjectsCounter = 0;
-
-    window.addNewARObject = function() {
-        arObjectsCounter++;
-        const container = document.getElementById('ar-objects-container');
-        const objectDiv = document.createElement('div');
-        objectDiv.className = 'col-md-6';
-        objectDiv.id = `ar-object-${arObjectsCounter}`;
-        objectDiv.innerHTML = `
-            <div class="card">
-                <div class="card-body">
-                    <h6>Obiekt AR #${arObjectsCounter}</h6>
-                    <div id="ar-preview-${arObjectsCounter}" class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
-                        <span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>
-                    </div>
-                    <input type="text" class="form-control mb-2" id="ar-name-${arObjectsCounter}" placeholder="Nazwa obiektu (np. Butelka)">
-                    <select class="form-select mb-2" id="ar-game-${arObjectsCounter}">
-                        <option value="snake">🐍 Snake</option>
-                        <option value="quiz">❓ Quiz</option>
-                        <option value="tetris">🧱 Tetris</option>
-                        <option value="arkanoid">🎮 Arkanoid</option>
-                    </select>
-                    <button class="btn btn-primary w-100 mb-2" onclick="captureARObject(${arObjectsCounter})">
-                        📸 Zrób zdjęcie obiektu
-                    </button>
-                    <button class="btn btn-danger w-100" onclick="removeARObject(${arObjectsCounter})">
-                        🗑️ Usuń
-                    </button>
-                </div>
-            </div>
-        `;
-        container.appendChild(objectDiv);
-    };
-
-    window.removeARObject = function(objectId) {
-        const objectDiv = document.getElementById(`ar-object-${objectId}`);
-        if (objectDiv) {
-            objectDiv.remove();
-        }
-    };
-
-    window.captureARObject = async function(objectId) {
-        const nameInput = document.getElementById(`ar-name-${objectId}`);
-        const gameSelect = document.getElementById(`ar-game-${objectId}`);
-        const previewDiv = document.getElementById(`ar-preview-${objectId}`);
-
-        const objectName = nameInput.value.trim();
-        if (!objectName) {
-            alert('Podaj nazwę obiektu!');
-            return;
-        }
-
-        try {
-            // Otwórz kamerę
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' }
-            });
-
-            // Utwórz video element
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            video.autoplay = true;
-            video.style.width = '100%';
-
-            // Pokaż podgląd kamery
-            previewDiv.innerHTML = '';
-            previewDiv.appendChild(video);
-
-            // Dodaj przycisk do zrobienia zdjęcia
-            const captureBtn = document.createElement('button');
-            captureBtn.className = 'btn btn-success mt-2';
-            captureBtn.textContent = '📸 Zrób zdjęcie';
-            captureBtn.onclick = async function() {
-                // Zrób zdjęcie
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-
-                // Konwertuj na base64
-                const imageData = canvas.toDataURL('image/jpeg', 0.8);
-
-                // Zatrzymaj kamerę
-                stream.getTracks().forEach(track => track.stop());
-
-                // Pokaż zdjęcie
-                const img = document.createElement('img');
-                img.src = imageData;
-                img.style.width = '100%';
-                previewDiv.innerHTML = '';
-                previewDiv.appendChild(img);
-
-                // Wyślij do backendu
-                const response = await fetch('/api/host/ar/setup-object', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        object_name: objectName,
-                        image_data: imageData,
-                        game_type: gameSelect.value
-                    })
-                });
-
-                const result = await response.json();
-                if (response.ok) {
-                    alert('✅ Obiekt AR zapisany!');
-                } else {
-                    alert('❌ Błąd: ' + result.error);
-                }
-            };
-
-            previewDiv.appendChild(captureBtn);
-
-            // Dodaj przycisk do anulowania
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn btn-secondary mt-2 ms-2';
-            cancelBtn.textContent = 'Anuluj';
-            cancelBtn.onclick = function() {
-                stream.getTracks().forEach(track => track.stop());
-                previewDiv.innerHTML = '<span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>';
-            };
-            previewDiv.appendChild(cancelBtn);
-
-        } catch (error) {
-            alert('Błąd dostępu do kamery: ' + error.message);
-        }
-    };
-
-    window.generateARPlayerQR = function() {
-        const qrDiv = document.getElementById('ar-player-qr');
-        qrDiv.innerHTML = '';
-
-        // URL do AR scannera
-        const arScannerUrl = `${window.location.origin}/ar-scanner/{{ event.id }}`;
-
-        // Generuj QR kod używając biblioteki
-        new QRCode(qrDiv, {
-            text: arScannerUrl,
-            width: 256,
-            height: 256
         });
-
-        // Dodaj link
-        const linkDiv = document.createElement('div');
-        linkDiv.className = 'mt-2';
-        linkDiv.innerHTML = `<a href="${arScannerUrl}" target="_blank" class="btn btn-sm btn-outline-primary">Otwórz AR Scanner</a>`;
-        qrDiv.appendChild(linkDiv);
-    };
-
-    // Załaduj istniejące obiekty AR przy otwieraniu zakładki
-    document.querySelector('button[data-bs-target="#ar"]')?.addEventListener('click', async () => {
-        try {
-            const response = await fetch('/api/host/ar/objects');
-            const result = await response.json();
-
-            const container = document.getElementById('ar-objects-container');
-            container.innerHTML = '';
-
-            if (result.objects && result.objects.length > 0) {
-                result.objects.forEach((obj, index) => {
-                    arObjectsCounter++;
-                    const objectDiv = document.createElement('div');
-                    objectDiv.className = 'col-md-6';
-                    objectDiv.id = `ar-object-${arObjectsCounter}`;
-                    objectDiv.innerHTML = `
-                        <div class="card">
-                            <div class="card-body">
-                                <h6>${obj.object_name}</h6>
-                                <div class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
-                                    <img src="${obj.image_data}" style="width: 100%; max-height: 200px; object-fit: contain;">
-                                </div>
-                                <p class="mb-2"><strong>Gra:</strong> ${obj.game_type}</p>
-                                <button class="btn btn-danger w-100" onclick="deleteARObject(${obj.id})">
-                                    🗑️ Usuń
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(objectDiv);
-                });
-            }
-        } catch (error) {
-            console.error('Błąd ładowania obiektów AR:', error);
-        }
     });
 
-    window.deleteARObject = async function(objectId) {
-        if (!confirm('Czy na pewno chcesz usunąć ten obiekt AR?')) return;
+    document.querySelectorAll('.reveal-q-btn').forEach(btn => {
+        btn.onclick = function() { fetch(`/api/host/question/reveal/${eventId}/${this.dataset.qid}`, { method: 'POST' }); }
+    });
 
-        try {
-            const response = await fetch(`/api/host/ar/object/${objectId}`, {
-                method: 'DELETE'
-            });
+    // --- 5. GRACZE ---
+    function renderPlayersTable(players) {
+        const tbody = document.getElementById('players-table-body');
+        tbody.innerHTML = '';
+        players.sort((a, b) => b.score - a.score);
+        players.forEach((p, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="ps-4 fw-bold text-muted">${index + 1}</td>
+                <td><span class="fw-bold">${p.name}</span></td>
+                <td class="text-muted small font-monospace">${p.id.substring(0, 6)}</td>
+                <td class="text-end fw-bold text-primary">${p.score}</td>
+                <td class="text-center pe-4"><button class="btn btn-sm btn-outline-danger" onclick="kickPlayer('${p.id}')"><i class="bi bi-x-lg"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
-            if (response.ok) {
-                // Odśwież listę
-                document.querySelector('button[data-bs-target="#ar"]').click();
-            } else {
-                alert('Błąd usuwania obiektu');
-            }
-        } catch (error) {
-            alert('Błąd: ' + error.message);
-        }
+    window.kickPlayer = (pid) => {
+        if(confirm('Usunąć gracza?')) console.log('Kick:', pid); // Tu dodaj fetch
     };
 
-});
+    // --- 6. TIMERY RUND (Zgodne z Twoim kodem) ---
+    async function checkActiveTimers() {
+        try {
+            // R2
+            const r2Res = await fetch(`/api/host/questions_r2/timer/${eventId}`);
+            if (r2Res.ok) {
+                const d = await r2Res.json();
+                if (d.active && d.end_time) {
+                    r2TimerEndTime = new Date(d.end_time);
+                    startTimerUI('r2', r2TimerEndTime);
+                }
+            }
+            // R3
+            const r3Res = await fetch(`/api/host/questions_r3/timer/${eventId}`);
+            if (r3Res.ok) {
+                const d = await r3Res.json();
+                if (d.active && d.end_time) {
+                    r3TimerEndTime = new Date(d.end_time);
+                    startTimerUI('r3', r3TimerEndTime);
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function startTimerUI(prefix, endTime) {
+        const display = document.getElementById(`${prefix}-questions-timer-display`);
+        const cancelBtn = document.getElementById(`${prefix}-questions-timer-cancel`);
+        display.style.display = 'block';
+        cancelBtn.style.display = 'inline-block';
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const left = Math.ceil((endTime - now) / 1000);
+            if (left <= 0) {
+                display.textContent = "KONIEC";
+                display.classList.add('bg-danger', 'text-white');
+                clearInterval(interval);
+            } else {
+                const m = Math.floor(left / 60).toString().padStart(2, '0');
+                const s = (left % 60).toString().padStart(2, '0');
+                display.textContent = `${m}:${s}`;
+            }
+        }, 1000);
+
+        if(prefix === 'r2') r2TimerInterval = interval;
+        if(prefix === 'r3') r3TimerInterval = interval;
+    }
+
+    // Handlery przycisków timerów
+    document.getElementById('r2-questions-timer-start').onclick = () => {
+        const min = document.getElementById('r2-questions-timer-minutes').value;
+        fetch(`/api/host/questions_r2/timer/start/${eventId}`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({minutes: min})
+        }).then(r=>r.json()).then(d => { if(d.end_time) startTimerUI('r2', new Date(d.end_time)); });
+    };
+    document.getElementById('r2-questions-timer-cancel').onclick = () => {
+        fetch(`/api/host/questions_r2/timer/stop/${eventId}`, { method: 'POST' }).then(() => location.reload());
+    };
+    // Powtórz to samo dla R3...
+    document.getElementById('r3-questions-timer-start').onclick = () => {
+        const min = document.getElementById('r3-questions-timer-minutes').value;
+        fetch(`/api/host/questions_r3/timer/start/${eventId}`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({minutes: min})
+        }).then(r=>r.json()).then(d => { if(d.end_time) startTimerUI('r3', new Date(d.end_time)); });
+    };
+    document.getElementById('r3-questions-timer-cancel').onclick = () => {
+        fetch(`/api/host/questions_r3/timer/stop/${eventId}`, { method: 'POST' }).then(() => location.reload());
+    };
+
+    // Inicjalizacja
+    checkActiveTimers();
+    fetch(`/api/host/game/status/${eventId}`).then(r=>r.json()).then(data => updateGameStatusUI(data));
+
+    window.sendScreenAction = (action) => {
+        socket.emit('screen_control', { action: action, room: eventId });
+        logAction(`Ekran: ${action}`);
+    };
+
+    document.getElementById('send-global-message-btn').onclick = () => {
+        const msg = document.getElementById('global-message-input').value;
+        if(msg) {
+            socket.emit('admin_message', { room: eventId, message: msg });
+            document.getElementById('global-message-input').value = '';
+            alert('Wysłano!');
+        }
+    };
 </script>
 {% endblock %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
