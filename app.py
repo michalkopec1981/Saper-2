@@ -214,7 +214,9 @@ class LiveSession(db.Model):
     is_enabled = db.Column(db.Boolean, default=True)
     button_count = db.Column(db.Integer, default=3)  # 2, 3, lub 4 przyciski (A,B) (A,B,C) lub (A,B,C,D)
     separate_score_pool = db.Column(db.Boolean, default=False)  # Czy punkty z trybu Na żywo idą do osobnej puli
+    result_mode = db.Column(db.String(10), default='auto')  # 'auto' lub 'manual' - kiedy pokazać wyniki
     qr_code = db.Column(db.String(50), nullable=True)  # Kod QR dla graczy
+    backup_qr_code = db.Column(db.String(50), nullable=True)  # Zapasowy kod QR (priorytetowy na ekranie 5)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class LiveQuestion(db.Model):
@@ -473,6 +475,54 @@ with app.app_context():
                 db.session.execute(text("ALTER TABLE live_session ADD COLUMN separate_score_pool BOOLEAN DEFAULT 0"))
                 db.session.commit()
                 print("✓ Database migration (SQLite): Added 'separate_score_pool' column to live_session table")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumna prawdopodobnie już istnieje
+
+        # ✅ Automatyczna migracja: Dodaj kolumnę 'result_mode' do tabeli 'live_session'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'live_session'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'result_mode' not in existing_columns:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN result_mode VARCHAR(10) DEFAULT 'auto'"))
+                db.session.commit()
+                print("✓ Database migration: Added 'result_mode' column to live_session table")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN result_mode VARCHAR(10) DEFAULT 'auto'"))
+                db.session.commit()
+                print("✓ Database migration (SQLite): Added 'result_mode' column to live_session table")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumna prawdopodobnie już istnieje
+
+        # ✅ Automatyczna migracja: Dodaj kolumnę 'backup_qr_code' do tabeli 'live_session'
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'live_session'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            if 'backup_qr_code' not in existing_columns:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN backup_qr_code VARCHAR(50)"))
+                db.session.commit()
+                print("✓ Database migration: Added 'backup_qr_code' column to live_session table")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                db.session.execute(text("ALTER TABLE live_session ADD COLUMN backup_qr_code VARCHAR(50)"))
+                db.session.commit()
+                print("✓ Database migration (SQLite): Added 'backup_qr_code' column to live_session table")
             except Exception as e:
                 db.session.rollback()
                 # Kolumna prawdopodobnie już istnieje
@@ -6611,6 +6661,7 @@ def live_session():
                 is_enabled=True,
                 button_count=3,
                 separate_score_pool=False,
+                result_mode='auto',
                 qr_code=qr_code
             )
             db.session.add(live_session)
@@ -6621,7 +6672,9 @@ def live_session():
             'is_enabled': live_session.is_enabled,
             'button_count': live_session.button_count,
             'separate_score_pool': live_session.separate_score_pool,
-            'qr_code': live_session.qr_code
+            'result_mode': live_session.result_mode,
+            'qr_code': live_session.qr_code,
+            'backup_qr_code': live_session.backup_qr_code
         })
 
     elif request.method == 'POST':
@@ -6632,6 +6685,7 @@ def live_session():
             live_session.is_enabled = data.get('is_enabled', live_session.is_enabled)
             live_session.button_count = data.get('button_count', live_session.button_count)
             live_session.separate_score_pool = data.get('separate_score_pool', live_session.separate_score_pool)
+            live_session.result_mode = data.get('result_mode', live_session.result_mode)
         else:
             import secrets
             qr_code = secrets.token_urlsafe(16)[:12]
@@ -6640,6 +6694,7 @@ def live_session():
                 is_enabled=data.get('is_enabled', True),
                 button_count=data.get('button_count', 3),
                 separate_score_pool=data.get('separate_score_pool', False),
+                result_mode=data.get('result_mode', 'auto'),
                 qr_code=qr_code
             )
             db.session.add(live_session)
@@ -6891,6 +6946,104 @@ def get_live_answers(question_id):
 
     return jsonify({'answers': result})
 
+@app.route('/api/host/live/backup-qr/generate', methods=['POST'])
+@host_required
+def generate_live_backup_qr():
+    """Generuj zapasowy kod QR dla trybu Live"""
+    event_id = session['host_event_id']
+    live_session = LiveSession.query.filter_by(event_id=event_id).first()
+
+    if not live_session:
+        return jsonify({'error': 'Brak sesji Live'}), 404
+
+    # Generuj nowy zapasowy kod QR
+    import secrets
+    backup_qr_code = secrets.token_urlsafe(16)[:12]
+    live_session.backup_qr_code = backup_qr_code
+    db.session.commit()
+
+    # Powiadom ekran 5 o nowym kodzie QR
+    socketio.emit('live_backup_qr_updated', {
+        'backup_qr_code': backup_qr_code
+    }, room=f'event_{event_id}')
+
+    return jsonify({
+        'message': 'Zapasowy kod QR wygenerowany',
+        'backup_qr_code': backup_qr_code
+    })
+
+@app.route('/api/host/live/question/<int:question_id>/show-statistics', methods=['POST'])
+@host_required
+def show_live_statistics(question_id):
+    """Wyświetl statystyki pytania na ekranie 5"""
+    event_id = session['host_event_id']
+    question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
+
+    if not question:
+        return jsonify({'error': 'Nie znaleziono pytania'}), 404
+
+    if not question.is_revealed:
+        return jsonify({'error': 'Pytanie nie zostało jeszcze zakończone'}), 400
+
+    # Pobierz wszystkie odpowiedzi
+    answers = LivePlayerAnswer.query.filter_by(question_id=question_id).all()
+    total_players = Player.query.filter_by(event_id=event_id).count()
+
+    # Zlicz odpowiedzi dla każdej opcji
+    answer_counts = {}
+    for answer in answers:
+        if answer.answer in answer_counts:
+            answer_counts[answer.answer] += 1
+        else:
+            answer_counts[answer.answer] = 1
+
+    # Przygotuj statystyki
+    statistics = []
+    letters = 'ABCDEFGHIJ'
+    correct_answers = question.correct_answer.split(',') if question.correct_answer else []
+
+    for letter in letters:
+        option_key = f'option_{letter.lower()}'
+        option_text = getattr(question, option_key, None)
+
+        if option_text:
+            count = answer_counts.get(letter, 0)
+            percentage = (count / total_players * 100) if total_players > 0 else 0
+            is_correct = letter in correct_answers
+
+            statistics.append({
+                'letter': letter,
+                'text': option_text,
+                'count': count,
+                'percentage': round(percentage, 1),
+                'is_correct': is_correct
+            })
+
+    # Dodaj statystykę dla braku odpowiedzi
+    answered_count = sum(answer_counts.values())
+    no_answer_count = total_players - answered_count
+    no_answer_percentage = (no_answer_count / total_players * 100) if total_players > 0 else 0
+
+    statistics.append({
+        'letter': 'BRAK',
+        'text': 'Brak odpowiedzi',
+        'count': no_answer_count,
+        'percentage': round(no_answer_percentage, 1),
+        'is_correct': False
+    })
+
+    # Wyślij statystyki na ekran 5
+    socketio.emit('live_statistics_show', {
+        'question_id': question_id,
+        'question_text': question.question_text,
+        'statistics': statistics
+    }, room=f'event_{event_id}')
+
+    return jsonify({
+        'message': 'Statystyki wysłane na ekran 5',
+        'statistics': statistics
+    })
+
 # ========================================
 # REGISTRATION SECURITY API ENDPOINTS
 # ========================================
@@ -7085,6 +7238,22 @@ def live_player_view(event_id, qr_code):
                          qr_code=qr_code,
                          button_count=live_session.button_count,
                          player=player)
+
+@app.route('/live/screen5/<int:event_id>')
+def live_screen5_view(event_id):
+    """Ekran numer 5 - wyświetla backup QR code i statystyki"""
+    # Sprawdź czy sesja live istnieje
+    live_session = LiveSession.query.filter_by(event_id=event_id).first()
+
+    if not live_session:
+        return "Tryb Live nie jest aktywny", 404
+
+    # Backup QR ma priorytet, jeśli istnieje
+    qr_code = live_session.backup_qr_code if live_session.backup_qr_code else live_session.qr_code
+
+    return render_template('live_screen5.html',
+                         event_id=event_id,
+                         qr_code=qr_code)
 
 @app.route('/api/player/live/answer', methods=['POST'])
 def submit_live_answer():

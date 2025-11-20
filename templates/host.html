@@ -1946,12 +1946,36 @@
                             <div class="text-center mb-3">
                                 <div id="live-qr-code"></div>
                             </div>
+
+                            <!-- Główny kod QR -->
                             <button class="btn btn-primary w-100 mb-2" onclick="openLiveQRPreview()">
                                 📱 Podgląd i druk kodu QR
                             </button>
-                            <button id="live-send-to-screen5-btn" class="btn btn-info w-100">
-                                📺 Wyślij kod na ekran numer 5
+
+                            <!-- Zapasowy kod QR -->
+                            <div class="d-flex gap-2 mt-2 mb-3">
+                                <button id="live-generate-backup-qr-btn" class="btn btn-success flex-grow-1">
+                                    🔄 Generuj zapasowy kod QR dla pytań na żywo
+                                </button>
+                                <button id="live-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>
+                                    📱 Podgląd i druk zapasowego kodu QR
+                                </button>
+                            </div>
+
+                            <!-- Przycisk do wyświetlenia ekranu 5 -->
+                            <button id="live-show-screen5-btn" class="btn btn-info w-100 mb-2">
+                                📺 Wyświetl ekran numer 5
                             </button>
+
+                            <!-- Link do ekranu 5 -->
+                            <div class="alert alert-info mb-0">
+                                <small><strong>Link do ekranu numer 5:</strong></small><br>
+                                <small><a id="live-screen5-link" href="#" target="_blank" class="text-break"></a></small>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">
+                                Zapasowy kod QR jest priorytetowy na ekranie numer 5. Domyślnie ekran pokazuje podstawowy kod QR.
+                            </small>
                         </div>
                     </div>
 
@@ -1976,6 +2000,43 @@
                                 <small class="text-muted d-block mt-2">
                                     <strong>Obecna pula:</strong> Punkty z trybu Na żywo trafiają do ogólnego licznika punktów gracza.<br>
                                     <strong>Osobna pula:</strong> Punkty z trybu Na żywo są liczone oddzielnie (np. gracz ma 60 pkt. ogólnych + 20 pkt. z trybu Na żywo).
+                                </small>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Ustawienie wyniku (Auto/Manual) -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Wynik:</strong></label>
+                                <div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="live-result-mode" id="live-result-auto" value="auto" checked>
+                                        <label class="form-check-label" for="live-result-auto">
+                                            Od razu (Auto)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="live-result-mode" id="live-result-manual" value="manual">
+                                        <label class="form-check-label" for="live-result-manual">
+                                            Na życzenie (Manual)
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <strong>Od razu:</strong> Wyniki i punkty pojawiają się automatycznie po upłynięciu czasu.<br>
+                                    <strong>Na życzenie:</strong> Host musi kliknąć "Wyświetl wynik" aby gracze zobaczyli odpowiedź i dostali punkty.
+                                </small>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Przycisk Statystyki -->
+                            <div class="mb-0">
+                                <button id="live-show-statistics-btn" class="btn btn-primary w-100" disabled>
+                                    📊 Wyświetl statystyki na ekranie 5
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    Gracze zobaczą procentowe wyniki wszystkich odpowiedzi (dostępne po zakończeniu pytania)
                                 </small>
                             </div>
                         </div>
@@ -7463,6 +7524,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 separateScorePoolCheckbox.checked = data.separate_score_pool || false;
             }
 
+            // Set result mode radio buttons
+            const resultMode = data.result_mode || 'auto';
+            const resultModeRadio = document.getElementById(`live-result-${resultMode}`);
+            if (resultModeRadio) {
+                resultModeRadio.checked = true;
+            }
+
             // Generate QR code
             if (data.qr_code) {
                 const qrContainer = document.getElementById('live-qr-code');
@@ -7474,6 +7542,24 @@ document.addEventListener('DOMContentLoaded', function () {
                         width: 200,
                         height: 200
                     });
+                }
+
+                // Set Screen 5 link
+                const screen5Link = document.getElementById('live-screen5-link');
+                if (screen5Link) {
+                    const screen5Url = `${window.location.origin}/live/screen5/{{ event.id }}`;
+                    screen5Link.href = screen5Url;
+                    screen5Link.textContent = screen5Url;
+                }
+            }
+
+            // Enable/disable backup QR button
+            const backupQRBtn = document.getElementById('live-backup-qr-btn');
+            if (backupQRBtn) {
+                if (data.backup_qr_code) {
+                    backupQRBtn.disabled = false;
+                } else {
+                    backupQRBtn.disabled = true;
                 }
             }
 
@@ -7488,6 +7574,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.saveLiveSettings = async function() {
         const enabled = document.getElementById('live-enabled').checked;
         const separateScorePool = document.getElementById('live-separate-score-pool').checked;
+        const resultMode = document.querySelector('input[name="live-result-mode"]:checked').value;
 
         try {
             const response = await fetch('/api/host/live/session', {
@@ -7495,7 +7582,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     is_enabled: enabled,
-                    separate_score_pool: separateScorePool
+                    separate_score_pool: separateScorePool,
+                    result_mode: resultMode
                 })
             });
 
@@ -7530,6 +7618,85 @@ document.addEventListener('DOMContentLoaded', function () {
     if (document.getElementById('live-separate-score-pool')) {
         document.getElementById('live-separate-score-pool').addEventListener('change', function(e) {
             saveLiveSettings();
+        });
+    }
+
+    // Result mode radio buttons handler
+    document.querySelectorAll('input[name="live-result-mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            saveLiveSettings();
+        });
+    });
+
+    // Show Screen 5 button
+    const liveShowScreen5Btn = document.getElementById('live-show-screen5-btn');
+    if (liveShowScreen5Btn) {
+        liveShowScreen5Btn.addEventListener('click', function() {
+            const link = document.getElementById('live-screen5-link').href;
+            if (link && link !== '#') {
+                window.open(link, '_blank');
+            }
+        });
+    }
+
+    // Generate backup QR button
+    const liveGenerateBackupQRBtn = document.getElementById('live-generate-backup-qr-btn');
+    if (liveGenerateBackupQRBtn) {
+        liveGenerateBackupQRBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/host/live/backup-qr/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Zapasowy kod QR został wygenerowany!');
+                    loadLiveSession(); // Reload to update UI
+                } else {
+                    alert('Błąd generowania zapasowego kodu QR');
+                }
+            } catch (error) {
+                console.error('Error generating backup QR:', error);
+                alert('Błąd: ' + error.message);
+            }
+        });
+    }
+
+    // Backup QR preview button
+    const liveBackupQRBtn = document.getElementById('live-backup-qr-btn');
+    if (liveBackupQRBtn) {
+        liveBackupQRBtn.addEventListener('click', function() {
+            if (liveSession && liveSession.backup_qr_code) {
+                const liveUrl = `${window.location.origin}/live/{{ event.id }}/${liveSession.backup_qr_code}`;
+                window.open(`/player_qr_preview/{{ event.id }}?url=${encodeURIComponent(liveUrl)}&title=Tryb Na Żywo (Zapasowy)`, '_blank');
+            }
+        });
+    }
+
+    // Show statistics button
+    const liveShowStatisticsBtn = document.getElementById('live-show-statistics-btn');
+    if (liveShowStatisticsBtn) {
+        liveShowStatisticsBtn.addEventListener('click', async function() {
+            if (!activeQuestionId) {
+                alert('Brak zakończonego pytania do wyświetlenia statystyk');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/host/live/question/${activeQuestionId}/show-statistics`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Statystyki zostały wysłane na ekran 5');
+                } else {
+                    alert('Błąd wyświetlania statystyk');
+                }
+            } catch (error) {
+                console.error('Error showing statistics:', error);
+                alert('Błąd: ' + error.message);
+            }
         });
     }
 
