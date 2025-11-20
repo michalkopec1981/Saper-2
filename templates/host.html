@@ -547,7 +547,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     // --- ZMIENNE GLOBALNE ---
-    const socket = io();
+    // --------------------------------------------------------------------------------
+    // WAŻNA ZMIANA: WYMUSZAMY TRYB "POLLING", BY UNIKNĄĆ BŁĘDU "GEVENT WEBSOCKET"
+    // --------------------------------------------------------------------------------
+    const socket = io({ transports: ['polling'], upgrade: false });
+
     const eventId = "{{ event.id }}";
     let gameTimerInterval, r2TimerInterval, r3TimerInterval;
     let gameStartTime = null, totalPausedDuration = 0, isPaused = false;
@@ -589,7 +593,7 @@
 
     // --- 2. LOGIKA SOCKET.IO ---
     socket.on('connect', () => {
-        console.log('Połączono z Socket.IO');
+        console.log('Połączono z Socket.IO (tryb Polling)');
         socket.emit('join', { room: eventId });
         logAction('Połączono z serwerem gry.');
     });
