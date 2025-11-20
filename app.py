@@ -224,7 +224,13 @@ class LiveQuestion(db.Model):
     option_b = db.Column(db.String(200), nullable=True)
     option_c = db.Column(db.String(200), nullable=True)
     option_d = db.Column(db.String(200), nullable=True)
-    correct_answer = db.Column(db.String(1), nullable=True)  # 'A', 'B', 'C', lub 'D' - null dopóki host nie ujawni
+    option_e = db.Column(db.String(200), nullable=True)
+    option_f = db.Column(db.String(200), nullable=True)
+    option_g = db.Column(db.String(200), nullable=True)
+    option_h = db.Column(db.String(200), nullable=True)
+    option_i = db.Column(db.String(200), nullable=True)
+    option_j = db.Column(db.String(200), nullable=True)
+    correct_answer = db.Column(db.String(50), nullable=True)  # Może zawierać wiele odpowiedzi, np. 'A,B,C' - null dopóki host nie ujawni
     is_active = db.Column(db.Boolean, default=False)  # Czy pytanie jest aktualnie aktywne
     is_revealed = db.Column(db.Boolean, default=False)  # Czy poprawna odpowiedź została ujawniona
     time_limit = db.Column(db.Integer, default=30)  # Limit czasu w sekundach
@@ -362,6 +368,64 @@ with app.app_context():
             except Exception as e:
                 db.session.rollback()
                 # Kolumna prawdopodobnie już istnieje
+
+        # ✅ Automatyczna migracja: Rozszerz tabelę 'live_question' dla dynamicznych opcji
+        try:
+            result = db.session.execute(text("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = 'live_question'
+            """))
+            existing_columns = [row[0] for row in result]
+
+            migrations_done = []
+
+            # Dodaj nowe kolumny opcji (E-J)
+            for letter in ['e', 'f', 'g', 'h', 'i', 'j']:
+                col_name = f'option_{letter}'
+                if col_name not in existing_columns:
+                    db.session.execute(text(f"ALTER TABLE live_question ADD COLUMN {col_name} VARCHAR(200)"))
+                    migrations_done.append(col_name)
+
+            # Rozszerz kolumnę correct_answer aby mogła przechowywać wiele odpowiedzi
+            # Dla PostgreSQL/MySQL użyj ALTER COLUMN, dla SQLite nie ma prostego sposobu
+            try:
+                if 'correct_answer' in existing_columns:
+                    # PostgreSQL
+                    db.session.execute(text("ALTER TABLE live_question ALTER COLUMN correct_answer TYPE VARCHAR(50)"))
+                    migrations_done.append('correct_answer (extended)')
+            except:
+                # MySQL syntax
+                try:
+                    db.session.execute(text("ALTER TABLE live_question MODIFY correct_answer VARCHAR(50)"))
+                    migrations_done.append('correct_answer (extended)')
+                except:
+                    pass  # SQLite nie obsługuje zmiany typu kolumny
+
+            if migrations_done:
+                db.session.commit()
+                print(f"✓ Database migration: Extended live_question table: {', '.join(migrations_done)}")
+
+        except Exception as migration_error:
+            # SQLite używa PRAGMA zamiast information_schema
+            try:
+                migrations_done = []
+
+                # Dodaj nowe kolumny opcji (E-J) dla SQLite
+                for letter in ['e', 'f', 'g', 'h', 'i', 'j']:
+                    col_name = f'option_{letter}'
+                    try:
+                        db.session.execute(text(f"ALTER TABLE live_question ADD COLUMN {col_name} VARCHAR(200)"))
+                        migrations_done.append(col_name)
+                    except:
+                        pass  # Kolumna prawdopodobnie już istnieje
+
+                if migrations_done:
+                    db.session.commit()
+                    print(f"✓ Database migration (SQLite): Extended live_question table: {', '.join(migrations_done)}")
+            except Exception as e:
+                db.session.rollback()
+                # Kolumny prawdopodobnie już istnieją
 
         if not Admin.query.first():
             admin = Admin(login='admin')
@@ -6577,17 +6641,21 @@ def create_live_question():
         is_active=True
     ).update({'is_active': False})
 
-    new_question = LiveQuestion(
-        event_id=event_id,
-        session_id=live_session.id,
-        question_text=data.get('question_text', ''),
-        option_a=data.get('option_a', ''),
-        option_b=data.get('option_b', ''),
-        option_c=data.get('option_c', ''),
-        option_d=data.get('option_d', ''),
-        time_limit=data.get('time_limit', 30),
-        is_active=False
-    )
+    # Przygotuj dane pytania z dynamicznymi opcjami
+    question_data = {
+        'event_id': event_id,
+        'session_id': live_session.id,
+        'question_text': data.get('question_text', ''),
+        'time_limit': data.get('time_limit', 30),
+        'is_active': False
+    }
+
+    # Dodaj wszystkie możliwe opcje (A-J)
+    for letter in 'abcdefghij':
+        option_key = f'option_{letter}'
+        question_data[option_key] = data.get(option_key, '')
+
+    new_question = LiveQuestion(**question_data)
 
     db.session.add(new_question)
     db.session.commit()
@@ -6619,23 +6687,28 @@ def start_live_question(question_id):
     question.is_revealed = False
     db.session.commit()
 
-    # Wyślij powiadomienie przez WebSocket
-    socketio.emit('live_question_started', {
+    # Wyślij powiadomienie przez WebSocket z dynamicznymi opcjami
+    question_data = {
         'question_id': question.id,
         'question_text': question.question_text,
-        'option_a': question.option_a,
-        'option_b': question.option_b,
-        'option_c': question.option_c,
-        'option_d': question.option_d,
         'time_limit': question.time_limit
-    }, room=f'event_{event_id}')
+    }
+
+    # Dodaj wszystkie opcje dynamicznie (A-J)
+    for letter in 'abcdefghij':
+        option_key = f'option_{letter}'
+        option_value = getattr(question, option_key, None)
+        if option_value:
+            question_data[option_key] = option_value
+
+    socketio.emit('live_question_started', question_data, room=f'event_{event_id}')
 
     return jsonify({'message': 'Pytanie uruchomione'})
 
 @app.route('/api/host/live/question/<int:question_id>/reveal', methods=['POST'])
 @host_required
 def reveal_live_answer(question_id):
-    """Ujawnij poprawną odpowiedź"""
+    """Ujawnij poprawną odpowiedź (obsługuje wiele poprawnych odpowiedzi)"""
     event_id = session['host_event_id']
     data = request.json
     question = LiveQuestion.query.filter_by(id=question_id, event_id=event_id).first()
@@ -6643,11 +6716,23 @@ def reveal_live_answer(question_id):
     if not question:
         return jsonify({'error': 'Nie znaleziono pytania'}), 404
 
-    correct_answer = data.get('correct_answer', '').upper()
-    if correct_answer not in ['A', 'B', 'C', 'D']:
-        return jsonify({'error': 'Nieprawidłowa odpowiedź'}), 400
+    # Obsługa wielu poprawnych odpowiedzi
+    correct_answer_str = data.get('correct_answer', '').upper()
 
-    question.correct_answer = correct_answer
+    # Podziel odpowiedzi (może być format "A,B,C" lub lista)
+    if isinstance(data.get('correct_answers'), list):
+        correct_answers = [ans.upper() for ans in data.get('correct_answers')]
+        correct_answer_str = ','.join(correct_answers)
+    else:
+        correct_answers = [ans.strip() for ans in correct_answer_str.split(',') if ans.strip()]
+
+    # Walidacja odpowiedzi (A-J)
+    valid_answers = 'ABCDEFGHIJ'
+    for ans in correct_answers:
+        if ans not in valid_answers:
+            return jsonify({'error': f'Nieprawidłowa odpowiedź: {ans}'}), 400
+
+    question.correct_answer = correct_answer_str
     question.is_revealed = True
     question.revealed_at = datetime.utcnow()
     question.is_active = False
@@ -6655,7 +6740,8 @@ def reveal_live_answer(question_id):
     # Zaktualizuj odpowiedzi graczy i przyznaj punkty
     answers = LivePlayerAnswer.query.filter_by(question_id=question_id).all()
     for answer in answers:
-        answer.is_correct = (answer.answer == correct_answer)
+        # Sprawdź czy odpowiedź gracza jest w liście poprawnych odpowiedzi
+        answer.is_correct = (answer.answer in correct_answers)
         if answer.is_correct:
             answer.points_awarded = 10  # Można to skonfigurować
             # Dodaj punkty do głównego score gracza
@@ -6668,10 +6754,11 @@ def reveal_live_answer(question_id):
     # Wyślij powiadomienie przez WebSocket
     socketio.emit('live_answer_revealed', {
         'question_id': question.id,
-        'correct_answer': correct_answer
+        'correct_answer': correct_answer_str,
+        'correct_answers': correct_answers
     }, room=f'event_{event_id}')
 
-    return jsonify({'message': 'Odpowiedź ujawniona', 'correct_answer': correct_answer})
+    return jsonify({'message': 'Odpowiedź ujawniona', 'correct_answer': correct_answer_str})
 
 @app.route('/api/host/live/question/<int:question_id>', methods=['PUT', 'DELETE'])
 @host_required
@@ -6686,11 +6773,14 @@ def update_or_delete_live_question(question_id):
     if request.method == 'PUT':
         data = request.json
         question.question_text = data.get('question_text', question.question_text)
-        question.option_a = data.get('option_a', question.option_a)
-        question.option_b = data.get('option_b', question.option_b)
-        question.option_c = data.get('option_c', question.option_c)
-        question.option_d = data.get('option_d', question.option_d)
         question.time_limit = data.get('time_limit', question.time_limit)
+
+        # Aktualizuj wszystkie możliwe opcje (A-J)
+        for letter in 'abcdefghij':
+            option_key = f'option_{letter}'
+            if option_key in data:
+                setattr(question, option_key, data.get(option_key, ''))
+
         db.session.commit()
         return jsonify({'message': 'Pytanie zaktualizowane'})
 
