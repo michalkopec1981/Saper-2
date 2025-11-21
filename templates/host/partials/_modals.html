@@ -1,0 +1,349 @@
+<!-- Modal for adding/editing question -->
+<div class="modal fade" id="questionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-translate="question_modal_title">Dodaj pytanie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" data-translate="question_text">Treść pytania:</label>
+                    <textarea class="form-control" id="modal-question-text" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" data-translate="answers">Odpowiedzi:</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">A)</span>
+                        <input type="text" class="form-control" id="modal-answer-a">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="correct-answer" value="A" id="correct-a">
+                        </div>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">B)</span>
+                        <input type="text" class="form-control" id="modal-answer-b">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="correct-answer" value="B" id="correct-b">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">C)</span>
+                        <input type="text" class="form-control" id="modal-answer-c">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="correct-answer" value="C" id="correct-c">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" data-translate="difficulty_level">Poziom trudności:</label>
+                    <div class="btn-group w-100" role="group" id="difficulty-buttons">
+                        <button type="button" class="btn btn-outline-success active" data-difficulty="easy" data-translate="easy">Łatwy</button>
+                        <button type="button" class="btn btn-outline-warning" data-difficulty="medium" data-translate="medium">Średni</button>
+                        <button type="button" class="btn btn-outline-danger" data-difficulty="hard" data-translate="hard">Trudny</button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" data-translate="question_category">Kategoria pytania:</label>
+                    <div class="btn-group w-100" role="group" id="category-buttons">
+                        <button type="button" class="btn btn-outline-primary active" data-category="company" data-translate="category_company">Firmowe</button>
+                        <button type="button" class="btn btn-outline-primary" data-category="world" data-translate="category_world">Światowe</button>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label" data-translate="letter_reveal">Litera do odsłonięcia:</label>
+                    <input type="text" class="form-control" id="modal-letter" maxlength="1" value="X">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="save-question-btn" data-translate="save">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Wyślij wiadomość do gracza -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1" aria-labelledby="sendMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendMessageModalLabel">
+                    <span id="message-modal-title"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="player-message-input" class="form-label" id="message-content-label"></label>
+                    <textarea class="form-control" id="player-message-input" rows="3" maxlength="120"></textarea>
+                    <small class="text-muted"><span id="message-char-count">0</span> / 120 znaków</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-translate="cancel">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="send-message-to-player-btn">
+                    <span data-translate="send">Wyślij</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edycja gracza -->
+<div class="modal fade" id="editPlayerModal" tabindex="-1" aria-labelledby="editPlayerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPlayerModalLabel">Edycja gracza</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="edit-player-name" class="form-label">Nazwa gracza:</label>
+                    <input type="text" class="form-control" id="edit-player-name" maxlength="80">
+                </div>
+                <div class="mb-3">
+                    <label for="edit-player-score" class="form-label">Punkty:</label>
+                    <input type="number" class="form-control" id="edit-player-score" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="save-player-edit-btn">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edycja pytań AI dla kategorii -->
+<div class="modal fade" id="aiQuestionsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edycja pytań AI - <span id="ai-category-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ai-questions-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edycja pojedynczego pytania AI -->
+<div class="modal fade" id="editAIQuestionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytuj pytanie AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-question-id">
+                <div class="mb-3">
+                    <label class="form-label">Treść pytania:</label>
+                    <textarea class="form-control" id="edit-question-text" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Odpowiedzi:</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">A)</span>
+                        <input type="text" class="form-control" id="edit-answer-a">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="A" id="edit-correct-a">
+                        </div>
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">B)</span>
+                        <input type="text" class="form-control" id="edit-answer-b">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="B" id="edit-correct-b">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text">C)</span>
+                        <input type="text" class="form-control" id="edit-answer-c">
+                        <div class="input-group-text">
+                            <input class="form-check-input" type="radio" name="edit-correct-answer" value="C" id="edit-correct-c">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" id="save-ai-question-btn">Zapisz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🎮 WIDOKI TESTOWE MINIGIER -->
+
+<!-- Tetris Test View -->
+<div id="tetris-test-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #607D8B; z-index: 2000;">
+    <div class="d-flex flex-column" style="height: 100vh;">
+        <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+            <h5 class="mb-0" style="font-size: 1.1rem;">🎮 TETRIS - Tryb Testowy</h5>
+            <div class="d-flex justify-content-between align-items-center px-3">
+                <span style="font-size: 0.85rem;">Tester: Host</span>
+                <strong style="font-size: 0.9rem;">Punkty: <span id="tetris-test-score">0</span> / 20</strong>
+            </div>
+        </div>
+
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+            <div id="tetris-test-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 class="mb-3" style="color: #333;">🎮 Test Tetris</h4>
+                <p class="mb-4" style="color: #666;">Przetestuj grę przed udostępnieniem graczom</p>
+                <button id="tetris-test-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START TESTU</button>
+                <br>
+                <button id="tetris-test-close-btn" class="btn btn-outline-secondary">← Wróć do panelu</button>
+            </div>
+
+            <div id="tetris-test-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="tetris-test-left-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
+                    <button id="tetris-test-rotate-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 28px; touch-action: manipulation; border: 3px solid #333; background: white;">🔄</button>
+                </div>
+            </div>
+
+            <canvas id="tetris-test-canvas" style="border: 3px solid #333; background-color: #000; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 4px); z-index: 1;"></canvas>
+
+            <div id="tetris-test-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="tetris-test-right-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
+                    <button id="tetris-test-down-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+            <button id="tetris-test-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">ZAKOŃCZ TEST</button>
+        </div>
+    </div>
+</div>
+
+<!-- Arkanoid Test View -->
+<div id="arkanoid-test-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #16213e; z-index: 2000;">
+    <div class="d-flex flex-column" style="height: 100vh;">
+        <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+            <h5 class="mb-0" style="font-size: 1.1rem;">🏓 ARKANOID - Tryb Testowy</h5>
+            <div class="d-flex justify-content-between align-items-center px-3">
+                <span style="font-size: 0.85rem;">Tester: Host</span>
+                <div>
+                    <strong style="font-size: 0.9rem;">Punkty: <span id="arkanoid-test-score">0</span> / 20</strong>
+                    <span style="margin-left: 15px; font-size: 1rem;" id="arkanoid-test-lives">❤️❤️❤️</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+            <div id="arkanoid-test-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 class="mb-3" style="color: #333;">🏓 Test Arkanoid</h4>
+                <p class="mb-4" style="color: #666;">Przetestuj grę przed udostępnieniem graczom</p>
+                <button id="arkanoid-test-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START TESTU</button>
+                <br>
+                <button id="arkanoid-test-close-btn" class="btn btn-outline-secondary">← Wróć do panelu</button>
+            </div>
+
+            <div id="arkanoid-test-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="arkanoid-test-left-btn" class="btn btn-light" style="width: 65px; height: 130px; font-size: 48px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
+                </div>
+            </div>
+
+            <canvas id="arkanoid-test-canvas" style="border: 3px solid #333; background-color: #1a1a2e; border-radius: 10px; max-width: calc(100% - 140px); max-height: calc(100% - 4px); z-index: 1;"></canvas>
+
+            <div id="arkanoid-test-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="arkanoid-test-right-btn" class="btn btn-light" style="width: 65px; height: 130px; font-size: 48px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+            <button id="arkanoid-test-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">ZAKOŃCZ TEST</button>
+        </div>
+    </div>
+</div>
+
+<!-- Snake Test View -->
+<div id="snake-test-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #2d4a2b; z-index: 2000;">
+    <div class="d-flex flex-column" style="height: 100vh;">
+        <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+            <h5 class="mb-0" style="font-size: 1.1rem;">🐍 SNAKE - Tryb Testowy</h5>
+            <div class="d-flex justify-content-between align-items-center px-3">
+                <span style="font-size: 0.85rem;">Tester: Host</span>
+                <strong style="font-size: 0.9rem;">Punkty: <span id="snake-test-score">0</span> / 20</strong>
+            </div>
+        </div>
+
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+            <div id="snake-test-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 class="mb-3" style="color: #333;">🐍 Test Snake</h4>
+                <p class="mb-4" style="color: #666;">Przetestuj grę przed udostępnieniem graczom</p>
+                <button id="snake-test-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START TESTU</button>
+                <br>
+                <button id="snake-test-close-btn" class="btn btn-outline-secondary">← Wróć do panelu</button>
+            </div>
+
+            <div id="snake-test-left-controls" style="display: none; position: absolute; left: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="snake-test-up-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▲</button>
+                    <button id="snake-test-left-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">◄</button>
+                </div>
+            </div>
+
+            <canvas id="snake-test-canvas" style="border: 3px solid #333; background: #000; box-shadow: 0 0 15px rgba(0,0,0,0.5);"></canvas>
+
+            <div id="snake-test-right-controls" style="display: none; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); z-index: 5;">
+                <div class="d-flex flex-column gap-2">
+                    <button id="snake-test-down-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">▼</button>
+                    <button id="snake-test-right-btn" class="btn btn-light" style="width: 65px; height: 65px; font-size: 32px; touch-action: manipulation; border: 3px solid #333; background: white; line-height: 1;">►</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+            <button id="snake-test-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">ZAKOŃCZ TEST</button>
+        </div>
+    </div>
+</div>
+
+<!-- T-Rex Test View -->
+<div id="trex-test-view" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f7f7f7; z-index: 2000;">
+    <div class="d-flex flex-column" style="height: 100vh;">
+        <div class="text-center py-1 bg-dark text-white" style="flex: 0 0 8%; min-height: 60px; display: flex; flex-direction: column; justify-content: center;">
+            <h5 class="mb-0" style="font-size: 1.1rem;">🦖 T-REX - Tryb Testowy</h5>
+            <div class="d-flex justify-content-between align-items-center px-3">
+                <span style="font-size: 0.85rem;">Tester: Host</span>
+                <strong style="font-size: 0.9rem;">Punkty: <span id="trex-test-score">0</span> / 20</strong>
+            </div>
+        </div>
+
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 2px; position: relative;">
+            <div id="trex-test-start-section" class="text-center" style="position: absolute; z-index: 10; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h4 class="mb-3" style="color: #333;">🦖 Test T-Rex</h4>
+                <p class="mb-4" style="color: #666;">Przetestuj grę przed udostępnieniem graczom</p>
+                <button id="trex-test-start-btn" class="btn btn-success btn-lg mb-3" style="width: 200px; font-weight: bold;">START TESTU</button>
+                <br>
+                <button id="trex-test-close-btn" class="btn btn-outline-secondary">← Wróć do panelu</button>
+            </div>
+
+            <canvas id="trex-test-canvas" style="border: 3px solid #535353; background: #f7f7f7; box-shadow: 0 0 15px rgba(0,0,0,0.2); max-width: calc(100% - 20px); max-height: calc(100% - 4px);"></canvas>
+
+            <div id="trex-test-jump-control" style="display: none; position: absolute; bottom: 20px; z-index: 5;">
+                <button id="trex-test-jump-btn" class="btn btn-warning" style="width: 120px; height: 80px; font-size: 28px; touch-action: manipulation; border: 4px solid #333; background: #ffc107; line-height: 1; font-weight: bold;">SKOK ▲</button>
+            </div>
+        </div>
+
+        <div style="flex: 0 0 8%; display: flex; align-items: center; justify-content: center; padding: 5px;">
+            <button id="trex-test-exit-btn" class="btn btn-danger" style="width: 90%; max-width: 300px; height: 45px; font-weight: bold; display: none;">ZAKOŃCZ TEST</button>
+        </div>
+    </div>
+</div>
+

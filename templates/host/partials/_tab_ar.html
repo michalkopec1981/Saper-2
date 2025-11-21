@@ -1,0 +1,24 @@
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="ar_tab">Rozszerzona rzeczywistość (AR)</h5></div>
+                <div class="card-body">
+                    <h6>1. Zdefiniuj obiekty AR</h6>
+                    <p class="text-muted">Sfotografuj przedmioty, które będą wyzwalać gry po rozpoznaniu przez graczy.</p>
+
+                    <div class="row g-3 mb-4" id="ar-objects-container">
+                        <!-- Obiekty AR będą dodawane tutaj dynamicznie -->
+                    </div>
+
+                    <button class="btn btn-success mb-4" onclick="addNewARObject()">
+                        + Dodaj nowy obiekt AR
+                    </button>
+
+                    <hr>
+
+                    <h6>2. Kod QR dla graczy (AR Scanner)</h6>
+                    <p class="text-muted">Wygeneruj kod QR, który gracze będą skanować, aby uruchomić skaner AR.</p>
+                    <div class="text-center">
+                        <a href="/ar_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
+                            🔍 Podgląd i Druk Kodu QR AR
+                        </a>
+                    </div>
+                </div>
+            </div>

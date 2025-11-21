@@ -1,0 +1,145 @@
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Zarządzanie pytaniami - Runda 3</h5>
+                    <button class="btn btn-primary" id="r3-add-question-btn">Dodaj pytanie</button>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="r3-questions-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="r3-questions-enabled">
+                                    <span id="r3-questions-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań</small>
+
+                            <!-- Timer do automatycznego uruchomienia -->
+                            <div class="mt-3">
+                                <label class="form-label"><strong>Czas do uruchomienia:</strong></label>
+                                <div class="input-group" style="max-width: 400px;">
+                                    <input type="number" class="form-control" id="r3-questions-timer-minutes" placeholder="Minuty" min="1" max="1440">
+                                    <button class="btn btn-primary" onclick="startR3QuestionsTimer()">OK</button>
+                                    <button class="btn btn-danger" onclick="cancelR3QuestionsTimer()" id="r3-questions-timer-cancel" style="display: none;">Anuluj</button>
+                                </div>
+                                <div id="r3-questions-timer-display" class="mt-2" style="display: none;">
+                                    <span class="badge bg-info">Timer aktywny: <span id="r3-questions-timer-countdown"></span></span>
+                                </div>
+                                <small class="text-muted">Pytania zostaną automatycznie uruchomione po określonym czasie</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Przełączniki -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="r3-use-round1-qr" onchange="toggleR3Round1QR()">
+                                    <label class="form-check-label" for="r3-use-round1-qr">
+                                        <strong>QR z Pytania runda 1</strong>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="r3-disable-other-rounds" disabled onchange="toggleR3DisableOtherRounds()">
+                                    <label class="form-check-label" for="r3-disable-other-rounds">
+                                        <strong>Wyłącz pytania z innych rund</strong>
+                                        <small class="text-muted d-block">Po zczytaniu QR gracz nie ma dostępu do pytań z rund 1 i 2</small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla łatwych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">Łatwe pytania:</h6>
+                                <button id="r3-questions-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla łatwych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla łatwych pytań</button>
+                                    <button id="r3-questions-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla łatwych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla średnich pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-warning mb-2">Średnie pytania:</h6>
+                                <button id="r3-questions-medium-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-medium-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
+                                    <button id="r3-questions-medium-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla trudnych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-danger mb-2">Trudne pytania:</h6>
+                                <button id="r3-questions-hard-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-hard-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
+                                    <button id="r3-questions-hard-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla mieszanych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-info mb-2">Mieszane pytania:</h6>
+                                <button id="r3-questions-mixed-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla mieszanych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="r3-questions-mixed-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla mieszanych pytań</button>
+                                    <button id="r3-questions-mixed-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla mieszanych pytań</button>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">Zapasowe kody QR mogą być użyte jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za łatwe pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na łatwe pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-easy-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('easy_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Punkty za średnie pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na średnie pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-medium-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('medium_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty za trudne pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na trudne pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="r3-questions-hard-points" value="15" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateR3QuestionsSetting('hard_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 15 punktów</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div id="r3-questions-list"></div>
+                </div>
+            </div>

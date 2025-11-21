@@ -1,0 +1,71 @@
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="fortune_title">Wróżka AI - atrakcja wykorzystująca sztuczną inteligencję</h5>
+                    <p class="text-muted mb-0 mt-2 small" data-translate="fortune_description">Gracze po zeskanowaniu kodu QR otrzymują możliwość opisania ostatniego snu, by uzyskać przepowiednię.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="fortune-enabled" style="width: 3em; height: 1.5em;">
+                                <label class="form-check-label ms-2" for="fortune-enabled">
+                                    <span id="fortune-status" class="badge bg-secondary">Nieaktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli korzystać z wróżki AI</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+                            <button id="fortune-qr-btn" class="btn btn-primary mb-3 w-100">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="fortune-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR</button>
+                                <button id="fortune-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Liczba słów AI -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba słów (AI):</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="fortune-word-count" value="300" min="10" max="500">
+                                    <button class="btn btn-primary" onclick="updateFortuneSetting('word_count')">OK</button>
+                                </div>
+                                <small class="text-muted">Zakres: 10-500 (domyślnie: 300)</small>
+                            </div>
+
+                            <!-- Punkty za udział -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za udział:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="fortune-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateFortuneSetting('points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Liczba słów gracza -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba słów gracza:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="fortune-player-words" value="2" min="1" max="10">
+                                    <button class="btn btn-primary" onclick="updateFortuneSetting('player_words')">OK</button>
+                                </div>
+                                <small class="text-muted">Zakres: 1-10 (domyślnie: 2). Ile słów gracz musi wpisać opisując sen</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

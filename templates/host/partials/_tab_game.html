@@ -1,0 +1,166 @@
+<!-- 1. INFORMACJE O GRZE (bez zmian) -->
+<div class="card mb-4">
+    <div class="card-header"><h5 class="card-title mb-0" data-translate="game_info">Informacje o grze</h5></div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="player_count">Liczba graczy:</span>
+                        <span id="info-player-count" class="badge bg-primary rounded-pill">0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="completion_percentage">Procent ukończenia:</span>
+                        <span id="info-completion-percentage" class="badge bg-success rounded-pill">0%</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="language_host_label">Język prowadzącego:</span>
+                        <span id="info-language" class="badge bg-secondary">Polski</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="time_left">Czas do końca:</span>
+                        <strong id="info-time-left">00:00</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="time_net">Czas gry (netto):</span>
+                        <span id="info-time-elapsed">00:00</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="time_gross">Czas gry (brutto):</span>
+                        <span id="info-time-elapsed-pauses">00:00</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="current_bonus">Aktualna premia:</span>
+                        <span id="info-bonus" class="badge bg-success">Brak</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="current_speed">Aktualne tempo:</span>
+                        <span id="info-speed" class="badge bg-info">x1</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span data-translate="game_status_label">Stan gry:</span>
+                        <span id="info-game-status" class="status-waiting">Oczekiwanie na Start</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. OBSŁUGA GRY (nowa pozycja - pełna szerokość) -->
+<fieldset id="pre-game-settings">
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="card-title mb-0" data-translate="pre_game_settings">Obsługa gry</h5></div>
+        <div class="card-body">
+            <!-- Pierwszy rząd: główne przyciski sterowania -->
+            <div class="row g-2 mb-3">
+                <div class="col-3">
+                    <button id="start-game" class="btn btn-success w-100" data-translate="start_game">Start Gry</button>
+                </div>
+                <div class="col-3">
+                    <button id="pause-btn" data-control="pause" class="btn btn-warning w-100" data-translate="pause">Pauza</button>
+                </div>
+                <div class="col-3">
+                    <button id="stop-game" class="btn btn-danger w-100" data-translate="stop_game">Stop Gry</button>
+                </div>
+                <div class="col-3">
+                    <button id="reset-game" class="btn btn-dark w-100" data-translate="reset_game">Reset Gry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</fieldset>
+
+<!-- 3. POLE HASŁO (pełna szerokość, klikalne) -->
+<div class="card mb-4" id="password-preview-card">
+    <div class="card-header">
+        <h5 class="card-title mb-0" data-translate="password_preview">Hasło</h5>
+    </div>
+    <div class="card-body text-center">
+        <div id="game-password-display"
+             class="d-flex flex-wrap gap-1 justify-content-center"
+             style="font-size: 1.2rem; font-family: monospace;">
+            <!-- Litery będą generowane dynamicznie -->
+        </div>
+    </div>
+</div>
+
+<!-- 3.5 POLE WYŚWIETLACZ (pełna szerokość) -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0" data-translate="display_panel">Wyświetlacz</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3" data-translate="display_panel_description">
+            Otwórz ekrany gry lub przejdź do ustawień wyświetlacza.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-primary" id="open-display-1-btn">
+                <i class="bi bi-display"></i> Otwórz ekran gry 1
+            </button>
+            <button class="btn btn-primary" id="open-display-2-btn">
+                <i class="bi bi-display"></i> Otwórz ekran gry 2
+            </button>
+            <button class="btn btn-primary" id="open-display-3-btn">
+                <i class="bi bi-display"></i> Otwórz ekran gry 3
+            </button>
+            <button class="btn btn-primary" id="open-display-4-btn">
+                <i class="bi bi-display"></i> Otwórz ekran gry 4
+            </button>
+            <button class="btn btn-secondary" id="open-display-settings-btn">
+                <i class="bi bi-gear"></i> <span data-translate="display_settings">Ustawienia</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. KOMUNIKATY NA EKRAN GRY (pełna szerokość) -->
+<div class="card mb-4">
+    <div class="card-header"><h5 class="card-title mb-0" data-translate="host_messages">Komunikaty na ekran gry</h5></div>
+    <div class="card-body">
+        <p class="text-muted small mb-3" data-translate="messages_description">
+            Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.
+        </p>
+        <div class="mb-3">
+            <label for="host-message-input" class="form-label" data-translate="message_label">Treść komunikatu (max 500 znaków):</label>
+            <textarea class="form-control" id="host-message-input" rows="3" maxlength="500" placeholder="Wpisz komunikat..."></textarea>
+            <small class="text-muted">
+                <span id="message-char-count">0</span> / 500 znaków
+            </small>
+        </div>
+        <button class="btn btn-primary" id="send-message-btn" data-translate="send_message">Wyślij komunikat</button>
+        <div id="message-status" class="mt-2"></div>
+    </div>
+</div>
+
+<!-- 5. TEMPO GRY ORAZ PUNKTACJA (pełna szerokość) -->
+<fieldset id="in-game-settings" disabled>
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="card-title mb-0" data-translate="in_game_settings">Tempo gry oraz punktacja</h5></div>
+        <div class="card-body" id="game-controls">
+            <label class="form-label" data-translate="time_speed">Tempo czasu:</label>
+            <div class="btn-group w-100 mb-3" role="group">
+                <button type="button" class="btn btn-outline-info" data-control="speed" data-value="0.5">x0,5</button>
+                <button type="button" class="btn btn-outline-info" data-control="speed" data-value="1">x1</button>
+                <button type="button" class="btn btn-outline-info" data-control="speed" data-value="2">x2</button>
+                <button type="button" class="btn btn-outline-info" data-control="speed" data-value="10">x10</button>
+                <button type="button" class="btn btn-outline-info" data-control="speed" data-value="30">x30</button>
+            </div>
+            <label class="form-label" data-translate="points_bonus">Premia punktowa:</label>
+            <div class="btn-group w-100 mb-3" role="group">
+                <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="1">x1</button>
+                <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="2">x2</button>
+                <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="3">x3</button>
+                <button type="button" class="btn btn-outline-primary" data-control="bonus" data-value="10">x10</button>
+            </div>
+        </div>
+    </div>
+</fieldset>

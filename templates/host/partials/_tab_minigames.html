@@ -1,0 +1,171 @@
+                <div class="card-header"><h5 class="card-title mb-0">Zarządzanie minigrami</h5></div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="minigames-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="minigames-enabled">
+                                    <span id="minigames-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować zielonych kodów QR do minigier</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+                            <button id="minigames-qr-btn" class="btn btn-primary mb-3 w-100">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="minigames-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR</button>
+                                <button id="minigames-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za przejście gry -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za przejście gry:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="minigame-completion-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateMinigameSetting('completion_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty do zdobycia w grze -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów do zdobycia w grze:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="minigame-target-points" value="20" min="1" max="200">
+                                    <button class="btn btn-primary" onclick="updateMinigameSetting('target_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 20 punktów (pod tę wartość gry są zoptymalizowane)</small>
+                            </div>
+
+                            <!-- Przełącznik wyboru gry -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Wybór gry:</strong></label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="minigame-player-choice" style="width: 3em; height: 1.5em;">
+                                    <label class="form-check-label ms-2" for="minigame-player-choice">
+                                        <span id="minigame-choice-status" class="badge bg-secondary">Losowa kolejność</span>
+                                    </label>
+                                </div>
+                                <small class="text-muted">Gdy włączone, gracz po zeskanowaniu kodu QR będzie mógł wybrać grę. Gdy wyłączone, gry uruchamiają się w losowej kolejności.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-info" id="minigames-info-alert">
+                        <strong>Informacja:</strong> Minigry aktywowane przez zielone kody QR.
+                        Każda minigra wymaga zdobycia <span id="minigame-target-display">20</span> punktów, aby otrzymać nagrodę <span id="minigame-completion-display">10</span> punktów.
+                    </div>
+                    
+                    <!-- TETRIS -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🎮 Tetris</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (ułóż linie)</p>
+                                    <small class="text-muted">Sterowanie: strzałki + obrót</small>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="btn btn-sm btn-info" id="tetris-test-btn">Test</button>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="tetris-toggle"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2" for="tetris-toggle">
+                                            <span id="tetris-status" class="badge bg-secondary">Nieaktywny</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- ARKANOID -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🏓 Arkanoid</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zbij cegły)</p>
+                                    <small class="text-muted">3 życia | Sterowanie: przyciski ◄ ►</small>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="btn btn-sm btn-info" id="arkanoid-test-btn">Test</button>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="arkanoid-toggle"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2" for="arkanoid-toggle">
+                                            <span id="arkanoid-status" class="badge bg-secondary">Nieaktywny</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SNAKE -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🐍 Snake</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (zbieraj jedzenie)</p>
+                                    <small class="text-muted">Sterowanie: przyciski ▲ ▼ ◄ ►</small>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="btn btn-sm btn-info" id="snake-test-btn">Test</button>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="snake-toggle"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2" for="snake-toggle">
+                                            <span id="snake-status" class="badge bg-secondary">Nieaktywny</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- T-REX -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1">🦖 T-Rex</h5>
+                                    <p class="text-muted mb-0">Cel: 20 punktów (unikaj przeszkód)</p>
+                                    <small class="text-muted">Sterowanie: przycisk skoku</small>
+                                </div>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="btn btn-sm btn-info" id="trex-test-btn">Test</button>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="trex-toggle"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2" for="trex-toggle">
+                                            <span id="trex-status" class="badge bg-secondary">Nieaktywny</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3" id="minigames-info" style="display: none;"></div>
+                </div>
+            </div>

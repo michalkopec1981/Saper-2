@@ -1,0 +1,146 @@
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="voting_tab">Głosowanie</h5></div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="voting-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="voting-enabled">
+                                    <span id="voting-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli głosować</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Główny kod QR -->
+                            <button id="voting-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-2 mb-3">
+                                <button id="voting-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR</button>
+                                <button id="voting-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+
+                            <!-- Wyślij na ekran 5 -->
+                            <button id="voting-send-to-screen5-btn" class="btn btn-info w-100">📺 Wyślij kod na ekran numer 5</button>
+
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia</h6>
+                            <p class="text-muted">Tutaj będą ustawienia głosowania</p>
+                        </div>
+                    </div>
+
+                    <!-- Pytania i odpowiedzi -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Pytania i odpowiedzi</h6>
+
+                            <!-- Przycisk dodaj propozycję -->
+                            <button class="btn btn-success mb-3" id="voting-add-question-btn">
+                                <i class="bi bi-plus-circle"></i> Dodaj propozycję
+                            </button>
+
+                            <!-- Formularz dodawania pytania (ukryty domyślnie) -->
+                            <div id="voting-question-form" class="border rounded p-3 mb-3" style="display: none; background: white;">
+                                <h6 class="mb-3">Nowe pytanie/propozycja</h6>
+
+                                <!-- Pole pytania -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Pytanie/Propozycja:</strong></label>
+                                    <input type="text" class="form-control" id="voting-question-text" placeholder="Wpisz pytanie lub propozycję...">
+                                </div>
+
+                                <!-- Pola odpowiedzi -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Odpowiedzi/Wybory:</strong></label>
+                                    <div id="voting-answers-container">
+                                        <div class="input-group mb-2 voting-answer-item">
+                                            <span class="input-group-text">1</span>
+                                            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 1">
+                                            <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+                                        </div>
+                                        <div class="input-group mb-2 voting-answer-item">
+                                            <span class="input-group-text">2</span>
+                                            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 2">
+                                            <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" id="voting-add-answer-btn">
+                                        + Dodaj nowe pole
+                                    </button>
+                                </div>
+
+                                <!-- Typ wyboru -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Typ wyboru:</strong></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-choice-type" id="voting-single-choice" value="single" checked>
+                                            <label class="form-check-label" for="voting-single-choice">Tylko jeden wybór</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-choice-type" id="voting-multiple-choice" value="multiple">
+                                            <label class="form-check-label" for="voting-multiple-choice">Wielokrotny wybór</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Czas -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Czas na głosowanie:</strong></label>
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <input type="number" class="form-control" id="voting-time-value" value="60" min="10" max="3600">
+                                        <select class="form-select" id="voting-time-unit" style="max-width: 120px;">
+                                            <option value="seconds">Sekundy</option>
+                                            <option value="minutes">Minuty</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Wynik -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Wynik:</strong></label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-result-type" id="voting-result-auto" value="auto" checked>
+                                            <label class="form-check-label" for="voting-result-auto">Od razu (Auto)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="voting-result-type" id="voting-result-manual" value="manual">
+                                            <label class="form-check-label" for="voting-result-manual">Na życzenie (Manual)</label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Auto: wyniki widoczne od razu po upływie czasu. Manual: wyniki widoczne po aktywacji przez hosta.</small>
+                                </div>
+
+                                <!-- Przyciski -->
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary" id="voting-submit-question-btn">
+                                        <i class="bi bi-check-circle"></i> Zatwierdź
+                                    </button>
+                                    <button class="btn btn-secondary" id="voting-cancel-question-btn">
+                                        Anuluj
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Lista pytań -->
+                            <div id="voting-questions-list">
+                                <!-- Tutaj będą wyświetlane dodane pytania -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

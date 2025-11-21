@@ -1,0 +1,136 @@
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Kategorie AI - Pytania generowane automatycznie</h5>
+                    <p class="text-muted mb-0 mt-2 small">Gracze po zeskanowaniu białego kodu QR otrzymują pytania z wybranej kategorii. Za poprawną odpowiedź: 5 punktów.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ai-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="ai-enabled">
+                                    <span id="ai-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli skanować białych kodów QR do pytań AI</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+
+                            <!-- Kody QR dla łatwych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-success mb-2">Łatwe pytania:</h6>
+                                <button id="ai-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla łatwych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla łatwych pytań</button>
+                                    <button id="ai-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla łatwych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla średnich pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-warning mb-2">Średnie pytania:</h6>
+                                <button id="ai-medium-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla średnich pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-medium-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla średnich pytań</button>
+                                    <button id="ai-medium-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla średnich pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla trudnych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-danger mb-2">Trudne pytania:</h6>
+                                <button id="ai-hard-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla trudnych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-hard-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla trudnych pytań</button>
+                                    <button id="ai-hard-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla trudnych pytań</button>
+                                </div>
+                            </div>
+
+                            <!-- Kody QR dla mieszanych pytań -->
+                            <div class="mb-3">
+                                <h6 class="text-info mb-2">Mieszane pytania:</h6>
+                                <button id="ai-mixed-qr-btn" class="btn btn-primary mb-2 w-100">📱 Podgląd i druk kodu QR dla mieszanych pytań</button>
+
+                                <div class="d-flex gap-2 mt-2">
+                                    <button id="ai-mixed-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR dla mieszanych pytań</button>
+                                    <button id="ai-mixed-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR dla mieszanych pytań</button>
+                                </div>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">Zapasowe kody QR mogą być użyte jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za łatwe pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na łatwe pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-easy-points" value="5" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('easy_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Punkty za średnie pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na średnie pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-medium-points" value="10" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('medium_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 10 punktów</small>
+                            </div>
+
+                            <!-- Punkty za trudne pytanie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za jedną poprawną odpowiedź na trudne pytanie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="ai-hard-points" value="15" min="1" max="100">
+                                    <button class="btn btn-primary" onclick="updateAISetting('hard_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 15 punktów</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3">Dodaj kategorię:</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="custom-category-name" class="form-label">Nazwa kategorii</label>
+                            <input type="text" class="form-control" id="custom-category-name" placeholder="np. Film, Geografia, Medycyna">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="custom-category-difficulty" class="form-label">Poziom trudności</label>
+                            <select class="form-select" id="custom-category-difficulty">
+                                <option value="easy">Łatwy</option>
+                                <option value="medium">Średni</option>
+                                <option value="advanced">Zaawansowany</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-success w-100" id="add-custom-category-btn">Dodaj kategorię</button>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mb-3">Twoje kategorie:</h6>
+                    <div id="ai-categories-list"></div>
+                </div>
+            </div>

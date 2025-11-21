@@ -1,0 +1,91 @@
+                <div class="card-header"><h5 class="card-title mb-0" data-translate="photo_tab">Galeria zdjęć</h5></div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="photo-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="photo-enabled">
+                                    <span id="photo-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, gracze nie będą mogli robić i przesyłać zdjęć</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR</h6>
+                            <button id="photo-qr-btn" class="btn btn-primary mb-3 w-100">📱 Podgląd i druk kodu QR</button>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="photo-generate-backup-qr-btn" class="btn btn-success flex-grow-1">🔄 Generuj zapasowy kod QR</button>
+                                <button id="photo-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>📱 Podgląd i druk zapasowego kodu QR</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Zapasowy kod QR może być użyty jako alternatywa dla głównego kodu</small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia gry -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia gry</h6>
+
+                            <!-- Punkty za wykonane zdjęcie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za wykonane zdjęcie selfie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="photo-selfie-points" value="30" min="1" max="1000">
+                                    <button class="btn btn-primary" onclick="updatePhotoSetting('selfie_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 30 punktów</small>
+                            </div>
+
+                            <!-- Punkty za polubienie -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za polubienie czyjegoś zdjęcia selfie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="photo-like-given-points" value="2" min="0" max="100">
+                                    <button class="btn btn-primary" onclick="updatePhotoSetting('like_given_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 2 punkty</small>
+                            </div>
+
+                            <!-- Punkty za uzyskanie polubienia -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Liczba punktów za uzyskanie polubienia (like) dla zdjęcia selfie:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="photo-like-received-points" value="5" min="0" max="100">
+                                    <button class="btn btn-primary" onclick="updatePhotoSetting('like_received_points')">OK</button>
+                                </div>
+                                <small class="text-muted">Domyślnie: 5 punktów</small>
+                            </div>
+
+                            <!-- Maksymalna liczba polubień -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Maksymalna liczba zdjęć selfie do polubienia:</strong></label>
+                                <div class="input-group" style="max-width: 300px;">
+                                    <input type="number" class="form-control" id="photo-max-likes" value="10" min="1" max="1000">
+                                    <button class="btn btn-primary" onclick="updatePhotoSetting('max_likes')">OK</button>
+                                </div>
+                                <small class="text-muted">Ile jeden uczestnik może polubić maksymalnie zdjęć innych graczy</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>Galeria zdjęć graczy</h6>
+                    <p data-translate="photo_description" class="text-muted">Poniżej zdjęcia przesłane przez graczy, posortowane według liczby polubień.</p>
+
+                    <div id="host-photo-gallery" class="row g-3 mt-3">
+                        <!-- Zdjęcia będą tutaj ładowane dynamicznie -->
+                    </div>
+
+                    <div id="no-photos-message" class="alert alert-info text-center mt-3" style="display: none;">
+                        <p class="mb-0">Brak zdjęć. Gracze mogą przesyłać zdjęcia skanując kod QR powyżej.</p>
+                    </div>
+                </div>
+            </div>

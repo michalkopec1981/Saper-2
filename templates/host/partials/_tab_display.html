@@ -1,0 +1,70 @@
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="display_tab">Ustawienia wyświetlacza</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6 data-translate="display_screens">Liczba ekranów zewnętrznych:</h6>
+                        <div class="btn-group w-100" role="group" id="display-screens-controls">
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="1" data-translate="one_screen">1 Ekran</button>
+                            <button type="button" class="btn btn-outline-primary active-modifier" data-control="display_screens" data-value="2" data-translate="two_screens">2 Ekrany</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="3" data-translate="three_screens">3 Ekrany</button>
+                            <button type="button" class="btn btn-outline-primary" data-control="display_screens" data-value="4" data-translate="four_screens">4 Ekrany</button>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <strong>1 ekran:</strong> Tytuł eventu, Nazwa firmy Bomba, Hasło<br>
+                            <strong>2 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta<br>
+                            <strong>3 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta | Ekran 3 - Zabawne Selfie w karuzeli<br>
+                            <strong>4 ekrany:</strong> Ekran 1 - Tytuł eventu, Nazwa firmy Bomba, Hasło | Ekran 2 - Ranking i komentarze hosta | Ekran 3 - Zabawne Selfie w karuzeli | Ekran 4 - Kod gracza i przedmioty AR do znalezienia
+                        </small>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Linki do ekranów:</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display1-link">
+                                🖥️ Ekran 1 - Główny wyświetlacz
+                            </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 1:</strong></small><br>
+                                <small><a href="{{ url_for('display', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
+                            <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
+                                🖥️ Ekran 2 - Ranking i zdjęcia
+                            </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 2:</strong></small><br>
+                                <small><a href="{{ url_for('display2', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display2', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
+                            <a href="{{ url_for('photo_player', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display3-link">
+                                🖥️ Ekran 3 - Selfie
+                            </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 3:</strong></small><br>
+                                <small><a href="{{ url_for('photo_player', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('photo_player', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
+                            <a href="{{ url_for('display4', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display4-link">
+                                🖥️ Ekran 4 - Przemioty do znalezienia oraz kod gracza
+                            </a>
+                            <div class="alert alert-info mb-2">
+                                <small><strong>Link do ekranu 4:</strong></small><br>
+                                <small><a href="{{ url_for('display4', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display4', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+
+                            <a href="{{ url_for('display5', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display5-link">
+                                🖥️ Ekran 5 - Głosowanie lub Pytania na Żywo
+                            </a>
+                            <div class="alert alert-info mb-0">
+                                <small><strong>Link do ekranu 5:</strong></small><br>
+                                <small><a href="{{ url_for('display5', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display5', event_id=event.id, _external=True) }}</a></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="display-status" class="mt-3 alert alert-info">
+                        Aktualnie uruchomione: <strong>2 ekrany</strong>
+                    </div>
+                </div>
+            </div>

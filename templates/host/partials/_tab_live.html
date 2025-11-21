@@ -1,0 +1,203 @@
+                <div class="card-header">
+                    <h5 class="card-title mb-0" data-translate="live_tab">Na żywo</h5>
+                    <p class="text-muted mb-0 mt-2 small">Spontaniczna rozgrywka prowadzona przez konferansjera ze sceny. Gracze odpowiadają na pytania w czasie rzeczywistym.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Stan gry - przełącznik -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Stan gry</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="live-enabled" style="width: 3em; height: 1.5em;" checked>
+                                <label class="form-check-label ms-2" for="live-enabled">
+                                    <span id="live-status" class="badge bg-success">Aktywna</span>
+                                </label>
+                            </div>
+                            <small class="text-muted">Gdy wyłączona, funkcja na żywo będzie nieaktywna</small>
+                        </div>
+                    </div>
+
+                    <!-- Kod QR -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Kod QR dla graczy</h6>
+                            <p class="text-muted">Wyświetl ten kod QR na ekranie, aby gracze mogli dołączyć do trybu live.</p>
+                            <div class="text-center mb-3">
+                                <div id="live-qr-code"></div>
+                            </div>
+
+                            <!-- Główny kod QR -->
+                            <button class="btn btn-primary w-100 mb-2" onclick="openLiveQRPreview()">
+                                📱 Podgląd i druk kodu QR
+                            </button>
+
+                            <!-- Zapasowy kod QR -->
+                            <div class="d-flex gap-2 mt-2 mb-3">
+                                <button id="live-generate-backup-qr-btn" class="btn btn-success flex-grow-1">
+                                    🔄 Generuj zapasowy kod QR dla pytań na żywo
+                                </button>
+                                <button id="live-backup-qr-btn" class="btn btn-secondary flex-grow-1" disabled>
+                                    📱 Podgląd i druk zapasowego kodu QR
+                                </button>
+                            </div>
+
+                            <!-- Przycisk do wyświetlenia ekranu 5 -->
+                            <button id="live-show-screen5-btn" class="btn btn-info w-100 mb-2">
+                                📺 Wyświetl ekran numer 5
+                            </button>
+
+                            <!-- Link do ekranu 5 -->
+                            <div class="alert alert-info mb-0">
+                                <small><strong>Link do ekranu numer 5:</strong></small><br>
+                                <small><a id="live-screen5-link" href="#" target="_blank" class="text-break"></a></small>
+                            </div>
+
+                            <small class="text-muted d-block mt-2">
+                                Zapasowy kod QR jest priorytetowy na ekranie numer 5. Domyślnie ekran pokazuje podstawowy kod QR.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Ustawienia -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Ustawienia</h6>
+                            <p class="text-muted">Liczba przycisków odpowiedzi jest dostosowywana automatycznie do liczby wypełnionych pól w pytaniu.</p>
+
+                            <hr class="my-3">
+
+                            <!-- Przełącznik puli punktów -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Pula punktów:</strong></label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="text-muted">Obecna pula punktów</span>
+                                    <div class="form-check form-switch" style="transform: scale(1.5); margin: 0 15px;">
+                                        <input class="form-check-input" type="checkbox" id="live-separate-score-pool" style="cursor: pointer;">
+                                    </div>
+                                    <span class="text-primary"><strong>Osobna pula punktów</strong></span>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <strong>Obecna pula:</strong> Punkty z trybu Na żywo trafiają do ogólnego licznika punktów gracza.<br>
+                                    <strong>Osobna pula:</strong> Punkty z trybu Na żywo są liczone oddzielnie (np. gracz ma 60 pkt. ogólnych + 20 pkt. z trybu Na żywo).
+                                </small>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Ustawienie wyniku (Auto/Manual) -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Wynik:</strong></label>
+                                <div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="live-result-mode" id="live-result-auto" value="auto" checked>
+                                        <label class="form-check-label" for="live-result-auto">
+                                            Od razu (Auto)
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="live-result-mode" id="live-result-manual" value="manual">
+                                        <label class="form-check-label" for="live-result-manual">
+                                            Na życzenie (Manual)
+                                        </label>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <strong>Od razu:</strong> Wyniki i punkty pojawiają się automatycznie po upłynięciu czasu.<br>
+                                    <strong>Na życzenie:</strong> Host musi kliknąć "Wyświetl wynik" aby gracze zobaczyli odpowiedź i dostali punkty.
+                                </small>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Przycisk Statystyki -->
+                            <div class="mb-0">
+                                <button id="live-show-statistics-btn" class="btn btn-primary w-100" disabled>
+                                    📊 Wyświetl statystyki na ekranie 5
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    Gracze zobaczą procentowe wyniki wszystkich odpowiedzi (dostępne po zakończeniu pytania)
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nowe pytanie -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Dodaj nowe pytanie</h6>
+                            <div class="mb-3">
+                                <label for="live-new-question-text" class="form-label">Treść pytania (opcjonalnie)</label>
+                                <textarea class="form-control" id="live-new-question-text" rows="2" placeholder="Możesz zostawić puste jeśli czytasz pytanie ze sceny"></textarea>
+                                <small class="text-muted">Jeśli wypełnisz, gracze zobaczą pytanie w swoich telefonach</small>
+                            </div>
+
+                            <!-- Pola odpowiedzi -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Odpowiedzi:</strong></label>
+                                <div id="live-answers-container">
+                                    <div class="input-group mb-2 live-answer-item">
+                                        <span class="input-group-text">Odpowiedź A</span>
+                                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                                            <span class="ms-2 small">Poprawna</span>
+                                        </div>
+                                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                                    </div>
+                                    <div class="input-group mb-2 live-answer-item">
+                                        <span class="input-group-text">Odpowiedź B</span>
+                                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                                            <span class="ms-2 small">Poprawna</span>
+                                        </div>
+                                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" id="live-add-answer-btn">
+                                    + Dodaj nowe pole
+                                </button>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="live-new-time-limit" class="form-label">Limit czasu (sekundy)</label>
+                                <input type="number" class="form-control" id="live-new-time-limit" value="30" min="5" max="180">
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="createLiveQuestion()">
+                                ➕ Dodaj pytanie
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista pytań -->
+                    <div class="card mb-3 bg-light">
+                        <div class="card-body">
+                            <h6 class="mb-3">Pytania</h6>
+                            <div id="live-questions-list">
+                                <p class="text-muted text-center">Brak pytań. Dodaj nowe pytanie powyżej.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aktywne pytanie -->
+                    <div class="card mb-3 bg-warning" id="live-active-question-card" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="mb-3">⚡ Aktywne pytanie</h6>
+                            <div id="live-active-question-content">
+                                <p class="mb-2"><strong id="live-active-q-text"></strong></p>
+                                <div id="live-active-options" class="mb-3 small"></div>
+                                <div id="live-active-timer" class="mb-3">
+                                    <h4 class="text-danger">Czas: <span id="live-timer-display">30</span>s</h4>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Odpowiedzi graczy: <span id="live-answers-count">0</span></strong>
+                                </div>
+                                <h6 class="mb-2">Ujawnij poprawną odpowiedź (można wybrać wiele):</h6>
+                                <div id="live-reveal-buttons" class="d-flex flex-wrap gap-2" role="group">
+                                    <!-- Przyciski generowane dynamicznie -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
