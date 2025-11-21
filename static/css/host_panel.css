@@ -517,3 +517,14 @@ body.dark-mode fieldset {
 body.dark-mode legend {
     color: #c9d1d9 !important;
 }
+
+/* IMPORTANT: Fieldset visibility fix */
+fieldset {
+    display: block !important;
+    min-height: inherit !important;
+}
+
+fieldset[disabled] {
+    opacity: 0.6;
+    pointer-events: none;
+}
