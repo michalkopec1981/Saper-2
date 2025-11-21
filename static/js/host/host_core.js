@@ -520,6 +520,11 @@ function toggleGameButtons(gameActive) {
 // DOM CONTENT LOADED - CORE INITIALIZATION
 // =====================================================================
 document.addEventListener('DOMContentLoaded', function () {
+    // Get config from HTML data attributes
+    const configEl = document.getElementById('host-config');
+    window.EVENT_ID = configEl ? configEl.dataset.eventId : null;
+    window.IS_SUPERHOST = configEl ? configEl.dataset.isSuperhost === 'true' : false;
+
     console.log('HOST CORE INITIALIZING - Event ID:', window.EVENT_ID);
 
     // Initialize Socket.IO
