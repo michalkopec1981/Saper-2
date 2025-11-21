@@ -455,15 +455,18 @@ function updateUI(state) {
 
     const preGameFieldset = document.getElementById('pre-game-settings');
     const inGameFieldset = document.getElementById('in-game-settings');
+    const timingFieldset = document.getElementById('timing-settings');
     const setTimeBtn = document.getElementById('set-time-btn-2');
 
     if (state.game_active) {
         if (preGameFieldset) preGameFieldset.disabled = false;
         if (inGameFieldset) inGameFieldset.disabled = false;
+        if (timingFieldset) timingFieldset.disabled = false;
         if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
     } else {
         if (preGameFieldset) preGameFieldset.disabled = false;
         if (inGameFieldset) inGameFieldset.disabled = true;
+        if (timingFieldset) timingFieldset.disabled = true;
         if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
     }
 
