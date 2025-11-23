@@ -4440,12 +4440,18 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('game-controls')?.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-control]');
         if (!btn) return;
-        
+
         const control = btn.dataset.control;
         const value = btn.dataset.value;
-        
+
         console.log('🎮 Sending game control:', control, value);
         sendGameControl(control, value);
+    });
+
+    // Pause button
+    document.getElementById('pause-btn')?.addEventListener('click', () => {
+        console.log('🎮 Pause/Resume button clicked');
+        sendGameControl('pause');
     });
 
 // =====================================================================
