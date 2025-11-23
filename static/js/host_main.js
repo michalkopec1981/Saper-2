@@ -1,0 +1,5999 @@
+// Translations
+    const translations = {
+    pl: {
+        host_title: 'ORGANIZACJA GRY',
+        open_display: 'Otwórz Ekran Gry',
+        tab_game: 'Gra',
+        tab_players: 'Gracze',
+        tab_questions: 'Pytania runda 1',
+        tab_minigames: 'Minigry',
+        tab_qrcodes: 'Kody QR',
+        tab_password: 'Hasło',
+        tab_photo: 'Foto',
+        tab_ar: 'AR',
+        tab_fortune: 'Wróżka AI',
+        fortune_title: 'Wróżka AI - atrakcja wykorzystująca sztuczną inteligencję',
+        fortune_description: 'Gracze po zeskanowaniu kodu QR otrzymują możliwość opisania ostatniego snu, by uzyskać przepowiednię.',
+        tab_display: 'Wyświetlacz',
+        tab_language: 'Język',
+        password_tab: 'Hasło do odsłonięcia',
+        password_description: 'Tutaj będzie widoczne hasło, które gracze muszą odsłonić podczas gry.',
+        photo_tab: 'Galeria zdjęć',
+        photo_description: 'Tutaj będą widoczne zdjęcia przesłane przez graczy.',
+        ar_tab: 'Rozszerzona rzeczywistość (AR)',
+        ar_description: 'Tutaj będą dostępne funkcje AR.',
+        display_tab: 'Ustawienia wyświetlacza',
+        display_screens: 'Liczba ekranów zewnętrznych:',
+        one_screen: '1 Ekran',
+        two_screens: '2 Ekrany',
+        three_screens: '3 Ekrany',
+        four_screens: '4 Ekrany',
+        language_tab: 'Ustawienia języka',
+        game_info: 'Informacje o grze',
+        player_count: 'Liczba graczy:',
+        completion_percentage: 'Procent ukończenia:',
+        language_host_label: 'Język prowadzącego:',
+        time_left: 'Czas do końca:',
+        time_net: 'Czas gry (netto):',
+        time_gross: 'Czas gry (brutto):',
+        current_bonus: 'Aktualna premia:',
+        current_speed: 'Aktualne tempo:',
+        game_status_label: 'Stan gry:',
+        game_status_waiting: 'Oczekiwanie na Start',
+        game_status_active: 'Start. Gra aktywna',
+        game_status_paused: 'Pauza',
+        game_status_stopped: 'Stop. Zakończenie gry',
+        pre_game_settings: 'Obsługa gry',
+        game_duration_label: 'Czas gry (minuty):',
+        game_duration_help: 'Przed grą: ustaw czas. Podczas gry: zmień czas (wymaga hasła)',
+        set_time_btn: 'OK',
+        player_language: 'Język graczy',
+        host_language: 'Język prowadzącego',
+        lang_polish: 'Język polski',
+        lang_english: 'Język angielski',
+        lang_german: 'Język niemiecki',
+        start_game: 'Start Gry',
+        in_game_settings: 'Tempo gry oraz punktacja',
+        points_bonus: 'Premia punktowa:',
+        time_speed: 'Tempo czasu:',
+        pause: 'Pauza',
+        resume: 'Wznów',
+        force_win: 'Przedwczesna wygrana',
+        stop_game: 'Stop Gry',
+        reset_game: 'Reset Gry',
+        quick_access: 'Szybki dostęp do zakładek:',
+        questions_management: 'Zarządzanie pytaniami',
+        players_management: 'Zarządzanie graczami',
+        add_question: 'Dodaj pytanie',
+        question_modal_title: 'Dodaj pytanie',
+        question_text: 'Treść pytania:',
+        answers: 'Odpowiedzi:',
+        difficulty_level: 'Poziom trudności:',
+        easy: 'Łatwy',
+        medium: 'Średni',
+        hard: 'Trudny',
+        letter_reveal: 'Litera do odsłonięcia:',
+        cancel: 'Anuluj',
+        save: 'Zapisz',
+        edit: 'Edytuj',
+        delete: 'Usuń',
+        shown: 'Wyświetlono',
+        correct: 'Poprawne',
+        times: 'razy',
+        admin_impersonate: 'Jesteś zalogowany jako Admin w panelu Hosta.',
+        back_to_admin: 'Powrót do panelu Admina',
+        warn: 'Ostrzeż',
+        warnings: 'Ostrzeżenia',
+        send_player_message: 'Wyślij wiadomość',
+        message_to_player: 'Wiadomość do gracza',
+        message_content: 'Treść wiadomości (max 120 znaków):',
+        send: 'Wyślij',
+        question_category: 'Kategoria pytania:',
+        category_company: 'Firmowe',
+        category_world: 'Światowe',
+        host_messages: 'Komunikaty na ekran gry',
+        messages_description: 'Wyślij komunikat, który pojawi się na głównym ekranie gry. Użyj tego, aby przekazać ważne informacje wszystkim uczestnikom.',
+        message_label: 'Treść komunikatu (max 500 znaków):',
+        send_message: 'Wyślij komunikat',
+        password_preview: 'Hasło',  // ⬅️ DODAJ TĘ LINIĘ
+        tab_timing: 'Czas i tempo',
+        timing_settings: 'Czas i tempo gry',
+        display_panel: 'Wyświetlacz',
+        display_panel_description: 'Otwórz ekrany gry lub przejdź do ustawień wyświetlacza.',
+        display_settings: 'Ustawienia',
+    },
+    en: {
+        host_title: 'GAME ORGANIZATION',
+        open_display: 'Open Game Display',
+        tab_game: 'Game',
+        tab_players: 'Players',
+        tab_questions: 'Questions',
+        tab_minigames: 'Minigames',
+        tab_qrcodes: 'QR Codes',
+        tab_password: 'Password',
+        tab_photo: 'Photo',
+        tab_ar: 'AR',
+        tab_fortune: 'Fortune Teller AI',
+        fortune_title: 'Fortune Teller AI - attraction using artificial intelligence',
+        fortune_description: 'Players after scanning the QR code get the opportunity to describe their last dream to get a prediction.',
+        tab_display: 'Display',
+        tab_language: 'Language',
+        password_tab: 'Password to reveal',
+        password_description: 'Here you will see the password that players must reveal during the game.',
+        photo_tab: 'Photo gallery',
+        photo_description: 'Here you will see photos uploaded by players.',
+        ar_tab: 'Augmented Reality (AR)',
+        ar_description: 'AR features will be available here.',
+        display_tab: 'Display settings',
+        display_screens: 'Number of external screens:',
+        one_screen: '1 Screen',
+        two_screens: '2 Screens',
+        three_screens: '3 Screens',
+        four_screens: '4 Screens',
+        language_tab: 'Language settings',
+        game_info: 'Game information',
+        player_count: 'Number of players:',
+        completion_percentage: 'Completion percentage:',
+        language_host_label: 'Host language:',
+        time_left: 'Time left:',
+        time_net: 'Game time (net):',
+        time_gross: 'Game time (gross):',
+        current_bonus: 'Current bonus:',
+        current_speed: 'Current speed:',
+        game_status_label: 'Game status:',
+        game_status_waiting: 'Waiting for Start',
+        game_status_active: 'Start. Game active',
+        game_status_paused: 'Pause',
+        game_status_stopped: 'Stop. Game ended',
+        pre_game_settings: 'Game Control',
+        game_duration_label: 'Game time (minutes):',
+        game_duration_help: 'Before game: set time. During game: change time (requires password)',
+        set_time_btn: 'OK',
+        player_language: 'Players language',
+        host_language: 'Host language',
+        lang_polish: 'Polish language',
+        lang_english: 'English language',
+        lang_german: 'German language',
+        start_game: 'Start Game',
+        in_game_settings: 'Game Speed and Scoring',
+        points_bonus: 'Points bonus:',
+        time_speed: 'Time speed:',
+        pause: 'Pause',
+        resume: 'Resume',
+        force_win: 'Force Win',
+        stop_game: 'Stop Game',
+        reset_game: 'Reset Game',
+        quick_access: 'Quick access to tabs:',
+        questions_management: 'Questions management',
+        players_management: 'Players management',
+        add_question: 'Add question',
+        question_modal_title: 'Add question',
+        question_text: 'Question text:',
+        answers: 'Answers:',
+        difficulty_level: 'Difficulty level:',
+        easy: 'Easy',
+        medium: 'Medium',
+        hard: 'Hard',
+        letter_reveal: 'Letter to reveal:',
+        cancel: 'Cancel',
+        save: 'Save',
+        edit: 'Edit',
+        delete: 'Delete',
+        shown: 'Shown',
+        correct: 'Correct',
+        times: 'times',
+        admin_impersonate: 'You are logged in as Admin in Host panel.',
+        back_to_admin: 'Back to Admin panel',
+        warn: 'Warn',
+        warnings: 'Warnings',
+        send_player_message: 'Send message',
+        message_to_player: 'Message to player',
+        message_content: 'Message content (max 120 characters):',
+        send: 'Send',
+        question_category: 'Question category:',
+        category_company: 'Company',
+        category_world: 'World',
+        host_messages: 'Messages on game screen',
+        messages_description: 'Send a message that will appear on the main game screen. Use this to share important information with all participants.',
+        message_label: 'Message content (max 500 characters):',
+        send_message: 'Send message',
+        password_preview: 'Password',
+        tab_timing: 'Time & Speed',
+        timing_settings: 'Game Time and Speed',
+        display_panel: 'Display',
+        display_panel_description: 'Open game screens or go to display settings.',
+        display_settings: 'Settings',
+    },
+    de: {
+        host_title: 'SPIELORGANISATION',
+        open_display: 'Spielbildschirm öffnen',
+        tab_game: 'Spiel',
+        tab_players: 'Spieler',
+        tab_questions: 'Fragen',
+        tab_minigames: 'Minispiele',
+        tab_qrcodes: 'QR-Codes',
+        tab_password: 'Passwort',
+        tab_photo: 'Foto',
+        tab_ar: 'AR',
+        tab_fortune: 'Wahrsagerin AI',
+        fortune_title: 'Wahrsagerin AI - Attraktion mit künstlicher Intelligenz',
+        fortune_description: 'Spieler erhalten nach dem Scannen des QR-Codes die Möglichkeit, ihren letzten Traum zu beschreiben, um eine Vorhersage zu erhalten.',
+        tab_display: 'Anzeige',
+        tab_language: 'Sprache',
+        password_tab: 'Zu enthüllendes Passwort',
+        password_description: 'Hier sehen Sie das Passwort, das die Spieler während des Spiels aufdecken müssen.',
+        photo_tab: 'Fotogalerie',
+        photo_description: 'Hier sehen Sie von Spielern hochgeladene Fotos.',
+        ar_tab: 'Erweiterte Realität (AR)',
+        ar_description: 'AR-Funktionen werden hier verfügbar sein.',
+        display_tab: 'Anzeigeeinstellungen',
+        display_screens: 'Anzahl externer Bildschirme:',
+        one_screen: '1 Bildschirm',
+        two_screens: '2 Bildschirme',
+        three_screens: '3 Bildschirme',
+        four_screens: '4 Bildschirme',
+        language_tab: 'Spracheinstellungen',
+        game_info: 'Spielinformationen',
+        player_count: 'Anzahl der Spieler:',
+        completion_percentage: 'Abschlussrate:',
+        language_host_label: 'Moderatorsprache:',
+        time_left: 'Verbleibende Zeit:',
+        time_net: 'Spielzeit (netto):',
+        time_gross: 'Spielzeit (brutto):',
+        current_bonus: 'Aktueller Bonus:',
+        current_speed: 'Aktuelle Geschwindigkeit:',
+        game_status_label: 'Spielstatus:',
+        game_status_waiting: 'Warten auf Start',
+        game_status_active: 'Start. Spiel aktiv',
+        game_status_paused: 'Pause',
+        game_status_stopped: 'Stopp. Spiel beendet',
+        pre_game_settings: 'Spielsteuerung',
+        game_duration_label: 'Spielzeit (Minuten):',
+        game_duration_help: 'Vor dem Spiel: Zeit einstellen. Während des Spiels: Zeit ändern (erfordert Passwort)',
+        set_time_btn: 'OK',
+        player_language: 'Spielersprache',
+        host_language: 'Moderatorsprache',
+        lang_polish: 'Polnische Sprache',
+        lang_english: 'Englische Sprache',
+        lang_german: 'Deutsche Sprache',
+        start_game: 'Spiel starten',
+        in_game_settings: 'Spielgeschwindigkeit und Punktzahl',
+        points_bonus: 'Punktebonus:',
+        time_speed: 'Zeitgeschwindigkeit:',
+        pause: 'Pause',
+        resume: 'Fortsetzen',
+        force_win: 'Erzwungener Sieg',
+        stop_game: 'Spiel stoppen',
+        reset_game: 'Spiel zurücksetzen',
+        quick_access: 'Schnellzugriff auf Registerkarten:',
+        questions_management: 'Fragenverwaltung',
+        players_management: 'Spielerverwaltung',
+        add_question: 'Frage hinzufügen',
+        question_modal_title: 'Frage hinzufügen',
+        question_text: 'Fragetext:',
+        answers: 'Antworten:',
+        difficulty_level: 'Schwierigkeitsgrad:',
+        easy: 'Einfach',
+        medium: 'Mittel',
+        hard: 'Schwer',
+        letter_reveal: 'Zu enthüllender Buchstabe:',
+        cancel: 'Abbrechen',
+        save: 'Speichern',
+        edit: 'Bearbeiten',
+        delete: 'Löschen',
+        shown: 'Angezeigt',
+        correct: 'Richtig',
+        times: 'Mal',
+        admin_impersonate: 'Sie sind als Admin im Host-Panel angemeldet.',
+        back_to_admin: 'Zurück zum Admin-Panel',
+        warn: 'Warnen',
+        warnings: 'Warnungen',
+        question_category: 'Fragenkategorie:',
+        category_company: 'Firma',
+        category_world: 'Welt',
+        host_messages: 'Nachrichten auf dem Spielbildschirm',
+        messages_description: 'Senden Sie eine Nachricht, die auf dem Hauptspielbildschirm erscheint. Verwenden Sie dies, um wichtige Informationen mit allen Teilnehmern zu teilen.',
+        message_label: 'Nachrichteninhalt (max. 500 Zeichen):',
+        send_message: 'Nachricht senden',
+        password_preview: 'Passwort',
+        tab_timing: 'Zeit & Tempo',
+        timing_settings: 'Spielzeit und Geschwindigkeit',
+        display_panel: 'Anzeige',
+        display_panel_description: 'Spielbildschirme öffnen oder zu den Anzeigeeinstellungen wechseln.',
+        display_settings: 'Einstellungen',
+    }
+};
+
+let currentLanguage = 'pl';
+let currentEditingQuestionId = null;
+const EVENT_ID = {{ event.id }};
+const IS_SUPERHOST = {{ 'true' if is_superhost else 'false' }};
+
+function translatePage(lang) {
+    currentLanguage = lang;
+    document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        if (translations[lang][key]) {
+            if (el.tagName === 'INPUT' && el.type === 'button') {
+                el.value = translations[lang][key];
+            } else {
+                el.textContent = translations[lang][key];
+            }
+        }
+    });
+    
+    // Update pause button text based on state
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn && (pauseBtn.textContent.includes('Wznów') || pauseBtn.textContent.includes('Resume'))) {
+        pauseBtn.textContent = translations[lang]['resume'];
+    }
+    
+    // Update game status text
+    updateGameStatusText();
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// ✅ Funkcja aktualizująca tekst statusu gry
+function updateGameStatusText() {
+    const statusEl = document.getElementById('info-game-status');
+    if (!statusEl) return;
+    
+    const currentStatus = statusEl.dataset.status;
+    if (!currentStatus) return;
+    
+    const statusTexts = {
+        'waiting': translations[currentLanguage].game_status_waiting,
+        'active': translations[currentLanguage].game_status_active,
+        'paused': translations[currentLanguage].game_status_paused,
+        'stopped': translations[currentLanguage].game_status_stopped
+    };
+    
+    statusEl.textContent = statusTexts[currentStatus] || statusTexts['waiting'];
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🎮 HOST PANEL INITIALIZING - Event ID:', EVENT_ID);
+    
+    const socket = io();
+    const questionModal = new bootstrap.Modal(document.getElementById('questionModal'));
+
+        // =====================================================================
+    // ✅ NOWE: Przekierowanie do zakładki Hasło po kliknięciu w pole
+    // =====================================================================
+    const passwordCard = document.getElementById('password-preview-card');
+    if (passwordCard) {
+        passwordCard.addEventListener('click', () => {
+            const passwordTab = document.querySelector('button[data-bs-target="#password"]');
+            if (passwordTab) {
+                const tab = new bootstrap.Tab(passwordTab);
+                tab.show();
+            }
+        });
+    }
+    
+    // =====================================================================
+    // SZYBKI DOSTĘP DO ZAKŁADEK
+    // =====================================================================
+    document.querySelectorAll('.quick-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            const tabButton = document.querySelector(`button[data-bs-target="#${tabName}"]`);
+            if (tabButton) {
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        });
+    });
+    
+    // =====================================================================
+    // WYŚWIETLACZ - PRZEŁĄCZANIE LICZBY EKRANÓW
+    // =====================================================================
+    document.getElementById('display-screens-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (btn) {
+            const screensCount = btn.dataset.value;
+
+            // Update active state
+            document.querySelectorAll('#display-screens-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
+
+            // Update status message
+            const statusDiv = document.getElementById('display-status');
+            if (statusDiv) {
+                let screenText;
+                if (screensCount === '1') {
+                    screenText = 'ekran';
+                } else if (screensCount === '2' || screensCount === '3' || screensCount === '4') {
+                    screenText = 'ekrany';
+                } else {
+                    screenText = 'ekranów';
+                }
+                statusDiv.innerHTML = `Aktualnie uruchomione: <strong>${screensCount} ${screenText}</strong>`;
+            }
+
+            // Możesz tutaj dodać zapisywanie ustawień do GameState jeśli potrzebne
+            console.log('Liczba ekranów ustawiona na:', screensCount);
+        }
+    });
+    
+    // =====================================================================
+    // GRACZE
+    // =====================================================================
+    // Załaduj listę graczy po otwarciu zakładki
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', () => {
+        loadPlayers();
+    });
+
+    function loadPlayers() {
+        fetch('/api/host/players')
+            .then(res => res.json())
+            .then(players => {
+                const list = document.getElementById('players-list');
+                if (players.length === 0) {
+                    list.innerHTML = `<p class="text-muted">Brak graczy</p>`;
+                    return;
+                }
+                
+                list.innerHTML = `
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>${translations[currentLanguage].player_count.replace(':', '')}</th>
+                                <th>Punkty</th>
+                                <th>% ukończenia</th>
+                                <th>${translations[currentLanguage].warnings}</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${players.map(p => `
+                                <tr>
+                                    <td>${p.name}</td>
+                                    <td>${p.score}</td>
+                                    <td>${p.completion_percentage !== undefined ? p.completion_percentage + '%' : '-'}</td>
+                                    <td>${p.warnings}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info send-message-btn" data-id="${p.id}" data-name="${p.name}">${translations[currentLanguage].send_player_message}</button>
+                                        <button class="btn btn-sm btn-warning warn-player-btn" data-id="${p.id}">${translations[currentLanguage].warn}</button>
+                                        <button class="btn btn-sm btn-primary edit-player-btn" data-id="${p.id}" data-name="${p.name}" data-score="${p.score}">Edycja</button>
+                                        <button class="btn btn-sm btn-danger delete-player-btn" data-id="${p.id}">${translations[currentLanguage].delete}</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                // Attach event listeners
+                document.querySelectorAll('.send-message-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        openMessageModal(parseInt(btn.dataset.id), btn.dataset.name);
+                    });
+                });
+                document.querySelectorAll('.warn-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => warnPlayer(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.edit-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        openEditPlayerModal(parseInt(btn.dataset.id), btn.dataset.name, parseInt(btn.dataset.score));
+                    });
+                });
+                document.querySelectorAll('.delete-player-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deletePlayer(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+    
+    async function warnPlayer(id) {
+        try {
+            const response = await fetch(`/api/host/player/${id}/warn`, { method: 'POST' });
+            if (!response.ok) throw new Error('Błąd ostrzeżenia gracza');
+            loadPlayers();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+    
+    async function deletePlayer(id) {
+        if (!confirm('Czy na pewno chcesz usunąć tego gracza?')) return;
+
+        try {
+            const response = await fetch(`/api/host/player/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania gracza');
+            loadPlayers();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // =====================================================================
+    // EDYCJA GRACZA
+    // =====================================================================
+    let currentEditPlayerId = null;
+
+    function openEditPlayerModal(playerId, playerName, playerScore) {
+        currentEditPlayerId = playerId;
+
+        // Ustaw wartości w polach formularza
+        document.getElementById('edit-player-name').value = playerName;
+        document.getElementById('edit-player-score').value = playerScore;
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('editPlayerModal'));
+        modal.show();
+    }
+
+    // Obsługa przycisku OK w modalu edycji
+    document.getElementById('save-player-edit-btn')?.addEventListener('click', async () => {
+        const newName = document.getElementById('edit-player-name').value.trim();
+        const newScore = parseInt(document.getElementById('edit-player-score').value);
+
+        if (!newName) {
+            alert('Proszę podać nazwę gracza');
+            return;
+        }
+
+        if (isNaN(newScore) || newScore < 0) {
+            alert('Proszę podać prawidłową liczbę punktów');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/player/${currentEditPlayerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newName,
+                    score: newScore
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Błąd aktualizacji gracza');
+            }
+
+            // Zamknij modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editPlayerModal'));
+            modal.hide();
+
+            // Odśwież listę graczy
+            loadPlayers();
+
+            alert('Gracz został zaktualizowany');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    // =====================================================================
+    // WYSYŁANIE WIADOMOŚCI DO GRACZA
+    // =====================================================================
+    let currentMessagePlayerId = null;
+
+    function openMessageModal(playerId, playerName) {
+        currentMessagePlayerId = playerId;
+
+        // Ustaw tytuł modala
+        document.getElementById('message-modal-title').textContent =
+            translations[currentLanguage].message_to_player + ': ' + playerName;
+
+        // Ustaw label pola tekstowego
+        document.getElementById('message-content-label').textContent =
+            translations[currentLanguage].message_content;
+
+        // Wyczyść pole tekstowe
+        const messageInput = document.getElementById('player-message-input');
+        messageInput.value = '';
+        document.getElementById('message-char-count').textContent = '0';
+
+        // Pokaż modal
+        const modal = new bootstrap.Modal(document.getElementById('sendMessageModal'));
+        modal.show();
+    }
+
+    // Licznik znaków w textarea
+    document.getElementById('player-message-input')?.addEventListener('input', (e) => {
+        const length = e.target.value.length;
+        document.getElementById('message-char-count').textContent = length;
+    });
+
+    // Obsługa przycisku wyślij w modalu
+    document.getElementById('send-message-to-player-btn')?.addEventListener('click', async () => {
+        const message = document.getElementById('player-message-input').value.trim();
+
+        if (!message) {
+            alert('Proszę wpisać wiadomość');
+            return;
+        }
+
+        if (message.length > 120) {
+            alert('Wiadomość może mieć maksymalnie 120 znaków');
+            return;
+        }
+
+        try {
+            // Wyślij wiadomość przez Socket.IO
+            socket.emit('host_message_to_player', {
+                player_id: currentMessagePlayerId,
+                message: message,
+                event_id: eventId
+            });
+
+            // Zamknij modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('sendMessageModal'));
+            modal.hide();
+
+            // Pokaż komunikat
+            alert('Wiadomość wysłana do gracza');
+        } catch (error) {
+            alert('Błąd wysyłania wiadomości: ' + error.message);
+        }
+    });
+
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', loadPlayers);
+
+    // =====================================================================
+    // JĘZYK I TRANSLACJA
+    // =====================================================================
+    document.getElementById('lang-host-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (btn) {
+            const lang = btn.dataset.value;
+            translatePage(lang);
+            sendGameControl('language_host', lang);
+            
+            // Update active state
+            document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
+        }
+    });
+    
+    document.getElementById('lang-player-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-value]');
+        if (btn) {
+            const lang = btn.dataset.value;
+            sendGameControl('language_player', lang);
+            
+            // Update active state
+            document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
+            btn.classList.add('active-modifier');
+        }
+    });
+    
+    // Difficulty buttons
+    document.getElementById('difficulty-buttons').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (btn) {
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    });
+
+    // Category buttons
+    document.getElementById('category-buttons').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (btn) {
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+    });
+    
+    // =====================================================================
+    // PYTANIA
+    // =====================================================================
+    function loadQuestions() {
+        fetch('/api/host/questions')
+            .then(res => res.json())
+            .then(questions => {
+                const list = document.getElementById('questions-list');
+                if (questions.length === 0) {
+                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
+                    return;
+                }
+                
+                list.innerHTML = questions.map((q, index) => {
+                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
+                    return `
+                        <div class="question-item d-flex align-items-start">
+                            <div class="me-3">
+                                <strong>${index + 1}.</strong>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-2">${q.text}</p>
+                                <div class="question-stats">
+                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
+                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> | 
+                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> | 
+                                    <span>${percentage}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-btn" data-id="${q.id}" data-translate="edit">${translations[currentLanguage].edit}</button>
+                                <button class="btn btn-sm btn-outline-danger delete-question-btn" data-id="${q.id}" data-translate="delete">${translations[currentLanguage].delete}</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Attach event listeners
+                document.querySelectorAll('.edit-question-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editQuestion(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-question-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteQuestion(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+    
+    document.getElementById('add-question-btn').addEventListener('click', () => {
+        currentEditingQuestionId = null;
+        currentEditingQuestionRound = 1;
+        document.getElementById('modal-question-text').value = '';
+        document.getElementById('modal-answer-a').value = '';
+        document.getElementById('modal-answer-b').value = '';
+        document.getElementById('modal-answer-c').value = '';
+        document.getElementById('modal-letter').value = 'X';
+        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+        document.getElementById('correct-a').checked = true;
+        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]').classList.add('active');
+        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#category-buttons .btn[data-category="company"]').classList.add('active');
+        document.querySelector('.modal-title').textContent = translations[currentLanguage].question_modal_title;
+        questionModal.show();
+    });
+    
+    let currentEditingQuestionRound = 1; // Default round
+
+    document.getElementById('save-question-btn').addEventListener('click', async () => {
+        const text = document.getElementById('modal-question-text').value.trim();
+        const answerA = document.getElementById('modal-answer-a').value.trim();
+        const answerB = document.getElementById('modal-answer-b').value.trim();
+        const answerC = document.getElementById('modal-answer-c').value.trim();
+        const correctAnswer = document.querySelector('input[name="correct-answer"]:checked')?.value;
+        const difficulty = document.querySelector('#difficulty-buttons .btn.active')?.dataset.difficulty || 'easy';
+        const category = document.querySelector('#category-buttons .btn.active')?.dataset.category || 'company';
+        const letter = document.getElementById('modal-letter').value.toUpperCase() || 'X';
+
+        if (!text || !answerA || !answerB || !answerC || !correctAnswer) {
+            alert('Wypełnij wszystkie pola!');
+            return;
+        }
+
+        const payload = {
+            text,
+            answers: [answerA, answerB, answerC],
+            correctAnswer,
+            difficulty,
+            letterToReveal: letter,
+            category: category,
+            round: currentEditingQuestionRound
+        };
+
+        try {
+            let response;
+            const roundParam = currentEditingQuestionRound > 1 ? `?round=${currentEditingQuestionRound}` : '';
+
+            // Determine which editing ID to use based on round
+            let editingId = null;
+            if (currentEditingQuestionRound === 2) {
+                editingId = currentEditingQuestionIdR2;
+            } else if (currentEditingQuestionRound === 3) {
+                editingId = currentEditingQuestionIdR3;
+            } else {
+                editingId = currentEditingQuestionId;
+            }
+
+            if (editingId) {
+                response = await fetch(`/api/host/question/${editingId}${roundParam}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                response = await fetch(`/api/host/questions${roundParam}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            if (!response.ok) throw new Error('Błąd zapisu pytania');
+
+            questionModal.hide();
+
+            // Reload appropriate round
+            if (currentEditingQuestionRound === 2) {
+                loadQuestionsR2();
+            } else if (currentEditingQuestionRound === 3) {
+                loadQuestionsR3();
+            } else {
+                loadQuestions();
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+    
+    async function editQuestion(id) {
+        try {
+            const response = await fetch('/api/host/questions');
+            const questions = await response.json();
+            const question = questions.find(q => q.id === id);
+            
+            if (!question) return;
+            
+            currentEditingQuestionId = id;
+            document.getElementById('modal-question-text').value = question.text;
+            document.getElementById('modal-answer-a').value = question.answers[0];
+            document.getElementById('modal-answer-b').value = question.answers[1];
+            document.getElementById('modal-answer-c').value = question.answers[2];
+            document.getElementById('modal-letter').value = question.letterToReveal;
+            
+            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
+            
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
+            
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
+            
+            document.querySelector('.modal-title').textContent = translations[currentLanguage].edit + ' ' + translations[currentLanguage].question_text.toLowerCase();
+            questionModal.show();
+        } catch (error) {
+            alert('Błąd ładowania pytania: ' + error.message);
+        }
+    }
+    
+    async function deleteQuestion(id) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+        
+        try {
+            const response = await fetch(`/api/host/question/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+            loadQuestions();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+    
+    document.querySelector('button[data-bs-target="#questions"]')?.addEventListener('click', loadQuestions);
+
+    // =====================================================================
+    // PYTANIA RUNDA 2
+    // =====================================================================
+    let currentEditingQuestionIdR2 = null;
+
+    function loadQuestionsR2() {
+        fetch('/api/host/questions?round=2')
+            .then(res => res.json())
+            .then(questions => {
+                const list = document.getElementById('r2-questions-list');
+                if (questions.length === 0) {
+                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
+                    return;
+                }
+
+                list.innerHTML = questions.map((q, index) => {
+                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
+                    return `
+                        <div class="question-item d-flex align-items-start">
+                            <div class="me-3">
+                                <strong>${index + 1}.</strong>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-2">${q.text}</p>
+                                <div class="question-stats">
+                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
+                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> |
+                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> |
+                                    <span>${percentage}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-r2-btn" data-id="${q.id}">Edytuj</button>
+                                <button class="btn btn-sm btn-outline-danger delete-question-r2-btn" data-id="${q.id}">Usuń</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Attach event listeners
+                document.querySelectorAll('.edit-question-r2-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editQuestionR2(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-question-r2-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteQuestionR2(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+
+    document.getElementById('r2-add-question-btn')?.addEventListener('click', () => {
+        currentEditingQuestionIdR2 = null;
+        currentEditingQuestionRound = 2;
+        document.getElementById('modal-question-text').value = '';
+        document.getElementById('modal-answer-a').value = '';
+        document.getElementById('modal-answer-b').value = '';
+        document.getElementById('modal-answer-c').value = '';
+        document.getElementById('modal-letter').value = 'X';
+        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+        document.getElementById('correct-a').checked = true;
+        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 2';
+        questionModal.show();
+    });
+
+    async function editQuestionR2(id) {
+        try {
+            const response = await fetch('/api/host/questions?round=2');
+            const questions = await response.json();
+            const question = questions.find(q => q.id === id);
+
+            if (!question) return;
+
+            currentEditingQuestionIdR2 = id;
+            currentEditingQuestionRound = 2;
+            document.getElementById('modal-question-text').value = question.text;
+            document.getElementById('modal-answer-a').value = question.answers[0];
+            document.getElementById('modal-answer-b').value = question.answers[1];
+            document.getElementById('modal-answer-c').value = question.answers[2];
+            document.getElementById('modal-letter').value = question.letterToReveal;
+
+            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
+
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
+
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
+
+            document.querySelector('.modal-title').textContent = 'Edytuj pytanie - Runda 2';
+            questionModal.show();
+        } catch (error) {
+            alert('Błąd ładowania pytania: ' + error.message);
+        }
+    }
+
+    async function deleteQuestionR2(id) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/question/${id}?round=2`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+            loadQuestionsR2();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    document.querySelector('button[data-bs-target="#questions-r2"]')?.addEventListener('click', loadQuestionsR2);
+
+    // =====================================================================
+    // PYTANIA RUNDA 3
+    // =====================================================================
+    let currentEditingQuestionIdR3 = null;
+
+    function loadQuestionsR3() {
+        fetch('/api/host/questions?round=3')
+            .then(res => res.json())
+            .then(questions => {
+                const list = document.getElementById('r3-questions-list');
+                if (questions.length === 0) {
+                    list.innerHTML = `<p class="text-muted">${translations[currentLanguage].add_question}</p>`;
+                    return;
+                }
+
+                list.innerHTML = questions.map((q, index) => {
+                    const percentage = q.times_shown > 0 ? Math.round((q.times_correct / q.times_shown) * 100) : 0;
+                    return `
+                        <div class="question-item d-flex align-items-start">
+                            <div class="me-3">
+                                <strong>${index + 1}.</strong>
+                            </div>
+                            <div class="flex-grow-1">
+                                <p class="mb-2">${q.text}</p>
+                                <div class="question-stats">
+                                    <span class="badge bg-info">${translations[currentLanguage][q.difficulty] || q.difficulty}</span>
+                                    <span>${translations[currentLanguage].shown}: ${q.times_shown}</span> |
+                                    <span>${translations[currentLanguage].correct}: ${q.times_correct}</span> |
+                                    <span>${percentage}%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2 edit-question-r3-btn" data-id="${q.id}">Edytuj</button>
+                                <button class="btn btn-sm btn-outline-danger delete-question-r3-btn" data-id="${q.id}">Usuń</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Attach event listeners
+                document.querySelectorAll('.edit-question-r3-btn').forEach(btn => {
+                    btn.addEventListener('click', () => editQuestionR3(parseInt(btn.dataset.id)));
+                });
+                document.querySelectorAll('.delete-question-r3-btn').forEach(btn => {
+                    btn.addEventListener('click', () => deleteQuestionR3(parseInt(btn.dataset.id)));
+                });
+            });
+    }
+
+    document.getElementById('r3-add-question-btn')?.addEventListener('click', () => {
+        currentEditingQuestionIdR3 = null;
+        currentEditingQuestionRound = 3;
+        document.getElementById('modal-question-text').value = '';
+        document.getElementById('modal-answer-a').value = '';
+        document.getElementById('modal-answer-b').value = '';
+        document.getElementById('modal-answer-c').value = '';
+        document.getElementById('modal-letter').value = 'X';
+        document.querySelectorAll('input[name="correct-answer"]').forEach(r => r.checked = false);
+        document.getElementById('correct-a').checked = true;
+        document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#difficulty-buttons .btn[data-difficulty="easy"]')?.classList.add('active');
+        document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('#category-buttons .btn[data-category="company"]')?.classList.add('active');
+        document.querySelector('.modal-title').textContent = 'Dodaj pytanie - Runda 3';
+        questionModal.show();
+    });
+
+    async function editQuestionR3(id) {
+        try {
+            const response = await fetch('/api/host/questions?round=3');
+            const questions = await response.json();
+            const question = questions.find(q => q.id === id);
+
+            if (!question) return;
+
+            currentEditingQuestionIdR3 = id;
+            currentEditingQuestionRound = 3;
+            document.getElementById('modal-question-text').value = question.text;
+            document.getElementById('modal-answer-a').value = question.answers[0];
+            document.getElementById('modal-answer-b').value = question.answers[1];
+            document.getElementById('modal-answer-c').value = question.answers[2];
+            document.getElementById('modal-letter').value = question.letterToReveal;
+
+            document.getElementById(`correct-${question.correctAnswer.toLowerCase()}`).checked = true;
+
+            document.querySelectorAll('#difficulty-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#difficulty-buttons .btn[data-difficulty="${question.difficulty}"]`)?.classList.add('active');
+
+            document.querySelectorAll('#category-buttons .btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`#category-buttons .btn[data-category="${question.category}"]`)?.classList.add('active');
+
+            document.querySelector('.modal-title').textContent = 'Edytuj pytanie - Runda 3';
+            questionModal.show();
+        } catch (error) {
+            alert('Błąd ładowania pytania: ' + error.message);
+        }
+    }
+
+    async function deleteQuestionR3(id) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/question/${id}?round=3`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Błąd usuwania pytania');
+            loadQuestionsR3();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    document.querySelector('button[data-bs-target="#questions-r3"]')?.addEventListener('click', loadQuestionsR3);
+
+    // =====================================================================
+    // MINIGRY
+    // =====================================================================
+    function loadMinigamesStatus() {
+        fetch('/api/host/minigames/status')
+            .then(res => res.json())
+            .then(data => {
+                // Tetris
+                const tetrisToggle = document.getElementById('tetris-toggle');
+                const tetrisStatus = document.getElementById('tetris-status');
+                if (tetrisToggle && tetrisStatus) {
+                    tetrisToggle.checked = data.tetris_enabled;
+                    tetrisStatus.textContent = data.tetris_enabled ? 'Aktywny' : 'Nieaktywny';
+                    tetrisStatus.className = data.tetris_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // Arkanoid
+                const arkanoidToggle = document.getElementById('arkanoid-toggle');
+                const arkanoidStatus = document.getElementById('arkanoid-status');
+                if (arkanoidToggle && arkanoidStatus) {
+                    arkanoidToggle.checked = data.arkanoid_enabled;
+                    arkanoidStatus.textContent = data.arkanoid_enabled ? 'Aktywny' : 'Nieaktywny';
+                    arkanoidStatus.className = data.arkanoid_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // Snake
+                const snakeToggle = document.getElementById('snake-toggle');
+                const snakeStatus = document.getElementById('snake-status');
+                if (snakeToggle && snakeStatus) {
+                    snakeToggle.checked = data.snake_enabled;
+                    snakeStatus.textContent = data.snake_enabled ? 'Aktywny' : 'Nieaktywny';
+                    snakeStatus.className = data.snake_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // T-Rex
+                const trexToggle = document.getElementById('trex-toggle');
+                const trexStatus = document.getElementById('trex-status');
+                if (trexToggle && trexStatus) {
+                    trexToggle.checked = data.trex_enabled;
+                    trexStatus.textContent = data.trex_enabled ? 'Aktywny' : 'Nieaktywny';
+                    trexStatus.className = data.trex_enabled ? 'badge bg-success' : 'badge bg-secondary';
+                }
+            });
+    }
+    
+    // Tetris toggle
+    document.getElementById('tetris-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('tetris-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'tetris', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+    
+    // Arkanoid toggle
+    document.getElementById('arkanoid-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('arkanoid-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'arkanoid', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Snake toggle
+    document.getElementById('snake-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('snake-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'snake', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.getElementById('trex-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('trex-status');
+        const infoEl = document.getElementById('minigames-info');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_type: 'trex', enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywny' : 'Nieaktywny';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            infoEl.textContent = result.message;
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesStatus);
+
+    // Funkcja do aktualizacji ustawień minigrów
+    async function updateMinigameSetting(settingType) {
+        const infoEl = document.getElementById('minigames-info');
+        let value, settingName;
+
+        if (settingType === 'completion_points') {
+            value = document.getElementById('minigame-completion-points').value;
+            settingName = 'Liczba punktów za przejście gry';
+        } else if (settingType === 'target_points') {
+            value = document.getElementById('minigame-target-points').value;
+            settingName = 'Liczba punktów do zdobycia w grze';
+        }
+
+        try {
+            const response = await fetch('/api/host/minigames/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ setting_type: settingType, value: parseInt(value) })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            // Aktualizuj wyświetlanie w alercie informacyjnym
+            if (settingType === 'completion_points') {
+                const completionDisplay = document.getElementById('minigame-completion-display');
+                if (completionDisplay) completionDisplay.textContent = value;
+            } else if (settingType === 'target_points') {
+                const targetDisplay = document.getElementById('minigame-target-display');
+                if (targetDisplay) targetDisplay.textContent = value;
+            }
+
+            infoEl.textContent = `${settingName} zaktualizowane: ${value}`;
+            infoEl.className = 'alert alert-success mt-3';
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Event listener dla przełącznika wyboru gry
+    document.getElementById('minigame-player-choice')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('minigame-choice-status');
+        const infoEl = document.getElementById('minigames-info');
+
+        try {
+            const response = await fetch('/api/host/minigames/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ setting_type: 'player_choice', value: enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+
+            statusEl.textContent = enabled ? 'Wybór gracza' : 'Losowa kolejność';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+
+            infoEl.textContent = enabled
+                ? 'Gracze będą mogli wybrać grę po zeskanowaniu kodu QR'
+                : 'Gry będą uruchamiane w losowej kolejności';
+            infoEl.className = 'alert alert-success mt-3';
+            infoEl.style.display = 'block';
+            setTimeout(() => { infoEl.style.display = 'none'; }, 3000);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Ładowanie ustawień minigrów przy starcie
+    function loadMinigamesSettings() {
+        fetch('/api/host/minigames/settings')
+            .then(res => res.json())
+            .then(data => {
+                // Ustawienie punktów za przejście
+                const completionPointsInput = document.getElementById('minigame-completion-points');
+                if (completionPointsInput && data.completion_points !== undefined) {
+                    completionPointsInput.value = data.completion_points;
+                }
+
+                // Ustawienie punktów do zdobycia
+                const targetPointsInput = document.getElementById('minigame-target-points');
+                if (targetPointsInput && data.target_points !== undefined) {
+                    targetPointsInput.value = data.target_points;
+                }
+
+                // Ustawienie przełącznika wyboru gry
+                const playerChoiceToggle = document.getElementById('minigame-player-choice');
+                const playerChoiceStatus = document.getElementById('minigame-choice-status');
+                if (playerChoiceToggle && playerChoiceStatus && data.player_choice !== undefined) {
+                    playerChoiceToggle.checked = data.player_choice;
+                    playerChoiceStatus.textContent = data.player_choice ? 'Wybór gracza' : 'Losowa kolejność';
+                    playerChoiceStatus.className = data.player_choice ? 'badge bg-success' : 'badge bg-secondary';
+                }
+
+                // Aktualizuj wyświetlanie wartości w alercie informacyjnym
+                const targetDisplay = document.getElementById('minigame-target-display');
+                const completionDisplay = document.getElementById('minigame-completion-display');
+                if (targetDisplay && data.target_points !== undefined) {
+                    targetDisplay.textContent = data.target_points;
+                }
+                if (completionDisplay && data.completion_points !== undefined) {
+                    completionDisplay.textContent = data.completion_points;
+                }
+            })
+            .catch(error => console.error('Błąd ładowania ustawień minigrów:', error));
+    }
+
+    // Wywołaj ładowanie ustawień gdy zakładka Minigry jest otwierana
+    document.querySelector('button[data-bs-target="#minigames"]')?.addEventListener('click', loadMinigamesSettings);
+
+    // =====================================================================
+    // STEROWANIE GRĄ
+    // =====================================================================
+    const infoElements = {
+        playerCount: document.getElementById('info-player-count'),
+        completionPercentage: document.getElementById('info-completion-percentage'),
+        language: document.getElementById('info-language'),
+        timeLeft: document.getElementById('info-time-left'),
+        timeElapsed: document.getElementById('info-time-elapsed'),
+        timeElapsedPauses: document.getElementById('info-time-elapsed-pauses'),
+        bonus: document.getElementById('info-bonus'),
+        speed: document.getElementById('info-speed'),
+        gameStatus: document.getElementById('info-game-status')
+    };
+    
+    let isTimerRunning = false;
+    let isGameActive = false;
+    
+    async function sendGameControl(control, value = null) {
+        console.log('🎮 Sending game control:', control, value);
+        try {
+            const response = await fetch('/api/host/game_control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ control, value })
+            });
+            if (!response.ok) throw new Error('Server error');
+            const result = await response.json();
+            console.log('✅ Game control response:', result);
+        } catch (error) {
+            console.error('❌ Control error:', error);
+        }
+    }
+    
+    function updateUI(state) {
+        console.log('🔄 Updating UI with state:', state);
+        
+        // Update player count
+        if (infoElements.playerCount) infoElements.playerCount.textContent = state.player_count || 0;
+        
+        // ✅ Update completion percentage
+        if (infoElements.completionPercentage) {
+            infoElements.completionPercentage.textContent = `${state.completion_percentage || 0}%`;
+        }
+        
+        // Update language display
+        if (infoElements.language) {
+            const langText = state.language_host === 'en' ? 'English' : 'Polski';
+            infoElements.language.textContent = langText;
+        }
+        
+        // Update bonus display
+        if (infoElements.bonus) {
+            const bonusVal = state.bonus_multiplier || 1;
+            infoElements.bonus.textContent = bonusVal > 1 ? `x${bonusVal}` : 'Brak';
+            
+            // Update button states
+            document.querySelectorAll('[data-control="bonus"]').forEach(btn => {
+                btn.classList.toggle('active-modifier', btn.dataset.value === String(bonusVal));
+            });
+        }
+        
+        // Update speed display
+        if (infoElements.speed) {
+            const speedVal = state.time_speed || 1;
+            infoElements.speed.textContent = `x${speedVal}`;
+            
+            // Update button states
+            document.querySelectorAll('[data-control="speed"]').forEach(btn => {
+                btn.classList.toggle('active-modifier', btn.dataset.value === String(speedVal));
+            });
+        }
+        
+        // ✅ Update game status
+        if (infoElements.gameStatus) {
+            const statusEl = infoElements.gameStatus;
+            const status = state.game_status || 'waiting';
+            statusEl.dataset.status = status;
+            
+            // Remove all status classes
+            statusEl.classList.remove('status-waiting', 'status-active', 'status-paused', 'status-stopped');
+            
+            // Add appropriate class
+            statusEl.classList.add(`status-${status}`);
+            
+            // Update text
+            updateGameStatusText();
+        }
+        
+        // Update pause button text
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            isTimerRunning = state.is_timer_running;
+            pauseBtn.textContent = state.is_timer_running 
+                ? translations[currentLanguage].pause 
+                : translations[currentLanguage].resume;
+        }
+        
+        // Store game active state
+        isGameActive = state.game_active;
+        
+        // ✅ LOGIKA AKTYWACJI/DEAKTYWACJI PRZYCISKÓW
+        const startGameBtn = document.getElementById('start-game');
+        const pauseGameBtn = document.getElementById('pause-btn');
+        const stopGameBtn = document.getElementById('stop-game');
+        const resetGameBtn = document.getElementById('reset-game');
+        
+        if (state.game_active) {
+            // GRA JEST AKTYWNA
+            // Start - nieaktywny (blady)
+            if (startGameBtn) {
+                startGameBtn.disabled = true;
+                startGameBtn.classList.add('opacity-50');
+            }
+            
+            // Pauza - aktywny
+            if (pauseGameBtn) {
+                pauseGameBtn.disabled = false;
+                pauseGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Stop - aktywny
+            if (stopGameBtn) {
+                stopGameBtn.disabled = false;
+                stopGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Reset - aktywny
+            if (resetGameBtn) {
+                resetGameBtn.disabled = false;
+                resetGameBtn.classList.remove('opacity-50');
+            }
+        } else {
+            // GRA NIE JEST AKTYWNA
+            // Start - aktywny
+            if (startGameBtn) {
+                startGameBtn.disabled = false;
+                startGameBtn.classList.remove('opacity-50');
+            }
+            
+            // Pauza - nieaktywny (blady)
+            if (pauseGameBtn) {
+                pauseGameBtn.disabled = true;
+                pauseGameBtn.classList.add('opacity-50');
+            }
+            
+            // Stop - nieaktywny (blady)
+            if (stopGameBtn) {
+                stopGameBtn.disabled = true;
+                stopGameBtn.classList.add('opacity-50');
+            }
+            
+            // Reset - nieaktywny (blady)
+            if (resetGameBtn) {
+                resetGameBtn.disabled = true;
+                resetGameBtn.classList.add('opacity-50');
+            }
+        }
+        
+        // Enable/disable fieldsets based on game state
+        const preGameFieldset = document.getElementById('pre-game-settings');
+        const inGameFieldset = document.getElementById('in-game-settings');
+        const gameDurationInput = document.getElementById('game-duration-input-2');
+        const setTimeBtn = document.getElementById('set-time-btn-2');
+        
+        if (state.game_active) {
+            preGameFieldset.disabled = false; // ✅ Zawsze dostępne
+            inGameFieldset.disabled = false;
+            // ✅ Zmień tekst przycisku podczas gry
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
+        } else {
+            preGameFieldset.disabled = false;
+            inGameFieldset.disabled = true;
+            // ✅ Przywróć oryginalny tekst przycisku
+            if (setTimeBtn) setTimeBtn.textContent = translations[currentLanguage].set_time_btn || 'OK';
+        }
+        
+        // ✅ Aktualizuj wyświetlanie hasła
+        const passwordDisplay = document.getElementById('current-password-display');
+        if (passwordDisplay && state.password) {
+            passwordDisplay.textContent = state.password.split('').join(' ');
+        }
+    }
+    
+    // Socket.IO event handlers
+    socket.on('connect', () => {
+        console.log('✅ Socket connected, joining room for event:', EVENT_ID);
+        socket.emit('join', { event_id: EVENT_ID });
+    });
+    
+    socket.on('disconnect', () => {
+        console.log('❌ Socket disconnected');
+    });
+    
+    socket.on('game_state_update', (state) => {
+        console.log('📡 Game state update received:', state);
+        updateUI(state);
+    });
+    
+    socket.on('timer_tick', (data) => {
+        console.log('⏱️ Timer tick:', data);
+        if (infoElements.timeLeft) infoElements.timeLeft.textContent = formatTime(data.time_left);
+        if (infoElements.timeElapsed) infoElements.timeElapsed.textContent = formatTime(data.time_elapsed);
+        // ✅ Zawsze aktualizuj czas brutto (również podczas pauzy)
+        if (infoElements.timeElapsedPauses) infoElements.timeElapsedPauses.textContent = formatTime(data.time_elapsed_with_pauses);
+    });
+    
+    socket.on('game_over', () => {
+        alert('Czas minął! Gra zakończona.');
+    });
+    
+    socket.on('game_forced_win', (data) => {
+        alert(data.message);
+    });
+    
+    socket.on('password_update', (password) => {
+        const passwordDisplay = document.getElementById('current-password-display');
+        if (passwordDisplay) {
+            passwordDisplay.textContent = password.split('').join(' ');
+        }
+
+        // ✅ NOWE: Aktualizuj również podgląd hasła w zakładce Gra
+        loadPasswordState();
+    });
+
+    socket.on('leaderboard_update', (players) => {
+        console.log('📊 Leaderboard update received:', players);
+        loadPlayers();
+    });
+
+    // Initial state load
+    console.log('🔄 Loading initial state...');
+    fetch('/api/host/state')
+        .then(res => res.json())
+        .then(state => {
+            console.log('✅ Initial state loaded:', state);
+            updateUI(state);
+            if (state.language_host === 'en') {
+                translatePage('en');
+                document.querySelectorAll('#lang-host-controls button').forEach(b => b.classList.remove('active-modifier'));
+                document.querySelector('#lang-host-controls button[data-value="en"]')?.classList.add('active-modifier');
+            }
+            if (state.language_player === 'en') {
+                document.querySelectorAll('#lang-player-controls button').forEach(b => b.classList.remove('active-modifier'));
+                document.querySelector('#lang-player-controls button[data-value="en"]')?.classList.add('active-modifier');
+            }
+
+            // ✅ Załaduj stan hasła od razu przy inicjalizacji - WYMUSZONY
+            setTimeout(() => loadPasswordState(), 100);
+
+            // ✅ Załaduj listę graczy od razu przy inicjalizacji
+            setTimeout(() => loadPlayers(), 100);
+        })
+        .catch(error => console.error('❌ Error loading initial state:', error));
+    
+    // ✅ NOWY: Ujednolicona obsługa przycisku "OK"
+    document.getElementById('set-time-btn-2')?.addEventListener('click', async () => {
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
+        console.log('🎮 Setting time:', minutes, 'minutes, Game active:', isGameActive);
+        
+        if (isNaN(minutes) || minutes < 1) {
+            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
+            return;
+        }
+        
+        if (!isGameActive) {
+            // ✅ PRZED GRĄ: Po prostu zapisz wartość (nie uruchamiaj gry)
+            alert(`Czas gry ustawiony na ${minutes} minut. Kliknij "Start Gry", aby rozpocząć.`);
+        } else {
+            // ✅ PODCZAS GRY: Zmień czas (wymaga hasła)
+            const password = prompt('Wprowadź hasło Hosta, aby zmienić czas gry:');
+            if (!password) return;
+            
+            if (!confirm(`Czy na pewno chcesz zmienić czas gry na ${minutes} minut?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/host/adjust_time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        new_minutes: minutes,
+                        password: password 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Błąd zmiany czasu');
+                }
+                
+                alert(result.message || 'Czas gry został zmieniony!');
+            } catch (error) {
+                alert('Błąd: ' + error.message);
+            }
+        }
+    });
+    
+    // Start game button
+    document.getElementById('start-game')?.addEventListener('click', async () => {
+        const minutes = parseInt(document.getElementById('game-duration-input-2').value);
+        console.log('🎮 Starting game with', minutes, 'minutes');
+        
+        if (isNaN(minutes) || minutes < 1) {
+            alert('Proszę wprowadzić poprawny czas gry (minimum 1 minuta).');
+            return;
+        }
+        
+        if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
+            return;
+        }
+        
+        try {
+            console.log('📤 Sending start game request...');
+            const response = await fetch('/api/host/start_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes })
+            });
+            
+            const result = await response.json();
+            console.log('📥 Start game response:', result);
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Nieznany błąd uruchamiania gry');
+            }
+            
+            console.log('✅ Game started successfully');
+            alert(result.message || 'Gra rozpoczęta!');
+        } catch (error) {
+            console.error('❌ Error starting game:', error);
+            alert('Błąd podczas uruchamiania gry: ' + error.message);
+        }
+    });
+    
+    // Stop game button
+    document.getElementById('stop-game')?.addEventListener('click', async () => {
+        const password = prompt('Wprowadź hasło Hosta, aby zakończyć grę:');
+        if (!password) return;
+        
+        try {
+            const response = await fetch('/api/host/stop_game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zatrzymywania gry');
+            }
+            
+            alert(result.message || 'Gra zatrzymana');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+    
+    // Reset game button
+    document.getElementById('reset-game')?.addEventListener('click', async () => {
+        const password = prompt('Wprowadź hasło Hosta, aby zresetować grę:');
+        if (!password) return;
+        
+        if (!confirm('Czy na pewno chcesz zresetować całą grę? To usunie wszystkich graczy, pytania i dane gry!')) {
+            return;
+        }
+        
+        try {
+            // Weryfikuj hasło przez endpoint stop_game (możesz też dodać osobny endpoint)
+            // Na razie wykorzystamy istniejący endpoint do resetu z admina
+            const response = await fetch(`/api/admin/event/${EVENT_ID}/reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Błąd resetowania gry');
+            }
+            
+            alert(result.message || 'Gra została zresetowana');
+            location.reload(); // Odśwież stronę
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+    
+    // In-game controls
+    document.getElementById('game-controls')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-control]');
+        if (!btn) return;
+        
+        const control = btn.dataset.control;
+        const value = btn.dataset.value;
+        
+        console.log('🎮 Sending game control:', control, value);
+        sendGameControl(control, value);
+    });
+
+// =====================================================================
+    // ✅ KOMUNIKATY NA EKRAN GRY
+    // =====================================================================
+    const messageInput = document.getElementById('host-message-input');
+    const charCount = document.getElementById('message-char-count');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const messageStatus = document.getElementById('message-status');
+
+    if (messageInput && charCount) {
+        messageInput.addEventListener('input', () => {
+            charCount.textContent = messageInput.value.length;
+        });
+    }
+
+    // Wysyłanie komunikatu
+    if (sendMessageBtn) {
+        sendMessageBtn.addEventListener('click', async () => {
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                messageStatus.innerHTML = '<div class="alert alert-warning">Wpisz treść komunikatu</div>';
+                setTimeout(() => messageStatus.innerHTML = '', 3000);
+                return;
+            }
+            
+            sendMessageBtn.disabled = true;
+            sendMessageBtn.textContent = 'Wysyłanie...';
+            
+            try {
+                const response = await fetch('/api/host/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Błąd wysyłania');
+                }
+                
+                messageStatus.innerHTML = '<div class="alert alert-success">✅ Komunikat wysłany!</div>';
+                messageInput.value = '';
+                charCount.textContent = '0';
+                
+                setTimeout(() => messageStatus.innerHTML = '', 3000);
+            } catch (error) {
+                messageStatus.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+            } finally {
+                sendMessageBtn.disabled = false;
+                sendMessageBtn.textContent = translations[currentLanguage].send_message || 'Wyślij komunikat';
+            }
+        });
+    }
+    
+    console.log('✅ HOST PANEL INITIALIZED');
+
+// =====================================================================
+// ZARZĄDZANIE HASŁEM - NOWY SYSTEM Z INDEKSAMI
+// =====================================================================
+
+    let currentPassword = 'SAPEREVENT';
+    let revealedLettersIndices = new Set();
+    let autoRevealEnabled = true;
+    let selectedLettersForReveal = new Set();
+    let passwordLetters = [];
+
+
+      // ✅ NOWA FUNKCJA: Renderowanie podglądu hasła w zakładce Gra
+    function renderGamePasswordPreview() {
+        const container = document.getElementById('game-password-display');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        for (let i = 0; i < currentPassword.length; i++) {
+            const char = currentPassword[i];
+            const isRevealed = revealedLettersIndices.has(i);
+            
+            if (char === ' ') {
+                // Spacja = odstęp
+                const spaceEl = document.createElement('div');
+                spaceEl.style.width = '15px';
+                spaceEl.style.height = '30px';
+                container.appendChild(spaceEl);
+            } else {
+                // Litera = badge (czerwony lub zielony)
+                const span = document.createElement('span');
+                span.className = isRevealed ? 'badge bg-success' : 'badge bg-danger';
+                span.textContent = char;
+                span.style.fontSize = '0.9rem';      // Mniejsza czcionka
+                span.style.width = '28px';           // Mniejszy rozmiar
+                span.style.height = '28px';
+                span.style.display = 'inline-flex';
+                span.style.alignItems = 'center';
+                span.style.justifyContent = 'center';
+                container.appendChild(span);
+            }
+        }
+    }
+    
+    async function loadPasswordState() {
+        try {
+            const response = await fetch('/api/host/password/state');
+            const data = await response.json();
+            
+            currentPassword = data.password;
+            autoRevealEnabled = data.mode === 'auto';
+
+            revealedLettersIndices.clear();
+            if (data.revealed_letters) {
+                const indices = data.revealed_letters.split(',').filter(x => x);
+                indices.forEach(idx => revealedLettersIndices.add(parseInt(idx)));
+            }
+
+            document.getElementById('password-edit-input').value = currentPassword;
+
+            const autoToggle = document.getElementById('password-auto-reveal-toggle');
+            const autoStatus = document.getElementById('auto-reveal-status');
+            if (autoToggle && autoStatus) {
+                autoToggle.checked = autoRevealEnabled;
+                autoStatus.textContent = autoRevealEnabled ? 'Włączone' : 'Wyłączone';
+                autoStatus.className = autoRevealEnabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            // Ustaw wartość procentu
+            const percentageInput = document.getElementById('auto-reveal-percentage');
+            if (percentageInput && data.reveal_percentage) {
+                percentageInput.value = data.reveal_percentage;
+            }
+            
+            renderPasswordLetters();
+            
+       // ✅ NOWE: Renderuj również podgląd w zakładce Gra
+            renderGamePasswordPreview();
+            
+        } catch (error) {
+            console.error('Błąd ładowania hasła:', error);
+        }
+    }
+    
+    function renderPasswordLetters() {
+        const container = document.getElementById('password-letters-display');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        passwordLetters = [];
+        selectedLettersForReveal.clear();
+        
+        for (let i = 0; i < currentPassword.length; i++) {
+            const char = currentPassword[i];
+            const isRevealed = revealedLettersIndices.has(i);
+            
+            passwordLetters.push({ char, index: i, revealed: isRevealed });
+            
+            if (char === ' ') {
+                const spaceEl = document.createElement('div');
+                spaceEl.style.width = '30px';
+                spaceEl.style.height = '50px';
+                container.appendChild(spaceEl);
+            } else {
+                const btn = document.createElement('button');
+                btn.className = isRevealed ? 'btn btn-success' : 'btn btn-danger';
+                btn.textContent = char;
+                btn.disabled = false;
+                btn.style.width = '50px';
+                btn.style.height = '50px';
+                btn.style.fontSize = '1.5rem';
+                btn.style.fontWeight = 'bold';
+                btn.dataset.index = i;
+                
+                btn.addEventListener('click', () => {
+                    if (isRevealed) return;
+                    
+                    if (btn.classList.contains('btn-danger')) {
+                        btn.classList.remove('btn-danger');
+                        btn.classList.add('btn-warning');
+                        selectedLettersForReveal.add(i);
+                    } else if (btn.classList.contains('btn-warning')) {
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-danger');
+                        selectedLettersForReveal.delete(i);
+                    }
+                    
+                    const confirmBtn = document.getElementById('reveal-selected-letters-btn');
+                    if (confirmBtn) {
+                        confirmBtn.disabled = selectedLettersForReveal.size === 0;
+                    }
+                });
+                
+                container.appendChild(btn);
+            }
+        }
+        
+        const confirmBtn = document.getElementById('reveal-selected-letters-btn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+        }
+        
+        // ✅ NOWE: Aktualizuj również podgląd w zakładce Gra
+        renderGamePasswordPreview();
+    }
+    
+    document.getElementById('password-edit-ok-btn')?.addEventListener('click', async () => {
+        const newPassword = document.getElementById('password-edit-input').value.trim().toUpperCase();
+        const statusEl = document.getElementById('password-edit-status');
+        
+        if (!newPassword) {
+            statusEl.innerHTML = '<div class="alert alert-warning">Hasło nie może być puste</div>';
+            return;
+        }
+        
+        if (newPassword.length > 50) {
+            statusEl.innerHTML = '<div class="alert alert-warning">Hasło może mieć maksymalnie 50 znaków</div>';
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/host/password/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: newPassword })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zapisu hasła');
+            }
+            
+            currentPassword = newPassword;
+            revealedLettersIndices.clear();
+            statusEl.innerHTML = '<div class="alert alert-success">✅ Hasło zaktualizowane!</div>';
+            
+            loadPasswordState();
+            
+            setTimeout(() => statusEl.innerHTML = '', 3000);
+        } catch (error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+        }
+    });
+    
+    document.getElementById('password-auto-reveal-toggle')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('auto-reveal-status');
+        
+        try {
+            const mode = enabled ? 'auto' : 'manual';
+            const response = await fetch('/api/host/password/mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany trybu');
+            }
+            
+            autoRevealEnabled = enabled;
+            statusEl.textContent = enabled ? 'Włączone' : 'Wyłączone';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Event listener dla zmiany procentu odkrywania
+    document.getElementById('auto-reveal-percentage')?.addEventListener('change', async (e) => {
+        const percentage = parseInt(e.target.value);
+
+        if (isNaN(percentage) || percentage < 1 || percentage > 100) {
+            alert('Procent musi być w zakresie 1-100');
+            e.target.value = 50; // Reset do domyślnej wartości
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/password/reveal_percentage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ percentage })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd zmiany procentu');
+            }
+
+            console.log(`Procent odkrywania ustawiony na: ${percentage}%`);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            loadPasswordState(); // Przeładuj wartość z serwera
+        }
+    });
+
+    document.getElementById('reveal-selected-letters-btn')?.addEventListener('click', async () => {
+        if (selectedLettersForReveal.size === 0) return;
+        
+        const indices = Array.from(selectedLettersForReveal);
+        const statusEl = document.getElementById('password-reveal-status');
+        
+        try {
+            const response = await fetch('/api/host/password/reveal_manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ indices })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd odkrywania liter');
+            }
+            
+            indices.forEach(idx => revealedLettersIndices.add(idx));
+            
+            statusEl.innerHTML = `<div class="alert alert-success">✅ ${result.message}</div>`;
+            
+            renderPasswordLetters();
+            
+            setTimeout(() => statusEl.innerHTML = '', 3000);
+        } catch (error) {
+            statusEl.innerHTML = `<div class="alert alert-danger">❌ ${error.message}</div>`;
+        }
+    });
+    
+    document.querySelector('button[data-bs-target="#password"]')?.addEventListener('click', loadPasswordState);
+
+    // ===================================================
+    // AI CATEGORIES MANAGEMENT
+    // ===================================================
+    async function loadAICategories() {
+        try {
+            const response = await fetch('/api/host/ai/categories');
+            const categories = await response.json();
+
+            const categoriesList = document.getElementById('ai-categories-list');
+            categoriesList.innerHTML = '';
+
+            if (categories.length === 0) {
+                categoriesList.innerHTML = '<p class="text-muted">Brak kategorii. Dodaj swoją pierwszą kategorię powyżej.</p>';
+                return;
+            }
+
+            categories.forEach(cat => {
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'card mb-3';
+
+                const difficultyBadge = cat.difficulty_level === 'easy' ? 'success' :
+                                       cat.difficulty_level === 'medium' ? 'warning' : 'danger';
+                const difficultyText = cat.difficulty_level === 'easy' ? 'Łatwy' :
+                                      cat.difficulty_level === 'medium' ? 'Średni' : 'Zaawansowany';
+
+                categoryItem.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">${cat.name}</h6>
+                                <span class="badge bg-${difficultyBadge}">${difficultyText}</span>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       ${cat.is_enabled ? 'checked' : ''}
+                                       onchange="toggleAICategory(${cat.id}, this.checked)">
+                                <label class="form-check-label">Aktywna</label>
+                            </div>
+                            <button class="btn btn-sm btn-primary ms-3" onclick="generateQuestionsForCategory(${cat.id}, '${cat.name}')">
+                                Generuj pytania
+                            </button>
+                            <button class="btn btn-sm btn-info ms-2" onclick="editCategoryQuestions(${cat.id}, '${cat.name}')">
+                                Edytuj
+                            </button>
+                            <button class="btn btn-sm btn-danger ms-2" onclick="deleteAICategory(${cat.id})">
+                                Usuń
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                categoriesList.appendChild(categoryItem);
+            });
+        } catch (error) {
+            console.error('Error loading AI categories:', error);
+        }
+    }
+
+    window.toggleAICategory = async function(categoryId, enabled) {
+        try {
+            const response = await fetch(`/api/host/ai/category/${categoryId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_enabled: enabled })
+            });
+
+            if (!response.ok) throw new Error('Błąd aktualizacji kategorii');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            loadAICategories();
+        }
+    };
+
+    window.deleteAICategory = async function(categoryId) {
+        if (!confirm('Czy na pewno chcesz usunąć tę kategorię wraz z pytaniami?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ai/category/${categoryId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Błąd usuwania kategorii');
+
+            loadAICategories();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.generateQuestionsForCategory = async function(categoryId, categoryName) {
+        const count = prompt(`Ile pytań wygenerować dla kategorii "${categoryName}"?`, '10');
+        if (!count) return;
+
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_questions/${categoryId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ count: parseInt(count) })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd generowania pytań');
+            }
+
+            alert(result.message);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generuj pytania';
+        }
+    };
+
+    // Edycja pytań AI dla kategorii
+    window.editCategoryQuestions = async function(categoryId, categoryName) {
+        try {
+            const response = await fetch(`/api/host/ai/questions/${categoryId}`);
+            const questions = await response.json();
+
+            if (!response.ok) {
+                throw new Error(questions.error || 'Błąd pobierania pytań');
+            }
+
+            // Ustaw nazwę kategorii w modalu
+            document.getElementById('ai-category-name').textContent = categoryName;
+
+            // Renderuj listę pytań
+            const questionsList = document.getElementById('ai-questions-list');
+            if (questions.length === 0) {
+                questionsList.innerHTML = '<p class="text-muted">Brak pytań w tej kategorii. Użyj przycisku "Generuj pytania" aby dodać pytania.</p>';
+            } else {
+                questionsList.innerHTML = questions.map((q, index) => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">Pytanie ${index + 1}</h6>
+                                <div>
+                                    <span class="badge bg-${q.source === 'generated' ? 'success' : 'warning'}">${q.source === 'generated' ? 'Wygenerowane' : 'Edytowane'}</span>
+                                    <span class="badge bg-info ms-1">Wyświetlone: ${q.times_shown}</span>
+                                    <span class="badge bg-primary ms-1">Poprawne: ${q.times_correct}</span>
+                                </div>
+                            </div>
+                            <p class="mb-2"><strong>Treść:</strong> ${q.text}</p>
+                            <p class="mb-1"><strong>Odpowiedzi:</strong></p>
+                            <ul class="mb-2">
+                                <li>A) ${q.option_a} ${q.correct_answer === 'A' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                                <li>B) ${q.option_b} ${q.correct_answer === 'B' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                                <li>C) ${q.option_c} ${q.correct_answer === 'C' ? '<span class="badge bg-success">Poprawna</span>' : ''}</li>
+                            </ul>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="openEditQuestionModal(${q.id}, ${categoryId})">
+                                    Edytuj
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteAIQuestion(${q.id}, ${categoryId}, '${categoryName}')">
+                                    Usuń
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Pokaż modal
+            const modal = new bootstrap.Modal(document.getElementById('aiQuestionsModal'));
+            modal.show();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.openEditQuestionModal = async function(questionId, categoryId) {
+        try {
+            const response = await fetch(`/api/host/ai/questions/${categoryId}`);
+            const questions = await response.json();
+
+            if (!response.ok) {
+                throw new Error('Błąd pobierania pytania');
+            }
+
+            const question = questions.find(q => q.id === questionId);
+            if (!question) {
+                throw new Error('Nie znaleziono pytania');
+            }
+
+            // Wypełnij formularz edycji
+            document.getElementById('edit-question-id').value = question.id;
+            document.getElementById('edit-question-text').value = question.text;
+            document.getElementById('edit-answer-a').value = question.option_a;
+            document.getElementById('edit-answer-b').value = question.option_b;
+            document.getElementById('edit-answer-c').value = question.option_c;
+
+            // Ustaw poprawną odpowiedź
+            document.getElementById(`edit-correct-${question.correct_answer.toLowerCase()}`).checked = true;
+
+            // Zapisz categoryId w przycisku zapisu
+            document.getElementById('save-ai-question-btn').setAttribute('data-category-id', categoryId);
+
+            // Pokaż modal edycji
+            const modal = new bootstrap.Modal(document.getElementById('editAIQuestionModal'));
+            modal.show();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    document.getElementById('save-ai-question-btn')?.addEventListener('click', async () => {
+        const questionId = document.getElementById('edit-question-id').value;
+        const categoryId = document.getElementById('save-ai-question-btn').getAttribute('data-category-id');
+        const text = document.getElementById('edit-question-text').value.trim();
+        const optionA = document.getElementById('edit-answer-a').value.trim();
+        const optionB = document.getElementById('edit-answer-b').value.trim();
+        const optionC = document.getElementById('edit-answer-c').value.trim();
+        const correctAnswer = document.querySelector('input[name="edit-correct-answer"]:checked')?.value;
+
+        if (!text || !optionA || !optionB || !optionC || !correctAnswer) {
+            alert('Wypełnij wszystkie pola i wybierz poprawną odpowiedź');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    option_a: optionA,
+                    option_b: optionB,
+                    option_c: optionC,
+                    correct_answer: correctAnswer
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd aktualizacji pytania');
+            }
+
+            // Zamknij modal edycji
+            const editModal = bootstrap.Modal.getInstance(document.getElementById('editAIQuestionModal'));
+            editModal.hide();
+
+            // Odśwież listę pytań
+            const categoryName = document.getElementById('ai-category-name').textContent;
+            await editCategoryQuestions(categoryId, categoryName);
+
+            alert('Pytanie zostało zaktualizowane');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    window.deleteAIQuestion = async function(questionId, categoryId, categoryName) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ai/question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd usuwania pytania');
+            }
+
+            // Odśwież listę pytań
+            await editCategoryQuestions(categoryId, categoryName);
+
+            alert('Pytanie zostało usunięte');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    document.getElementById('add-custom-category-btn')?.addEventListener('click', async () => {
+        const nameInput = document.getElementById('custom-category-name');
+        const difficultySelect = document.getElementById('custom-category-difficulty');
+
+        const name = nameInput.value.trim();
+        const difficulty = difficultySelect.value;
+
+        if (!name) {
+            alert('Podaj nazwę kategorii');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/host/ai/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    difficulty_level: difficulty
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Błąd dodawania kategorii');
+            }
+
+            nameInput.value = '';
+            difficultySelect.value = 'easy';
+            loadAICategories();
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    });
+
+    document.querySelector('button[data-bs-target="#ai"]')?.addEventListener('click', loadAICategories);
+
+    // ============ AR FUNKCJE ============
+
+    let arObjectsCounter = 0;
+
+    window.addNewARObject = function() {
+        arObjectsCounter++;
+        const container = document.getElementById('ar-objects-container');
+        const objectDiv = document.createElement('div');
+        objectDiv.className = 'col-md-6';
+        objectDiv.id = `ar-object-${arObjectsCounter}`;
+        objectDiv.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h6>Obiekt AR #${arObjectsCounter}</h6>
+                    <div id="ar-preview-${arObjectsCounter}" class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                        <span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>
+                    </div>
+                    <input type="text" class="form-control mb-2" id="ar-name-${arObjectsCounter}" placeholder="Nazwa obiektu (np. Butelka)">
+                    <select class="form-select mb-2" id="ar-game-${arObjectsCounter}">
+                        <option value="questions_easy">❓ Pytania (łatwe)</option>
+                        <option value="questions_medium">❓ Pytania (średnie)</option>
+                        <option value="questions_hard">❓ Pytania (trudne)</option>
+                        <option value="questions_mixed">❓ Pytania (mieszane)</option>
+                        <option value="questions_round2_easy">❓ Pytania runda 2 (łatwe)</option>
+                        <option value="questions_round2_medium">❓ Pytania runda 2 (średnie)</option>
+                        <option value="questions_round2_hard">❓ Pytania runda 2 (trudne)</option>
+                        <option value="questions_round2_mixed">❓ Pytania runda 2 (mieszane)</option>
+                        <option value="questions_round3_easy">❓ Pytania runda 3 (łatwe)</option>
+                        <option value="questions_round3_medium">❓ Pytania runda 3 (średnie)</option>
+                        <option value="questions_round3_hard">❓ Pytania runda 3 (trudne)</option>
+                        <option value="questions_round3_mixed">❓ Pytania runda 3 (mieszane)</option>
+                        <option value="ai_easy">🤖 AI (pytania łatwe)</option>
+                        <option value="ai_medium">🤖 AI (pytania średnie)</option>
+                        <option value="ai_hard">🤖 AI (pytania trudne)</option>
+                        <option value="ai_mixed">🤖 AI (pytania mieszane)</option>
+                        <option value="fortune">🔮 Wróżka AI</option>
+                        <option value="minigames">🎮 Minigry</option>
+                        <option value="photo">📸 Foto</option>
+                        <option value="voting">🗳️ Głosowanie</option>
+                        <option value="live">📡 Na żywo</option>
+                    </select>
+                    <button class="btn btn-primary w-100 mb-2" onclick="captureARObject(${arObjectsCounter})">
+                        📸 Zrób zdjęcie obiektu
+                    </button>
+                    <button class="btn btn-danger w-100" onclick="removeARObject(${arObjectsCounter})">
+                        🗑️ Usuń
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(objectDiv);
+    };
+
+    window.removeARObject = function(objectId) {
+        const objectDiv = document.getElementById(`ar-object-${objectId}`);
+        if (objectDiv) {
+            objectDiv.remove();
+        }
+    };
+
+    window.captureARObject = async function(objectId) {
+        const nameInput = document.getElementById(`ar-name-${objectId}`);
+        const gameSelect = document.getElementById(`ar-game-${objectId}`);
+        const previewDiv = document.getElementById(`ar-preview-${objectId}`);
+
+        const objectName = nameInput.value.trim();
+        if (!objectName) {
+            alert('Podaj nazwę obiektu!');
+            return;
+        }
+
+        try {
+            // Otwórz kamerę
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+
+            // Utwórz video element
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.style.width = '100%';
+
+            // Pokaż podgląd kamery
+            previewDiv.innerHTML = '';
+            previewDiv.appendChild(video);
+
+            // Dodaj przycisk do zrobienia zdjęcia
+            const captureBtn = document.createElement('button');
+            captureBtn.className = 'btn btn-success mt-2';
+            captureBtn.textContent = '📸 Zrób zdjęcie';
+            captureBtn.onclick = async function() {
+                // Zrób zdjęcie
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+
+                // Konwertuj na base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                // Zatrzymaj kamerę
+                stream.getTracks().forEach(track => track.stop());
+
+                // Pokaż zdjęcie
+                const img = document.createElement('img');
+                img.src = imageData;
+                img.style.width = '100%';
+                previewDiv.innerHTML = '';
+                previewDiv.appendChild(img);
+
+                // Wyślij do backendu
+                const response = await fetch('/api/host/ar/setup-object', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        object_name: objectName,
+                        image_data: imageData,
+                        game_type: gameSelect.value
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('✅ Obiekt AR zapisany!');
+                } else {
+                    alert('❌ Błąd: ' + result.error);
+                }
+            };
+
+            previewDiv.appendChild(captureBtn);
+
+            // Dodaj przycisk do anulowania
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-secondary mt-2 ms-2';
+            cancelBtn.textContent = 'Anuluj';
+            cancelBtn.onclick = function() {
+                stream.getTracks().forEach(track => track.stop());
+                previewDiv.innerHTML = '<span class="text-muted" style="line-height: 200px;">Brak zdjęcia</span>';
+            };
+            previewDiv.appendChild(cancelBtn);
+
+        } catch (error) {
+            alert('Błąd dostępu do kamery: ' + error.message);
+        }
+    };
+
+    // Załaduj istniejące obiekty AR przy otwieraniu zakładki
+    document.querySelector('button[data-bs-target="#ar"]')?.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/host/ar/objects');
+            const result = await response.json();
+
+            const container = document.getElementById('ar-objects-container');
+            container.innerHTML = '';
+
+            if (result.objects && result.objects.length > 0) {
+                result.objects.forEach((obj, index) => {
+                    arObjectsCounter++;
+                    const objectDiv = document.createElement('div');
+                    objectDiv.className = 'col-md-6';
+                    objectDiv.id = `ar-object-${arObjectsCounter}`;
+                    objectDiv.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>${obj.object_name}</h6>
+                                <div class="mb-3 text-center" style="min-height: 200px; background: #f8f9fa; border-radius: 8px; overflow: hidden;">
+                                    <img src="${obj.image_data}" style="width: 100%; max-height: 200px; object-fit: contain;">
+                                </div>
+                                <p class="mb-2"><strong>Gra:</strong> ${obj.game_type}</p>
+
+                                <!-- Czułość -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Czułość:</strong></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="sensitivity-${obj.id}"
+                                               value="${obj.sensitivity || 50}" min="5" max="500" step="5">
+                                        <button class="btn btn-primary" onclick="updateARSensitivity(${obj.id})">OK</button>
+                                    </div>
+                                    <small class="text-muted">Zakres: 5-500 (domyślnie: 50)</small>
+                                </div>
+
+                                <!-- Interwał skanowania -->
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Interwał skanowania:</strong></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="interval-${obj.id}"
+                                               value="${obj.scan_interval || 2}" min="1" max="10" step="1">
+                                        <button class="btn btn-primary" onclick="updateARInterval(${obj.id})">OK</button>
+                                    </div>
+                                    <small class="text-muted">Zakres: 1-10 sekund (domyślnie: 2)</small>
+                                </div>
+
+                                <button class="btn btn-danger w-100" onclick="deleteARObject(${obj.id})">
+                                    🗑️ Usuń
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(objectDiv);
+                });
+            }
+        } catch (error) {
+            console.error('Błąd ładowania obiektów AR:', error);
+        }
+    });
+
+    window.deleteARObject = async function(objectId) {
+        if (!confirm('Czy na pewno chcesz usunąć ten obiekt AR?')) return;
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Odśwież listę
+                document.querySelector('button[data-bs-target="#ar"]').click();
+            } else {
+                alert('Błąd usuwania obiektu');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateARSensitivity = async function(objectId) {
+        const inputElement = document.getElementById(`sensitivity-${objectId}`);
+        const sensitivity = parseInt(inputElement.value);
+
+        // Walidacja
+        if (isNaN(sensitivity) || sensitivity < 5 || sensitivity > 500) {
+            alert('Czułość musi być w zakresie 5-500');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}/sensitivity`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sensitivity })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + (data.error || 'Nie udało się zaktualizować czułości'));
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateARInterval = async function(objectId) {
+        const inputElement = document.getElementById(`interval-${objectId}`);
+        const scan_interval = parseInt(inputElement.value);
+
+        // Walidacja
+        if (isNaN(scan_interval) || scan_interval < 1 || scan_interval > 10) {
+            alert('Interwał skanowania musi być w zakresie 1-10 sekund');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/ar/object/${objectId}/interval`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scan_interval })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + (data.error || 'Nie udało się zaktualizować interwału'));
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // =====================================================================
+    // TRYB TESTOWY MINIGIER
+    // =====================================================================
+
+    // Tetris Test Mode
+    document.getElementById('tetris-test-btn')?.addEventListener('click', () => {
+        document.getElementById('tetris-test-view').style.display = 'block';
+    });
+
+    document.getElementById('tetris-test-start-btn')?.addEventListener('click', () => {
+        const tetrisGame = new TetrisGame('tetris-test-canvas', 0, 0, 0);
+        tetrisGame.start();
+
+        document.getElementById('tetris-test-start-section').style.display = 'none';
+        document.getElementById('tetris-test-left-controls').style.display = 'block';
+        document.getElementById('tetris-test-right-controls').style.display = 'block';
+        document.getElementById('tetris-test-exit-btn').style.display = 'block';
+    });
+
+    document.getElementById('tetris-test-close-btn')?.addEventListener('click', () => {
+        document.getElementById('tetris-test-view').style.display = 'none';
+        document.getElementById('tetris-test-start-section').style.display = 'block';
+        document.getElementById('tetris-test-left-controls').style.display = 'none';
+        document.getElementById('tetris-test-right-controls').style.display = 'none';
+        document.getElementById('tetris-test-exit-btn').style.display = 'none';
+    });
+
+    document.getElementById('tetris-test-exit-btn')?.addEventListener('click', () => {
+        if (confirm('Czy na pewno chcesz zakończyć test?')) {
+            document.getElementById('tetris-test-view').style.display = 'none';
+            document.getElementById('tetris-test-start-section').style.display = 'block';
+            document.getElementById('tetris-test-left-controls').style.display = 'none';
+            document.getElementById('tetris-test-right-controls').style.display = 'none';
+            document.getElementById('tetris-test-exit-btn').style.display = 'none';
+        }
+    });
+
+    // Arkanoid Test Mode
+    document.getElementById('arkanoid-test-btn')?.addEventListener('click', () => {
+        document.getElementById('arkanoid-test-view').style.display = 'block';
+    });
+
+    document.getElementById('arkanoid-test-start-btn')?.addEventListener('click', () => {
+        const arkanoidGame = new ArkanoidGame('arkanoid-test-canvas', 0, 0, 0);
+        arkanoidGame.start();
+
+        document.getElementById('arkanoid-test-start-section').style.display = 'none';
+        document.getElementById('arkanoid-test-left-controls').style.display = 'block';
+        document.getElementById('arkanoid-test-right-controls').style.display = 'block';
+        document.getElementById('arkanoid-test-exit-btn').style.display = 'block';
+    });
+
+    document.getElementById('arkanoid-test-close-btn')?.addEventListener('click', () => {
+        document.getElementById('arkanoid-test-view').style.display = 'none';
+        document.getElementById('arkanoid-test-start-section').style.display = 'block';
+        document.getElementById('arkanoid-test-left-controls').style.display = 'none';
+        document.getElementById('arkanoid-test-right-controls').style.display = 'none';
+        document.getElementById('arkanoid-test-exit-btn').style.display = 'none';
+    });
+
+    document.getElementById('arkanoid-test-exit-btn')?.addEventListener('click', () => {
+        if (confirm('Czy na pewno chcesz zakończyć test?')) {
+            document.getElementById('arkanoid-test-view').style.display = 'none';
+            document.getElementById('arkanoid-test-start-section').style.display = 'block';
+            document.getElementById('arkanoid-test-left-controls').style.display = 'none';
+            document.getElementById('arkanoid-test-right-controls').style.display = 'none';
+            document.getElementById('arkanoid-test-exit-btn').style.display = 'none';
+        }
+    });
+
+    // Snake Test Mode
+    document.getElementById('snake-test-btn')?.addEventListener('click', () => {
+        document.getElementById('snake-test-view').style.display = 'block';
+    });
+
+    document.getElementById('snake-test-start-btn')?.addEventListener('click', () => {
+        const snakeGame = new SnakeGame('snake-test-canvas', 0, 0, 0);
+        snakeGame.start();
+
+        document.getElementById('snake-test-start-section').style.display = 'none';
+        document.getElementById('snake-test-left-controls').style.display = 'block';
+        document.getElementById('snake-test-right-controls').style.display = 'block';
+        document.getElementById('snake-test-exit-btn').style.display = 'block';
+    });
+
+    document.getElementById('snake-test-close-btn')?.addEventListener('click', () => {
+        document.getElementById('snake-test-view').style.display = 'none';
+        document.getElementById('snake-test-start-section').style.display = 'block';
+        document.getElementById('snake-test-left-controls').style.display = 'none';
+        document.getElementById('snake-test-right-controls').style.display = 'none';
+        document.getElementById('snake-test-exit-btn').style.display = 'none';
+    });
+
+    document.getElementById('snake-test-exit-btn')?.addEventListener('click', () => {
+        if (confirm('Czy na pewno chcesz zakończyć test?')) {
+            document.getElementById('snake-test-view').style.display = 'none';
+            document.getElementById('snake-test-start-section').style.display = 'block';
+            document.getElementById('snake-test-left-controls').style.display = 'none';
+            document.getElementById('snake-test-right-controls').style.display = 'none';
+            document.getElementById('snake-test-exit-btn').style.display = 'none';
+        }
+    });
+
+    // T-Rex Test Mode
+    document.getElementById('trex-test-btn')?.addEventListener('click', () => {
+        document.getElementById('trex-test-view').style.display = 'block';
+    });
+
+    document.getElementById('trex-test-start-btn')?.addEventListener('click', () => {
+        const trexGame = new TRexGame('trex-test-canvas', 0, 0, 0);
+        trexGame.start();
+
+        document.getElementById('trex-test-start-section').style.display = 'none';
+        document.getElementById('trex-test-jump-control').style.display = 'block';
+        document.getElementById('trex-test-exit-btn').style.display = 'block';
+    });
+
+    document.getElementById('trex-test-close-btn')?.addEventListener('click', () => {
+        document.getElementById('trex-test-view').style.display = 'none';
+        document.getElementById('trex-test-start-section').style.display = 'block';
+        document.getElementById('trex-test-jump-control').style.display = 'none';
+        document.getElementById('trex-test-exit-btn').style.display = 'none';
+    });
+
+    document.getElementById('trex-test-exit-btn')?.addEventListener('click', () => {
+        if (confirm('Czy na pewno chcesz zakończyć test?')) {
+            document.getElementById('trex-test-view').style.display = 'none';
+            document.getElementById('trex-test-start-section').style.display = 'block';
+            document.getElementById('trex-test-jump-control').style.display = 'none';
+            document.getElementById('trex-test-exit-btn').style.display = 'none';
+        }
+    });
+
+    // Wróżka AI - przełącznik
+    document.getElementById('fortune-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('fortune-status');
+        try {
+            const response = await fetch('/api/host/fortune/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+            alert(result.message);
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Podgląd QR
+    document.getElementById('fortune-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/fortune_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR
+    document.getElementById('fortune-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('fortune-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('fortune-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/fortune/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR
+    document.getElementById('fortune-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/fortune_qr/${eventId}?backup=true`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA PYTAŃ
+    // ===================================================
+
+    // Podgląd QR Pytania
+    document.getElementById('questions-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=easy`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla łatwych Pytań
+    document.getElementById('questions-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('questions-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('questions-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych Pytań
+    document.getElementById('questions-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich Pytań
+    document.getElementById('questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla średnich Pytań
+    document.getElementById('questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('questions-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('questions-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich Pytań
+    document.getElementById('questions-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych Pytań
+    document.getElementById('questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla trudnych Pytań
+    document.getElementById('questions-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('questions-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('questions-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych Pytań
+    document.getElementById('questions-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych Pytań
+    document.getElementById('questions-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?difficulty=mixed`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych Pytań
+    document.getElementById('questions-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('questions-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('questions-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych Pytań
+    document.getElementById('questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA PYTAŃ RUNDA 2
+    // ===================================================
+
+    // Funkcja przełączania QR z rundy 1 dla rundy 2
+    function toggleR2Round1QR() {
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+        const disableOtherRoundsCheckbox = document.getElementById('r2-disable-other-rounds');
+
+        // Włącz/wyłącz przełącznik "Wyłącz pytania z innych rund"
+        if (useRound1QR) {
+            disableOtherRoundsCheckbox.disabled = false;
+        } else {
+            disableOtherRoundsCheckbox.disabled = true;
+            disableOtherRoundsCheckbox.checked = false;
+        }
+
+        // Przyciski generowania zapasowych kodów
+        const generateButtons = [
+            'r2-questions-generate-backup-qr-btn',
+            'r2-questions-medium-generate-backup-qr-btn',
+            'r2-questions-hard-generate-backup-qr-btn',
+            'r2-questions-mixed-generate-backup-qr-btn'
+        ];
+
+        // Przyciski podglądu zapasowych kodów
+        const backupButtons = [
+            'r2-questions-backup-qr-btn',
+            'r2-questions-medium-backup-qr-btn',
+            'r2-questions-hard-backup-qr-btn',
+            'r2-questions-mixed-backup-qr-btn'
+        ];
+
+        if (useRound1QR) {
+            // Wyłącz przyciski generowania i podglądu zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+
+            backupButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+        } else {
+            // Włącz przyciski generowania zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-success');
+                }
+            });
+
+            // Przyciski podglądu zapasowych kodów pozostają wyłączone
+            // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Funkcja przełączania "Wyłącz pytania z innych rund" dla rundy 2
+    async function toggleR2DisableOtherRounds() {
+        const eventId = {{ event.id }};
+        const disableOtherRounds = document.getElementById('r2-disable-other-rounds').checked;
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/disable_other_rounds/${eventId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: disableOtherRounds })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd zapisywania ustawienia');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Podgląd głównego QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            // Użyj kodu QR z rundy 1
+            window.open(`/questions_qr/${eventId}?difficulty=easy`, '_blank');
+        } else {
+            // Użyj kodu QR z rundy 2
+            window.open(`/questions_r2_qr/${eventId}?difficulty=easy`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych pytań - Runda 2
+    document.getElementById('r2-questions-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=medium`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich pytań - Runda 2
+    document.getElementById('r2-questions-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=hard`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych pytań - Runda 2
+    document.getElementById('r2-questions-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r2-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=mixed`, '_blank');
+        } else {
+            window.open(`/questions_r2_qr/${eventId}?difficulty=mixed`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r2-questions-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r2-questions-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań (runda 2) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych pytań - Runda 2
+    document.getElementById('r2-questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r2_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA PYTAŃ RUNDA 3
+    // ===================================================
+
+    // Funkcja przełączania QR z rundy 1 dla rundy 3
+    function toggleR3Round1QR() {
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+        const disableOtherRoundsCheckbox = document.getElementById('r3-disable-other-rounds');
+
+        // Włącz/wyłącz przełącznik "Wyłącz pytania z innych rund"
+        if (useRound1QR) {
+            disableOtherRoundsCheckbox.disabled = false;
+        } else {
+            disableOtherRoundsCheckbox.disabled = true;
+            disableOtherRoundsCheckbox.checked = false;
+        }
+
+        // Przyciski generowania zapasowych kodów
+        const generateButtons = [
+            'r3-questions-generate-backup-qr-btn',
+            'r3-questions-medium-generate-backup-qr-btn',
+            'r3-questions-hard-generate-backup-qr-btn',
+            'r3-questions-mixed-generate-backup-qr-btn'
+        ];
+
+        // Przyciski podglądu zapasowych kodów
+        const backupButtons = [
+            'r3-questions-backup-qr-btn',
+            'r3-questions-medium-backup-qr-btn',
+            'r3-questions-hard-backup-qr-btn',
+            'r3-questions-mixed-backup-qr-btn'
+        ];
+
+        if (useRound1QR) {
+            // Wyłącz przyciski generowania i podglądu zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+
+            backupButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                }
+            });
+        } else {
+            // Włącz przyciski generowania zapasowych kodów
+            generateButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-success');
+                }
+            });
+
+            // Przyciski podglądu zapasowych kodów pozostają wyłączone
+            // (będą włączone po wygenerowaniu zapasowego kodu)
+        }
+    }
+
+    // Funkcja przełączania "Wyłącz pytania z innych rund" dla rundy 3
+    async function toggleR3DisableOtherRounds() {
+        const eventId = {{ event.id }};
+        const disableOtherRounds = document.getElementById('r3-disable-other-rounds').checked;
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/disable_other_rounds/${eventId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: disableOtherRounds })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd zapisywania ustawienia');
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Podgląd głównego QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=easy`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=easy`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych pytań - Runda 3
+    document.getElementById('r3-questions-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=medium`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=medium`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich pytań - Runda 3
+    document.getElementById('r3-questions-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=hard`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=hard`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych pytań - Runda 3
+    document.getElementById('r3-questions-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        const useRound1QR = document.getElementById('r3-use-round1-qr').checked;
+
+        if (useRound1QR) {
+            window.open(`/questions_qr/${eventId}?difficulty=mixed`, '_blank');
+        } else {
+            window.open(`/questions_r3_qr/${eventId}?difficulty=mixed`, '_blank');
+        }
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('r3-questions-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('r3-questions-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań (runda 3) został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych pytań - Runda 3
+    document.getElementById('r3-questions-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/questions_r3_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA FOTO
+    // ===================================================
+
+    // Podgląd QR Foto
+    document.getElementById('photo-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/photo_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla Foto
+    document.getElementById('photo-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('photo-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('photo-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/photo/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR Foto
+    document.getElementById('photo-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/photo_qr/${eventId}?backup=true`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA MINIGRY
+    // ===================================================
+
+    // Podgląd QR Minigry
+    document.getElementById('minigames-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/minigames_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla Minigry
+    document.getElementById('minigames-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('minigames-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('minigames-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/minigames/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR Minigry
+    document.getElementById('minigames-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/minigames_qr/${eventId}?backup=true`, '_blank');
+    });
+
+    // ===================================================
+    // KODY QR DLA AI
+    // ===================================================
+
+    // Podgląd QR AI
+    document.getElementById('ai-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=easy`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla łatwych AI
+    document.getElementById('ai-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=easy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla łatwych pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla łatwych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla łatwych AI
+    document.getElementById('ai-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=easy`, '_blank');
+    });
+
+    // Podgląd głównego QR dla średnich AI
+    document.getElementById('ai-medium-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=medium`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla średnich AI
+    document.getElementById('ai-medium-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-medium-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-medium-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=medium`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla średnich pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla średnich pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla średnich AI
+    document.getElementById('ai-medium-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=medium`, '_blank');
+    });
+
+    // Podgląd głównego QR dla trudnych AI
+    document.getElementById('ai-hard-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=hard`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla trudnych AI
+    document.getElementById('ai-hard-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-hard-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-hard-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=hard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla trudnych pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla trudnych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla trudnych AI
+    document.getElementById('ai-hard-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=hard`, '_blank');
+    });
+
+    // Podgląd głównego QR dla mieszanych AI
+    document.getElementById('ai-mixed-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?difficulty=mixed`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla mieszanych AI
+    document.getElementById('ai-mixed-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('ai-mixed-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('ai-mixed-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/ai/generate_backup_qr/${eventId}?difficulty=mixed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+
+            if (!response.ok) throw new Error(result.error || 'Błąd generowania kodu QR');
+
+            // Włącz przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+            backupBtn.classList.remove('btn-secondary');
+            backupBtn.classList.add('btn-primary');
+
+            generateBtn.textContent = '✅ Wygenerowano';
+            setTimeout(() => {
+                generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+                generateBtn.disabled = false;
+            }, 2000);
+
+            alert('Zapasowy kod QR dla mieszanych pytań AI został wygenerowany pomyślnie!');
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR dla mieszanych pytań';
+            generateBtn.disabled = false;
+        }
+    });
+
+    // Podgląd zapasowego QR dla mieszanych AI
+    document.getElementById('ai-mixed-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/ai_qr/${eventId}?backup=true&difficulty=mixed`, '_blank');
+    });
+
+    // ===================================================
+    // PRZEŁĄCZNIKI STAN GRY
+    // ===================================================
+
+    // Pytania - przełącznik
+    document.getElementById('questions-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('questions-status');
+        try {
+            const response = await fetch('/api/host/questions/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // AI - przełącznik
+    document.getElementById('ai-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('ai-status');
+        try {
+            const response = await fetch('/api/host/ai/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Minigry - przełącznik
+    document.getElementById('minigames-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('minigames-status');
+        try {
+            const response = await fetch('/api/host/minigames/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Foto - przełącznik
+    document.getElementById('photo-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('photo-status');
+        try {
+            const response = await fetch('/api/host/photo/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+            statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+            e.target.checked = !enabled;
+        }
+    });
+
+    // Głosowanie - przełącznik
+    document.getElementById('voting-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('voting-status');
+        statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+        statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        // TODO: Dodać endpoint API dla głosowania
+        console.log('Voting enabled:', enabled);
+    });
+
+    // Głosowanie - zarządzanie pytaniami
+    let votingQuestions = [];
+    let votingEditingIndex = null;
+
+    // Pokazywanie formularza
+    document.getElementById('voting-add-question-btn')?.addEventListener('click', function() {
+        document.getElementById('voting-question-form').style.display = 'block';
+        document.getElementById('voting-add-question-btn').style.display = 'none';
+        votingEditingIndex = null;
+        votingResetForm();
+    });
+
+    // Anulowanie formularza
+    document.getElementById('voting-cancel-question-btn')?.addEventListener('click', function() {
+        document.getElementById('voting-question-form').style.display = 'none';
+        document.getElementById('voting-add-question-btn').style.display = 'block';
+        votingResetForm();
+    });
+
+    // Dodawanie nowego pola odpowiedzi
+    document.getElementById('voting-add-answer-btn')?.addEventListener('click', function() {
+        const container = document.getElementById('voting-answers-container');
+        const currentCount = container.querySelectorAll('.voting-answer-item').length;
+
+        if (currentCount >= 100) {
+            alert('Maksymalna liczba odpowiedzi to 100');
+            return;
+        }
+
+        const newIndex = currentCount + 1;
+        const newAnswerItem = document.createElement('div');
+        newAnswerItem.className = 'input-group mb-2 voting-answer-item';
+        newAnswerItem.innerHTML = `
+            <span class="input-group-text">${newIndex}</span>
+            <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź ${newIndex}">
+            <button class="btn btn-danger voting-remove-answer-btn" type="button">×</button>
+        `;
+
+        container.appendChild(newAnswerItem);
+
+        // Pokaż przyciski usuwania jeśli jest więcej niż 2 odpowiedzi
+        votingUpdateRemoveButtons();
+
+        // Dodaj event listener do nowego przycisku usuwania
+        newAnswerItem.querySelector('.voting-remove-answer-btn').addEventListener('click', function() {
+            newAnswerItem.remove();
+            votingUpdateAnswerNumbers();
+            votingUpdateRemoveButtons();
+        });
+    });
+
+    // Funkcja aktualizująca numerację odpowiedzi
+    function votingUpdateAnswerNumbers() {
+        const container = document.getElementById('voting-answers-container');
+        const items = container.querySelectorAll('.voting-answer-item');
+        items.forEach((item, index) => {
+            item.querySelector('.input-group-text').textContent = index + 1;
+            item.querySelector('.voting-answer-input').placeholder = `Odpowiedź ${index + 1}`;
+        });
+    }
+
+    // Funkcja pokazująca/ukrywająca przyciski usuwania
+    function votingUpdateRemoveButtons() {
+        const container = document.getElementById('voting-answers-container');
+        const items = container.querySelectorAll('.voting-answer-item');
+        const showButtons = items.length > 2;
+
+        items.forEach(item => {
+            const removeBtn = item.querySelector('.voting-remove-answer-btn');
+            removeBtn.style.display = showButtons ? 'block' : 'none';
+        });
+    }
+
+    // Dodaj event listenery do początkowych przycisków usuwania
+    document.querySelectorAll('.voting-remove-answer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const item = btn.closest('.voting-answer-item');
+            item.remove();
+            votingUpdateAnswerNumbers();
+            votingUpdateRemoveButtons();
+        });
+    });
+
+    // Zatwierdzanie pytania
+    document.getElementById('voting-submit-question-btn')?.addEventListener('click', function() {
+        const questionText = document.getElementById('voting-question-text').value.trim();
+
+        if (!questionText) {
+            alert('Proszę wpisać pytanie');
+            return;
+        }
+
+        // Pobierz odpowiedzi
+        const answerInputs = document.querySelectorAll('.voting-answer-input');
+        const answers = [];
+        answerInputs.forEach(input => {
+            const value = input.value.trim();
+            if (value) {
+                answers.push(value);
+            }
+        });
+
+        if (answers.length < 2) {
+            alert('Proszę dodać przynajmniej 2 odpowiedzi');
+            return;
+        }
+
+        // Pobierz typ wyboru
+        const choiceType = document.querySelector('input[name="voting-choice-type"]:checked').value;
+
+        // Pobierz czas
+        const timeValue = parseInt(document.getElementById('voting-time-value').value);
+        const timeUnit = document.getElementById('voting-time-unit').value;
+
+        // Pobierz typ wyniku
+        const resultType = document.querySelector('input[name="voting-result-type"]:checked').value;
+
+        // Utwórz obiekt pytania
+        const question = {
+            id: votingEditingIndex !== null ? votingQuestions[votingEditingIndex].id : Date.now(),
+            question: questionText,
+            answers: answers,
+            choiceType: choiceType,
+            timeValue: timeValue,
+            timeUnit: timeUnit,
+            resultType: resultType,
+            status: 'inactive' // inactive, active, finished
+        };
+
+        // Dodaj lub zaktualizuj pytanie
+        if (votingEditingIndex !== null) {
+            votingQuestions[votingEditingIndex] = question;
+            votingEditingIndex = null;
+        } else {
+            votingQuestions.push(question);
+        }
+
+        // Wyświetl pytania
+        votingDisplayQuestions();
+
+        // Ukryj formularz
+        document.getElementById('voting-question-form').style.display = 'none';
+        document.getElementById('voting-add-question-btn').style.display = 'block';
+        votingResetForm();
+    });
+
+    // Funkcja resetująca formularz
+    function votingResetForm() {
+        document.getElementById('voting-question-text').value = '';
+
+        // Resetuj odpowiedzi do 2
+        const container = document.getElementById('voting-answers-container');
+        container.innerHTML = `
+            <div class="input-group mb-2 voting-answer-item">
+                <span class="input-group-text">1</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 1">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+            </div>
+            <div class="input-group mb-2 voting-answer-item">
+                <span class="input-group-text">2</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź 2">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" style="display: none;">×</button>
+            </div>
+        `;
+
+        // Dodaj event listenery do przycisków usuwania
+        container.querySelectorAll('.voting-remove-answer-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const item = btn.closest('.voting-answer-item');
+                item.remove();
+                votingUpdateAnswerNumbers();
+                votingUpdateRemoveButtons();
+            });
+        });
+
+        // Resetuj opcje
+        document.getElementById('voting-single-choice').checked = true;
+        document.getElementById('voting-time-value').value = 60;
+        document.getElementById('voting-time-unit').value = 'seconds';
+        document.getElementById('voting-result-auto').checked = true;
+    }
+
+    // Funkcja wyświetlająca pytania
+    function votingDisplayQuestions() {
+        const listContainer = document.getElementById('voting-questions-list');
+
+        if (votingQuestions.length === 0) {
+            listContainer.innerHTML = '<p class="text-muted">Brak dodanych pytań. Kliknij "Dodaj propozycję" aby utworzyć pierwsze pytanie.</p>';
+            return;
+        }
+
+        listContainer.innerHTML = votingQuestions.map((q, index) => {
+            const timeDisplay = q.timeUnit === 'minutes' ? `${q.timeValue} min` : `${q.timeValue} sek`;
+            const choiceDisplay = q.choiceType === 'single' ? 'Jeden wybór' : 'Wielokrotny';
+            const resultDisplay = q.resultType === 'auto' ? 'Auto' : 'Manual';
+
+            return `
+                <div class="card mb-3" style="background: white;">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3"><strong>Pytanie ${index + 1}:</strong> ${q.question}</h6>
+
+                        <div class="mb-2">
+                            <strong>Odpowiedzi:</strong>
+                            <ol class="mb-2">
+                                ${q.answers.map(a => `<li>${a}</li>`).join('')}
+                            </ol>
+                        </div>
+
+                        <div class="mb-3">
+                            <span class="badge bg-info me-2">${choiceDisplay}</span>
+                            <span class="badge bg-secondary me-2">Czas: ${timeDisplay}</span>
+                            <span class="badge bg-primary me-2">Wynik: ${resultDisplay}</span>
+                            <span class="badge ${q.status === 'active' ? 'bg-success' : q.status === 'finished' ? 'bg-dark' : 'bg-warning'}">${
+                                q.status === 'active' ? 'Aktywne' : q.status === 'finished' ? 'Zakończone' : 'Nieaktywne'
+                            }</span>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-success" onclick="votingStartQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Start
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="votingStopQuestion(${index})" ${q.status !== 'active' ? 'disabled' : ''}>
+                                Stop
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="votingResetQuestion(${index})">
+                                Reset
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="votingEditQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Edytuj
+                            </button>
+                            <button class="btn btn-sm btn-secondary" onclick="votingDeleteQuestion(${index})" ${q.status === 'active' ? 'disabled' : ''}>
+                                Usuń
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Funkcje kontrolne dla pytań
+    window.votingStartQuestion = function(index) {
+        votingQuestions[index].status = 'active';
+        votingDisplayQuestions();
+        console.log('Started question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingStopQuestion = function(index) {
+        votingQuestions[index].status = 'finished';
+        votingDisplayQuestions();
+        console.log('Stopped question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingResetQuestion = function(index) {
+        votingQuestions[index].status = 'inactive';
+        votingDisplayQuestions();
+        console.log('Reset question:', votingQuestions[index]);
+        // TODO: Wysłać do API
+    };
+
+    window.votingEditQuestion = function(index) {
+        const question = votingQuestions[index];
+        votingEditingIndex = index;
+
+        // Wypełnij formularz danymi pytania
+        document.getElementById('voting-question-text').value = question.question;
+
+        // Wypełnij odpowiedzi
+        const container = document.getElementById('voting-answers-container');
+        container.innerHTML = '';
+
+        question.answers.forEach((answer, i) => {
+            const answerItem = document.createElement('div');
+            answerItem.className = 'input-group mb-2 voting-answer-item';
+            answerItem.innerHTML = `
+                <span class="input-group-text">${i + 1}</span>
+                <input type="text" class="form-control voting-answer-input" placeholder="Odpowiedź ${i + 1}" value="${answer}">
+                <button class="btn btn-danger voting-remove-answer-btn" type="button" ${question.answers.length <= 2 ? 'style="display: none;"' : ''}>×</button>
+            `;
+            container.appendChild(answerItem);
+
+            answerItem.querySelector('.voting-remove-answer-btn').addEventListener('click', function() {
+                answerItem.remove();
+                votingUpdateAnswerNumbers();
+                votingUpdateRemoveButtons();
+            });
+        });
+
+        // Wypełnij opcje
+        if (question.choiceType === 'single') {
+            document.getElementById('voting-single-choice').checked = true;
+        } else {
+            document.getElementById('voting-multiple-choice').checked = true;
+        }
+
+        document.getElementById('voting-time-value').value = question.timeValue;
+        document.getElementById('voting-time-unit').value = question.timeUnit;
+
+        if (question.resultType === 'auto') {
+            document.getElementById('voting-result-auto').checked = true;
+        } else {
+            document.getElementById('voting-result-manual').checked = true;
+        }
+
+        // Pokaż formularz
+        document.getElementById('voting-question-form').style.display = 'block';
+        document.getElementById('voting-add-question-btn').style.display = 'none';
+    };
+
+    window.votingDeleteQuestion = function(index) {
+        if (confirm('Czy na pewno chcesz usunąć to pytanie?')) {
+            votingQuestions.splice(index, 1);
+            votingDisplayQuestions();
+            console.log('Deleted question at index:', index);
+            // TODO: Wysłać do API
+        }
+    };
+
+    // Inicjalizacja wyświetlania pytań
+    votingDisplayQuestions();
+
+    // Na żywo - przełącznik
+    document.getElementById('live-enabled')?.addEventListener('change', async (e) => {
+        const enabled = e.target.checked;
+        const statusEl = document.getElementById('live-status');
+        statusEl.textContent = enabled ? 'Aktywna' : 'Nieaktywna';
+        statusEl.className = enabled ? 'badge bg-success' : 'badge bg-secondary';
+        // TODO: Dodać endpoint API dla funkcji na żywo
+        console.log('Live enabled:', enabled);
+    });
+
+    // Aktualizacja ustawień
+    window.updateFortuneSetting = async function(setting) {
+        let value, endpoint;
+
+        if (setting === 'word_count') {
+            value = parseInt(document.getElementById('fortune-word-count').value);
+            if (value < 10 || value > 500) {
+                alert('Liczba słów musi być w zakresie 10-500');
+                return;
+            }
+            endpoint = '/api/host/fortune/word-count';
+        } else if (setting === 'points') {
+            value = parseInt(document.getElementById('fortune-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = '/api/host/fortune/points';
+        } else if (setting === 'player_words') {
+            value = parseInt(document.getElementById('fortune-player-words').value);
+            if (value < 1 || value > 10) {
+                alert('Liczba słów gracza musi być w zakresie 1-10');
+                return;
+            }
+            endpoint = '/api/host/fortune/player-words';
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do aktualizacji ustawień pytań
+    window.updateQuestionsSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('questions-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/easy-points/${eventId}`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('questions-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/medium-points/${eventId}`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('questions-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/hard-points/${eventId}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateR2QuestionsSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('r2-questions-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/easy-points/${eventId}?round=2`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('r2-questions-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/medium-points/${eventId}?round=2`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('r2-questions-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/hard-points/${eventId}?round=2`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.updateR3QuestionsSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('r3-questions-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/easy-points/${eventId}?round=3`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('r3-questions-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/medium-points/${eventId}?round=3`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('r3-questions-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/questions/hard-points/${eventId}?round=3`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do aktualizacji ustawień AI
+    window.updateAISetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'easy_points') {
+            value = parseInt(document.getElementById('ai-easy-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/easy-points/${eventId}`;
+        } else if (setting === 'medium_points') {
+            value = parseInt(document.getElementById('ai-medium-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/medium-points/${eventId}`;
+        } else if (setting === 'hard_points') {
+            value = parseInt(document.getElementById('ai-hard-points').value);
+            if (value < 1 || value > 100) {
+                alert('Punkty muszą być w zakresie 1-100');
+                return;
+            }
+            endpoint = `/api/host/ai/hard-points/${eventId}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do aktualizacji ustawień Foto
+    window.updatePhotoSetting = async function(setting) {
+        let value, endpoint;
+        const eventId = {{ event.id }};
+
+        if (setting === 'selfie_points') {
+            value = parseInt(document.getElementById('photo-selfie-points').value);
+            if (value < 1 || value > 1000) {
+                alert('Punkty muszą być w zakresie 1-1000');
+                return;
+            }
+            endpoint = `/api/host/photo/selfie-points/${eventId}`;
+        } else if (setting === 'like_given_points') {
+            value = parseInt(document.getElementById('photo-like-given-points').value);
+            if (value < 0 || value > 100) {
+                alert('Punkty muszą być w zakresie 0-100');
+                return;
+            }
+            endpoint = `/api/host/photo/like-given-points/${eventId}`;
+        } else if (setting === 'like_received_points') {
+            value = parseInt(document.getElementById('photo-like-received-points').value);
+            if (value < 0 || value > 100) {
+                alert('Punkty muszą być w zakresie 0-100');
+                return;
+            }
+            endpoint = `/api/host/photo/like-received-points/${eventId}`;
+        } else if (setting === 'max_likes') {
+            value = parseInt(document.getElementById('photo-max-likes').value);
+            if (value < 1 || value > 1000) {
+                alert('Wartość musi być w zakresie 1-1000');
+                return;
+            }
+            endpoint = `/api/host/photo/max-likes/${eventId}`;
+        }
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+            } else {
+                alert('Błąd: ' + data.error);
+            }
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Funkcja do ładowania galerii zdjęć w panelu hosta
+    window.loadHostPhotoGallery = async function() {
+        const eventId = {{ event.id }};
+        try {
+            const response = await fetch(`/api/photos/${eventId}`);
+            const photos = await response.json();
+
+            const gallery = document.getElementById('host-photo-gallery');
+            const noPhotosMsg = document.getElementById('no-photos-message');
+
+            if (photos.length === 0) {
+                gallery.innerHTML = '';
+                noPhotosMsg.style.display = 'block';
+                return;
+            }
+
+            noPhotosMsg.style.display = 'none';
+            gallery.innerHTML = photos.map(photo => `
+                <div class="col-md-4 col-sm-6">
+                    <div class="card">
+                        <img src="${photo.image_url}" class="card-img-top" alt="Photo by ${photo.player_name}" style="height: 250px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">${photo.player_name}</h6>
+                            <p class="card-text">
+                                <span class="badge bg-primary">❤️ ${photo.votes} polubień</span>
+                            </p>
+                            <small class="text-muted">${new Date(photo.timestamp).toLocaleString('pl-PL')}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Błąd ładowania galerii:', error);
+        }
+    };
+
+    // Ładuj galerię przy otwieraniu zakładki Foto
+    document.querySelector('button[data-bs-target="#photo"]').addEventListener('click', function() {
+        setTimeout(() => loadHostPhotoGallery(), 100);
+    });
+
+    // Nasłuchuj na nowe zdjęcia przez Socket.IO
+    socket.on('new_photo', function(data) {
+        console.log('New photo received:', data);
+        // Przeładuj galerię jeśli jest otwarta zakładka Foto
+        if (document.getElementById('photo').classList.contains('active')) {
+            loadHostPhotoGallery();
+        }
+    });
+
+    // ========================================
+    // PRZYCISKI WYŚWIETLACZA
+    // ========================================
+
+    // Otwórz ekran gry 1
+    document.getElementById('open-display-1-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 2
+    document.getElementById('open-display-2-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display2', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 3
+    document.getElementById('open-display-3-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('photo_player', event_id=event.id) }}", '_blank');
+    });
+
+    // Otwórz ekran gry 4
+    document.getElementById('open-display-4-btn')?.addEventListener('click', () => {
+        window.open("{{ url_for('display4', event_id=event.id) }}", '_blank');
+    });
+
+    // Przejdź do zakładki Ustawienia wyświetlacza
+    document.getElementById('open-display-settings-btn')?.addEventListener('click', () => {
+        const displayTab = document.querySelector('button[data-bs-target="#display"]');
+        if (displayTab) {
+            displayTab.click();
+        }
+    });
+
+    // ========================================
+    // DARK MODE TOGGLE
+    // ========================================
+
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeStatus = document.getElementById('dark-mode-status');
+
+    // Function to apply dark mode
+    function applyDarkMode(enabled) {
+        if (enabled) {
+            document.body.classList.add('dark-mode');
+            darkModeStatus.textContent = 'Włączony';
+            darkModeStatus.className = 'badge bg-success';
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeStatus.textContent = 'Wyłączony';
+            darkModeStatus.className = 'badge bg-secondary';
+        }
+    }
+
+    // Load dark mode preference from localStorage (default: enabled)
+    const darkModeEnabled = localStorage.getItem('darkMode') !== 'false';
+    if (darkModeToggle) {
+        darkModeToggle.checked = darkModeEnabled;
+        applyDarkMode(darkModeEnabled);
+
+        // Dark mode toggle event listener
+        darkModeToggle.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            applyDarkMode(enabled);
+            localStorage.setItem('darkMode', enabled ? 'true' : 'false');
+        });
+    }
+
+    // ========================================
+    // LIVE MODE FUNCTIONS
+    // ========================================
+
+    let liveSession = null;
+    let liveTimerInterval = null;
+    let activeQuestionId = null;
+
+    // Load Live Mode session on page load
+    async function loadLiveSession() {
+        try {
+            const response = await fetch('/api/host/live/session');
+            const data = await response.json();
+            liveSession = data;
+
+            // Update UI
+            const enabledCheckbox = document.getElementById('live-enabled');
+            const statusBadge = document.getElementById('live-status');
+            const separateScorePoolCheckbox = document.getElementById('live-separate-score-pool');
+
+            if (enabledCheckbox) {
+                enabledCheckbox.checked = data.is_enabled;
+                statusBadge.textContent = data.is_enabled ? 'Aktywna' : 'Nieaktywna';
+                statusBadge.className = data.is_enabled ? 'badge bg-success' : 'badge bg-secondary';
+            }
+
+            if (separateScorePoolCheckbox) {
+                separateScorePoolCheckbox.checked = data.separate_score_pool || false;
+            }
+
+            // Set result mode radio buttons
+            const resultMode = data.result_mode || 'auto';
+            const resultModeRadio = document.getElementById(`live-result-${resultMode}`);
+            if (resultModeRadio) {
+                resultModeRadio.checked = true;
+            }
+
+            // Generate QR code
+            if (data.qr_code) {
+                const qrContainer = document.getElementById('live-qr-code');
+                if (qrContainer) {
+                    qrContainer.innerHTML = '';
+                    const liveUrl = `${window.location.origin}/live/{{ event.id }}/${data.qr_code}`;
+                    new QRCode(qrContainer, {
+                        text: liveUrl,
+                        width: 200,
+                        height: 200
+                    });
+                }
+
+                // Set Screen 5 link
+                const screen5Link = document.getElementById('live-screen5-link');
+                if (screen5Link) {
+                    const screen5Url = `${window.location.origin}/live/screen5/{{ event.id }}`;
+                    screen5Link.href = screen5Url;
+                    screen5Link.textContent = screen5Url;
+                }
+            }
+
+            // Enable/disable backup QR button
+            const backupQRBtn = document.getElementById('live-backup-qr-btn');
+            if (backupQRBtn) {
+                if (data.backup_qr_code) {
+                    backupQRBtn.disabled = false;
+                } else {
+                    backupQRBtn.disabled = true;
+                }
+            }
+
+            // Load questions
+            loadLiveQuestions();
+        } catch (error) {
+            console.error('Error loading live session:', error);
+        }
+    }
+
+    // Save Live Mode settings
+    window.saveLiveSettings = async function() {
+        const enabled = document.getElementById('live-enabled').checked;
+        const separateScorePool = document.getElementById('live-separate-score-pool').checked;
+        const resultMode = document.querySelector('input[name="live-result-mode"]:checked').value;
+
+        try {
+            const response = await fetch('/api/host/live/session', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    is_enabled: enabled,
+                    separate_score_pool: separateScorePool,
+                    result_mode: resultMode
+                })
+            });
+
+            if (response.ok) {
+                console.log('Ustawienia zapisane');
+                loadLiveSession();
+            } else {
+                alert('Błąd zapisu ustawień');
+            }
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            alert('Błąd zapisu ustawień: ' + error.message);
+        }
+    };
+
+    // Live enabled toggle handler
+    if (document.getElementById('live-enabled')) {
+        document.getElementById('live-enabled').addEventListener('change', function(e) {
+            const statusBadge = document.getElementById('live-status');
+            if (e.target.checked) {
+                statusBadge.textContent = 'Aktywna';
+                statusBadge.className = 'badge bg-success';
+            } else {
+                statusBadge.textContent = 'Nieaktywna';
+                statusBadge.className = 'badge bg-secondary';
+            }
+            saveLiveSettings();
+        });
+    }
+
+    // Separate score pool toggle handler
+    if (document.getElementById('live-separate-score-pool')) {
+        document.getElementById('live-separate-score-pool').addEventListener('change', function(e) {
+            saveLiveSettings();
+        });
+    }
+
+    // Result mode radio buttons handler
+    document.querySelectorAll('input[name="live-result-mode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            saveLiveSettings();
+        });
+    });
+
+    // Show Screen 5 button
+    const liveShowScreen5Btn = document.getElementById('live-show-screen5-btn');
+    if (liveShowScreen5Btn) {
+        liveShowScreen5Btn.addEventListener('click', function() {
+            const link = document.getElementById('live-screen5-link').href;
+            if (link && link !== '#') {
+                window.open(link, '_blank');
+            }
+        });
+    }
+
+    // Generate backup QR button
+    const liveGenerateBackupQRBtn = document.getElementById('live-generate-backup-qr-btn');
+    if (liveGenerateBackupQRBtn) {
+        liveGenerateBackupQRBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch('/api/host/live/backup-qr/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Zapasowy kod QR został wygenerowany!');
+                    loadLiveSession(); // Reload to update UI
+                } else {
+                    alert('Błąd generowania zapasowego kodu QR');
+                }
+            } catch (error) {
+                console.error('Error generating backup QR:', error);
+                alert('Błąd: ' + error.message);
+            }
+        });
+    }
+
+    // Backup QR preview button
+    const liveBackupQRBtn = document.getElementById('live-backup-qr-btn');
+    if (liveBackupQRBtn) {
+        liveBackupQRBtn.addEventListener('click', function() {
+            if (liveSession && liveSession.backup_qr_code) {
+                const liveUrl = `${window.location.origin}/live/{{ event.id }}/${liveSession.backup_qr_code}`;
+                window.open(`/player_qr_preview/{{ event.id }}?url=${encodeURIComponent(liveUrl)}&title=Tryb Na Żywo (Zapasowy)`, '_blank');
+            }
+        });
+    }
+
+    // Show statistics button
+    const liveShowStatisticsBtn = document.getElementById('live-show-statistics-btn');
+    if (liveShowStatisticsBtn) {
+        liveShowStatisticsBtn.addEventListener('click', async function() {
+            if (!activeQuestionId) {
+                alert('Brak zakończonego pytania do wyświetlenia statystyk');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/host/live/question/${activeQuestionId}/show-statistics`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Statystyki zostały wysłane na ekran 5');
+                } else {
+                    alert('Błąd wyświetlania statystyk');
+                }
+            } catch (error) {
+                console.error('Error showing statistics:', error);
+                alert('Błąd: ' + error.message);
+            }
+        });
+    }
+
+    // Handle adding new answer fields for Live mode
+    const liveAddAnswerBtn = document.getElementById('live-add-answer-btn');
+    if (liveAddAnswerBtn) {
+        liveAddAnswerBtn.addEventListener('click', function() {
+            const container = document.getElementById('live-answers-container');
+            const currentCount = container.querySelectorAll('.live-answer-item').length;
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            if (currentCount < 26) {
+                const newLetter = letters[currentCount];
+                const newItem = document.createElement('div');
+                newItem.className = 'input-group mb-2 live-answer-item';
+                newItem.innerHTML = `
+                    <span class="input-group-text">Odpowiedź ${newLetter}</span>
+                    <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                    <div class="input-group-text">
+                        <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                        <span class="ms-2 small">Poprawna</span>
+                    </div>
+                    <button class="btn btn-danger live-remove-answer-btn" type="button">×</button>
+                `;
+
+                // Add event listener to the remove button
+                const removeBtn = newItem.querySelector('.live-remove-answer-btn');
+                removeBtn.addEventListener('click', function() {
+                    newItem.remove();
+                    updateLiveAnswerLabels();
+                    updateLiveRemoveButtons();
+                });
+
+                container.appendChild(newItem);
+                updateLiveRemoveButtons();
+            }
+        });
+    }
+
+    // Update answer labels after removal
+    function updateLiveAnswerLabels() {
+        const items = document.querySelectorAll('#live-answers-container .live-answer-item');
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        items.forEach((item, index) => {
+            const label = item.querySelector('.input-group-text');
+            if (label) {
+                label.textContent = `Odpowiedź ${letters[index]}`;
+            }
+        });
+    }
+
+    // Update visibility of remove buttons (always show for >2 items)
+    function updateLiveRemoveButtons() {
+        const items = document.querySelectorAll('#live-answers-container .live-answer-item');
+        items.forEach((item, index) => {
+            const removeBtn = item.querySelector('.live-remove-answer-btn');
+            if (removeBtn) {
+                // Show remove button only if there are more than 2 items
+                if (items.length > 2) {
+                    removeBtn.style.display = 'block';
+                    // Add event listener if not already present
+                    if (!removeBtn.hasAttribute('data-listener')) {
+                        removeBtn.setAttribute('data-listener', 'true');
+                        removeBtn.addEventListener('click', function() {
+                            item.remove();
+                            updateLiveAnswerLabels();
+                            updateLiveRemoveButtons();
+                        });
+                    }
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    // Create new live question
+    window.createLiveQuestion = async function() {
+        const questionText = document.getElementById('live-new-question-text').value;
+        const timeLimit = parseInt(document.getElementById('live-new-time-limit').value);
+
+        // Collect answers and correct answers from dynamic fields
+        const answerItems = document.querySelectorAll('#live-answers-container .live-answer-item');
+        const options = {};
+        const correctAnswers = [];
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        answerItems.forEach((item, index) => {
+            const input = item.querySelector('.live-answer-input');
+            const checkbox = item.querySelector('.live-correct-checkbox');
+            const letter = letters[index];
+
+            if (input && input.value.trim()) {
+                options[`option_${letter.toLowerCase()}`] = input.value.trim();
+
+                if (checkbox && checkbox.checked) {
+                    correctAnswers.push(letter);
+                }
+            }
+        });
+
+        try {
+            const response = await fetch('/api/host/live/question', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    question_text: questionText,
+                    ...options,
+                    correct_answers: correctAnswers,
+                    time_limit: timeLimit
+                })
+            });
+
+            if (response.ok) {
+                console.log('Pytanie dodane');
+                // Clear form
+                document.getElementById('live-new-question-text').value = '';
+                document.getElementById('live-new-time-limit').value = '30';
+
+                // Reset answer fields to initial state (A and B only)
+                const container = document.getElementById('live-answers-container');
+                container.innerHTML = `
+                    <div class="input-group mb-2 live-answer-item">
+                        <span class="input-group-text">Odpowiedź A</span>
+                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                        <div class="input-group-text">
+                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                            <span class="ms-2 small">Poprawna</span>
+                        </div>
+                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                    </div>
+                    <div class="input-group mb-2 live-answer-item">
+                        <span class="input-group-text">Odpowiedź B</span>
+                        <input type="text" class="form-control live-answer-input" placeholder="Opcjonalnie">
+                        <div class="input-group-text">
+                            <input class="form-check-input live-correct-checkbox mt-0" type="checkbox" title="Poprawna odpowiedź">
+                            <span class="ms-2 small">Poprawna</span>
+                        </div>
+                        <button class="btn btn-danger live-remove-answer-btn" type="button" style="display: none;">×</button>
+                    </div>
+                `;
+                updateLiveRemoveButtons();
+
+                loadLiveQuestions();
+            } else {
+                const data = await response.json();
+                alert('Błąd: ' + (data.error || 'Nie udało się dodać pytania'));
+            }
+        } catch (error) {
+            console.error('Error creating question:', error);
+            alert('Błąd tworzenia pytania: ' + error.message);
+        }
+    };
+
+    // Load live questions list
+    async function loadLiveQuestions() {
+        try {
+            const response = await fetch('/api/host/live/questions');
+            const data = await response.json();
+            const container = document.getElementById('live-questions-list');
+
+            if (data.questions && data.questions.length > 0) {
+                container.innerHTML = data.questions.map(q => {
+                    // Build options dynamically
+                    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    let optionsHtml = '';
+                    for (let i = 0; i < letters.length; i++) {
+                        const letter = letters[i].toLowerCase();
+                        const optionKey = `option_${letter}`;
+                        if (q[optionKey]) {
+                            optionsHtml += `<small>${letters[i]}: ${q[optionKey]}</small><br>`;
+                        }
+                    }
+
+                    // Display correct answers
+                    let correctAnswersHtml = '';
+                    if (q.is_revealed && q.correct_answer) {
+                        correctAnswersHtml = `<br><small class="text-success">Poprawna: ${q.correct_answer} (${q.correct_answers || 0} poprawnych)</small>`;
+                    }
+
+                    return `
+                        <div class="card mb-2 ${q.is_active ? 'border-warning' : ''}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1"><strong>${q.question_text || '(Pytanie czytane ze sceny)'}</strong></p>
+                                        ${optionsHtml}
+                                        <small class="text-muted">Limit: ${q.time_limit}s | Odpowiedzi: ${q.total_answers || 0}</small>
+                                        ${correctAnswersHtml}
+                                    </div>
+                                    <div class="btn-group-vertical ms-2">
+                                        ${!q.is_active && !q.is_revealed ? `
+                                            <button class="btn btn-sm btn-success" onclick="startLiveQuestion(${q.id})">▶ Start</button>
+                                        ` : ''}
+                                        ${q.is_active ? `<span class="badge bg-warning">Aktywne</span>` : ''}
+                                        ${q.is_revealed ? `<span class="badge bg-info">Zakończone</span>` : ''}
+                                        <button class="btn btn-sm btn-danger" onclick="deleteLiveQuestion(${q.id})">🗑</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">Brak pytań. Dodaj nowe pytanie powyżej.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading questions:', error);
+        }
+    }
+
+    // Start live question
+    window.startLiveQuestion = async function(questionId) {
+        try {
+            const response = await fetch(`/api/host/live/question/${questionId}/start`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                activeQuestionId = questionId;
+                console.log('Pytanie uruchomione');
+                loadLiveQuestions();
+                showActiveQuestionPanel(questionId);
+                startLiveTimer();
+            } else {
+                alert('Błąd uruchamiania pytania');
+            }
+        } catch (error) {
+            console.error('Error starting question:', error);
+            alert('Błąd uruchamiania pytania: ' + error.message);
+        }
+    };
+
+    // Show active question panel
+    async function showActiveQuestionPanel(questionId) {
+        try {
+            // Fetch question details to show options
+            const response = await fetch('/api/host/live/questions');
+            const data = await response.json();
+            const question = data.questions.find(q => q.id === questionId);
+
+            if (!question) return;
+
+            // Update question text
+            const questionTextEl = document.getElementById('live-active-q-text');
+            if (questionTextEl) {
+                questionTextEl.textContent = question.question_text || '(Pytanie czytane ze sceny)';
+            }
+
+            // Display options
+            const optionsEl = document.getElementById('live-active-options');
+            if (optionsEl) {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let optionsHtml = '';
+                for (let i = 0; i < letters.length; i++) {
+                    const letter = letters[i].toLowerCase();
+                    const optionKey = `option_${letter}`;
+                    if (question[optionKey]) {
+                        optionsHtml += `<div><strong>${letters[i]}:</strong> ${question[optionKey]}</div>`;
+                    }
+                }
+                optionsEl.innerHTML = optionsHtml;
+            }
+
+            // Generate reveal buttons dynamically
+            const buttonsContainer = document.getElementById('live-reveal-buttons');
+            if (buttonsContainer) {
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let buttonsHtml = '';
+                for (let i = 0; i < letters.length; i++) {
+                    const letter = letters[i].toLowerCase();
+                    const optionKey = `option_${letter}`;
+                    if (question[optionKey]) {
+                        buttonsHtml += `<button type="button" class="btn btn-outline-primary live-reveal-btn" data-answer="${letters[i]}">${letters[i]}</button>`;
+                    }
+                }
+                buttonsContainer.innerHTML = buttonsHtml;
+
+                // Add event listeners to buttons
+                const selectedAnswers = new Set();
+                buttonsContainer.querySelectorAll('.live-reveal-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const answer = this.dataset.answer;
+                        if (selectedAnswers.has(answer)) {
+                            selectedAnswers.delete(answer);
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-outline-primary');
+                        } else {
+                            selectedAnswers.add(answer);
+                            this.classList.remove('btn-outline-primary');
+                            this.classList.add('btn-success');
+                        }
+                    });
+                });
+
+                // Add final reveal button
+                const revealBtn = document.createElement('button');
+                revealBtn.className = 'btn btn-danger w-100 mt-2';
+                revealBtn.textContent = '✅ Ujawnij wybrane odpowiedzi';
+                revealBtn.onclick = function() {
+                    if (selectedAnswers.size === 0) {
+                        alert('Wybierz przynajmniej jedną poprawną odpowiedź');
+                        return;
+                    }
+                    revealAnswers(Array.from(selectedAnswers));
+                };
+                buttonsContainer.appendChild(revealBtn);
+            }
+
+            const card = document.getElementById('live-active-question-card');
+            card.style.display = 'block';
+            // Scroll to active question card
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (error) {
+            console.error('Error showing active question panel:', error);
+        }
+    }
+
+    // Hide active question panel
+    function hideActiveQuestionPanel() {
+        const card = document.getElementById('live-active-question-card');
+        card.style.display = 'none';
+        if (liveTimerInterval) {
+            clearInterval(liveTimerInterval);
+            liveTimerInterval = null;
+        }
+    }
+
+    // Start live timer
+    function startLiveTimer() {
+        if (liveTimerInterval) {
+            clearInterval(liveTimerInterval);
+        }
+
+        let timeRemaining = 30; // Default, will be updated
+        const timerDisplay = document.getElementById('live-timer-display');
+
+        liveTimerInterval = setInterval(() => {
+            timeRemaining--;
+            if (timerDisplay) {
+                timerDisplay.textContent = timeRemaining;
+            }
+
+            if (timeRemaining <= 0) {
+                clearInterval(liveTimerInterval);
+                liveTimerInterval = null;
+            }
+        }, 1000);
+    }
+
+    // Reveal answer (legacy function for backwards compatibility)
+    window.revealAnswer = async function(answer) {
+        return revealAnswers([answer]);
+    };
+
+    // Reveal answers (supports multiple correct answers)
+    window.revealAnswers = async function(answers) {
+        if (!activeQuestionId) return;
+
+        try {
+            const response = await fetch(`/api/host/live/question/${activeQuestionId}/reveal`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    correct_answer: answers.join(','),  // Send as comma-separated string
+                    correct_answers: answers  // Also send as array
+                })
+            });
+
+            if (response.ok) {
+                console.log(`Poprawne odpowiedzi: ${answers.join(', ')}`);
+                activeQuestionId = null;
+                hideActiveQuestionPanel();
+                loadLiveQuestions();
+            } else {
+                alert('Błąd ujawniania odpowiedzi');
+            }
+        } catch (error) {
+            console.error('Error revealing answer:', error);
+            alert('Błąd ujawniania odpowiedzi: ' + error.message);
+        }
+    };
+
+    // Delete live question
+    window.deleteLiveQuestion = async function(questionId) {
+        if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+
+        try {
+            const response = await fetch(`/api/host/live/question/${questionId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                console.log('Pytanie usunięte');
+                loadLiveQuestions();
+            } else {
+                alert('Błąd usuwania pytania');
+            }
+        } catch (error) {
+            console.error('Error deleting question:', error);
+            alert('Błąd usuwania pytania: ' + error.message);
+        }
+    };
+
+    // Open Live QR Preview (similar to other QR previews)
+    window.openLiveQRPreview = function() {
+        if (liveSession && liveSession.qr_code) {
+            const liveUrl = `${window.location.origin}/live/{{ event.id }}/${liveSession.qr_code}`;
+            window.open(`/player_qr_preview/{{ event.id }}?url=${encodeURIComponent(liveUrl)}&title=Tryb Na Żywo`, '_blank');
+        }
+    };
+
+    // WebSocket listeners for live mode
+    if (socket) {
+        socket.on('live_question_started', function(data) {
+            console.log('Live question started:', data);
+            loadLiveQuestions();
+        });
+
+        socket.on('live_answer_revealed', function(data) {
+            console.log('Live answer revealed:', data);
+            loadLiveQuestions();
+        });
+
+        socket.on('live_questions_reset', function(data) {
+            console.log('Live questions reset by admin');
+            loadLiveQuestions();
+            // Ukryj aktywne pytanie jeśli było wyświetlane
+            hideActiveQuestionPanel();
+        });
+    }
+
+    // Initialize Live Mode on page load
+    loadLiveSession();
+
+    // =====================================================================
+    // ZARZĄDZANIE ZABEZPIECZENIAMI REJESTRACJI
+    // =====================================================================
+
+    window.loadSecurityStats = async function() {
+        try {
+            const response = await fetch('/api/host/registration/limits');
+            const data = await response.json();
+
+            // Ustaw limity w formularzu
+            document.getElementById('limit-ip').value = data.limits.max_players_per_ip;
+            document.getElementById('limit-device').value = data.limits.max_players_per_device;
+
+            // Wyświetl statystyki
+            let html = `
+                <div class="row text-center mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="mb-0">${data.stats.total_players}</h3>
+                                <small class="text-muted">Graczy</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="mb-0">${data.stats.unique_ips}</h3>
+                                <small class="text-muted">Unikalne IP</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h3 class="mb-0">${data.stats.unique_devices}</h3>
+                                <small class="text-muted">Urządzeń</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card ${data.stats.suspicious_devices_count > 0 ? 'bg-warning' : 'bg-success'} text-white">
+                            <div class="card-body">
+                                <h3 class="mb-0">${data.stats.suspicious_devices_count}</h3>
+                                <small>Podejrzanych</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Podejrzane urządzenia
+            if (Object.keys(data.suspicious_devices).length > 0) {
+                html += '<div class="alert alert-warning"><strong>⚠️ Podejrzane urządzenia (wiele kont):</strong><ul class="mb-0">';
+
+                for (const [fp, players] of Object.entries(data.suspicious_devices)) {
+                    const fpShort = fp.substring(0, 12) + '...';
+                    html += `<li><strong>Urządzenie ${fpShort}:</strong> ${players.length} graczy<ul>`;
+                    players.forEach(p => {
+                        html += `<li>${p.name} (${p.score} pkt, IP: ${p.ip})</li>`;
+                    });
+                    html += `</ul></li>`;
+                }
+
+                html += '</ul></div>';
+            }
+
+            // Podejrzane IP
+            if (Object.keys(data.suspicious_ips).length > 0) {
+                html += '<div class="alert alert-info"><strong>ℹ️ IP z wieloma graczami (może być OK dla WiFi):</strong><ul class="mb-0">';
+
+                for (const [ip, players] of Object.entries(data.suspicious_ips)) {
+                    html += `<li><strong>${ip}:</strong> ${players.length} graczy<ul>`;
+                    players.forEach(p => {
+                        const fpInfo = p.fingerprint ? ` (Urządzenie: ${p.fingerprint})` : '';
+                        html += `<li>${p.name} (${p.score} pkt)${fpInfo}</li>`;
+                    });
+                    html += `</ul></li>`;
+                }
+
+                html += '</ul></div>';
+            }
+
+            if (Object.keys(data.suspicious_devices).length === 0 && Object.keys(data.suspicious_ips).length === 0) {
+                html += '<div class="alert alert-success">✅ Wszystko wygląda OK! Brak podejrzanych rejestracji.</div>';
+            }
+
+            document.getElementById('security-stats').innerHTML = html;
+
+        } catch (error) {
+            alert('Błąd ładowania statystyk: ' + error.message);
+        }
+    };
+
+    window.updateSecurityLimits = async function() {
+        const limitIP = parseInt(document.getElementById('limit-ip').value);
+        const limitDevice = parseInt(document.getElementById('limit-device').value);
+
+        try {
+            const response = await fetch('/api/host/registration/limits', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    max_players_per_ip: limitIP,
+                    max_players_per_device: limitDevice
+                })
+            });
+
+            const data = await response.json();
+            alert(data.message || 'Limity zaktualizowane!');
+            loadSecurityStats();
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    window.cleanupDuplicates = async function(strategy) {
+        const confirmMessage =
+            strategy === 'fingerprint' ? 'Usuń duplikaty według urządzeń? (zostawi najlepszego gracza z każdego urządzenia)' :
+            strategy === 'ip' ? 'Usuń duplikaty według IP? (zostawi najlepszych graczy według limitu IP)' :
+            'Usuń wszystkie duplikaty? (połączenie obu metod)';
+
+        if (!confirm(confirmMessage)) return;
+
+        try {
+            const response = await fetch('/api/host/registration/cleanup_duplicates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ strategy })
+            });
+
+            const data = await response.json();
+            alert(`${data.message}\n\nUsunięto: ${data.removed_count} graczy`);
+
+            loadSecurityStats();
+            loadPlayers();
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    };
+
+    // Załaduj statystyki przy otwarciu zakładki Gracze
+    document.querySelector('button[data-bs-target="#players"]')?.addEventListener('click', () => {
+        setTimeout(() => loadSecurityStats(), 100);
+    });
+
+    // === VOTING QR CODES ===
+
+    // Podgląd głównego kodu QR dla głosowania
+    document.getElementById('voting-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/voting_qr/${eventId}`, '_blank');
+    });
+
+    // Generuj zapasowy kod QR dla głosowania
+    document.getElementById('voting-generate-backup-qr-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const generateBtn = document.getElementById('voting-generate-backup-qr-btn');
+        const backupBtn = document.getElementById('voting-backup-qr-btn');
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = '⏳ Generowanie...';
+
+        try {
+            const response = await fetch(`/api/host/voting/generate_backup_qr/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd generowania kodu QR');
+            }
+
+            const data = await response.json();
+            alert(data.message);
+
+            // Aktywuj przycisk podglądu zapasowego kodu
+            backupBtn.disabled = false;
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🔄 Generuj zapasowy kod QR';
+        }
+    });
+
+    // Podgląd zapasowego kodu QR dla głosowania
+    document.getElementById('voting-backup-qr-btn')?.addEventListener('click', () => {
+        const eventId = {{ event.id }};
+        window.open(`/voting_qr/${eventId}?backup=true`, '_blank');
+    });
+
+    // Wyślij kod QR głosowania na ekran 5
+    document.getElementById('voting-send-to-screen5-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const btn = document.getElementById('voting-send-to-screen5-btn');
+
+        btn.disabled = true;
+        btn.textContent = '📺 Wysyłanie...';
+
+        try {
+            const votingUrl = `${window.location.origin}/voting/${eventId}`;
+
+            const response = await fetch('/api/display/screen5/send_qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'voting',
+                    url: votingUrl,
+                    description: 'Zeskanuj kod aby zagłosować'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd wysyłania kodu QR');
+            }
+
+            const data = await response.json();
+            alert('Kod QR został wysłany na ekran 5!');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📺 Wyślij kod na ekran numer 5';
+        }
+    });
+
+    // === LIVE MODE - SEND TO SCREEN 5 ===
+
+    document.getElementById('live-send-to-screen5-btn')?.addEventListener('click', async () => {
+        const eventId = {{ event.id }};
+        const btn = document.getElementById('live-send-to-screen5-btn');
+
+        btn.disabled = true;
+        btn.textContent = '📺 Wysyłanie...';
+
+        try {
+            // Sprawdź czy liveSession istnieje
+            if (!liveSession || !liveSession.qr_code) {
+                throw new Error('Brak sesji live. Upewnij się że tryb live jest włączony.');
+            }
+
+            const liveUrl = `${window.location.origin}/live/${eventId}/${liveSession.qr_code}`;
+
+            const response = await fetch('/api/display/screen5/send_qr', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'live',
+                    url: liveUrl,
+                    description: 'Dołącz do trybu live'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd wysyłania kodu QR');
+            }
+
+            const data = await response.json();
+            alert('Kod QR został wysłany na ekran 5!');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '📺 Wyślij kod na ekran numer 5';
+        }
+    });
+
+    // ===================================================
+    // TIMER DLA PYTAŃ RUNDA 2
+    // ===================================================
+
+    let r2TimerInterval = null;
+    let r2TimerEndTime = null;
+
+    async function startR2QuestionsTimer() {
+        const eventId = {{ event.id }};
+        const minutes = parseInt(document.getElementById('r2-questions-timer-minutes').value);
+
+        if (!minutes || minutes < 1) {
+            alert('Proszę wprowadzić prawidłową liczbę minut (min. 1)');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/timer/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: minutes })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd uruchamiania timera');
+            }
+
+            const data = await response.json();
+            r2TimerEndTime = new Date(data.end_time);
+
+            // Pokaż timer i przycisk anulowania
+            document.getElementById('r2-questions-timer-display').style.display = 'block';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'inline-block';
+            document.getElementById('r2-questions-timer-minutes').disabled = true;
+
+            // Rozpocznij odliczanie
+            updateR2TimerDisplay();
+            r2TimerInterval = setInterval(updateR2TimerDisplay, 1000);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    function updateR2TimerDisplay() {
+        if (!r2TimerEndTime) return;
+
+        const now = new Date();
+        const diff = r2TimerEndTime - now;
+
+        if (diff <= 0) {
+            // Timer zakończony - włącz pytania
+            clearInterval(r2TimerInterval);
+            r2TimerInterval = null;
+            r2TimerEndTime = null;
+
+            document.getElementById('r2-questions-timer-display').style.display = 'none';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r2-questions-timer-minutes').disabled = false;
+            document.getElementById('r2-questions-timer-minutes').value = '';
+
+            // Włącz pytania
+            document.getElementById('r2-questions-enabled').checked = true;
+            document.getElementById('r2-questions-status').textContent = 'Aktywna';
+            document.getElementById('r2-questions-status').className = 'badge bg-success';
+
+            alert('Pytania Runda 2 zostały automatycznie włączone!');
+            return;
+        }
+
+        // Oblicz pozostały czas
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const display = `${hours}h ${minutes}m ${seconds}s`;
+        document.getElementById('r2-questions-timer-countdown').textContent = display;
+    }
+
+    async function cancelR2QuestionsTimer() {
+        const eventId = {{ event.id }};
+
+        try {
+            const response = await fetch(`/api/host/questions_r2/timer/${eventId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd anulowania timera');
+            }
+
+            // Zatrzymaj timer
+            clearInterval(r2TimerInterval);
+            r2TimerInterval = null;
+            r2TimerEndTime = null;
+
+            // Ukryj elementy timera
+            document.getElementById('r2-questions-timer-display').style.display = 'none';
+            document.getElementById('r2-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r2-questions-timer-minutes').disabled = false;
+            document.getElementById('r2-questions-timer-minutes').value = '';
+
+            alert('Timer został anulowany');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // ===================================================
+    // TIMER DLA PYTAŃ RUNDA 3
+    // ===================================================
+
+    let r3TimerInterval = null;
+    let r3TimerEndTime = null;
+
+    async function startR3QuestionsTimer() {
+        const eventId = {{ event.id }};
+        const minutes = parseInt(document.getElementById('r3-questions-timer-minutes').value);
+
+        if (!minutes || minutes < 1) {
+            alert('Proszę wprowadzić prawidłową liczbę minut (min. 1)');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/timer/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minutes: minutes })
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd uruchamiania timera');
+            }
+
+            const data = await response.json();
+            r3TimerEndTime = new Date(data.end_time);
+
+            // Pokaż timer i przycisk anulowania
+            document.getElementById('r3-questions-timer-display').style.display = 'block';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'inline-block';
+            document.getElementById('r3-questions-timer-minutes').disabled = true;
+
+            // Rozpocznij odliczanie
+            updateR3TimerDisplay();
+            r3TimerInterval = setInterval(updateR3TimerDisplay, 1000);
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    function updateR3TimerDisplay() {
+        if (!r3TimerEndTime) return;
+
+        const now = new Date();
+        const diff = r3TimerEndTime - now;
+
+        if (diff <= 0) {
+            // Timer zakończony - włącz pytania
+            clearInterval(r3TimerInterval);
+            r3TimerInterval = null;
+            r3TimerEndTime = null;
+
+            document.getElementById('r3-questions-timer-display').style.display = 'none';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r3-questions-timer-minutes').disabled = false;
+            document.getElementById('r3-questions-timer-minutes').value = '';
+
+            // Włącz pytania
+            document.getElementById('r3-questions-enabled').checked = true;
+            document.getElementById('r3-questions-status').textContent = 'Aktywna';
+            document.getElementById('r3-questions-status').className = 'badge bg-success';
+
+            alert('Pytania Runda 3 zostały automatycznie włączone!');
+            return;
+        }
+
+        // Oblicz pozostały czas
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        const display = `${hours}h ${minutes}m ${seconds}s`;
+        document.getElementById('r3-questions-timer-countdown').textContent = display;
+    }
+
+    async function cancelR3QuestionsTimer() {
+        const eventId = {{ event.id }};
+
+        try {
+            const response = await fetch(`/api/host/questions_r3/timer/${eventId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error('Błąd anulowania timera');
+            }
+
+            // Zatrzymaj timer
+            clearInterval(r3TimerInterval);
+            r3TimerInterval = null;
+            r3TimerEndTime = null;
+
+            // Ukryj elementy timera
+            document.getElementById('r3-questions-timer-display').style.display = 'none';
+            document.getElementById('r3-questions-timer-cancel').style.display = 'none';
+            document.getElementById('r3-questions-timer-minutes').disabled = false;
+            document.getElementById('r3-questions-timer-minutes').value = '';
+
+            alert('Timer został anulowany');
+
+        } catch (error) {
+            alert('Błąd: ' + error.message);
+        }
+    }
+
+    // Sprawdź przy ładowaniu czy są aktywne timery
+    async function checkActiveTimers() {
+        const eventId = {{ event.id }};
+
+        try {
+            // Sprawdź timer rundy 2
+            const r2Response = await fetch(`/api/host/questions_r2/timer/${eventId}`);
+            if (r2Response.ok) {
+                const r2Data = await r2Response.json();
+                if (r2Data.active && r2Data.end_time) {
+                    r2TimerEndTime = new Date(r2Data.end_time);
+                    document.getElementById('r2-questions-timer-display').style.display = 'block';
+                    document.getElementById('r2-questions-timer-cancel').style.display = 'inline-block';
+                    document.getElementById('r2-questions-timer-minutes').disabled = true;
+                    r2TimerInterval = setInterval(updateR2TimerDisplay, 1000);
+                    updateR2TimerDisplay();
+                }
+            }
+
+            // Sprawdź timer rundy 3
+            const r3Response = await fetch(`/api/host/questions_r3/timer/${eventId}`);
+            if (r3Response.ok) {
+                const r3Data = await r3Response.json();
+                if (r3Data.active && r3Data.end_time) {
+                    r3TimerEndTime = new Date(r3Data.end_time);
+                    document.getElementById('r3-questions-timer-display').style.display = 'block';
+                    document.getElementById('r3-questions-timer-cancel').style.display = 'inline-block';
+                    document.getElementById('r3-questions-timer-minutes').disabled = true;
+                    r3TimerInterval = setInterval(updateR3TimerDisplay, 1000);
+                    updateR3TimerDisplay();
+                }
+            }
+        } catch (error) {
+            console.error('Błąd sprawdzania timerów:', error);
+        }
+    }
+
+    // Sprawdź timery przy załadowaniu strony
+    checkActiveTimers();
+
+});
