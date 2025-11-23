@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Panel Hosta - {{ event.name }}{% endblock %}
+{% block title %}Panel Hosta 2 - {{ event.name }}{% endblock %}
 
 {% block styles %}
 <meta charset="UTF-8">
@@ -512,14 +512,14 @@
 {% block content %}
 <div class="container mt-4">
     {% if is_impersonated %}
-    <div class="alert alert-warning d-flex justify-content-between align-items-center">
-        <span data-translate="admin_impersonate">Jesteś zalogowany jako Admin w panelu Hosta.</span>
-        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-warning" data-translate="back_to_admin">Powrót do panelu Admina</a>
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <span><strong>Panel Hosta 2</strong> - Jesteś zalogowany jako Admin.</span>
+        <a href="{{ url_for('logout_impersonate') }}" class="btn btn-sm btn-info" data-translate="back_to_admin">Powrót do panelu Admina</a>
     </div>
     {% endif %}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="mb-0" data-translate="host_title">ORGANIZACJA GRY</h1>
+            <h1 class="mb-0" data-translate="host_title">ORGANIZACJA GRY <span class="badge bg-info text-white">PANEL 2</span></h1>
             <h3 class="text-muted mb-0">{{ event.name }}</h3>
         </div>
         <a href="{{ url_for('display', event_id=event.id) }}" target="_blank" class="btn btn-outline-secondary" data-translate="open_display">Otwórz Ekran Gry</a>
