@@ -4734,7 +4734,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Start game button
     document.getElementById('start-game')?.addEventListener('click', async () => {
-        const minutes = parseInt(document.getElementById('game-duration-input-dashboard').value);
+        console.log('🖱️ Start Game button clicked');
+
+        // Inteligentne pobieranie wartości czasu z jednego z dwóch pól
+        const dashboardInput = document.getElementById('game-duration-input-dashboard');
+        const timingInput = document.getElementById('game-duration-input-2');
+
+        let minutesValue = '60'; // Wartość domyślna
+
+        // Próbujemy pobrać z pola dashboard (Pulpit)
+        if (dashboardInput && dashboardInput.value) {
+            minutesValue = dashboardInput.value;
+            console.log('⏱️ Using time from dashboard field:', minutesValue);
+        }
+        // Jeśli nie ma, próbujemy z pola timing (zakładka Czas)
+        else if (timingInput && timingInput.value) {
+            minutesValue = timingInput.value;
+            console.log('⏱️ Using time from timing field:', minutesValue);
+        } else {
+            console.log('⏱️ Using default time:', minutesValue);
+        }
+
+        const minutes = parseInt(minutesValue);
         console.log('🎮 Starting game with', minutes, 'minutes');
 
         if (isNaN(minutes) || minutes < 1) {
@@ -4745,7 +4766,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!confirm(`Czy na pewno chcesz rozpocząć nową grę na ${minutes} minut?`)) {
             return;
         }
-        
+
+        // Wizualna informacja o uruchamianiu
+        const startGameBtn = document.getElementById('start-game');
+        const originalText = startGameBtn ? startGameBtn.textContent : '';
+        if (startGameBtn) {
+            startGameBtn.disabled = true;
+            startGameBtn.textContent = "Uruchamianie...";
+        }
+
         try {
             console.log('📤 Sending start game request...');
             const response = await fetch('/api/host/start_game', {
@@ -4753,19 +4782,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minutes })
             });
-            
+
             const result = await response.json();
             console.log('📥 Start game response:', result);
-            
+
             if (!response.ok) {
                 throw new Error(result.error || 'Nieznany błąd uruchamiania gry');
             }
-            
+
             console.log('✅ Game started successfully');
             alert(result.message || 'Gra rozpoczęta!');
         } catch (error) {
             console.error('❌ Error starting game:', error);
             alert('Błąd podczas uruchamiania gry: ' + error.message);
+
+            // Przywróć przycisk w przypadku błędu
+            if (startGameBtn) {
+                startGameBtn.disabled = false;
+                startGameBtn.textContent = originalText;
+            }
         }
     });
     
