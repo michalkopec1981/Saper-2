@@ -158,12 +158,6 @@
                         <button class="btn btn-primary" id="open-display-2-btn">
                             <i class="bi bi-display"></i> Otwórz ekran gry 2
                         </button>
-                        <button class="btn btn-primary" id="open-display-3-btn">
-                            <i class="bi bi-display"></i> Otwórz ekran gry 3
-                        </button>
-                        <button class="btn btn-primary" id="open-display-4-btn">
-                            <i class="bi bi-display"></i> Otwórz ekran gry 4
-                        </button>
                         <button class="btn btn-secondary" id="open-display-settings-btn">
                             <i class="bi bi-gear"></i> <span data-translate="display_settings">Ustawienia</span>
                         </button>
@@ -1798,33 +1792,9 @@
                             <a href="{{ url_for('display2', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display2-link">
                                 🖥️ Ekran 2 - Ranking i zdjęcia
                             </a>
-                            <div class="alert alert-info mb-2">
+                            <div class="alert alert-info mb-0">
                                 <small><strong>Link do ekranu 2:</strong></small><br>
                                 <small><a href="{{ url_for('display2', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display2', event_id=event.id, _external=True) }}</a></small>
-                            </div>
-
-                            <a href="{{ url_for('photo_player', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display3-link">
-                                🖥️ Ekran 3 - Selfie
-                            </a>
-                            <div class="alert alert-info mb-2">
-                                <small><strong>Link do ekranu 3:</strong></small><br>
-                                <small><a href="{{ url_for('photo_player', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('photo_player', event_id=event.id, _external=True) }}</a></small>
-                            </div>
-
-                            <a href="{{ url_for('display4', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display4-link">
-                                🖥️ Ekran 4 - Przemioty do znalezienia oraz kod gracza
-                            </a>
-                            <div class="alert alert-info mb-2">
-                                <small><strong>Link do ekranu 4:</strong></small><br>
-                                <small><a href="{{ url_for('display4', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display4', event_id=event.id, _external=True) }}</a></small>
-                            </div>
-
-                            <a href="{{ url_for('display5', event_id=event.id) }}" target="_blank" class="btn btn-secondary" id="display5-link">
-                                🖥️ Ekran 5 - Głosowanie lub Pytania na Żywo
-                            </a>
-                            <div class="alert alert-info mb-0">
-                                <small><strong>Link do ekranu 5:</strong></small><br>
-                                <small><a href="{{ url_for('display5', event_id=event.id, _external=True) }}" target="_blank" class="text-break">{{ url_for('display5', event_id=event.id, _external=True) }}</a></small>
                             </div>
                         </div>
                     </div>
@@ -6965,16 +6935,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Otwórz ekran gry 2
     document.getElementById('open-display-2-btn')?.addEventListener('click', () => {
         window.open("{{ url_for('display2', event_id=event.id) }}", '_blank');
-    });
-
-    // Otwórz ekran gry 3
-    document.getElementById('open-display-3-btn')?.addEventListener('click', () => {
-        window.open("{{ url_for('photo_player', event_id=event.id) }}", '_blank');
-    });
-
-    // Otwórz ekran gry 4
-    document.getElementById('open-display-4-btn')?.addEventListener('click', () => {
-        window.open("{{ url_for('display4', event_id=event.id) }}", '_blank');
     });
 
     // Przejdź do zakładki Ustawienia wyświetlacza
