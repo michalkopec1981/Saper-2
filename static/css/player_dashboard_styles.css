@@ -1,0 +1,304 @@
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dashboard-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .player-name {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #667eea;
+        margin: 0;
+    }
+
+    .game-name {
+        font-size: 1.1rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .info-value.highlight {
+        color: #667eea;
+    }
+
+    .timer-display {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .timer-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        font-family: 'Courier New', monospace;
+    }
+
+    .multiplier-badges {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .multiplier-badge {
+        flex: 1;
+        background: #e3f2fd;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .multiplier-badge.time {
+        background: #fff3e0;
+    }
+
+    .multiplier-badge.points {
+        background: #e8f5e9;
+    }
+
+    .badge-label {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 3px;
+    }
+
+    .badge-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .action-btn {
+        padding: 15px 10px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-btn.password {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .action-btn.scan {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .action-btn.selfie {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .message-box {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .message-box.visible {
+        display: block;
+    }
+
+    .message-text {
+        margin: 0;
+        color: #333;
+    }
+
+    .language-selector {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .lang-btn {
+        width: 50px;
+        height: 35px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+    }
+
+    .lang-btn:hover {
+        border-color: #667eea;
+        transform: scale(1.1);
+    }
+
+    .lang-btn.active {
+        border-color: #667eea;
+        border-width: 3px;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #999;
+        border: none;
+        background: none;
+    }
+
+    .password-display {
+        font-size: 2rem;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+        letter-spacing: 5px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+
+    #qr-reader {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .selfie-gallery {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .selfie-item {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .selfie-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .selfie-info {
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .vote-btn {
+        background: #f093fb;
+        border: none;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+
+    .vote-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }

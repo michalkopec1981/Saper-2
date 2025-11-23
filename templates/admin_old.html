@@ -1,0 +1,620 @@
+{% extends 'base.html' %}
+{% block title %}Panel Admina{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+    .logo-area {
+        width: 100%;
+        max-width: 300px;
+        height: 120px;
+        border: 2px dashed #ccc;
+        border-radius: .375rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f8f9fa;
+        overflow: hidden;
+    }
+    .logo-area img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .logo-placeholder {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .notes-textarea {
+        resize: none;
+        overflow-y: hidden;
+        min-height: 38px; /* Standard input height */
+    }
+    .btn-fixed-width {
+        min-width: 130px;
+    }
+    .status-badge {
+        border: 2px solid;
+        padding: .375rem .75rem;
+        font-size: .875rem;
+        font-weight: 700;
+        line-height: 1.5;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        border-radius: .375rem;
+        background-color: #fff;
+    }
+    .status-start {
+        border-color: #198754;
+        color: #198754;
+    }
+    .status-pauza {
+        border-color: #ffc107;
+        color: #ffc107;
+    }
+    .status-koniec {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+    .status-przygotowanie {
+        border-color: #212529;
+        color: #212529;
+    }
+    .status-default {
+         border-color: #6c757d;
+         color: #6c757d;
+    }
+
+    /* Dark Mode Styles */
+    /* Base dark mode colors */
+    body.dark-mode {
+        background-color: #0d1117 !important;
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .container {
+        background-color: #0d1117 !important;
+    }
+
+    /* Cards */
+    body.dark-mode .card {
+        background-color: #161b22 !important;
+        border-color: #30363d !important;
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .card-header {
+        background-color: #1c2128 !important;
+        border-bottom-color: #30363d !important;
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .card-title {
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .card-body {
+        background-color: #161b22 !important;
+    }
+
+    /* Buttons */
+    body.dark-mode .btn-primary {
+        background-color: #238636 !important;
+        border-color: #238636 !important;
+        color: #ffffff !important;
+    }
+
+    body.dark-mode .btn-primary:hover {
+        background-color: #2ea043 !important;
+        border-color: #2ea043 !important;
+    }
+
+    body.dark-mode .btn-secondary {
+        background-color: #30363d !important;
+        border-color: #30363d !important;
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .btn-secondary:hover {
+        background-color: #3d444d !important;
+        border-color: #3d444d !important;
+    }
+
+    body.dark-mode .btn-success {
+        background-color: #238636 !important;
+        border-color: #238636 !important;
+    }
+
+    body.dark-mode .btn-success:hover {
+        background-color: #2ea043 !important;
+        border-color: #2ea043 !important;
+    }
+
+    body.dark-mode .btn-danger {
+        background-color: #da3633 !important;
+        border-color: #da3633 !important;
+    }
+
+    body.dark-mode .btn-danger:hover {
+        background-color: #e5534b !important;
+        border-color: #e5534b !important;
+    }
+
+    body.dark-mode .btn-warning {
+        background-color: #9e6a03 !important;
+        border-color: #9e6a03 !important;
+        color: #ffffff !important;
+    }
+
+    body.dark-mode .btn-warning:hover {
+        background-color: #bb8009 !important;
+        border-color: #bb8009 !important;
+    }
+
+    body.dark-mode .btn-info {
+        background-color: #0969da !important;
+        border-color: #0969da !important;
+    }
+
+    body.dark-mode .btn-info:hover {
+        background-color: #1177ea !important;
+        border-color: #1177ea !important;
+    }
+
+    /* Forms */
+    body.dark-mode .form-control,
+    body.dark-mode .form-select {
+        background-color: #0d1117 !important;
+        border-color: #30363d !important;
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-select:focus {
+        background-color: #0d1117 !important;
+        border-color: #58a6ff !important;
+        color: #c9d1d9 !important;
+        box-shadow: 0 0 0 0.25rem rgba(88, 166, 255, 0.25) !important;
+    }
+
+    body.dark-mode .form-control::placeholder {
+        color: #6e7681 !important;
+    }
+
+    body.dark-mode .form-label,
+    body.dark-mode .form-check-label {
+        color: #c9d1d9 !important;
+    }
+
+    /* Text colors */
+    body.dark-mode h1,
+    body.dark-mode h2,
+    body.dark-mode h3,
+    body.dark-mode h4,
+    body.dark-mode h5,
+    body.dark-mode h6 {
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .text-muted {
+        color: #8b949e !important;
+    }
+
+    body.dark-mode .text-secondary {
+        color: #8b949e !important;
+    }
+
+    /* Badges */
+    body.dark-mode .badge.bg-success {
+        background-color: #238636 !important;
+    }
+
+    body.dark-mode .badge.bg-secondary {
+        background-color: #30363d !important;
+    }
+
+    body.dark-mode .badge.bg-warning {
+        background-color: #9e6a03 !important;
+        color: #ffffff !important;
+    }
+
+    body.dark-mode .badge.bg-danger {
+        background-color: #da3633 !important;
+    }
+
+    body.dark-mode .badge.bg-info {
+        background-color: #0969da !important;
+    }
+
+    body.dark-mode .badge.bg-primary {
+        background-color: #1f6feb !important;
+    }
+
+    /* Alerts */
+    body.dark-mode .alert-warning {
+        background-color: #3d2e00 !important;
+        border-color: #9e6a03 !important;
+        color: #e3b341 !important;
+    }
+
+    body.dark-mode .alert-info {
+        background-color: #051d4d !important;
+        border-color: #0969da !important;
+        color: #79c0ff !important;
+    }
+
+    body.dark-mode .alert-success {
+        background-color: #0d3818 !important;
+        border-color: #238636 !important;
+        color: #56d364 !important;
+    }
+
+    body.dark-mode .alert-danger {
+        background-color: #490202 !important;
+        border-color: #da3633 !important;
+        color: #f85149 !important;
+    }
+
+    /* Switches */
+    body.dark-mode .form-check-input {
+        background-color: #30363d !important;
+        border-color: #30363d !important;
+    }
+
+    body.dark-mode .form-check-input:checked {
+        background-color: #238636 !important;
+        border-color: #238636 !important;
+    }
+
+    body.dark-mode .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(35, 134, 54, 0.25) !important;
+    }
+
+    /* Modals */
+    body.dark-mode .modal-content {
+        background-color: #161b22 !important;
+        border-color: #30363d !important;
+    }
+
+    body.dark-mode .modal-header {
+        background-color: #1c2128 !important;
+        border-bottom-color: #30363d !important;
+    }
+
+    body.dark-mode .modal-footer {
+        border-top-color: #30363d !important;
+    }
+
+    body.dark-mode .modal-title {
+        color: #c9d1d9 !important;
+    }
+
+    body.dark-mode .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Spinner */
+    body.dark-mode .spinner-border {
+        color: #58a6ff !important;
+    }
+
+    /* Status badges */
+    body.dark-mode .status-badge {
+        background-color: #0d1117 !important;
+    }
+
+    /* Logo area */
+    body.dark-mode .logo-area {
+        background-color: #0d1117 !important;
+        border-color: #30363d !important;
+    }
+
+    body.dark-mode .logo-placeholder {
+        color: #8b949e !important;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0">SAPER QR - GŁÓWNY PANEL ADMINA</h1>
+            <p class="text-muted mb-0">Zarządzaj eventami, ustawiaj loginy, hasła i uprawnienia.</p>
+        </div>
+        <button id="add-event-btn" class="btn btn-primary btn-sm btn-fixed-width">Dodaj Nowy Event</button>
+    </div>
+
+    <!-- Ustawienia -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Ustawienia</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h6>Tryb wyświetlania</h6>
+                    <p class="text-muted small mb-0">
+                        Wybierz jasny lub ciemny tryb dla panelu admina. Ciemny tryb wykorzystuje przyjemne dla oka barwy czarne i ciemnoszare.
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <span class="me-3 text-muted">Tryb jasny</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="dark-mode-toggle" style="width: 4em; height: 2em;">
+                            <label class="form-check-label ms-3" for="dark-mode-toggle">
+                                <span id="dark-mode-status" class="badge bg-secondary">Wyłączony</span>
+                            </label>
+                        </div>
+                        <span class="ms-3 text-muted">Tryb ciemny</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="status-container" class="mb-3"></div>
+
+    <div id="events-container">
+        <div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Ładowanie...</span></div></div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventsContainer = document.getElementById('events-container');
+    const addEventBtn = document.getElementById('add-event-btn');
+    const statusContainer = document.getElementById('status-container');
+
+    async function fetchApi(url, options = {}) {
+        const isFormData = options.body instanceof FormData;
+        if (!isFormData && options.body) {
+            options.headers = { 'Content-Type': 'application/json', ...options.headers };
+            options.body = JSON.stringify(options.body);
+        }
+
+        try {
+            const response = await fetch(url, options);
+            const data = await response.json().catch(() => null);
+            if (!response.ok) throw new Error(data ? (data.message || data.error) : `Błąd serwera: ${response.status}`);
+            return data;
+        } catch (error) {
+            showStatus(`Błąd API: ${error.message}`, 'danger');
+            console.error('API Error:', error);
+            return null;
+        }
+    }
+
+    function showStatus(message, type = 'success', duration = 4000) {
+        statusContainer.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+        setTimeout(() => {
+            const alert = statusContainer.querySelector('.alert');
+            if (alert) bootstrap.Alert.getOrCreateInstance(alert).close();
+        }, duration);
+    }
+
+    function createEventPanel(event) {
+        const panel = document.createElement('div');
+        panel.className = 'card mb-3';
+        panel.dataset.eventId = event.id;
+
+        const deleteBtnVisibility = event.id > 1 ? '' : 'style="display: none;"';
+        const logoContent = event.logo_url 
+            ? `<img src="${event.logo_url}" class="event-logo-preview">`
+            : `<span class="logo-placeholder">Brak logo</span>`;
+        const deleteLogoBtnVisibility = event.logo_url ? '' : 'style="display: none;"';
+
+        // Logika statusu gry
+        const status = event.game_status || { status_text: 'Brak Danych' };
+        let statusClass = 'status-default';
+        if (status.status_text === 'Start') statusClass = 'status-start';
+        else if (status.status_text === 'Pauza') statusClass = 'status-pauza';
+        else if (status.status_text === 'Koniec') statusClass = 'status-koniec';
+        else if (status.status_text === 'Przygotowanie') statusClass = 'status-przygotowanie';
+
+        panel.innerHTML = `
+            <div class="card-body">
+                <div class="row g-3 align-items-start">
+                    <div class="col-lg-9">
+                        <div class="row g-3">
+                            <div class="col-md-3"><label class="form-label">Nazwa Eventu</label><input type="text" class="form-control event-name" value="${event.name || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Login Hosta</label><input type="text" class="form-control event-login" value="${event.login || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Hasło Hosta</label><input type="text" class="form-control event-password" value="${event.password || ''}"></div>
+                            <div class="col-md-3"><label class="form-label">Data</label><input type="date" class="form-control event-date" value="${event.event_date || ''}"></div>
+                            <div class="col-md-12"><label class="form-label">Uwagi</label><textarea class="form-control notes-textarea event-notes" rows="1">${event.notes || ''}</textarea></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 d-flex flex-column align-items-center">
+                        <div class="d-flex gap-2 mb-2">
+                            <button class="btn btn-sm btn-light border btn-logo btn-fixed-width">Logo</button>
+                            <button class="btn btn-sm btn-light border btn-delete-logo btn-fixed-width" ${deleteLogoBtnVisibility}>Usuń Logo</button>
+                        </div>
+                        <div class="logo-area">${logoContent}</div>
+                    </div>
+                </div>
+                <hr class="my-3">
+                <div class="d-flex align-items-center flex-wrap justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <span class="status-badge ${statusClass}">STAN GRY: ${status.status_text}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input event-superhost" type="checkbox" role="switch" id="superhost-${event.id}" ${event.is_superhost ? 'checked' : ''}>
+                            <label class="form-check-label" for="superhost-${event.id}">Uprawnienia Superhost</label>
+                        </div>
+                        <input type="file" class="logo-upload-input" style="display: none;" accept="image/png, image/jpeg">
+                        <button class="btn btn-sm btn-danger btn-delete btn-fixed-width" ${deleteBtnVisibility}>Usuń Event</button>
+                        <button class="btn btn-sm btn-danger btn-reset btn-fixed-width">Reset Gry</button>
+                        <a href="/admin/impersonate/${event.id}" target="_blank" class="btn btn-sm btn-secondary btn-fixed-width">Panel Hosta</a>
+                        <button class="btn btn-sm btn-success btn-save btn-fixed-width">Zapisz Zmiany</button>
+                    </div>
+                </div>
+            </div>`;
+
+        // Auto-resize textarea
+        const textarea = panel.querySelector('.notes-textarea');
+        textarea.addEventListener('input', () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        });
+        // Initial resize
+        setTimeout(() => textarea.dispatchEvent(new Event('input')), 0);
+
+        return panel;
+    }
+
+    async function loadEvents() {
+        const events = await fetchApi('/api/admin/events');
+        if (events) {
+            eventsContainer.innerHTML = '';
+            events.forEach(event => eventsContainer.appendChild(createEventPanel(event)));
+        } else {
+            eventsContainer.innerHTML = '<div class="alert alert-warning">Nie udało się załadować eventów.</div>';
+        }
+    }
+
+    addEventBtn.addEventListener('click', async () => {
+        addEventBtn.disabled = true;
+        const newEvent = await fetchApi('/api/admin/events', { method: 'POST' });
+        if (newEvent) {
+            eventsContainer.appendChild(createEventPanel(newEvent));
+            showStatus(`Dodano pomyślnie ${newEvent.name}.`);
+        }
+        addEventBtn.disabled = false;
+    });
+
+    eventsContainer.addEventListener('click', async (e) => {
+        const target = e.target;
+        const panel = target.closest('.card');
+        if (!panel) return;
+        const eventId = panel.dataset.eventId;
+
+        if (target.classList.contains('btn-logo')) {
+            panel.querySelector('.logo-upload-input').click();
+        }
+
+        if (target.classList.contains('btn-delete-logo')) {
+            const confirmed = confirm(`Czy na pewno chcesz usunąć logo dla Eventu ${eventId}?`);
+            if (confirmed) {
+                const result = await fetchApi(`/api/admin/event/${eventId}/delete_logo`, { method: 'POST' });
+                if (result) {
+                    const logoArea = panel.querySelector('.logo-area');
+                    logoArea.innerHTML = `<span class="logo-placeholder">Brak logo</span>`;
+                    target.style.display = 'none';
+                    showStatus(result.message);
+                }
+            }
+        }
+
+        if (target.classList.contains('btn-save')) {
+            const payload = {
+                name: panel.querySelector('.event-name').value,
+                login: panel.querySelector('.event-login').value,
+                password: panel.querySelector('.event-password').value,
+                is_superhost: panel.querySelector('.event-superhost').checked,
+                event_date: panel.querySelector('.event-date').value,
+                notes: panel.querySelector('.event-notes').value
+            };
+            const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'PUT', body: payload });
+            if (result) {
+                 showStatus(`Zapisano zmiany dla Eventu ${eventId}.`);
+                 const updatedPanel = createEventPanel(result);
+                 panel.replaceWith(updatedPanel);
+            }
+        }
+
+        if (target.classList.contains('btn-reset')) {
+            const hostPassword = panel.querySelector('.event-password').value;
+            const enteredPassword = prompt(`Aby zresetować grę dla Eventu ${eventId}, wpisz hasło Hosta:`);
+            if (enteredPassword !== null) {
+                if (enteredPassword === hostPassword) {
+                    const result = await fetchApi(`/api/admin/event/${eventId}/reset`, { method: 'POST' });
+                    if (result) {
+                        showStatus(result.message, 'warning');
+                        loadEvents();
+                    }
+                } else if (enteredPassword) {
+                    showStatus('Nieprawidłowe hasło. Resetowanie gry anulowane.', 'danger');
+                }
+            }
+        }
+
+        if (target.classList.contains('btn-delete')) {
+            const hostPassword = panel.querySelector('.event-password').value;
+            const enteredPassword = prompt(`Aby USUNĄĆ Event ${eventId}, wpisz hasło Hosta:`);
+             if (enteredPassword !== null) {
+                if (enteredPassword === hostPassword) {
+                    const result = await fetchApi(`/api/admin/event/${eventId}`, { method: 'DELETE' });
+                    if (result) {
+                        panel.remove();
+                        showStatus(result.message, 'success');
+                    }
+                } else if (enteredPassword) {
+                    showStatus('Nieprawidłowe hasło. Usuwanie eventu anulowane.', 'danger');
+                }
+            }
+        }
+    });
+
+    eventsContainer.addEventListener('change', async (e) => {
+        if (e.target.classList.contains('logo-upload-input')) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const panel = e.target.closest('.card');
+            const eventId = panel.dataset.eventId;
+            const formData = new FormData();
+            formData.append('logo', file);
+
+            const result = await fetchApi(`/api/admin/event/${eventId}/upload_logo`, { method: 'POST', body: formData });
+
+            if (result && result.logo_url) {
+                const logoArea = panel.querySelector('.logo-area');
+                logoArea.innerHTML = `<img src="${result.logo_url}?t=${new Date().getTime()}" class="event-logo-preview">`;
+                panel.querySelector('.btn-delete-logo').style.display = 'inline-block';
+                showStatus('Logo zostało zaktualizowane.');
+            }
+        }
+    });
+
+    loadEvents();
+
+    // ========================================
+    // DARK MODE TOGGLE
+    // ========================================
+
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeStatus = document.getElementById('dark-mode-status');
+
+    // Function to apply dark mode
+    function applyDarkMode(enabled) {
+        if (enabled) {
+            document.body.classList.add('dark-mode');
+            darkModeStatus.textContent = 'Włączony';
+            darkModeStatus.className = 'badge bg-success';
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeStatus.textContent = 'Wyłączony';
+            darkModeStatus.className = 'badge bg-secondary';
+        }
+    }
+
+    // Load dark mode preference from localStorage (default: enabled)
+    const darkModeEnabled = localStorage.getItem('darkModeAdmin') !== 'false';
+    if (darkModeToggle) {
+        darkModeToggle.checked = darkModeEnabled;
+        applyDarkMode(darkModeEnabled);
+
+        // Dark mode toggle event listener
+        darkModeToggle.addEventListener('change', (e) => {
+            const enabled = e.target.checked;
+            applyDarkMode(enabled);
+            localStorage.setItem('darkModeAdmin', enabled ? 'true' : 'false');
+        });
+    }
+});
+</script>
+{% endblock %}
+
