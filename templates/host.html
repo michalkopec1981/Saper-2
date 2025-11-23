@@ -2192,6 +2192,7 @@
 {% block scripts %}
 {{ super() }}
 <script src="https://cdn.socket.io/4.5.2/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/socket-manager.js') }}"></script>
 <script src="{{ url_for('static', filename='tetris.js') }}"></script>
 <script src="{{ url_for('static', filename='arkanoid.js') }}"></script>
 <script src="{{ url_for('static', filename='snake.js') }}"></script>

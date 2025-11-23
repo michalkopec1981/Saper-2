@@ -1,0 +1,143 @@
+    body.dark-mode #password-preview-card { {
+    body.dark-mode #password-preview-card:hover { {
+    body.dark-mode .alert-danger {
+    body.dark-mode .alert-danger { {
+    body.dark-mode .alert-info {
+    body.dark-mode .alert-info { {
+    body.dark-mode .alert-success {
+    body.dark-mode .alert-success { {
+    body.dark-mode .alert-warning {
+    body.dark-mode .alert-warning { {
+    body.dark-mode .badge.bg-danger {
+    body.dark-mode .badge.bg-danger { {
+    body.dark-mode .badge.bg-info {
+    body.dark-mode .badge.bg-info { {
+    body.dark-mode .badge.bg-primary {
+    body.dark-mode .badge.bg-primary { {
+    body.dark-mode .badge.bg-secondary {
+    body.dark-mode .badge.bg-secondary { {
+    body.dark-mode .badge.bg-success {
+    body.dark-mode .badge.bg-success { {
+    body.dark-mode .badge.bg-warning {
+    body.dark-mode .badge.bg-warning { {
+    body.dark-mode .btn-close {
+    body.dark-mode .btn-close { {
+    body.dark-mode .btn-danger {
+    body.dark-mode .btn-danger { {
+    body.dark-mode .btn-danger:hover {
+    body.dark-mode .btn-danger:hover { {
+    body.dark-mode .btn-group .btn { {
+    body.dark-mode .btn-group .btn.active-modifier { {
+    body.dark-mode .btn-info {
+    body.dark-mode .btn-info { {
+    body.dark-mode .btn-info:hover {
+    body.dark-mode .btn-info:hover { {
+    body.dark-mode .btn-outline-primary.active-modifier,
+    body.dark-mode .btn-outline-primary { {
+    body.dark-mode .btn-outline-primary:hover { {
+    body.dark-mode .btn-outline-secondary { {
+    body.dark-mode .btn-outline-secondary:hover { {
+    body.dark-mode .btn-primary {
+    body.dark-mode .btn-primary { {
+    body.dark-mode .btn-primary:hover {
+    body.dark-mode .btn-primary:hover { {
+    body.dark-mode .btn-secondary {
+    body.dark-mode .btn-secondary { {
+    body.dark-mode .btn-secondary:hover {
+    body.dark-mode .btn-secondary:hover { {
+    body.dark-mode .btn-success {
+    body.dark-mode .btn-success { {
+    body.dark-mode .btn-success:hover {
+    body.dark-mode .btn-success:hover { {
+    body.dark-mode .btn-warning {
+    body.dark-mode .btn-warning { {
+    body.dark-mode .btn-warning:hover {
+    body.dark-mode .btn-warning:hover { {
+    body.dark-mode .card {
+    body.dark-mode .card { {
+    body.dark-mode .card-body {
+    body.dark-mode .card-body { {
+    body.dark-mode .card-header {
+    body.dark-mode .card-header { {
+    body.dark-mode .card-text { {
+    body.dark-mode .card-title {
+    body.dark-mode .card-title { {
+    body.dark-mode .container {
+    body.dark-mode .container { {
+    body.dark-mode .dropdown-item { {
+    body.dark-mode .dropdown-item:hover { {
+    body.dark-mode .dropdown-menu { {
+    body.dark-mode .form-check-input {
+    body.dark-mode .form-check-input { {
+    body.dark-mode .form-check-input:checked {
+    body.dark-mode .form-check-input:checked { {
+    body.dark-mode .form-check-input:focus {
+    body.dark-mode .form-check-input:focus { {
+    body.dark-mode .form-check-label {
+    body.dark-mode .form-control,
+    body.dark-mode .form-control,
+    body.dark-mode .form-check-label { {
+    body.dark-mode .form-control::placeholder {
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-control:focus,
+    body.dark-mode .form-label,
+    body.dark-mode .form-label,
+    body.dark-mode .form-control::placeholder { {
+    body.dark-mode .form-select {
+    body.dark-mode .form-select { {
+    body.dark-mode .form-select:focus {
+    body.dark-mode .form-select:focus { {
+    body.dark-mode .input-group-text { {
+    body.dark-mode .list-group-flush .list-group-item { {
+    body.dark-mode .list-group-item { {
+    body.dark-mode .list-group-item:hover { {
+    body.dark-mode .logo-area {
+    body.dark-mode .logo-placeholder {
+    body.dark-mode .modal-content {
+    body.dark-mode .modal-content { {
+    body.dark-mode .modal-footer {
+    body.dark-mode .modal-footer { {
+    body.dark-mode .modal-header {
+    body.dark-mode .modal-header { {
+    body.dark-mode .modal-title {
+    body.dark-mode .modal-title { {
+    body.dark-mode .nav-tabs .nav-link { {
+    body.dark-mode .nav-tabs .nav-link.active { {
+    body.dark-mode .nav-tabs .nav-link:hover { {
+    body.dark-mode .nav-tabs { {
+    body.dark-mode .progress { {
+    body.dark-mode .question-item { {
+    body.dark-mode .question-stats { {
+    body.dark-mode .spinner-border {
+    body.dark-mode .status-badge {
+    body.dark-mode .tab-content::-webkit-scrollbar-thumb { {
+    body.dark-mode .tab-content::-webkit-scrollbar-thumb:hover { {
+    body.dark-mode .tab-content::-webkit-scrollbar-track { {
+    body.dark-mode .table td,
+    body.dark-mode .table tbody { {
+    body.dark-mode .table th { {
+    body.dark-mode .table thead { {
+    body.dark-mode .table { {
+    body.dark-mode .table-hover > tbody > tr:hover > * { {
+    body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * { {
+    body.dark-mode .text-muted {
+    body.dark-mode .text-muted { {
+    body.dark-mode .text-secondary {
+    body.dark-mode .text-secondary { {
+    body.dark-mode .text-white { {
+    body.dark-mode h1,
+    body.dark-mode h1,
+    body.dark-mode h2,
+    body.dark-mode h2,
+    body.dark-mode h3,
+    body.dark-mode h3,
+    body.dark-mode h4,
+    body.dark-mode h4,
+    body.dark-mode h5,
+    body.dark-mode h5,
+    body.dark-mode fieldset { {
+    body.dark-mode h6 {
+    body.dark-mode h6 { {
+    body.dark-mode hr { {
+    body.dark-mode legend { {
+    body.dark-mode {
