@@ -580,6 +580,18 @@ def impersonate_host(event_id):
     session['impersonated_by_admin'] = True
     return redirect(url_for('host_panel'))
 
+@app.route('/admin/impersonate2/<int:event_id>')
+@admin_required
+def impersonate_host2(event_id):
+    """Panel Hosta 2 - nowy layout w stylu MailerLite"""
+    event = db.session.get(Event, event_id)
+    if not event:
+        return "Event nie istnieje", 404
+    session['host_event_id'] = event_id
+    session['impersonated_by_admin'] = True
+    is_superhost = event.is_superhost if event else False
+    return render_template('host2.html', event=event, is_impersonated=True, is_superhost=is_superhost)
+
 # --- HOST ---
 @app.route('/host/login', methods=['GET', 'POST'])
 def host_login():
