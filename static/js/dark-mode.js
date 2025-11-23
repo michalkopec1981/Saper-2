@@ -5,9 +5,9 @@
 
 const DarkMode = {
     init() {
-        // Check localStorage for saved theme
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
+        // Check localStorage for saved dark mode (use 'darkMode' key to match base.html)
+        const darkModeEnabled = localStorage.getItem('darkMode') !== 'false';
+        if (darkModeEnabled) {
             document.body.classList.add('dark-mode');
             this.updateToggleButton(true);
         }
@@ -22,7 +22,7 @@ const DarkMode = {
     toggle() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('darkMode', isDark ? 'true' : 'false');
         this.updateToggleButton(isDark);
     },
 
