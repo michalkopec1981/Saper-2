@@ -9,6 +9,8 @@ import os
 import random
 import json
 import uuid
+import logging
+import traceback
 from flask import Flask, render_template, render_template_string, request, jsonify, url_for, session, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
@@ -43,6 +45,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'bardzo-tajny-klucz-super-bezpieczny')
 app.config['UPLOAD_FOLDER'] = 'static/uploads/logos'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB limit
+
+# Konfiguracja logowania
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+app.logger.setLevel(logging.INFO)
 
 # Tworzenie folderów na pliki
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -910,13 +919,25 @@ def impersonate_host(event_id):
 @admin_required
 def impersonate_host2(event_id):
     """Panel Hosta 2 - nowy layout w stylu MailerLite"""
-    event = db.session.get(Event, event_id)
-    if not event:
-        return "Event nie istnieje", 404
-    session['host_event_id'] = event_id
-    session['impersonated_by_admin'] = True
-    is_superhost = event.is_superhost if event else False
-    return render_template('host2.html', event=event, is_impersonated=True, is_superhost=is_superhost)
+    try:
+        logging.info(f"=== IMPERSONATE2 START === event_id: {event_id}")
+        event = db.session.get(Event, event_id)
+        logging.info(f"Event query result: {event}")
+
+        if not event:
+            logging.error(f"Event {event_id} nie istnieje")
+            return "Event nie istnieje", 404
+
+        session['host_event_id'] = event_id
+        session['impersonated_by_admin'] = True
+        is_superhost = event.is_superhost if event else False
+
+        logging.info(f"Rendering host2.html - event_id: {event_id}, is_superhost: {is_superhost}")
+        return render_template('host2.html', event=event, is_impersonated=True, is_superhost=is_superhost)
+    except Exception as e:
+        logging.error(f"=== ERROR IN IMPERSONATE2 === {str(e)}")
+        logging.error(traceback.format_exc())
+        return f"Internal Server Error: {str(e)}", 500
 
 # --- HOST ---
 @app.route('/host/login', methods=['GET', 'POST'])
