@@ -4529,9 +4529,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // Enable/disable fieldsets based on game state
         const preGameFieldset = document.getElementById('pre-game-settings');
         const inGameFieldset = document.getElementById('in-game-settings');
+        const timingFieldset = document.getElementById('timing-settings');
         const gameDurationInput = document.getElementById('game-duration-input-2');
         const setTimeBtn = document.getElementById('set-time-btn-2');
-        
+
+        // ✅ Zawsze włącz timing-settings (zakładka Czas i tempo)
+        if (timingFieldset) {
+            timingFieldset.disabled = false;
+        }
+
         if (state.game_active) {
             preGameFieldset.disabled = false; // ✅ Zawsze dostępne
             inGameFieldset.disabled = false;
