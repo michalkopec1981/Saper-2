@@ -1271,30 +1271,69 @@
 
             <!-- QRCODES SECTION -->
             <div id="qrcodes-section" class="content-section ">
-<!-- Kod QR Gracza -->
-            <div class="card mx-auto mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">📱 Kod QR Gracza</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-success">
-                        <strong>ℹ️ Instrukcja:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>Ten kod QR pozwala graczom dołączyć do gry</li>
-                            <li>Gracz skanuje kod, wpisuje swoje imię i otrzymuje dostęp do panelu</li>
-                            <li>Wydrukuj i umieść kod w widocznym miejscu</li>
-                        </ul>
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">📱 Kody QR</h5>
                     </div>
+                    <div class="card-body">
+                        <p class="text-muted">Zarządzaj kodami QR dla graczy i innych funkcji gry.</p>
+                    </div>
+                </div>
 
-                    <div class="d-grid gap-2">
-                        <a href="/player_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
-                            🔍 Podgląd i Druk Kodu QR
-                        </a>
+                <!-- Kod QR Gracza do Rejestracji -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">📱 Kod QR do Rejestracji Graczy</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <strong>ℹ️ Instrukcja:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Ten kod QR pozwala graczom dołączyć do gry</li>
+                                <li>Gracz skanuje kod, wpisuje swoje imię i otrzymuje dostęp do panelu</li>
+                                <li>Wydrukuj i umieść kod w widocznym miejscu</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="/player_qr_preview/{{ event.id }}" target="_blank" class="btn btn-success btn-lg">
+                                🔍 Podgląd i Druk Kodu QR Rejestracji
+                            </a>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Kody QR Graczy (Dashboardy) -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">👥 Kody QR Graczy - Dostęp do Dashboardów</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Instrukcja:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Wyświetla kody QR dla wszystkich zarejestrowanych graczy</li>
+                                <li>Każdy kod prowadzi bezpośrednio do dashboardu gracza</li>
+                                <li>Możesz wydrukować wszystkie kody naraz</li>
+                                <li>Przydatne gdy gracz zgubił dostęp do swojego panelu</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="/player_qrcodes/{{ event.id }}" target="_blank" class="btn btn-info btn-lg">
+                                👥 Wyświetl Kody QR Wszystkich Graczy
+                            </a>
+                        </div>
+
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <strong>Liczba graczy:</strong> <span id="qrcodes-player-count">Ładowanie...</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-        </div>
 
             <!-- AR SECTION -->
             <div id="ar-section" class="content-section ">
@@ -2992,6 +3031,30 @@ function showSection(sectionId, element) {
     if (window.innerWidth <= 992) {
         toggleSidebar();
     }
+
+    // Załaduj liczbę graczy po otwarciu zakładki Kody QR
+    if (sectionId === 'qrcodes-section') {
+        loadQRCodesPlayerCount();
+    }
+}
+
+// Funkcja ładująca liczbę graczy dla zakładki Kody QR
+function loadQRCodesPlayerCount() {
+    fetch('/api/host/players')
+        .then(res => res.json())
+        .then(players => {
+            const countElement = document.getElementById('qrcodes-player-count');
+            if (countElement) {
+                countElement.textContent = players.length;
+            }
+        })
+        .catch(err => {
+            console.error('Błąd ładowania liczby graczy:', err);
+            const countElement = document.getElementById('qrcodes-player-count');
+            if (countElement) {
+                countElement.textContent = 'Błąd';
+            }
+        });
 }
 
 // Funkcja toggle sidebar (mobile)
