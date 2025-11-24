@@ -7948,7 +7948,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // Ładuj galerię przy otwieraniu zakładki Foto
-    document.querySelector('button[data-bs-target="#photo"]').addEventListener('click', function() {
+    document.querySelector('button[data-bs-target="#photo"]')?.addEventListener('click', function() {
         setTimeout(() => loadHostPhotoGallery(), 100);
     });
 
@@ -7956,7 +7956,8 @@ document.addEventListener('DOMContentLoaded', function () {
     socket.on('new_photo', function(data) {
         console.log('New photo received:', data);
         // Przeładuj galerię jeśli jest otwarta zakładka Foto
-        if (document.getElementById('photo').classList.contains('active')) {
+        const photoElement = document.getElementById('photo');
+        if (photoElement && photoElement.classList.contains('active')) {
             loadHostPhotoGallery();
         }
     });
