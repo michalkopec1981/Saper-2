@@ -1461,7 +1461,15 @@ def game_control():
         if is_active and is_running:
             print(f"   Running - update_timers() will apply x{new_speed}")
         elif is_active and not is_running:
-            print(f"   Paused - x{new_speed} will be used after resume")        
+            print(f"   Paused - x{new_speed} will be used after resume")
+
+    elif control == 'bonus':
+        current_bonus = int(get_game_state(event_id, 'bonus_multiplier', 1))
+        new_bonus = int(value) if str(current_bonus) != str(value) else 1
+
+        print(f"🎁 Bonus change: x{current_bonus} → x{new_bonus}")
+        set_game_state(event_id, 'bonus_multiplier', new_bonus)
+
     elif control == 'language_player':
         set_game_state(event_id, 'language_player', value)
 
